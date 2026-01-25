@@ -1,0 +1,29 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidLibrary)
+}
+
+kotlin {
+    androidLibrary {
+        namespace = "org.vpilo.babymonitor.camera.model"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
+    }
+
+    jvm("desktop")
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":common"))
+
+            implementation(libs.koin.core)
+
+            api(libs.kotlinx.coroutines)
+        }
+    }
+}

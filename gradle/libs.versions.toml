@@ -1,0 +1,107 @@
+[versions]
+kotlin = "2.3.10"
+kotlinx-coroutines = "1.10.2"
+agp = "9.0.1"
+koin = "4.1.1"
+ktor = "3.4.0"
+coil3 = "3.4.0"
+ksp = "2.3.2"
+slf4j = "2.0.17"
+
+android-compileSdk = "36"
+android-minSdk = "26"
+android-targetSdk = "36"
+
+compose = "1.10.1"
+compose-material = "1.9.0"
+compose-materialIconsExtended = "1.7.3"
+compose-navigation = "2.9.2"
+
+androidx-activityCompose = "1.12.4"
+androidx-core = "1.17.0"
+jetbrains-lifecycle = "2.9.6"
+androidx-camera = "1.5.3"
+
+junit = "4.13.2"
+
+[libraries]
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
+compose-material = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material" }
+compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "compose-materialIconsExtended" }
+compose-navigation = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "compose-navigation" }
+compose-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
+compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose" }
+
+jetbrains-lifecycle-common = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-common", version.ref = "jetbrains-lifecycle" }
+jetbrains-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "jetbrains-lifecycle" }
+jetbrains-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "jetbrains-lifecycle" }
+
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
+
+# Camera libraries
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "androidx-camera" }
+androidx-camera-impl = { group = "androidx.camera", name = "camera-camera2", version.ref = "androidx-camera" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "androidx-camera" }
+guava = { group = "com.google.guava", name = "guava", version = "33.5.0-jre" }
+webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version = "0.3.12" }
+
+kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+koin-androidxCompose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
+koin-composeViewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
+ktor-serializationKotlinxJson = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
+coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil3" }
+coil-network-ktor2 = { module = "io.coil-kt.coil3:coil-network-ktor2", version.ref = "coil3" }
+coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil3" }
+coil-mp = { module = "io.coil-kt.coil3:coil", version.ref = "coil3" }
+
+
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+
+[bundles]
+ktor = [
+    "ktor-client-core",
+    "ktor-client-contentNegotiation",
+    "ktor-client-auth",
+    "ktor-client-logging",
+    "ktor-serializationKotlinxJson",
+]
+coil = [
+    "coil-compose",
+    "coil-compose-core",
+    "coil-network-ktor2",
+    "coil-network-ktor3",
+    "coil-mp"
+]
