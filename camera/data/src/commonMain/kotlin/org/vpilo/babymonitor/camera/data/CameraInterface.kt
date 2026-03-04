@@ -12,3 +12,5 @@ expect object CameraInterface {
 
     fun stop()
 }
+
+internal const val MAX_FRAME_BUFFER_SIZE: Int = 100

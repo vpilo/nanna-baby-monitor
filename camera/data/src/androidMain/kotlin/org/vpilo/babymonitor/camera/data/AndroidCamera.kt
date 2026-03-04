@@ -22,12 +22,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.camera.model.CameraFrameData
-import org.vpilo.babymonitor.camera.model.CameraImageFormat
 import org.vpilo.babymonitor.camera.model.CameraImageRotation
 import org.vpilo.babymonitor.common.Logger
+import java.nio.ByteBuffer
 import kotlin.time.Instant
 
-class AndroidCamera(
+internal class AndroidCamera(
     private val context: Context,
     private val lifecycleOwner: LifecycleOwner,
     private val videoFrames: MutableSharedFlow<CameraFrameData>,
@@ -48,12 +48,12 @@ class AndroidCamera(
     // FIXME android version needs to request permissions via compose
     private fun onFrameReceived(image: ImageProxy) {
         @OptIn(ExperimentalGetImage::class)
-        val buffer = image.image?.planes?.flatMap { plane ->
-            val byteBuffer = plane.buffer
-            val bytes = ByteArray(byteBuffer.capacity())
-            byteBuffer.get(bytes)
-            bytes.toList()
-        }?.toByteArray() ?: ByteArray(0)
+        val rgbaBuffer = image.image?.planes?.get(0)?.buffer
+            ?: run {
+                Logger.e(this::class) { "Invalid image received! image=${image.image}, planes=${image.image?.planes?.size}" }
+                image.close()
+                return
+            }
 
         CameraFrameData(
             width = image.width,
@@ -65,9 +65,8 @@ class AndroidCamera(
                 270 -> CameraImageRotation.ROTATION_270
                 else -> CameraImageRotation.ROTATION_0
             },
-            format = CameraImageFormat.YUV_420_888,
             timestamp = Instant.fromEpochMilliseconds(image.imageInfo.timestamp),
-            data = buffer,
+            data = rgbaBuffer.toRgbaByteArray(),
         )
             .also { frame -> videoFrames.tryEmit(frame) }
 
@@ -87,7 +86,7 @@ class AndroidCamera(
         val imageAnalysis = ImageAnalysis.Builder()
             .setTargetRotation(Surface.ROTATION_0)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
             .build()
             .also {
                 it.setAnalyzer(executor, ::onFrameReceived)
@@ -154,4 +153,7 @@ class AndroidCamera(
         audioRecord?.release()
         audioRecord = null
     }
+
+    private fun ByteBuffer.toRgbaByteArray(): ByteArray =
+        ByteArray(remaining()).also { get(it) }
 }

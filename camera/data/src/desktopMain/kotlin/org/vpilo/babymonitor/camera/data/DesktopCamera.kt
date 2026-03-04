@@ -10,19 +10,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.camera.data.ktx.cloneToByteArray
 import org.vpilo.babymonitor.camera.data.ktx.sizes
 import org.vpilo.babymonitor.camera.model.CameraFrameData
-import org.vpilo.babymonitor.camera.model.CameraImageFormat
 import org.vpilo.babymonitor.camera.model.CameraImageRotation
 import org.vpilo.babymonitor.common.Logger
 import java.awt.Dimension
+import java.awt.image.BufferedImage
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
 
-class DesktopCamera(
+internal class DesktopCamera(
     private val videoFrames: MutableSharedFlow<CameraFrameData>,
     private val audioSamples: MutableSharedFlow<ByteArray>,
     webcamGetter: () -> Webcam = { Webcam.getDefault() },
@@ -67,24 +66,24 @@ class DesktopCamera(
                             delay(10.milliseconds)
                             continue
                         }
-                        webcam.getImage()?.let { image ->
-                            CameraFrameData(
-                                width = image.width,
-                                height = image.height,
-                                rotation = CameraImageRotation.ROTATION_0,
-                                format = CameraImageFormat.YUV_420_888,
-                                timestamp = Clock.System.now(),
-                                data = image.data.dataBuffer.cloneToByteArray(),
-                            )
-                                .also { frame -> videoFrames.tryEmit(frame) }
+                        webcam.getImage()
+                            ?.let { image ->
+                                CameraFrameData(
+                                    width = image.width,
+                                    height = image.height,
+                                    rotation = CameraImageRotation.ROTATION_0,
+                                    timestamp = Clock.System.now(),
+                                    data = image.convertToRgba(),
+                                )
+                                    .also { frame -> videoFrames.tryEmit(frame) }
 
-                            if (++frameCounter % frameCount == 0) {
-                                frameCounter = 0
-                                Logger.d(this@DesktopCamera::class) {
-                                    "FPS: ${"%.02f".format(webcam.fps)} with ${image.sizes} image"
+                                if (++frameCounter % frameCount == 0) {
+                                    frameCounter = 0
+                                    Logger.d(this@DesktopCamera::class) {
+                                        "FPS: ${"%.02f".format(webcam.fps)} with ${image.sizes} image of type ${image.type}"
+                                    }
                                 }
                             }
-                        }
                             ?: run {
                                 Logger.w(this@DesktopCamera::class) { "Failed to capture image" }
                                 delay(100.milliseconds)
@@ -114,6 +113,23 @@ class DesktopCamera(
         }
         Logger.i(this::class) { "Stopping camera" }
         videoCaptureJob?.cancel()
+    }
+
+    private fun BufferedImage.convertToRgba(): ByteArray {
+        // getRGB returns ARGB.
+        val argbData = getRGB(0, 0, width, height, null, 0, width)
+        return ByteArray(argbData.size * 4)
+            .also { bytes ->
+                for (idx in argbData.indices) {
+                    val argb = argbData[idx]
+                    val offset = idx * 4
+                    // In order, R, G, B, A.
+                    bytes[offset] = (argb shr 16 and 0xFF).toByte()
+                    bytes[offset + 1] = (argb shr 8 and 0xFF).toByte()
+                    bytes[offset + 2] = (argb and 0xFF).toByte()
+                    bytes[offset + 3] = (argb shr 24 and 0xFF).toByte()
+                }
+            }
     }
 
     private companion object {

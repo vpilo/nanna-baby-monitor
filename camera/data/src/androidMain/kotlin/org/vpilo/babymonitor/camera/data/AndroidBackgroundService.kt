@@ -8,7 +8,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import org.vpilo.babymonitor.common.Logger
 
-class AndroidBackgroundService : LifecycleService() {
+internal class AndroidBackgroundService : LifecycleService() {
 
     private var camera: AndroidCamera? = null
 

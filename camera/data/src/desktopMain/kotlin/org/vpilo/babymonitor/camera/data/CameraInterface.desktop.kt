@@ -1,13 +1,18 @@
 package org.vpilo.babymonitor.camera.data
 
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.onEach
 import org.vpilo.babymonitor.camera.model.CameraFrameData
+import org.vpilo.babymonitor.camera.model.CameraRepository
+import org.vpilo.babymonitor.common.Logger
 
 actual object CameraInterface {
 
-    private val frameCollector: MutableSharedFlow<CameraFrameData> = MutableSharedFlow()
+    private val frameCollector: MutableSharedFlow<CameraFrameData> =
+        MutableSharedFlow(0, MAX_FRAME_BUFFER_SIZE, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val sampleCollector: MutableSharedFlow<ByteArray> = MutableSharedFlow()
 

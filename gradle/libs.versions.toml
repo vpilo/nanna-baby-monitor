@@ -1,9 +1,9 @@
 [versions]
 kotlin = "2.3.10"
 kotlinx-coroutines = "1.10.2"
-agp = "9.0.1"
+agp = "9.1.0"
 koin = "4.1.1"
-ktor = "3.4.0"
+ktor = "3.4.1"
 coil3 = "3.4.0"
 ksp = "2.3.2"
 slf4j = "2.0.17"
@@ -20,7 +20,10 @@ compose-navigation = "2.9.2"
 androidx-activityCompose = "1.12.4"
 androidx-core = "1.17.0"
 jetbrains-lifecycle = "2.9.6"
+
 androidx-camera = "1.5.3"
+guava = "33.5.0-android"
+webcam-capture = "0.3.12"
 
 junit = "4.13.2"
 
@@ -47,8 +50,8 @@ androidx-core = { group = "androidx.core", name = "core", version.ref = "android
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "androidx-camera" }
 androidx-camera-impl = { group = "androidx.camera", name = "camera-camera2", version.ref = "androidx-camera" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "androidx-camera" }
-guava = { group = "com.google.guava", name = "guava", version = "33.5.0-jre" }
-webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version = "0.3.12" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version.ref = "webcam-capture" }
 
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }

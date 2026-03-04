@@ -11,7 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-abstract class LifecycleService : Service(), LifecycleOwner {
+internal abstract class LifecycleService : Service(), LifecycleOwner {
     private val scope = CoroutineScope(Dispatchers.Main.immediate)
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
 
