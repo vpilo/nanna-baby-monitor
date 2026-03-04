@@ -10,8 +10,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import org.vpilo.babymonitor.navigation.Route
-import org.vpilo.babymonitor.presentation.test.TestRouteScreenRoot
+import org.vpilo.babymonitor.presentation.server.ServerPreviewScreenRoot
 import org.koin.compose.viewmodel.koinViewModel
+import org.vpilo.babymonitor.presentation.permissioncheck.PermissionCheckScreen
 
 @Composable
 @Preview
@@ -22,12 +23,22 @@ fun App() {
             navController = navController,
             startDestination = Route.RootNavGraph,
         ) {
-            navigation<Route.RootNavGraph>(startDestination = Route.TestRoute) {
-                composable<Route.TestRoute>(
+            navigation<Route.RootNavGraph>(startDestination = Route.PermissionCheck) {
+                composable<Route.PermissionCheck>(
                     exitTransition = { slideOutHorizontally() },
                     popEnterTransition = { slideInHorizontally() },
                 ) {
-                    TestRouteScreenRoot(
+                    PermissionCheckScreen(
+                        onAllPermissionsGranted = {
+                            navController.navigate(Route.ServerPreview)
+                        },
+                    )
+                }
+                composable<Route.ServerPreview>(
+                    exitTransition = { slideOutHorizontally() },
+                    popEnterTransition = { slideInHorizontally() },
+                ) {
+                    ServerPreviewScreenRoot(
                         viewModel = koinViewModel(),
                     )
                 }

@@ -33,6 +33,8 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material)
             implementation(libs.compose.ui)
+            implementation(libs.compose.ui.tooling)
+            implementation(libs.jetbrains.lifecycle.runtime.compose)
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.koin.core)

@@ -8,8 +8,8 @@ sealed interface Route {
     data object RootNavGraph : Route
 
     @Serializable
-    data object TestRoute : Route
+    data object PermissionCheck : Route
 
     @Serializable
-    data class BookDetail(val id: String) : Route
+    data object ServerPreview : Route
 }

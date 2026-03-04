@@ -10,4 +10,6 @@ interface CameraRepository {
     suspend fun start()
 
     suspend fun stop()
+
+    fun isStarted(): Boolean
 }

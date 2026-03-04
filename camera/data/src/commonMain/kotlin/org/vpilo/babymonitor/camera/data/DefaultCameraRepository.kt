@@ -17,4 +17,7 @@ internal class DefaultCameraRepository(
     override suspend fun stop() {
         CameraInterface.stop()
     }
+
+    override fun isStarted(): Boolean =
+        CameraInterface.isStarted()
 }

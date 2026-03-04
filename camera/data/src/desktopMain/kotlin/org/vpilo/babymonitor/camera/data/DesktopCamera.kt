@@ -20,7 +20,6 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
-
 internal class DesktopCamera(
     private val videoFrames: MutableSharedFlow<CameraFrameData>,
     private val audioSamples: MutableSharedFlow<ByteArray>,
@@ -36,7 +35,7 @@ internal class DesktopCamera(
 
     fun start() {
         if (videoCaptureJob?.isActive == true) {
-            Logger.w(this::class) { "Camera is already running, ignoring start request." }
+            Logger.w(TAG) { "Camera is already running, ignoring start request." }
             return
         }
 
@@ -44,7 +43,7 @@ internal class DesktopCamera(
         for (size in customResolutions) {
             webcam.setViewSize(size)
             if (webcam.open()) {
-                Logger.d(this::class) { "Camera opened with ${size.sizes}" }
+                Logger.d(TAG) { "Camera opened with ${size.sizes}" }
                 break
             }
         }
@@ -54,7 +53,7 @@ internal class DesktopCamera(
             check(webcam.open()) { "Failed to open webcam with any resolution." }
         }
 
-        Logger.d(this::class) {
+        Logger.d(TAG) {
             "Camera supports resolutions: ${webcam.viewSizes.map { it.sizes }}, current ${webcam.viewSize.sizes}"
         }
 
@@ -79,13 +78,13 @@ internal class DesktopCamera(
 
                                 if (++frameCounter % frameCount == 0) {
                                     frameCounter = 0
-                                    Logger.d(this@DesktopCamera::class) {
+                                    Logger.d(TAG) {
                                         "FPS: ${"%.02f".format(webcam.fps)} with ${image.sizes} image of type ${image.type}"
                                     }
                                 }
                             }
                             ?: run {
-                                Logger.w(this@DesktopCamera::class) { "Failed to capture image" }
+                                Logger.w(TAG) { "Failed to capture image" }
                                 delay(100.milliseconds)
                             }
                     }
@@ -95,25 +94,28 @@ internal class DesktopCamera(
                 .also {
                     it.invokeOnCompletion { ex ->
                         if (ex == null || ex is CancellationException) {
-                            Logger.d(this::class) { "Camera stopped" }
+                            Logger.d(TAG) { "Camera stopped" }
                         } else {
-                            Logger.w(this::class, ex) { "Camera failed!" }
+                            Logger.w(TAG, ex) { "Camera failed!" }
                         }
                         webcam.close()
                         videoCaptureJob = null
                     }
                 }
-        Logger.i(this::class) { "Started camera" }
+        Logger.i(TAG) { "Started camera" }
     }
 
     fun stop() {
         if (videoCaptureJob == null) {
-            Logger.w(this::class) { "Camera was not running anymore!" }
+            Logger.w(TAG) { "Camera was not running anymore!" }
             return
         }
-        Logger.i(this::class) { "Stopping camera" }
+        Logger.i(TAG) { "Stopping camera" }
         videoCaptureJob?.cancel()
+        videoCaptureJob = null
     }
+
+    fun isStarted() = videoCaptureJob != null
 
     private fun BufferedImage.convertToRgba(): ByteArray {
         // getRGB returns ARGB.
@@ -133,6 +135,7 @@ internal class DesktopCamera(
     }
 
     private companion object {
+        private val TAG = DesktopCamera::class
 
         private val customResolutions = arrayOf<Dimension>(
             WebcamResolution.UHD4K.size,

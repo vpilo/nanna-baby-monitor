@@ -25,4 +25,7 @@ actual object CameraInterface: KoinComponent {
     actual fun stop() {
         AndroidBackgroundService.stop(get())
     }
+
+    actual fun isStarted() =
+        AndroidBackgroundService.isStarted()
 }

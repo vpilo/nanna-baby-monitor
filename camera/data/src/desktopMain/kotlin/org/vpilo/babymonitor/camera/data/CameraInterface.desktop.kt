@@ -28,4 +28,6 @@ actual object CameraInterface {
     actual fun stop() {
         camera.stop()
     }
+
+    actual fun isStarted(): Boolean = camera.isStarted()
 }

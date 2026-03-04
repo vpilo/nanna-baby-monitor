@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.presentation.test
+package org.vpilo.babymonitor.presentation.server
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.Duration.Companion.seconds
 
-class TestRouteViewModel(
+class ServerPreviewViewModel(
 ) : ViewModel() {
-    private val _state = MutableStateFlow(TestRouteState())
+    private val _state = MutableStateFlow(ServerPreviewState())
     val state = _state
         .onStart {
         }

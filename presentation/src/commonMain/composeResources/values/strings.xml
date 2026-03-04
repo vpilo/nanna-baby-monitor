@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="permissions_needed">The app needs the Camera and Microphone permission to continue.</string>
+</resources>
