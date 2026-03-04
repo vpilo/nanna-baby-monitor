@@ -1,5 +1,6 @@
-package org.vpilo.babymonitor.camera.model
+package org.vpilo.babymonitor.model
 
+import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
 data class CameraFrameData(
@@ -33,3 +34,10 @@ data class CameraFrameData(
         return result
     }
 }
+
+@Serializable
+data class CameraFrameProperties(
+    val width: Int,
+    val height: Int,
+    val rotation: CameraImageRotation,
+)

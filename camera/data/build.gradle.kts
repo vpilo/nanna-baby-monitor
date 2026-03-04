@@ -25,6 +25,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":common"))
+            implementation(project(":model"))
             implementation(project(":camera:model"))
 
             implementation(libs.koin.core)

@@ -21,12 +21,9 @@ kotlin {
             implementation(project(":appCommon"))
 
             implementation(libs.androidx.activity.compose)
-            implementation(libs.compose.ui.tooling)
 
             implementation(libs.koin.android)
             implementation(libs.koin.androidxCompose)
-            implementation(libs.ktor.client.okhttp)
-
         }
 }
 

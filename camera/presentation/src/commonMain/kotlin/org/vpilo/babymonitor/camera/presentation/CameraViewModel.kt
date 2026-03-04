@@ -4,24 +4,24 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.camera.model.CameraFrameData
-import org.vpilo.babymonitor.camera.model.CameraRepository
+import org.vpilo.babymonitor.model.CameraFrameData
+import org.vpilo.babymonitor.model.VideoFeedRepository
 
 class CameraViewModel(
-    private val cameraRepository: CameraRepository,
+    private val videoFeedRepository: VideoFeedRepository,
 ) : ViewModel() {
 
-    val frames: SharedFlow<CameraFrameData> = cameraRepository.frames
+    val frames: SharedFlow<CameraFrameData> = videoFeedRepository.frames
 
     val isEnabled: Boolean
-        get() = cameraRepository.isStarted()
+        get() = videoFeedRepository.isOpen
 
     fun setEnabled(enabled: Boolean) {
         viewModelScope.launch {
             if (enabled) {
-                cameraRepository.start()
+                videoFeedRepository.start()
             } else {
-                cameraRepository.stop()
+                videoFeedRepository.close()
             }
         }
     }

@@ -11,6 +11,7 @@ object Theme {
 
         val accent: Color = LightBlue
 
+        val text: Color = White
         val error: Color = LightRed
     }
 

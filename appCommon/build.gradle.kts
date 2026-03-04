@@ -28,7 +28,6 @@ kotlin {
 
             implementation(libs.koin.android)
             implementation(libs.koin.androidxCompose)
-            implementation(libs.ktor.client.okhttp)
         }
 
         commonMain.dependencies {
@@ -39,6 +38,8 @@ kotlin {
             implementation(project(":camera:data"))
             implementation(project(":camera:model"))
             implementation(project(":camera:presentation"))
+            implementation(project(":network:client"))
+            implementation(project(":network:server"))
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -52,12 +53,6 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.koin.core)
-
-            implementation(libs.bundles.ktor)
-        }
-
-        desktopMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
         }
     }
 }

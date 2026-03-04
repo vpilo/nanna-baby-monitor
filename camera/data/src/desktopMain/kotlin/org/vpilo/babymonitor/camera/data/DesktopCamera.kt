@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.camera.data.ktx.sizes
-import org.vpilo.babymonitor.camera.model.CameraFrameData
-import org.vpilo.babymonitor.camera.model.CameraImageRotation
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.CameraFrameData
+import org.vpilo.babymonitor.model.CameraImageRotation
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import kotlin.coroutines.cancellation.CancellationException

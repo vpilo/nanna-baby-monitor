@@ -20,6 +20,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":common"))
+            implementation(project(":model"))
 
             implementation(libs.koin.core)
 

@@ -17,8 +17,9 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
-import org.vpilo.babymonitor.camera.model.CameraImageRotation
+import org.vpilo.babymonitor.model.CameraImageRotation
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.di.AppRole
 
 private const val TAG = "CameraView"
 

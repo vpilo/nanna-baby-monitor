@@ -8,7 +8,13 @@ sealed interface Route {
     data object RootNavGraph : Route
 
     @Serializable
+    data object AppRoleChooser : Route
+
+    @Serializable
     data object PermissionCheck : Route
+
+    @Serializable
+    data object ClientPreview : Route
 
     @Serializable
     data object ServerPreview : Route

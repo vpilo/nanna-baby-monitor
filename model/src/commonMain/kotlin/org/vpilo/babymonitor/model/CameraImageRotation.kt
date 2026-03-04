@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.model
+package org.vpilo.babymonitor.model
 
 enum class CameraImageRotation {
     ROTATION_0,

@@ -1,12 +1,14 @@
 package org.vpilo.babymonitor.camera.data
 
 import kotlinx.coroutines.flow.SharedFlow
-import org.vpilo.babymonitor.camera.model.CameraFrameData
+import org.vpilo.babymonitor.model.CameraFrameData
+import org.vpilo.babymonitor.model.FrameFlow
+import org.vpilo.babymonitor.model.SampleFlow
 
 expect object CameraInterface {
 
-    val frames: SharedFlow<CameraFrameData>
-    val samples: SharedFlow<ByteArray>
+    val frames: FrameFlow
+    val samples: SampleFlow
 
     fun start()
 
@@ -14,5 +16,3 @@ expect object CameraInterface {
 
     fun isStarted(): Boolean
 }
-
-internal const val MAX_FRAME_BUFFER_SIZE: Int = 100

@@ -21,9 +21,9 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.camera.model.CameraFrameData
-import org.vpilo.babymonitor.camera.model.CameraImageRotation
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.CameraFrameData
+import org.vpilo.babymonitor.model.CameraImageRotation
 import java.nio.ByteBuffer
 import kotlin.time.Instant
 

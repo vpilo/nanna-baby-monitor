@@ -35,6 +35,9 @@ plugins {
 
 include(":common")
 
+include(":network:server")
+include(":network:client")
+
 include(":camera:data")
 include(":camera:model")
 include(":camera:presentation")
