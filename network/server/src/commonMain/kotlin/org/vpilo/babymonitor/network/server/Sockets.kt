@@ -48,6 +48,8 @@ fun Application.configureSockets() {
             var lastFrameProperties: CameraFrameProperties? = null
 
             repository.frames
+                // FIXME SharedFlows don't complete, need to close manually instead of this. maybe make a flow of repo states instead,
+                //  could be useful later, e.g. to show if there's no activity to send.
                 .onCompletion {
                     repository.stop()
                     close(CloseReason(CloseReason.Codes.GOING_AWAY, "Camera feed ended."))

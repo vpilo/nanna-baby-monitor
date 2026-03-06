@@ -50,7 +50,7 @@ fun CameraView(
                         CameraImageRotation.ROTATION_180 -> 180f
                         CameraImageRotation.ROTATION_270 -> 270f
                     }
-                    img = rgbaToImageBitmap(image.data, image.width, image.height)
+                    img = decodeToImageBitmap(image.data)
                 }
             }
 

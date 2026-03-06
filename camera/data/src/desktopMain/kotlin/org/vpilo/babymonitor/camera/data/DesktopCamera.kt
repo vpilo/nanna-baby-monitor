@@ -16,6 +16,10 @@ import org.vpilo.babymonitor.model.CameraFrameData
 import org.vpilo.babymonitor.model.CameraImageRotation
 import java.awt.Dimension
 import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import javax.imageio.IIOImage
+import javax.imageio.ImageIO
+import javax.imageio.ImageWriteParam
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
@@ -72,7 +76,7 @@ internal class DesktopCamera(
                                     height = image.height,
                                     rotation = CameraImageRotation.ROTATION_0,
                                     timestamp = Clock.System.now(),
-                                    data = image.convertToRgba(),
+                                    data = image.toJpeg(),
                                 )
                                     .also { frame -> videoFrames.tryEmit(frame) }
 
@@ -117,25 +121,24 @@ internal class DesktopCamera(
 
     fun isStarted() = videoCaptureJob != null
 
-    private fun BufferedImage.convertToRgba(): ByteArray {
-        // getRGB returns ARGB.
-        val argbData = getRGB(0, 0, width, height, null, 0, width)
-        return ByteArray(argbData.size * 4)
-            .also { bytes ->
-                for (idx in argbData.indices) {
-                    val argb = argbData[idx]
-                    val offset = idx * 4
-                    // In order, R, G, B, A.
-                    bytes[offset] = (argb shr 16 and 0xFF).toByte()
-                    bytes[offset + 1] = (argb shr 8 and 0xFF).toByte()
-                    bytes[offset + 2] = (argb and 0xFF).toByte()
-                    bytes[offset + 3] = (argb shr 24 and 0xFF).toByte()
-                }
+    private fun BufferedImage.toJpeg(): ByteArray =
+        ByteArrayOutputStream().let { outputStream ->
+            val writer = ImageIO.getImageWritersByFormatName("jpeg").next()
+            val param = writer.defaultWriteParam.apply {
+                compressionMode = ImageWriteParam.MODE_EXPLICIT
+                compressionQuality = JPEG_QUALITY
             }
-    }
+            writer.output = ImageIO.createImageOutputStream(outputStream)
+            writer.write(null, IIOImage(this, null, null), param)
+            writer.dispose()
+
+            outputStream.toByteArray()
+        }
 
     private companion object {
         private val TAG = DesktopCamera::class
+
+        private const val JPEG_QUALITY = 0.7f
 
         private val customResolutions = arrayOf<Dimension>(
             WebcamResolution.UHD4K.size,

@@ -1,6 +1,8 @@
 package org.vpilo.babymonitor.camera.data
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Bitmap.createBitmap
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -24,6 +26,7 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CameraFrameData
 import org.vpilo.babymonitor.model.CameraImageRotation
+import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import kotlin.time.Instant
 
@@ -45,7 +48,6 @@ internal class AndroidCamera(
     private var frameCounter = 0
     private var lastFpsTimestamp = System.currentTimeMillis()
 
-    // FIXME android version needs to request permissions via compose
     private fun onFrameReceived(image: ImageProxy) {
         @OptIn(ExperimentalGetImage::class)
         val rgbaBuffer = image.image?.planes?.get(0)?.buffer
@@ -66,7 +68,7 @@ internal class AndroidCamera(
                 else -> CameraImageRotation.ROTATION_0
             },
             timestamp = Instant.fromEpochMilliseconds(image.imageInfo.timestamp),
-            data = rgbaBuffer.toRgbaByteArray(),
+            data = rgbaBuffer.toJpeg(image.width, image.height),
         )
             .also { frame -> videoFrames.tryEmit(frame) }
 
@@ -154,6 +156,18 @@ internal class AndroidCamera(
         audioRecord = null
     }
 
-    private fun ByteBuffer.toRgbaByteArray(): ByteArray =
-        ByteArray(remaining()).also { get(it) }
+    private fun ByteBuffer.toJpeg(width: Int, height: Int, quality: Int = JPEG_QUALITY): ByteArray {
+        val bitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        bitmap.copyPixelsFromBuffer(this)
+        return ByteArrayOutputStream()
+            .let {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, it)
+                bitmap.recycle()
+                it.toByteArray()
+            }
+    }
+
+    private companion object {
+        private const val JPEG_QUALITY = 70
+    }
 }
