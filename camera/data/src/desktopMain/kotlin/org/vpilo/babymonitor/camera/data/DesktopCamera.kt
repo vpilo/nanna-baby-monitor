@@ -32,9 +32,6 @@ internal class DesktopCamera(
 ) {
     private var videoCaptureJob: Job? = null
 
-    private val frameCount = 10
-    private var frameCounter = 0
-
     private val webcam: Webcam = webcamGetter()
 
     fun start() {
@@ -79,13 +76,6 @@ internal class DesktopCamera(
                                     data = image.toJpeg(),
                                 )
                                     .also { frame -> videoFrames.tryEmit(frame) }
-
-                                if (++frameCounter % frameCount == 0) {
-                                    frameCounter = 0
-                                    Logger.d(TAG) {
-                                        "FPS: ${"%.02f".format(webcam.fps)} with ${image.sizes} image of type ${image.type}"
-                                    }
-                                }
                             }
                             ?: run {
                                 Logger.w(TAG) { "Failed to capture image" }
