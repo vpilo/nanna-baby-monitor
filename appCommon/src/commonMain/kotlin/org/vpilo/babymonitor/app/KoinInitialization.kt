@@ -2,7 +2,7 @@ package org.vpilo.babymonitor.app
 
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
-import org.vpilo.babymonitor.camera.data.di.cameraDataKoinModules
+import org.vpilo.babymonitor.camera.data.di.cameraDataKoinModule
 import org.vpilo.babymonitor.camera.presentation.di.cameraPresentationKoinModule
 import org.vpilo.babymonitor.data.di.dataKoinModule
 import org.vpilo.babymonitor.di.appSharedKoinModules
@@ -18,7 +18,7 @@ fun initializeKoin(config: KoinAppDeclaration? = null) {
                 presentationKoinModule,
                 cameraPresentationKoinModule,
                 networkKoinModule,
-            ) + appSharedKoinModules + cameraDataKoinModules,
+            ) + appSharedKoinModules + cameraDataKoinModule,
         )
     }
 }

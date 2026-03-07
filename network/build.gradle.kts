@@ -8,6 +8,7 @@ plugins {
 kotlin {
     androidLibrary {
         namespace = "org.vpilo.babymonitor.network"
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compileSdk = libs.versions.android.compileSdk.get().toInt()
 
         compilerOptions {

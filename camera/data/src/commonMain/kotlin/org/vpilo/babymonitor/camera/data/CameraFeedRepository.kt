@@ -11,6 +11,10 @@ internal class CameraFeedRepository(
     override val frames: FrameFlow = CameraInterface.frames
     override val samples: SampleFlow = CameraInterface.samples
 
+    /**
+     * Reference count of users of the camera feed.
+     * This is due to the repository being used both by the UI and the network layer independently.
+     */
     @Volatile
     private var userRefCount = 0
 
@@ -18,8 +22,7 @@ internal class CameraFeedRepository(
         get() = CameraInterface.isStarted()
 
     override fun start() {
-        userRefCount++
-        if (userRefCount == 1) {
+        if (userRefCount++ == 0) {
             CameraInterface.start()
         }
 
@@ -27,8 +30,7 @@ internal class CameraFeedRepository(
     }
 
     override fun stop() {
-        userRefCount--
-        if (userRefCount == 0) {
+        if (--userRefCount == 0) {
             CameraInterface.stop()
         }
 

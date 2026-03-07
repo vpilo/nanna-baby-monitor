@@ -12,7 +12,7 @@
 
     <application>
         <service
-            android:name=".AndroidBackgroundService"
+            android:name=".AndroidServiceHost"
             android:foregroundServiceType="camera" />
     </application>
 </manifest>

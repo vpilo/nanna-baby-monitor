@@ -31,8 +31,6 @@ import java.nio.ByteBuffer
 import kotlin.time.Instant
 
 internal class AndroidCamera(
-    private val context: Context,
-    private val lifecycleOwner: LifecycleOwner,
     private val videoFrames: MutableSharedFlow<CameraFrameData>,
     private val audioSamples: MutableSharedFlow<ByteArray>,
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
@@ -44,10 +42,6 @@ internal class AndroidCamera(
 
     private val executor = backgroundDispatcher.asExecutor()
 
-    private val frameCount = 10
-    private var frameCounter = 0
-    private var lastFpsTimestamp = System.currentTimeMillis()
-
     private fun onFrameReceived(image: ImageProxy) {
         @OptIn(ExperimentalGetImage::class)
         val rgbaBuffer = image.image?.planes?.get(0)?.buffer
@@ -56,35 +50,28 @@ internal class AndroidCamera(
                 image.close()
                 return
             }
-
-        CameraFrameData(
-            width = image.width,
-            height = image.height,
-            rotation = when (image.imageInfo.rotationDegrees) {
-                0 -> CameraImageRotation.ROTATION_0
-                90 -> CameraImageRotation.ROTATION_90
-                180 -> CameraImageRotation.ROTATION_180
-                270 -> CameraImageRotation.ROTATION_270
-                else -> CameraImageRotation.ROTATION_0
-            },
-            timestamp = Instant.fromEpochMilliseconds(image.imageInfo.timestamp),
-            data = rgbaBuffer.toJpeg(image.width, image.height),
-        )
-            .also { frame -> videoFrames.tryEmit(frame) }
-
-        if (++frameCounter % frameCount == 0) {
-            frameCounter = 0
-            val now = System.currentTimeMillis()
-            val delta = now - lastFpsTimestamp
-            val fps = 1000 * frameCount.toFloat() / delta
-            Logger.d(this::class) { "FPS: ${"%.02f".format(fps)} with ${image.width}x${image.height} image" }
-            lastFpsTimestamp = now
-        }
+        val bytes = rgbaBuffer.toJpeg(image.width, image.height)
         image.close()
+
+        videoFrames.tryEmit(
+            CameraFrameData(
+                width = image.width,
+                height = image.height,
+                rotation = when (image.imageInfo.rotationDegrees) {
+                    0 -> CameraImageRotation.ROTATION_0
+                    90 -> CameraImageRotation.ROTATION_90
+                    180 -> CameraImageRotation.ROTATION_180
+                    270 -> CameraImageRotation.ROTATION_270
+                    else -> CameraImageRotation.ROTATION_0
+                },
+                timestamp = Instant.fromEpochMilliseconds(image.imageInfo.timestamp),
+                data = bytes,
+            ),
+        )
     }
 
     @MainThread
-    fun onCameraReady(camera: ProcessCameraProvider) {
+    fun onCameraReady(camera: ProcessCameraProvider, lifecycleOwner: LifecycleOwner) {
         val imageAnalysis = ImageAnalysis.Builder()
             .setTargetRotation(Surface.ROTATION_0)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -106,14 +93,15 @@ internal class AndroidCamera(
         }
     }
 
-    fun start() {
+    fun start(context: Context, lifecycleOwner: LifecycleOwner) {
+        Logger.d(TAG) { "Starting recording" }
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener(
             {
                 cameraProvider = cameraProviderFuture.get()
                     .also {
                         CoroutineScope(mainDispatcher).launch {
-                            onCameraReady(it)
+                            onCameraReady(it, lifecycleOwner)
                         }
                     }
             },
@@ -123,6 +111,7 @@ internal class AndroidCamera(
     }
 
     fun stop() {
+        Logger.d(TAG) { "Stopping recording" }
         cameraProvider?.unbindAll()
         cameraProvider = null
         stopAudio()
@@ -169,5 +158,7 @@ internal class AndroidCamera(
 
     private companion object {
         private const val JPEG_QUALITY = 70
+
+        private val TAG = AndroidCamera::class
     }
 }

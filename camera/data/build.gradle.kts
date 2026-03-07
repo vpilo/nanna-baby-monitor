@@ -31,12 +31,12 @@ kotlin {
             implementation(libs.koin.core)
         }
         androidMain.dependencies {
+            implementation(project(":androidService"))
+
             implementation(libs.androidx.core)
             implementation(libs.androidx.camera.core)
             implementation(libs.androidx.camera.impl)
             implementation(libs.androidx.camera.lifecycle)
-            implementation(libs.guava)
-            implementation(libs.jetbrains.lifecycle.common)
         }
         val desktopMain by getting
         desktopMain.dependencies {

@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -15,16 +14,12 @@ kotlin {
     }
 
     dependencies {
-            implementation(project(":model"))
-            implementation(project(":data"))
-            implementation(project(":presentation"))
-            implementation(project(":appCommon"))
+        implementation(project(":androidService"))
+        implementation(project(":appCommon"))
 
-            implementation(libs.androidx.activity.compose)
-
-            implementation(libs.koin.android)
-            implementation(libs.koin.androidxCompose)
-        }
+        implementation(libs.koin.android)
+        implementation(libs.koin.androidxCompose)
+    }
 }
 
 android {

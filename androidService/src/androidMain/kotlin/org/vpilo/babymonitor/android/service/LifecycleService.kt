@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.data
+package org.vpilo.babymonitor.android.service
 
 import android.app.Service
 import android.content.Intent

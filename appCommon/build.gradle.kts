@@ -24,6 +24,8 @@ kotlin {
         val desktopMain by getting
 
         androidMain.dependencies {
+            implementation(project(":androidService"))
+
             implementation(libs.androidx.activity.compose)
 
             implementation(libs.koin.android)
