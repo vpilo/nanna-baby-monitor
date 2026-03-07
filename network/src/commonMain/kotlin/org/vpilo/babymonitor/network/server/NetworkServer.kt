@@ -4,6 +4,7 @@ import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
+import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
@@ -19,10 +20,22 @@ import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.server.websockets.webSocketServerStreaming
 import kotlin.time.Duration.Companion.seconds
 
+private var server: EmbeddedServer<*, *>? = null
+
 suspend fun createNetworkServer(coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO) {
     withContext(coroutineDispatcher) {
-        embeddedServer(CIO, port = Constants.COMMUNICATION_PORT, host = Constants.SERVER_LISTEN_ADDRESS, module = Application::module)
-            .start(wait = true)
+        if (server != null) {
+            return@withContext
+        }
+        val newServer =
+            embeddedServer(
+                factory = CIO,
+                module = Application::module,
+                host = Constants.SERVER_LISTEN_ADDRESS,
+                port = Constants.COMMUNICATION_PORT,
+            )
+        server = newServer
+        newServer.start(wait = true)
     }
 }
 

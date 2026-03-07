@@ -2,17 +2,22 @@ package org.vpilo.babymonitor.network.client
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.websocket.ClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.HttpMethod
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.network.client.websockets.webSocketClientStreaming
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
+import java.net.ConnectException
 
 private val networkClient: HttpClient by lazy {
     HttpClient(CIO) {
@@ -22,14 +27,25 @@ private val networkClient: HttpClient by lazy {
     }
 }
 
+private var currentSession: ClientWebSocketSession? = null
+
 suspend fun createNetworkClient(coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO) {
-    withContext(coroutineDispatcher) {
-        networkClient.webSocket(
-            method = HttpMethod.Get,
-            host = Constants.CLIENT_ADDRESS,
-            port = Constants.COMMUNICATION_PORT,
-            path = Endpoints.STREAM,
-            block = { webSocketClientStreaming() },
-        )
+    try {
+        withContext(coroutineDispatcher) {
+            networkClient.webSocket(
+                method = HttpMethod.Get,
+                host = Constants.CLIENT_ADDRESS,
+                port = Constants.COMMUNICATION_PORT,
+                path = Endpoints.STREAM,
+            ) {
+                if (currentSession != null) {
+                    currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New session created."))
+                }
+                currentSession = this
+                webSocketClientStreaming()
+            }
+        }
+    } catch (ex: ConnectException) {
+        Logger.w("Client") { "Connection to server failed: ${ex.message}" }
     }
 }
