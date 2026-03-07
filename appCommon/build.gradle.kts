@@ -38,8 +38,7 @@ kotlin {
             implementation(project(":camera:data"))
             implementation(project(":camera:model"))
             implementation(project(":camera:presentation"))
-            implementation(project(":network:client"))
-            implementation(project(":network:server"))
+            implementation(project(":network"))
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

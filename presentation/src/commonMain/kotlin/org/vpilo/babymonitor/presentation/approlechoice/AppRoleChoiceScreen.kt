@@ -18,12 +18,10 @@ import babymonitor.presentation.generated.resources.app_role_choice_alternative
 import babymonitor.presentation.generated.resources.app_role_choice_presentation
 import babymonitor.presentation.generated.resources.app_role_monitor
 import babymonitor.presentation.generated.resources.app_role_record
-import babymonitor.presentation.generated.resources.permissions_needed
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.di.AppRole
 import org.vpilo.babymonitor.presentation.MaxUserInterfaceWidth
 import org.vpilo.babymonitor.presentation.Theme
-import org.vpilo.babymonitor.presentation.composables.LoadingBox
 
 @Composable
 fun AppRoleChoiceScreen(

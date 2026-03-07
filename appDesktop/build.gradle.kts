@@ -23,7 +23,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "org.vpilo.babymonitor.MainKt"
+        mainClass = "org.vpilo.babymonitor.app.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Deb)
