@@ -4,10 +4,10 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
-typealias FrameFlow = SharedFlow<CameraFrameData>
-typealias MutableFrameFlow = MutableSharedFlow<CameraFrameData>
+typealias CameraFrameFlow = SharedFlow<CameraFrame>
+typealias MutableCameraFrameFlow = MutableSharedFlow<CameraFrame>
 
-fun makeMutableFrameFlow(): MutableFrameFlow =
+fun makeMutableCameraFrameFlow(): MutableCameraFrameFlow =
     MutableSharedFlow(0, MAX_FRAME_BUFFER_SIZE, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
 private const val MAX_FRAME_BUFFER_SIZE: Int = 100

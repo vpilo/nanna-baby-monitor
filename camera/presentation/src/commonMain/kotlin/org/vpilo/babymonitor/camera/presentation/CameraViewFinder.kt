@@ -19,41 +19,29 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import org.vpilo.babymonitor.camera.presentation.ktx.toImageBitmap
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.CameraImageRotation
 
-private const val TAG = "CameraView"
+private const val TAG = "CameraViewFinder"
 
 @Composable
-fun CameraView(
+fun CameraViewFinder(
     modifier: Modifier = Modifier,
-    viewModel: CameraViewModel = koinViewModel()
+    viewModel: CameraViewFinderViewModel = koinViewModel()
 ) {
     val scope = rememberCoroutineScope()
     var img by remember { mutableStateOf<ImageBitmap?>(null) }
-    var rotationDegrees by remember { mutableFloatStateOf(0f) }
 
     LifecycleResumeEffect(Unit) {
-        viewModel.setEnabled(true)
-
         Logger.d(TAG) { "Started showing preview" }
         val frameJob =
             scope.launch(Dispatchers.Default) {
-                viewModel.frames.collect { image ->
-                    rotationDegrees = when (image.rotation) {
-                        CameraImageRotation.ROTATION_0 -> 0f
-                        CameraImageRotation.ROTATION_90 -> 90f
-                        CameraImageRotation.ROTATION_180 -> 180f
-                        CameraImageRotation.ROTATION_270 -> 270f
-                    }
-                    img = decodeToImageBitmap(image.data)
-                }
+                viewModel.frames.collect { img = it.toImageBitmap() }
             }
 
         onPauseOrDispose {
             Logger.d(TAG) { "Stopped showing preview" }
             frameJob.cancel()
-            viewModel.setEnabled(false)
             img = null
         }
     }
@@ -64,13 +52,7 @@ fun CameraView(
                 bitmap = img!!,
                 contentScale = ContentScale.FillWidth,
                 contentDescription = null,
-                modifier = modifier
-                    .fillMaxSize()
-                    .also { modifier ->
-                        if (rotationDegrees != 0f) {
-                            modifier.graphicsLayer { rotationZ = rotationDegrees }
-                        }
-                    },
+                modifier = modifier.fillMaxSize(),
             )
             FpsCounter(frameKey = img!!)
         }

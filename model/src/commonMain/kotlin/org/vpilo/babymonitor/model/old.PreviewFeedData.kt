@@ -3,7 +3,7 @@ package org.vpilo.babymonitor.model
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
-data class CameraFrameData(
+data class oldPreviewFeedData(
     val data: ByteArray,
     val width: Int,
     val height: Int,
@@ -14,7 +14,7 @@ data class CameraFrameData(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as CameraFrameData
+        other as oldPreviewFeedData
 
         if (width != other.width) return false
         if (height != other.height) return false

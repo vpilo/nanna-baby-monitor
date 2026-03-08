@@ -6,7 +6,7 @@ import io.ktor.util.reflect.typeInfo
 import io.ktor.websocket.Frame
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.CameraFrameData
+import org.vpilo.babymonitor.model.oldPreviewFeedData
 import org.vpilo.babymonitor.model.CameraFrameProperties
 import org.vpilo.babymonitor.model.VideoFeedRepository
 import org.vpilo.babymonitor.network.client.VideoFeedReceiverRepository
@@ -29,15 +29,15 @@ internal suspend fun DefaultClientWebSocketSession.webSocketClientStreaming() {
                     Logger.w(TAG) { "Received frame data before frame properties. Skipping." }
                     continue
                 }
-                repository.frames.emit(
-                    CameraFrameData(
-                        data = frameData,
-                        width = cameraFrameProperties.width,
-                        height = cameraFrameProperties.height,
-                        rotation = cameraFrameProperties.rotation,
-                        timestamp = Clock.System.now(),
-                    ),
-                )
+//                repository.chunks.emit(
+//                    oldPreviewFeedData(
+//                        data = frameData,
+//                        width = cameraFrameProperties.width,
+//                        height = cameraFrameProperties.height,
+//                        rotation = cameraFrameProperties.rotation,
+//                        timestamp = Clock.System.now(),
+//                    ),
+//                )
             }
 
             is Frame.Text -> {

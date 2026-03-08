@@ -4,10 +4,10 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
-typealias SampleFlow = SharedFlow<ByteArray>
-typealias MutableSampleFlow = MutableSharedFlow<ByteArray>
+typealias VideoFeedFlow = SharedFlow<ByteArray>
+typealias MutableVideoFeedFlow = MutableSharedFlow<ByteArray>
 
-fun makeMutableSampleFlow(): MutableSampleFlow =
+fun makeMutableVideoFeedFlow(): MutableVideoFeedFlow =
     MutableSharedFlow(0, MAX_SAMPLE_BUFFER_SIZE, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-private const val MAX_SAMPLE_BUFFER_SIZE: Int = 10
+private const val MAX_SAMPLE_BUFFER_SIZE: Int = 100
