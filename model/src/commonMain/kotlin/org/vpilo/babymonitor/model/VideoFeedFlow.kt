@@ -4,6 +4,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
+//FIXME cleanup
 typealias VideoFeedFlow = SharedFlow<ByteArray>
 typealias MutableVideoFeedFlow = MutableSharedFlow<ByteArray>
 

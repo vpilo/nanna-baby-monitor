@@ -2,4 +2,4 @@ package org.vpilo.babymonitor.model
 
 import kotlinx.coroutines.flow.SharedFlow
 
-typealias CameraFrameFlow = SharedFlow<CameraFrame>
+typealias AudioFlow = SharedFlow<ByteArray>

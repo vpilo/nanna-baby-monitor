@@ -1,5 +1,5 @@
 package org.vpilo.babymonitor.camera.data
 
-import org.vpilo.babymonitor.model.CameraFrame
+import org.vpilo.babymonitor.model.CameraFrameRepository
 
-expect class CameraRepository : SharedResourceRepository<CameraFrame>
+expect class CameraRepository : CameraFrameRepository
