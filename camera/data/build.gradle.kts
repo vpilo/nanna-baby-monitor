@@ -41,6 +41,8 @@ kotlin {
         val desktopMain by getting
         desktopMain.dependencies {
             implementation(libs.webcam.capture)
+            implementation(libs.javacpp)
+            implementation(libs.ffmpeg)
         }
     }
 

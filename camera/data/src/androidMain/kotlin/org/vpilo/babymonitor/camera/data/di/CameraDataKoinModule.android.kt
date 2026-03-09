@@ -13,8 +13,5 @@ actual val cameraDataKoinModule: Module =
     module {
         factory<CameraFrameRepository> { CameraRepository() }
         factory<AudioChunkRepository> { AudioRepository() }
-        factory<VideoFeedRepository> { VideoEncoderRepository() }
-//        singleOf(::VideoEncoderRepository)
-//            .withOptions { qualifier = AppRole.CAMERA }
-//            .bind(VideoFeedRepository::class)
+        factory<VideoFeedRepository> { VideoEncoderRepository(cameraFrameRepository = get()) }
     }

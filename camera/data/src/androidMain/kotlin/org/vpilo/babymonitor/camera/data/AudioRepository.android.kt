@@ -42,7 +42,7 @@ actual class AudioRepository(
             while (isActive) {
                 audioRecord?.read(buffer, 0, buffer.size)?.let { read ->
                     if (isActive && read > 0) {
-                        //    previewFeed.tryEmit(buffer)
+                        collector.tryEmit(buffer.copyOf(read))
                     }
                 }
             }
