@@ -13,5 +13,5 @@ actual val cameraDataKoinModule: Module =
     module {
         factory<CameraFrameRepository> { CameraRepository() }
         factory<AudioChunkRepository> { AudioRepository() }
-        factory<VideoFeedRepository> { VideoEncoderRepository(cameraFrameRepository = get()) }
+        factory<VideoFeedRepository> { VideoEncoderRepository(cameraFrameRepository = get(), audioChunkRepository = get()) }
     }

@@ -40,16 +40,53 @@ actual class CameraRepository(
 
     private fun onFrameReceived(image: ImageProxy) {
         @OptIn(ExperimentalGetImage::class)
-        val rgbaBuffer = image.image?.planes?.get(0)?.buffer
+        val mediaImage = image.image
             ?: run {
-                Logger.e(TAG) { "Invalid image received! image=${image.image}, planes=${image.image?.planes?.size}" }
+                Logger.e(TAG) { "Invalid image received! image=${image.image}" }
                 image.close()
                 return
             }
 
-        val bytes = with(rgbaBuffer) { ByteArray(remaining()).also { get(it) } }
+        // YUV_420_888: plane 0 = Y, plane 1 = U, plane 2 = V
+        val yPlane = mediaImage.planes[0]
+        val uPlane = mediaImage.planes[1]
+        val vPlane = mediaImage.planes[2]
+
+        val yBuffer = yPlane.buffer
+        val uBuffer = uPlane.buffer
+        val vBuffer = vPlane.buffer
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        val nv21 = ByteArray(ySize + uSize + vSize)
+
+        // Copy Y plane
+        yBuffer.get(nv21, 0, ySize)
+
+        // NV21 interleaving: VUVU...
+        // If pixelStride is 2, the UV planes are already semi-planar (NV21-like)
+        if (vPlane.pixelStride == 2) {
+            // V and U planes are interleaved — copy V plane which includes U data in NV21 order
+            vBuffer.get(nv21, ySize, vSize)
+        } else {
+            // Planar UV — manually interleave as NV21 (V first, then U)
+            val uBytes = ByteArray(uSize)
+            val vBytes = ByteArray(vSize)
+            uBuffer.get(uBytes)
+            vBuffer.get(vBytes)
+            var offset = ySize
+            for (i in vBytes.indices) {
+                nv21[offset++] = vBytes[i]
+                if (i < uBytes.size) {
+                    nv21[offset++] = uBytes[i]
+                }
+            }
+        }
+
         image.close()
-        collector.tryEmit(CameraFrame(bytes = bytes, width = image.width, height = image.height))
+        collector.tryEmit(CameraFrame(bytes = nv21, width = image.width, height = image.height))
     }
 
     @MainThread
@@ -57,7 +94,6 @@ actual class CameraRepository(
         val imageAnalysis = ImageAnalysis.Builder()
             .setTargetRotation(Surface.ROTATION_0)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
             .build()
             .also {
                 it.setAnalyzer(executor, ::onFrameReceived)
