@@ -5,10 +5,8 @@ import io.ktor.websocket.Frame
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
-import org.vpilo.babymonitor.model.StreamingAudioRepository
-import org.vpilo.babymonitor.model.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
 import org.vpilo.babymonitor.network.client.StreamingAudioReceiverRepository
-import org.vpilo.babymonitor.network.client.StreamingVideoReceiverRepository
 
 
 internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket() {

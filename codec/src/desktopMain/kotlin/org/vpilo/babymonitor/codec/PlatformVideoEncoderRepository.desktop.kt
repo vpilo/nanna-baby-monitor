@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.data
+package org.vpilo.babymonitor.codec
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.asSharedFlow
@@ -42,7 +42,8 @@ import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.StreamingVideoFlow
-import org.vpilo.babymonitor.model.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 import org.vpilo.babymonitor.model.VideoCaptureRepository
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte

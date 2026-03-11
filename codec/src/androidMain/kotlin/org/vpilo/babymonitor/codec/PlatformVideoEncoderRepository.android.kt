@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.data
+package org.vpilo.babymonitor.codec
 
 import android.content.Context
 import android.media.MediaCodec
@@ -18,7 +18,8 @@ import org.vpilo.babymonitor.model.VideoCaptureRepository
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.StreamingVideoFlow
-import org.vpilo.babymonitor.model.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 import java.nio.ByteBuffer
 
 actual class PlatformVideoEncoderRepository(

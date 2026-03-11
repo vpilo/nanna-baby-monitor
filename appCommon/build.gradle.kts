@@ -40,6 +40,7 @@ kotlin {
             implementation(project(":camera:data"))
             implementation(project(":camera:model"))
             implementation(project(":camera:presentation"))
+            implementation(project(":codec"))
             implementation(project(":network"))
 
             implementation(libs.compose.runtime)

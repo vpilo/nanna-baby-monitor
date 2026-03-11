@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.data
+package org.vpilo.babymonitor.codec
 
 import android.content.Context
 import android.media.MediaCodec
@@ -16,7 +16,8 @@ import org.vpilo.babymonitor.model.AudioCaptureRepository
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.StreamingAudioFlow
-import org.vpilo.babymonitor.model.StreamingAudioRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
+import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 import java.nio.ByteBuffer
 
 actual class PlatformAudioEncoderRepository(
@@ -136,7 +137,7 @@ actual class PlatformAudioEncoderRepository(
         AndroidServiceRegistry.unregister(this)
     }
 
-    override val TAG = PlatformVideoEncoderRepository::class
+    override val TAG = PlatformAudioEncoderRepository::class
 
     private companion object {
         const val CODEC_TIMEOUT_US = 10_000L

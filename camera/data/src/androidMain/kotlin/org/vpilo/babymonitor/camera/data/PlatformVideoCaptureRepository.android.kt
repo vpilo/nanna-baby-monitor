@@ -23,6 +23,7 @@ import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.VideoCaptureRepository
 import org.vpilo.babymonitor.model.MediaFormats
+import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 
 actual class PlatformVideoCaptureRepository(
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,

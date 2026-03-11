@@ -15,6 +15,7 @@ import org.vpilo.babymonitor.model.AudioCaptureRepository
 import org.vpilo.babymonitor.model.AudioFrame
 import org.vpilo.babymonitor.model.AudioFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
+import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 
 actual class PlatformAudioCaptureRepository(
 ) : AudioCaptureRepository,

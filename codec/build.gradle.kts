@@ -7,13 +7,9 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "org.vpilo.babymonitor.camera.data"
+        namespace = "org.vpilo.babymonitor.codec"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
-
-        androidResources {
-            enable = true
-        }
 
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
@@ -34,13 +30,11 @@ kotlin {
             implementation(project(":androidService"))
 
             implementation(libs.androidx.core)
-            implementation(libs.androidx.camera.core)
-            implementation(libs.androidx.camera.impl)
-            implementation(libs.androidx.camera.lifecycle)
         }
         val desktopMain by getting
         desktopMain.dependencies {
-            implementation(libs.webcam.capture)
+            implementation(libs.javacpp)
+            implementation(libs.ffmpeg)
         }
     }
 

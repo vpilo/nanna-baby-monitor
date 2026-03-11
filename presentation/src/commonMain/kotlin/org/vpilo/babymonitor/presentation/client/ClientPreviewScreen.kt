@@ -13,7 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.getKoin
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
 import org.vpilo.babymonitor.presentation.Theme
 
 @Composable

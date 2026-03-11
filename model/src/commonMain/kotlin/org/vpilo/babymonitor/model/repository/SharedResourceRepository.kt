@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.data
+package org.vpilo.babymonitor.model.repository
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -6,9 +6,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.ktx.reactor
+import org.vpilo.babymonitor.model.repository.ktx.reactor
 import kotlin.reflect.KClass
 
+/**
+ * Base class for a repository that manages a shared resource, such as a camera.
+ *
+ * This assumes the shared resource generates a flow of [T] objects when in use.
+ * [start] when the first subscriber starts using the [collector], and [stop] is called when the last subscriber stops using it.
+ *
+ * The [bufferCapacity] determines the [collector]'s buffer, and the [onBufferOverflow] strategy determines how to handle buffer overflows,
+ * e.g. slow subscribers.
+ */
 abstract class SharedResourceRepository<T>(
     protected val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
     bufferCapacity: Int = 0,

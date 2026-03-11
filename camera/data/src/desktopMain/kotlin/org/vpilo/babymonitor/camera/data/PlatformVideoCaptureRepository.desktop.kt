@@ -12,6 +12,7 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
+import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 import org.vpilo.babymonitor.model.VideoCaptureRepository
 import java.awt.Dimension
 import kotlin.coroutines.cancellation.CancellationException

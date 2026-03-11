@@ -36,6 +36,7 @@ plugins {
 include(":common")
 
 include(":androidService")
+include(":codec")
 include(":network")
 
 include(":camera:data")

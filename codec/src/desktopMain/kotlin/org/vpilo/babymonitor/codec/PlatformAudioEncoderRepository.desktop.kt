@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.data
+package org.vpilo.babymonitor.codec
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.asSharedFlow
@@ -29,7 +29,8 @@ import org.vpilo.babymonitor.model.AudioCaptureRepository
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.StreamingAudioFlow
-import org.vpilo.babymonitor.model.StreamingAudioRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
+import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -74,7 +75,7 @@ actual class PlatformAudioEncoderRepository(
 
     /**
      * Encapsulates FFmpeg resources for AAC audio encoding.
-     * Input: 16-bit signed LE mono PCM at 44100 Hz (matching [PlatformAudioCaptureRepository]).
+     * Input: 16-bit signed LE mono PCM at 44100 Hz.
      */
     private class AudioEncoderContext private constructor(
         private val codecCtx: AVCodecContext,

@@ -7,9 +7,7 @@ import io.ktor.websocket.send
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.onCompletion
 import org.koin.mp.KoinPlatform
-import org.vpilo.babymonitor.model.StreamingAudioRepository
-import org.vpilo.babymonitor.model.StreamingVideoRepository
-import org.vpilo.babymonitor.network.client.StreamingVideoReceiverRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
 
 internal suspend fun DefaultWebSocketServerSession.audioStreamingServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<StreamingAudioRepository>()

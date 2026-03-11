@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.model.ktx
+package org.vpilo.babymonitor.model.repository.ktx
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
