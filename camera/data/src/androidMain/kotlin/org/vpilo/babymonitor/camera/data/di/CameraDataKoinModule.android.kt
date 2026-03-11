@@ -17,14 +17,8 @@ import org.vpilo.babymonitor.model.di.AppRole
 
 actual val cameraDataKoinModule: Module =
     module {
-        factory<AudioCaptureRepository> { PlatformAudioCaptureRepository() }
-        factory<VideoCaptureRepository> { PlatformVideoCaptureRepository() }
-
-        singleOf(::PlatformAudioEncoderRepository)
-            .withOptions { qualifier = AppRole.CAMERA }
-            .bind(StreamingAudioRepository::class)
-
-        singleOf(::PlatformVideoEncoderRepository)
-            .withOptions { qualifier = AppRole.CAMERA }
-            .bind(StreamingVideoRepository::class)
+        single<AudioCaptureRepository> { PlatformAudioCaptureRepository() }
+        single<VideoCaptureRepository> { PlatformVideoCaptureRepository() }
+        single<StreamingAudioRepository>(qualifier = AppRole.CAMERA) { PlatformAudioEncoderRepository(get()) }
+        single<StreamingVideoRepository>(qualifier = AppRole.CAMERA) { PlatformVideoEncoderRepository(get()) }
     }

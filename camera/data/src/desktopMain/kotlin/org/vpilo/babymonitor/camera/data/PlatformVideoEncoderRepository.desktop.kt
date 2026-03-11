@@ -12,6 +12,7 @@ import org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER
 import org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_H264
 import org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY
 import org.bytedeco.ffmpeg.global.avcodec.av_packet_alloc
+import org.bytedeco.ffmpeg.global.avcodec.avcodec_find_encoder_by_name
 import org.bytedeco.ffmpeg.global.avcodec.av_packet_free
 import org.bytedeco.ffmpeg.global.avcodec.av_packet_unref
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_alloc_context3
@@ -213,8 +214,13 @@ actual class PlatformVideoEncoderRepository(
 
         companion object {
             fun create(width: Int, height: Int): VideoEncoderContext {
-                val codec = avcodec_find_encoder(AV_CODEC_ID_H264)
-                    ?: error("H.264 encoder not found. Ensure FFmpeg was built with libx264.")
+                // Prefer libx264 if available, fall back to libopenh264
+                val codec = avcodec_find_encoder_by_name("libx264")
+                    ?: avcodec_find_encoder_by_name("libopenh264")
+                    ?: avcodec_find_encoder(AV_CODEC_ID_H264)
+                    ?: error("H.264 encoder not found.")
+
+                val encoderName = codec.name().getString()
 
                 val codecCtx = avcodec_alloc_context3(codec).apply {
                     width(width)
@@ -225,17 +231,27 @@ actual class PlatformVideoEncoderRepository(
                     bit_rate(MediaFormats.Video.BIT_RATE.toLong())
                     gop_size(MediaFormats.Video.FRAME_RATE * MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
                     max_b_frames(0)
-                    // Ensure Annex-B output (inline SPS/PPS, no global header)
-                    flags(flags() or AV_CODEC_FLAG_GLOBAL_HEADER.inv())
+                    // Ensure Annex-B output: clear the GLOBAL_HEADER flag so
+                    // SPS/PPS are emitted inline with the bitstream.
+                    flags(flags() and AV_CODEC_FLAG_GLOBAL_HEADER.inv())
                 }
 
                 val opts = AVDictionary()
-                av_dict_set(opts, "preset", "ultrafast", 0)
-                av_dict_set(opts, "tune", "zerolatency", 0)
+                when (encoderName) {
+                    "libx264" -> {
+                        av_dict_set(opts, "preset", "ultrafast", 0)
+                        av_dict_set(opts, "tune", "zerolatency", 0)
+                    }
+                    "libopenh264" -> {
+                        // libopenh264 doesn't support presets/tunes;
+                        // use its own low-latency knobs instead.
+                        av_dict_set(opts, "rc_mode", "bitrate", 0)
+                    }
+                }
 
                 val ret = avcodec_open2(codecCtx, codec, opts)
                 av_dict_free(opts)
-                check(ret >= 0) { "Could not open H.264 codec: $ret" }
+                check(ret >= 0) { "Could not open H.264 codec ($encoderName): $ret" }
 
                 val srcFrame = av_frame_alloc().apply {
                     format(AV_PIX_FMT_BGR24)

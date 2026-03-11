@@ -19,6 +19,7 @@ import org.bytedeco.ffmpeg.global.avcodec.avcodec_receive_packet
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_send_frame
 import org.bytedeco.ffmpeg.global.avutil.AVERROR_EOF
 import org.bytedeco.ffmpeg.global.avutil.AV_SAMPLE_FMT_FLTP
+import org.bytedeco.ffmpeg.global.avutil.av_channel_layout_default
 import org.bytedeco.ffmpeg.global.avutil.av_frame_alloc
 import org.bytedeco.ffmpeg.global.avutil.av_frame_free
 import org.bytedeco.ffmpeg.global.avutil.av_frame_get_buffer
@@ -157,7 +158,7 @@ actual class PlatformAudioEncoderRepository(
                 val codecCtx = avcodec_alloc_context3(codec).apply {
                     sample_fmt(AV_SAMPLE_FMT_FLTP) // FFmpeg's native AAC encoder requires FLTP
                     sample_rate(MediaFormats.Audio.SAMPLE_RATE)
-                    ch_layout().nb_channels(MediaFormats.Audio.CHANNELS)
+                    av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
                     bit_rate(MediaFormats.Audio.BIT_RATE.toLong())
                 }
 
@@ -169,7 +170,7 @@ actual class PlatformAudioEncoderRepository(
                 val frame = av_frame_alloc().apply {
                     format(AV_SAMPLE_FMT_FLTP)
                     sample_rate(MediaFormats.Audio.SAMPLE_RATE)
-                    ch_layout().nb_channels(MediaFormats.Audio.CHANNELS)
+                    av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
                     nb_samples(frameSize)
                 }
                 av_frame_get_buffer(frame, 0)
@@ -181,5 +182,5 @@ actual class PlatformAudioEncoderRepository(
         }
     }
 
-    override val TAG = PlatformVideoEncoderRepository::class
+    override val TAG = PlatformAudioEncoderRepository::class
 }

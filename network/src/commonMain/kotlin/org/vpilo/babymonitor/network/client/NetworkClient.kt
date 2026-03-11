@@ -11,6 +11,8 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.common.Logger
@@ -31,34 +33,42 @@ private val networkClient: HttpClient by lazy {
 private var currentSession: ClientWebSocketSession? = null
 
 suspend fun createNetworkClient(coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO) {
-    try {
-        withContext(coroutineDispatcher) {
-            networkClient.webSocket(
-                method = HttpMethod.Get,
-                host = Constants.CLIENT_ADDRESS,
-                port = Constants.COMMUNICATION_PORT,
-                path = Endpoints.STREAM_AUDIO,
-            ) {
-                if (currentSession != null) {
-                    currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New audio session created."))
+    coroutineScope {
+        launch(coroutineDispatcher) {
+            try {
+                networkClient.webSocket(
+                    method = HttpMethod.Get,
+                    host = Constants.CLIENT_ADDRESS,
+                    port = Constants.COMMUNICATION_PORT,
+                    path = Endpoints.STREAM_AUDIO,
+                ) {
+                    if (currentSession != null) {
+                        currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New audio session created."))
+                    }
+                    currentSession = this
+                    audioStreamingClientWebSocket()
                 }
-                currentSession = this
-                audioStreamingClientWebSocket()
-            }
-            networkClient.webSocket(
-                method = HttpMethod.Get,
-                host = Constants.CLIENT_ADDRESS,
-                port = Constants.COMMUNICATION_PORT,
-                path = Endpoints.STREAM_VIDEO,
-            ) {
-                if (currentSession != null) {
-                    currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New video session created."))
-                }
-                currentSession = this
-                videoStreamingClientWebSocket()
+            } catch (ex: ConnectException) {
+                Logger.w("Client") { "Connection to server failed: ${ex.message}" }
             }
         }
-    } catch (ex: ConnectException) {
-        Logger.w("Client") { "Connection to server failed: ${ex.message}" }
+        launch(coroutineDispatcher) {
+            try {
+                networkClient.webSocket(
+                    method = HttpMethod.Get,
+                    host = Constants.CLIENT_ADDRESS,
+                    port = Constants.COMMUNICATION_PORT,
+                    path = Endpoints.STREAM_VIDEO,
+                ) {
+                    if (currentSession != null) {
+                        currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New video session created."))
+                    }
+                    currentSession = this
+                    videoStreamingClientWebSocket()
+                }
+            } catch (ex: ConnectException) {
+                Logger.w("Client") { "Connection to server failed: ${ex.message}" }
+            }
+        }
     }
 }
