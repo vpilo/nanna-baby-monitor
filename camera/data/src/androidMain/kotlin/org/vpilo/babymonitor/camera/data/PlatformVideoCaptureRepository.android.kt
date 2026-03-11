@@ -21,15 +21,14 @@ import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
-import org.vpilo.babymonitor.model.CameraFrameRepository
-import org.vpilo.babymonitor.model.Configuration
-import kotlin.reflect.KClass
+import org.vpilo.babymonitor.model.VideoCaptureRepository
+import org.vpilo.babymonitor.model.MediaFormats
 
-actual class CameraRepository(
+actual class PlatformVideoCaptureRepository(
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
-) : CameraFrameRepository,
+) : VideoCaptureRepository,
     SharedResourceRepository<CameraFrame>(
-        bufferCapacity = Configuration.MAX_FRAME_BUFFER_SIZE,
+        bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
     ), AndroidService {
 
     override val frames: CameraFrameFlow = collector.asSharedFlow()
@@ -40,53 +39,16 @@ actual class CameraRepository(
 
     private fun onFrameReceived(image: ImageProxy) {
         @OptIn(ExperimentalGetImage::class)
-        val mediaImage = image.image
+        val pixelBuffer = image.image?.planes?.get(0)?.buffer
             ?: run {
-                Logger.e(TAG) { "Invalid image received! image=${image.image}" }
+                Logger.e(TAG) { "Invalid image received! image=${image.image}, planes=${image.image?.planes?.size}" }
                 image.close()
                 return
             }
 
-        // YUV_420_888: plane 0 = Y, plane 1 = U, plane 2 = V
-        val yPlane = mediaImage.planes[0]
-        val uPlane = mediaImage.planes[1]
-        val vPlane = mediaImage.planes[2]
-
-        val yBuffer = yPlane.buffer
-        val uBuffer = uPlane.buffer
-        val vBuffer = vPlane.buffer
-
-        val ySize = yBuffer.remaining()
-        val uSize = uBuffer.remaining()
-        val vSize = vBuffer.remaining()
-
-        val nv21 = ByteArray(ySize + uSize + vSize)
-
-        // Copy Y plane
-        yBuffer.get(nv21, 0, ySize)
-
-        // NV21 interleaving: VUVU...
-        // If pixelStride is 2, the UV planes are already semi-planar (NV21-like)
-        if (vPlane.pixelStride == 2) {
-            // V and U planes are interleaved — copy V plane which includes U data in NV21 order
-            vBuffer.get(nv21, ySize, vSize)
-        } else {
-            // Planar UV — manually interleave as NV21 (V first, then U)
-            val uBytes = ByteArray(uSize)
-            val vBytes = ByteArray(vSize)
-            uBuffer.get(uBytes)
-            vBuffer.get(vBytes)
-            var offset = ySize
-            for (i in vBytes.indices) {
-                nv21[offset++] = vBytes[i]
-                if (i < uBytes.size) {
-                    nv21[offset++] = uBytes[i]
-                }
-            }
-        }
-
+        val bytes = with(pixelBuffer) { ByteArray(remaining()).also { get(it) } }
         image.close()
-        collector.tryEmit(CameraFrame(bytes = nv21, width = image.width, height = image.height))
+        collector.tryEmit(CameraFrame(bytes = bytes, width = image.width, height = image.height))
     }
 
     @MainThread
@@ -94,6 +56,7 @@ actual class CameraRepository(
         val imageAnalysis = ImageAnalysis.Builder()
             .setTargetRotation(Surface.ROTATION_0)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_NV21) // FIXME check which ones does the encoder support & if the number of planes needs to be adapted
             .build()
             .also {
                 it.setAnalyzer(executor, ::onFrameReceived)
@@ -114,7 +77,6 @@ actual class CameraRepository(
     }
 
     override fun onServiceStarted(context: Context, lifecycleOwner: LifecycleOwner) {
-        Logger.d(TAG) { "Starting recording" }
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener(
             {
@@ -130,7 +92,6 @@ actual class CameraRepository(
     }
 
     override fun onServiceStopped() {
-        Logger.d(TAG) { "Stopping recording" }
         cameraProvider?.unbindAll()
         cameraProvider = null
     }
@@ -143,5 +104,5 @@ actual class CameraRepository(
         AndroidServiceRegistry.unregister(this)
     }
 
-    override val TAG: KClass<*> = CameraRepository::class
+    override val TAG = PlatformVideoCaptureRepository::class
 }

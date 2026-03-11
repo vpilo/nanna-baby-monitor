@@ -2,12 +2,12 @@ package org.vpilo.babymonitor.camera.presentation
 
 import androidx.lifecycle.ViewModel
 import org.vpilo.babymonitor.model.CameraFrameFlow
-import org.vpilo.babymonitor.model.CameraFrameRepository
+import org.vpilo.babymonitor.model.VideoCaptureRepository
 
 class CameraViewFinderViewModel(
-    cameraFrameRepository: CameraFrameRepository,
+    videoCaptureRepository: VideoCaptureRepository,
 ) : ViewModel() {
 
     val frames: CameraFrameFlow =
-        cameraFrameRepository.frames
+        videoCaptureRepository.frames
 }

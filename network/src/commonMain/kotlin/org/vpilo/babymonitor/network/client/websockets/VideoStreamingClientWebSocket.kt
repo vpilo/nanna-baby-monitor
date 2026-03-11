@@ -4,25 +4,27 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.websocket.Frame
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.VideoFeedRepository
-import org.vpilo.babymonitor.network.client.VideoFeedReceiverRepository
+import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
+import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
+import org.vpilo.babymonitor.model.StreamingAudioRepository
+import org.vpilo.babymonitor.model.StreamingVideoRepository
+import org.vpilo.babymonitor.network.client.StreamingAudioReceiverRepository
+import org.vpilo.babymonitor.network.client.StreamingVideoReceiverRepository
 
 
-internal suspend fun DefaultClientWebSocketSession.webSocketClientStreaming() {
-    val repository = KoinPlatform.getKoin().getOrNull<VideoFeedRepository>()
-    check(repository is VideoFeedReceiverRepository) { "Dependency injection error - wrong repository" }
-
+internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket() {
     Logger.w(TAG) { "WebSocket connection established with the server." }
+
+    val repository = KoinPlatform.getKoin().get<StreamingVideoRepository>() as StreamingVideoReceiverRepository
 
     while (true) {
         when (val frame = incoming.receiveCatching().getOrNull() ?: break) {
             is Frame.Binary -> {
-                TODO()
-//                repository.chunks.emit(...)
+                repository.collector.emit(EncodedVideoStreamChunk(data = frame.data, isCodecConfig = false, isKeyFrame = false))
             }
 
             is Frame.Text -> {
-                TODO()
+                Logger.d(TAG) { "Received frame of type ${frame.frameType}: $frame" }
                 /*
                  converter?.deserialize(
                      charset = Charset.defaultCharset(),

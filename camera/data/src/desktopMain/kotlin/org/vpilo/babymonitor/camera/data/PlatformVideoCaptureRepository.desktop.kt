@@ -11,28 +11,23 @@ import org.vpilo.babymonitor.camera.data.ktx.sizes
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
-import org.vpilo.babymonitor.model.CameraFrameRepository
-import org.vpilo.babymonitor.model.Configuration
+import org.vpilo.babymonitor.model.MediaFormats
+import org.vpilo.babymonitor.model.VideoCaptureRepository
 import java.awt.Dimension
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
 
-actual class CameraRepository(
+actual class PlatformVideoCaptureRepository(
     webcamGetter: () -> Webcam = { Webcam.getDefault() },
-) : CameraFrameRepository, SharedResourceRepository<CameraFrame>(
-    bufferCapacity = Configuration.MAX_FRAME_BUFFER_SIZE,
+) : VideoCaptureRepository, SharedResourceRepository<CameraFrame>(
+    bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
 ) {
 
     private var videoCaptureJob: Job? = null
 
     private val webcam: Webcam = webcamGetter()
 
-
     override val frames: CameraFrameFlow = collector.asSharedFlow()
-
-
-    override val TAG: KClass<*> = CameraRepository::class
 
     override fun start() {
         if (videoCaptureJob?.isActive == true) {
@@ -93,6 +88,8 @@ actual class CameraRepository(
         videoCaptureJob?.cancel()
         videoCaptureJob = null
     }
+
+    override val TAG = PlatformVideoCaptureRepository::class
 
     private companion object {
         private val customResolutions = arrayOf<Dimension>(

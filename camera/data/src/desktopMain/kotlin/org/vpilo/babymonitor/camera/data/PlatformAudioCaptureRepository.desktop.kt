@@ -5,23 +5,23 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.AudioChunkRepository
-import org.vpilo.babymonitor.model.AudioFlow
-import org.vpilo.babymonitor.model.Configuration
+import org.vpilo.babymonitor.model.AudioCaptureRepository
+import org.vpilo.babymonitor.model.AudioFrame
+import org.vpilo.babymonitor.model.AudioFrameFlow
+import org.vpilo.babymonitor.model.MediaFormats
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
-import kotlin.reflect.KClass
 
-actual class AudioRepository(
-) : AudioChunkRepository,
-    SharedResourceRepository<ByteArray>(
-        bufferCapacity = Configuration.MAX_SAMPLE_BUFFER_SIZE,
+actual class PlatformAudioCaptureRepository : AudioCaptureRepository,
+    SharedResourceRepository<AudioFrame>(
+        bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
     ) {
-    override val samples: AudioFlow = collector.asSharedFlow()
+    override val samples: AudioFrameFlow = collector.asSharedFlow()
 
     private var targetLine: TargetDataLine? = null
+
     private var audioJob: Job? = null
 
     override fun start() {
@@ -31,11 +31,11 @@ actual class AudioRepository(
         }
 
         val format = AudioFormat(
-            SAMPLE_RATE,
-            SAMPLE_SIZE_BITS,
-            CHANNELS,
-            SIGNED,
-            BIG_ENDIAN,
+            MediaFormats.Audio.SAMPLE_RATE.toFloat(),
+            MediaFormats.Audio.SAMPLE_SIZE_BITS,
+            MediaFormats.Audio.CHANNELS,
+            MediaFormats.Audio.SIGNED,
+            MediaFormats.Audio.BIG_ENDIAN,
         )
         val info = DataLine.Info(TargetDataLine::class.java, format)
 
@@ -73,13 +73,5 @@ actual class AudioRepository(
         audioJob = null
     }
 
-    override val TAG: KClass<*> = AudioRepository::class
-
-    private companion object {
-        const val SAMPLE_RATE = 44100f
-        const val SAMPLE_SIZE_BITS = 16
-        const val CHANNELS = 1
-        const val SIGNED = true
-        const val BIG_ENDIAN = false
-    }
+    override val TAG = PlatformAudioCaptureRepository::class
 }

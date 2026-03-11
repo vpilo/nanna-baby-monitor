@@ -14,7 +14,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.network.client.websockets.webSocketClientStreaming
+import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
+import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import java.net.ConnectException
@@ -36,13 +37,25 @@ suspend fun createNetworkClient(coroutineDispatcher: CoroutineDispatcher = Dispa
                 method = HttpMethod.Get,
                 host = Constants.CLIENT_ADDRESS,
                 port = Constants.COMMUNICATION_PORT,
-                path = Endpoints.STREAM,
+                path = Endpoints.STREAM_AUDIO,
             ) {
                 if (currentSession != null) {
-                    currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New session created."))
+                    currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New audio session created."))
                 }
                 currentSession = this
-                webSocketClientStreaming()
+                audioStreamingClientWebSocket()
+            }
+            networkClient.webSocket(
+                method = HttpMethod.Get,
+                host = Constants.CLIENT_ADDRESS,
+                port = Constants.COMMUNICATION_PORT,
+                path = Endpoints.STREAM_VIDEO,
+            ) {
+                if (currentSession != null) {
+                    currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New video session created."))
+                }
+                currentSession = this
+                videoStreamingClientWebSocket()
             }
         }
     } catch (ex: ConnectException) {

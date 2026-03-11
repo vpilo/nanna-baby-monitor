@@ -17,7 +17,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.network.server.websockets.webSocketServerStreaming
+import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
+import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
 import kotlin.time.Duration.Companion.seconds
 
 private var server: EmbeddedServer<*, *>? = null
@@ -49,6 +50,7 @@ fun Application.module() {
     }
 
     routing {
-        webSocket(Endpoints.STREAM) { webSocketServerStreaming() }
+        webSocket(Endpoints.STREAM_AUDIO) { audioStreamingServerWebSocket() }
+        webSocket(Endpoints.STREAM_VIDEO) { videoStreamingServerWebSocket() }
     }
 }

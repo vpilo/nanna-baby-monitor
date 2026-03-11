@@ -3,17 +3,14 @@ package org.vpilo.babymonitor.network.server.websockets
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
+import io.ktor.websocket.send
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.onCompletion
 import org.koin.mp.KoinPlatform
-import org.vpilo.babymonitor.model.VideoFeedRepository
-import org.vpilo.babymonitor.network.client.VideoFeedReceiverRepository
+import org.vpilo.babymonitor.model.StreamingVideoRepository
 
-internal suspend fun DefaultWebSocketServerSession.webSocketServerStreaming() {
-    val repository = checkNotNull(KoinPlatform.getKoin().getOrNull<VideoFeedRepository>()) {
-        "Dependency injection error - VideoFeedRepository not found"
-    }
-    check(repository !is VideoFeedReceiverRepository) { "Dependency injection error - wrong repository" }
-
+internal suspend fun DefaultWebSocketServerSession.videoStreamingServerWebSocket() {
+    val repository = KoinPlatform.getKoin().get<StreamingVideoRepository>()
 
     repository.chunks
         // FIXME SharedFlows don't complete, need to close manually instead of this. maybe make a flow of repo states instead,
@@ -21,7 +18,8 @@ internal suspend fun DefaultWebSocketServerSession.webSocketServerStreaming() {
         .onCompletion {
             close(CloseReason(CloseReason.Codes.GOING_AWAY, "Camera feed ended."))
         }
+        .dropWhile { !it.isCodecConfig }
         .collect {
-            TODO()
+            send(it.data)
         }
 }

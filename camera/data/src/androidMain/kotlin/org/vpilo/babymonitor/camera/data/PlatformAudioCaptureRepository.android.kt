@@ -11,24 +11,22 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.android.service.AndroidService
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
-import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.AudioChunkRepository
-import org.vpilo.babymonitor.model.AudioFlow
-import org.vpilo.babymonitor.model.Configuration
-import kotlin.reflect.KClass
+import org.vpilo.babymonitor.model.AudioCaptureRepository
+import org.vpilo.babymonitor.model.AudioFrame
+import org.vpilo.babymonitor.model.AudioFrameFlow
+import org.vpilo.babymonitor.model.MediaFormats
 
-actual class AudioRepository(
-) : AudioChunkRepository,
-    SharedResourceRepository<ByteArray>(
-        bufferCapacity = Configuration.MAX_SAMPLE_BUFFER_SIZE,
+actual class PlatformAudioCaptureRepository(
+) : AudioCaptureRepository,
+    SharedResourceRepository<AudioFrame>(
+        bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
     ), AndroidService {
     private var audioRecord: AudioRecord? = null
-    private var audioJob: Job? = null
+    private var recordingJob: Job? = null
 
-    override val samples: AudioFlow = collector.asSharedFlow()
+    override val samples: AudioFrameFlow = collector.asSharedFlow()
 
     override fun onServiceStarted(context: Context, lifecycleOwner: LifecycleOwner) {
-        Logger.d(TAG) { "Starting recording" }
         val audioSource = MediaRecorder.AudioSource.MIC
         val sampleRate = 44100
         val channelConfig = AudioFormat.CHANNEL_IN_MONO
@@ -36,7 +34,7 @@ actual class AudioRepository(
         val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
         audioRecord = AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize)
-        audioJob = coroutineScope.launch {
+        recordingJob = coroutineScope.launch {
             val buffer = ByteArray(bufferSize)
             audioRecord?.startRecording()
             while (isActive) {
@@ -50,8 +48,7 @@ actual class AudioRepository(
     }
 
     override fun onServiceStopped() {
-        Logger.d(TAG) { "Stopping recording" }
-        audioJob?.cancel()
+        recordingJob?.cancel()
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null
@@ -65,5 +62,5 @@ actual class AudioRepository(
         AndroidServiceRegistry.unregister(this)
     }
 
-    override val TAG: KClass<*> = AudioRepository::class
+    override val TAG = PlatformAudioCaptureRepository::class
 }

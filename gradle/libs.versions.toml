@@ -25,8 +25,8 @@ jetbrains-lifecycle = "2.9.6"
 androidx-camera = "1.5.3"
 guava = "33.5.0-android"
 webcam-capture = "0.3.12"
-javacpp = "1.5.11"
-ffmpeg = "7.1-1.5.11"
+javacpp = "1.5.13"
+ffmpeg = "8.0.1-1.5.13"
 
 junit = "4.13.2"
 
@@ -56,7 +56,7 @@ androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycl
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version.ref = "webcam-capture" }
 javacpp = { group = "org.bytedeco", name = "javacpp", version.ref = "javacpp" }
-ffmpeg = { group = "org.bytedeco", name = "ffmpeg", version.ref = "ffmpeg" }
+ffmpeg = { group = "org.bytedeco", name = "ffmpeg-platform", version.ref = "ffmpeg" }
 
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
