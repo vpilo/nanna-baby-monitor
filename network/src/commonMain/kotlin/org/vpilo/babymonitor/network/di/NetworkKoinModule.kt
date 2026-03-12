@@ -5,11 +5,11 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.withOptions
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import org.vpilo.babymonitor.codec.StreamingAudioReceiverRepository
+import org.vpilo.babymonitor.codec.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
 import org.vpilo.babymonitor.model.di.AppRole
-import org.vpilo.babymonitor.network.client.StreamingAudioReceiverRepository
-import org.vpilo.babymonitor.network.client.StreamingVideoReceiverRepository
 
 val networkKoinModule: Module =
     module {

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
-    <string name="permissions_needed">The app needs the Camera and Microphone permission to continue.</string>
     <string name="app_role_choice_presentation">Do you want to:</string>
     <string name="app_role_record">Record something with this device's camera?</string>
     <string name="app_role_choice_alternative">or</string>

@@ -52,7 +52,6 @@ kotlin {
             implementation(libs.koin.core)
 
             implementation(libs.bundles.coil)
-            implementation(project(":camera:presentation"))
         }
 
         desktopMain.dependencies {

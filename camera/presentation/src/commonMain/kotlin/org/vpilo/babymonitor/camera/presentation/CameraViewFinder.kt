@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.camera.presentation.ktx.toImageBitmap
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.presentation.composables.FpsCounter
 
 private const val TAG = "CameraViewFinder"
 

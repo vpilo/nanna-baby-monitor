@@ -28,11 +28,13 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":common"))
             implementation(project(":model"))
+            implementation(project(":presentation"))
             implementation(project(":camera:model"))
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material)
+            implementation(libs.compose.resources)
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.tooling)
             implementation(libs.jetbrains.lifecycle.runtime.compose)

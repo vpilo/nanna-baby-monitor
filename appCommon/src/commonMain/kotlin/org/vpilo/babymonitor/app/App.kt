@@ -13,10 +13,10 @@ import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.network.client.createNetworkClient
 import org.vpilo.babymonitor.network.server.createNetworkServer
 import org.vpilo.babymonitor.presentation.AppTheme
-import org.vpilo.babymonitor.presentation.approlechoice.AppRoleChoiceScreen
-import org.vpilo.babymonitor.presentation.client.ClientPreviewScreenRoot
-import org.vpilo.babymonitor.presentation.permissioncheck.PermissionCheckScreen
-import org.vpilo.babymonitor.presentation.server.ServerPreviewScreenRoot
+import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
+import org.vpilo.babymonitor.app.client.ClientPreviewScreenRoot
+import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
+import org.vpilo.babymonitor.app.server.ServerPreviewScreenRoot
 
 // Temporary role assignment at startup, until onboarding is implemented.
 var CURRENT_APP_ROLE: AppRole = AppRole.CAMERA

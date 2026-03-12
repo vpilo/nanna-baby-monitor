@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.presentation.server
+package org.vpilo.babymonitor.app.server
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.presentation
+package org.vpilo.babymonitor.presentation.composables
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text

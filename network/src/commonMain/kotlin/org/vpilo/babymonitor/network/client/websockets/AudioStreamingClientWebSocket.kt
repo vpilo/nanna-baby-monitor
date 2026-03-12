@@ -7,7 +7,6 @@ import org.vpilo.babymonitor.codec.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
-import org.vpilo.babymonitor.network.client.StreamingAudioReceiverRepository
 
 
 internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket() {
