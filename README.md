@@ -1,4 +1,16 @@
 
+# Baby Monitor app
+
+feature plan
+- Play and pause independently audio or video
+- Secure lan-only communication channel, with clients (monitors) pairing with server (camera).
+- network discovery
+- Plugins for raw AV streams to:
+  - reduce noise
+  - detect silence
+  - detect no movement
+
+
 
 https://github.com/zeenolife/ai-baby-monitor
 https://github.com/danmacnaughtan/baby-monitor
