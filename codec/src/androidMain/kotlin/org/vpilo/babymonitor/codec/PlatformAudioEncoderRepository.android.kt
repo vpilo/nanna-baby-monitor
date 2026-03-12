@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.codec
 
 import android.content.Context
 import android.media.MediaCodec
-import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.Job
@@ -59,14 +58,13 @@ actual class PlatformAudioEncoderRepository(
 
     private fun createAudioEncoder(): MediaCodec {
         val format = MediaFormat.createAudioFormat(
-            MediaFormat.MIMETYPE_AUDIO_AAC,
+            MediaFormat.MIMETYPE_AUDIO_OPUS,
             MediaFormats.Audio.SAMPLE_RATE,
             MediaFormats.Audio.CHANNELS,
         ).apply {
             setInteger(MediaFormat.KEY_BIT_RATE, MediaFormats.Audio.BIT_RATE)
-            setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
         }
-        return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC).also {
+        return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS).also {
             it.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             it.start()
         }

@@ -1,12 +1,14 @@
 package org.vpilo.babymonitor.network.client.websockets
 
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.plugins.websocket.converter
 import io.ktor.websocket.Frame
 import org.koin.mp.KoinPlatform
+import org.vpilo.babymonitor.codec.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
-import org.vpilo.babymonitor.network.client.StreamingVideoReceiverRepository
+import org.vpilo.babymonitor.network.common.Constants
 
 
 internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket() {
@@ -22,13 +24,13 @@ internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket
 
             is Frame.Text -> {
                 Logger.d(TAG) { "Received frame of type ${frame.frameType}: $frame" }
-                /*
-                 converter?.deserialize(
-                     charset = Charset.defaultCharset(),
-                     typeInfo = typeInfo<SomeClass>(),
-                     content = frame,
-                 )
-                 */
+
+                converter?.deserialize(
+                    charset = Constants.ENCODING_CHARSET,
+                    typeInfo = Constants.TYPE_INFO_VIDEO_CHUNK,
+                    content = frame,
+                )
+
             }
 
             else -> {

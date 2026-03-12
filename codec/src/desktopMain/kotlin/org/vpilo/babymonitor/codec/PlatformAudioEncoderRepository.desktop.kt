@@ -7,19 +7,22 @@ import org.bytedeco.ffmpeg.avcodec.AVCodecContext
 import org.bytedeco.ffmpeg.avcodec.AVPacket
 import org.bytedeco.ffmpeg.avutil.AVDictionary
 import org.bytedeco.ffmpeg.avutil.AVFrame
-import org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_AAC
+import org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_OPUS
 import org.bytedeco.ffmpeg.global.avcodec.av_packet_alloc
 import org.bytedeco.ffmpeg.global.avcodec.av_packet_free
 import org.bytedeco.ffmpeg.global.avcodec.av_packet_unref
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_alloc_context3
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_find_encoder
+import org.bytedeco.ffmpeg.global.avcodec.avcodec_find_encoder_by_name
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_free_context
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_open2
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_receive_packet
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_send_frame
 import org.bytedeco.ffmpeg.global.avutil.AVERROR_EOF
-import org.bytedeco.ffmpeg.global.avutil.AV_SAMPLE_FMT_FLTP
+import org.bytedeco.ffmpeg.global.avutil.AV_SAMPLE_FMT_S16
 import org.bytedeco.ffmpeg.global.avutil.av_channel_layout_default
+import org.bytedeco.ffmpeg.global.avutil.av_dict_free
+import org.bytedeco.ffmpeg.global.avutil.av_dict_set
 import org.bytedeco.ffmpeg.global.avutil.av_frame_alloc
 import org.bytedeco.ffmpeg.global.avutil.av_frame_free
 import org.bytedeco.ffmpeg.global.avutil.av_frame_get_buffer
@@ -31,8 +34,6 @@ import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.StreamingAudioFlow
 import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
 import org.vpilo.babymonitor.model.repository.SharedResourceRepository
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 actual class PlatformAudioEncoderRepository(
     private val audioCaptureRepository: AudioCaptureRepository,
@@ -74,40 +75,30 @@ actual class PlatformAudioEncoderRepository(
     }
 
     /**
-     * Encapsulates FFmpeg resources for AAC audio encoding.
-     * Input: 16-bit signed LE mono PCM at 44100 Hz.
+     * Encapsulates FFmpeg resources for Opus audio encoding.
      */
     private class AudioEncoderContext private constructor(
         private val codecCtx: AVCodecContext,
         private val frame: AVFrame,
         private val packet: AVPacket,
-        private val frameSize: Int,       // samples per frame expected by the codec
+        private val sampleFrameSize: Int,
     ) {
         private var pts = 0L
         private var residualBuf = ByteArray(0) // leftover PCM from previous encode() call
 
         fun encode(pcmData: ByteArray, emit: (EncodedAudioStreamChunk) -> Unit) {
-            // Accumulate PCM bytes (16-bit LE mono)
             val combined = residualBuf + pcmData
-            val bytesPerFrame = frameSize * (MediaFormats.Audio.SAMPLE_SIZE_BITS / 8)
+            val bytesPerFrame = sampleFrameSize * (MediaFormats.Audio.SAMPLE_SIZE_BITS / 8)
             var offset = 0
 
             while (offset + bytesPerFrame <= combined.size) {
-                // Convert 16-bit signed LE PCM → 32-bit float for FLTP format
                 val sampleBuf = frame.data(0)
                 sampleBuf.position(0L)
-                val shortBuf = ByteBuffer.wrap(combined, offset, bytesPerFrame)
-                    .order(ByteOrder.LITTLE_ENDIAN)
-                    .asShortBuffer()
-                val floatBytes = ByteBuffer.allocate(frameSize * 4).order(ByteOrder.nativeOrder())
-                for (i in 0 until frameSize) {
-                    floatBytes.putFloat(shortBuf.get(i).toFloat() / Short.MAX_VALUE)
-                }
-                sampleBuf.put(floatBytes.array(), 0, frameSize * 4)
+                sampleBuf.put(combined, offset, bytesPerFrame)
                 offset += bytesPerFrame
 
                 frame.pts(pts)
-                pts += frameSize
+                pts += sampleFrameSize
 
                 var ret = avcodec_send_frame(codecCtx, frame)
                 if (ret < 0 && ret != AVERROR_EAGAIN()) {
@@ -137,7 +128,6 @@ actual class PlatformAudioEncoderRepository(
                 }
             }
 
-            // Store remaining bytes for next call
             residualBuf = if (offset < combined.size) {
                 combined.copyOfRange(offset, combined.size)
             } else {
@@ -153,23 +143,33 @@ actual class PlatformAudioEncoderRepository(
 
         companion object {
             fun create(): AudioEncoderContext {
-                val codec = avcodec_find_encoder(AV_CODEC_ID_AAC)
-                    ?: error("AAC encoder not found.")
+                val codec = avcodec_find_encoder_by_name("libopus")
+                    ?: avcodec_find_encoder(AV_CODEC_ID_OPUS)
+                    ?: error("Opus encoder not found.")
 
                 val codecCtx = avcodec_alloc_context3(codec).apply {
-                    sample_fmt(AV_SAMPLE_FMT_FLTP) // FFmpeg's native AAC encoder requires FLTP
+                    sample_fmt(AV_SAMPLE_FMT_S16)
                     sample_rate(MediaFormats.Audio.SAMPLE_RATE)
                     av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
                     bit_rate(MediaFormats.Audio.BIT_RATE.toLong())
                 }
 
-                val ret = avcodec_open2(codecCtx, codec, null as AVDictionary?)
-                check(ret >= 0) { "Could not open AAC codec: $ret" }
+                val opts = AVDictionary()
+                try {
+                    av_dict_set(opts, "frame_duration", MediaFormats.Audio.FRAME_DURATION_MS.toString(), 0)
+                    // Voice-optimised mode
+                    av_dict_set(opts, "application", "voip", 0)
+
+                    val ret = avcodec_open2(codecCtx, codec, opts)
+                    check(ret >= 0) { "Could not open Opus codec: $ret" }
+                } finally {
+                    av_dict_free(opts)
+                }
 
                 val frameSize = codecCtx.frame_size()
 
                 val frame = av_frame_alloc().apply {
-                    format(AV_SAMPLE_FMT_FLTP)
+                    format(AV_SAMPLE_FMT_S16)
                     sample_rate(MediaFormats.Audio.SAMPLE_RATE)
                     av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
                     nb_samples(frameSize)

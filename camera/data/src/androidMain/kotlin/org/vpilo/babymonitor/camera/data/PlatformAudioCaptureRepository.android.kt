@@ -29,7 +29,7 @@ actual class PlatformAudioCaptureRepository(
 
     override fun onServiceStarted(context: Context, lifecycleOwner: LifecycleOwner) {
         val audioSource = MediaRecorder.AudioSource.MIC
-        val sampleRate = 44100
+        val sampleRate = MediaFormats.Audio.SAMPLE_RATE
         val channelConfig = AudioFormat.CHANNEL_IN_MONO
         val audioFormat = AudioFormat.ENCODING_PCM_16BIT
         val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)

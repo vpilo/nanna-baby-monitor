@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.network.client.websockets
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.websocket.Frame
 import org.koin.mp.KoinPlatform
+import org.vpilo.babymonitor.codec.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.repository.StreamingAudioRepository

@@ -3,13 +3,15 @@ package org.vpilo.babymonitor.model
 object MediaFormats {
 
     object Audio {
-        const val SAMPLE_RATE = 44100
+        const val SAMPLE_RATE = 48_000
         const val SAMPLE_SIZE_BITS = 16
         const val CHANNELS = 1
         const val SIGNED = true
         const val BIG_ENDIAN = false
 
-        const val BIT_RATE = 128_000 // 128 kbps AAC
+        const val BIT_RATE = 64_000 // 64 kbps Opus (voice-optimised, equivalent quality to 128 kbps AAC)
+
+        const val FRAME_DURATION_MS = 20 // Milliseconds per frame
     }
 
     object Video {

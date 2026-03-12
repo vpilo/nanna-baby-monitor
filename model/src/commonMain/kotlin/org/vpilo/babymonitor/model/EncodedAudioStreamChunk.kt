@@ -2,13 +2,13 @@ package org.vpilo.babymonitor.model
 
 /**
  * An encoded chunk of audio.
- * Audio chunks are raw AAC frames (ADTS on Desktop, raw on Android).
+ * Audio chunks are raw Opus frames.
  * Each frame is a self-contained unit of audio data, and can be decoded independently.
  */
 data class EncodedAudioStreamChunk(
-    /** Encoded data (AAC format). */
+    /** Encoded data (Opus format). */
     val data: ByteArray,
-    /** `true` when this carries codec configuration. FIXME check if needed on android, it's not needed on desktop */
+    /** `true` when this carries codec configuration (Opus header). */
     val isCodecConfig: Boolean,
 ) {
 
