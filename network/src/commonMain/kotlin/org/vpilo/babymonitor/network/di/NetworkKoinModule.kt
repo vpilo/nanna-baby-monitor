@@ -7,17 +7,17 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.vpilo.babymonitor.codec.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.codec.StreamingVideoReceiverRepository
-import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
-import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.model.di.AppRole
 
 val networkKoinModule: Module =
     module {
         singleOf(::StreamingAudioReceiverRepository)
             .withOptions { qualifier = AppRole.MONITOR }
-            .bind(StreamingAudioRepository::class)
+            .bind(StreamingAudioSenderRepository::class)
 
         singleOf(::StreamingVideoReceiverRepository)
             .withOptions { qualifier = AppRole.MONITOR }
-            .bind(StreamingVideoRepository::class)
+            .bind(StreamingVideoSenderRepository::class)
     }

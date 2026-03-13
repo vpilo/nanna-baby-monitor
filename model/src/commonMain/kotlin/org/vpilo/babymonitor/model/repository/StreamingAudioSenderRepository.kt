@@ -2,6 +2,6 @@ package org.vpilo.babymonitor.model.repository
 
 import org.vpilo.babymonitor.model.StreamingAudioFlow
 
-interface StreamingAudioRepository {
+interface StreamingAudioSenderRepository {
     val chunks: StreamingAudioFlow
 }

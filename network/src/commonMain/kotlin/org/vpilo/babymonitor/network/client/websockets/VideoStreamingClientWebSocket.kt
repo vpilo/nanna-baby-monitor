@@ -7,14 +7,14 @@ import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.codec.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
-import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.network.common.Constants
 
 
 internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket() {
     Logger.w(TAG) { "WebSocket connection established with the server." }
 
-    val repository = KoinPlatform.getKoin().get<StreamingVideoRepository>() as StreamingVideoReceiverRepository
+    val repository = KoinPlatform.getKoin().get<StreamingVideoSenderRepository>() as StreamingVideoReceiverRepository
 
     while (true) {
         when (val frame = incoming.receiveCatching().getOrNull() ?: break) {

@@ -42,16 +42,16 @@ import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.StreamingVideoFlow
-import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 import org.vpilo.babymonitor.model.VideoCaptureRepository
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
 import java.awt.image.DataBufferInt
 
-actual class PlatformVideoEncoderRepository(
+actual class VideoEncoderRepository(
     private val videoCaptureRepository: VideoCaptureRepository,
-) : StreamingVideoRepository,
+) : StreamingVideoSenderRepository,
     SharedResourceRepository<EncodedVideoStreamChunk>(
         bufferCapacity = MediaFormats.BufferSizes.MAX_VIDEO_STREAM_BUFFER_SIZE,
     ) {
@@ -281,5 +281,5 @@ actual class PlatformVideoEncoderRepository(
         }
     }
 
-    override val TAG = PlatformVideoEncoderRepository::class
+    override val TAG = VideoEncoderRepository::class
 }

@@ -15,13 +15,13 @@ import org.vpilo.babymonitor.model.AudioCaptureRepository
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.StreamingAudioFlow
-import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 import java.nio.ByteBuffer
 
-actual class PlatformAudioEncoderRepository(
+actual class AudioEncoderRepository(
     private val audioCaptureRepository: AudioCaptureRepository,
-) : StreamingAudioRepository,
+) : StreamingAudioSenderRepository,
     SharedResourceRepository<EncodedAudioStreamChunk>(
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
     ), AndroidService {
@@ -135,7 +135,7 @@ actual class PlatformAudioEncoderRepository(
         AndroidServiceRegistry.unregister(this)
     }
 
-    override val TAG = PlatformAudioEncoderRepository::class
+    override val TAG = AudioEncoderRepository::class
 
     private companion object {
         const val CODEC_TIMEOUT_US = 10_000L

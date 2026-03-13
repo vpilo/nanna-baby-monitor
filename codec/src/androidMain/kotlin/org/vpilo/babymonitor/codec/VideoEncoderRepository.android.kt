@@ -18,13 +18,13 @@ import org.vpilo.babymonitor.model.VideoCaptureRepository
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.StreamingVideoFlow
-import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 import java.nio.ByteBuffer
 
-actual class PlatformVideoEncoderRepository(
+actual class VideoEncoderRepository(
     private val videoCaptureRepository: VideoCaptureRepository,
-) : StreamingVideoRepository,
+) : StreamingVideoSenderRepository,
     SharedResourceRepository<EncodedVideoStreamChunk>(
         bufferCapacity = MediaFormats.BufferSizes.MAX_VIDEO_STREAM_BUFFER_SIZE,
     ), AndroidService {
@@ -159,7 +159,7 @@ actual class PlatformVideoEncoderRepository(
         AndroidServiceRegistry.unregister(this)
     }
 
-    override val TAG = PlatformVideoEncoderRepository::class
+    override val TAG = VideoEncoderRepository::class
 
     private companion object {
         const val CODEC_TIMEOUT_US = 10_000L

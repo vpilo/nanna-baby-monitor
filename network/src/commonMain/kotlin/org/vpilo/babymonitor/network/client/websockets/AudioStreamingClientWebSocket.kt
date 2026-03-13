@@ -6,13 +6,13 @@ import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.codec.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
-import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 
 
 internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket() {
     Logger.w(TAG) { "WebSocket connection established with the server." }
 
-    val repository = KoinPlatform.getKoin().get<StreamingAudioRepository>() as StreamingAudioReceiverRepository
+    val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>() as StreamingAudioReceiverRepository
 
     while (true) {
         when (val frame = incoming.receiveCatching().getOrNull() ?: break) {

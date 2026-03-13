@@ -7,10 +7,10 @@ import io.ktor.websocket.send
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.onCompletion
 import org.koin.mp.KoinPlatform
-import org.vpilo.babymonitor.model.repository.StreamingVideoRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 
 internal suspend fun DefaultWebSocketServerSession.videoStreamingServerWebSocket() {
-    val repository = KoinPlatform.getKoin().get<StreamingVideoRepository>()
+    val repository = KoinPlatform.getKoin().get<StreamingVideoSenderRepository>()
 
     repository.chunks
         // FIXME SharedFlows don't complete, need to close manually instead of this. maybe make a flow of repo states instead,

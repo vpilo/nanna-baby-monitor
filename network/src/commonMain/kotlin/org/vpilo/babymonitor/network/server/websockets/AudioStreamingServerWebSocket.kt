@@ -7,10 +7,10 @@ import io.ktor.websocket.send
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.onCompletion
 import org.koin.mp.KoinPlatform
-import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 
 internal suspend fun DefaultWebSocketServerSession.audioStreamingServerWebSocket() {
-    val repository = KoinPlatform.getKoin().get<StreamingAudioRepository>()
+    val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
 
     repository.chunks
         // FIXME SharedFlows don't complete, need to close manually instead of this. maybe make a flow of repo states instead,

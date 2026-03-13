@@ -32,12 +32,12 @@ import org.vpilo.babymonitor.model.AudioCaptureRepository
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.StreamingAudioFlow
-import org.vpilo.babymonitor.model.repository.StreamingAudioRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.model.repository.SharedResourceRepository
 
-actual class PlatformAudioEncoderRepository(
+actual class AudioEncoderRepository(
     private val audioCaptureRepository: AudioCaptureRepository,
-) : StreamingAudioRepository,
+) : StreamingAudioSenderRepository,
     SharedResourceRepository<EncodedAudioStreamChunk>(
         bufferCapacity = MediaFormats.BufferSizes.MAX_VIDEO_STREAM_BUFFER_SIZE,
     ) {
@@ -183,5 +183,5 @@ actual class PlatformAudioEncoderRepository(
         }
     }
 
-    override val TAG = PlatformAudioEncoderRepository::class
+    override val TAG = AudioEncoderRepository::class
 }
