@@ -9,7 +9,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary{
+    androidLibrary {
         namespace = "org.vpilo.babymonitor.model"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
 

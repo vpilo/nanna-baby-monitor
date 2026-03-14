@@ -37,7 +37,10 @@ include(":common")
 
 include(":androidService")
 include(":codec")
-include(":network")
+
+include(":network:common")
+include(":network:client")
+include(":network:server")
 
 include(":camera:data")
 include(":camera:model")

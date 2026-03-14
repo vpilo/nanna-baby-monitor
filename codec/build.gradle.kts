@@ -24,14 +24,10 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":common"))
             implementation(project(":model"))
-            implementation(project(":camera:model"))
 
             implementation(libs.compose.ui)
-            implementation(libs.koin.core)
         }
         androidMain.dependencies {
-            implementation(project(":androidService"))
-
             implementation(libs.androidx.core)
         }
         val desktopMain by getting

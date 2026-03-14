@@ -4,4 +4,7 @@ import org.vpilo.babymonitor.model.StreamingVideoFlow
 
 interface StreamingVideoSenderRepository {
     val chunks: StreamingVideoFlow
+
+    fun start()
+    fun stop()
 }

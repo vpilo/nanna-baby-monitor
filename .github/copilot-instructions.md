@@ -14,10 +14,12 @@ Using Koin singletons, the app has either AV encoder repositories (camera role),
 This is a Kotlin Multiplatform project using `androidLibrary` and `jvm("desktop")` targets.
 
 **Compile a module's source sets:**
+
 - Desktop: `:module:compileKotlinDesktop`
 - Android: `:module:compileAndroidMain`
 
 **Examples:**
+
 ```
 ./gradlew :codec:compileKotlinDesktop
 ./gradlew :codec:compileAndroidMain

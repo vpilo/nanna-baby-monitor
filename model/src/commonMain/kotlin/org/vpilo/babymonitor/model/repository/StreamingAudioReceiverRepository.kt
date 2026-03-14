@@ -1,10 +1,10 @@
 package org.vpilo.babymonitor.model.repository
 
+import org.vpilo.babymonitor.model.AudioFrameFlow
+
 /**
- * Repository that receives encoded audio chunks, decodes them, and plays the audio.
- * No output flow — audio is played directly to the system audio output.
+ * Repository that provides decoded audio chunks.
  */
 interface StreamingAudioReceiverRepository {
-    fun startPlayback()
-    fun stopPlayback()
+    val chunks: AudioFrameFlow
 }

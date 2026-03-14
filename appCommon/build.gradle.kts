@@ -17,7 +17,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
-    
+
     jvm("desktop")
 
     sourceSets {
@@ -40,8 +40,8 @@ kotlin {
             implementation(project(":camera:data"))
             implementation(project(":camera:model"))
             implementation(project(":camera:presentation"))
-            implementation(project(":codec"))
-            implementation(project(":network"))
+            implementation(project(":network:client"))
+            implementation(project(":network:server"))
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

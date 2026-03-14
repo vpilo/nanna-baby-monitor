@@ -8,15 +8,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import org.vpilo.babymonitor.model.di.AppRole
+import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
+import org.vpilo.babymonitor.app.client.ClientPreviewScreenRoot
 import org.vpilo.babymonitor.app.navigation.Route
+import org.vpilo.babymonitor.app.server.ServerPreviewScreenRoot
+import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
+import org.vpilo.babymonitor.model.di.AppRole
 import org.vpilo.babymonitor.network.client.createNetworkClient
 import org.vpilo.babymonitor.network.server.createNetworkServer
 import org.vpilo.babymonitor.presentation.AppTheme
-import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
-import org.vpilo.babymonitor.app.client.ClientPreviewScreenRoot
-import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
-import org.vpilo.babymonitor.app.server.ServerPreviewScreenRoot
 
 // Temporary role assignment at startup, until onboarding is implemented.
 var CURRENT_APP_ROLE: AppRole = AppRole.CAMERA

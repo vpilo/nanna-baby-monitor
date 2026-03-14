@@ -24,9 +24,10 @@ kotlin {
         androidMain.dependencies {
             implementation(project(":common"))
 
+            api(libs.jetbrains.lifecycle.common)
+
             implementation(libs.koin.android)
             implementation(libs.guava)
-            implementation(libs.jetbrains.lifecycle.common)
         }
     }
 }

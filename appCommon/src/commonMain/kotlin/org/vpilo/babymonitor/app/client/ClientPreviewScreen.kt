@@ -48,7 +48,7 @@ private const val TAG = "ReceiverView"
 fun ReceiverView(
     modifier: Modifier = Modifier,
     videoReceiverRepository: StreamingVideoReceiverRepository = getKoin().get(),
-    audioReceiverRepository: StreamingAudioReceiverRepository = getKoin().get(),
+   // audioReceiverRepository: StreamingAudioReceiverRepository = getKoin().get(),
 ) {
     val scope = rememberCoroutineScope()
     var img by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -57,7 +57,7 @@ fun ReceiverView(
         Logger.d(TAG) { "Started showing feed" }
 
         // Start audio playback
-        audioReceiverRepository.startPlayback()
+     //   audioReceiverRepository.startPlayback()
 
         // Collect decoded video frames
         val frameJob = scope.launch(Dispatchers.Default) {
@@ -69,7 +69,7 @@ fun ReceiverView(
         onPauseOrDispose {
             Logger.d(TAG) { "Stopped showing feed" }
             frameJob.cancel()
-            audioReceiverRepository.stopPlayback()
+      //      audioReceiverRepository.stopPlayback()
             img = null
         }
     }
