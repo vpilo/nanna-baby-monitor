@@ -1,12 +1,11 @@
 package org.vpilo.babymonitor.network.server
 
-import io.ktor.serialization.kotlinx.cbor.cbor
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
@@ -43,15 +42,12 @@ suspend fun createNetworkServer(coroutineDispatcher: CoroutineDispatcher = Dispa
 }
 
 fun Application.module() {
-    install(ContentNegotiation) {
-        @OptIn(ExperimentalSerializationApi::class)
-        cbor(
-            Cbor {
-                ignoreUnknownKeys = false
-            },
-        )
-    }
     install(WebSockets) {
+        contentConverter =
+            KotlinxWebsocketSerializationConverter(
+                @OptIn(ExperimentalSerializationApi::class)
+                Cbor,
+            )
         pingPeriod = 15.seconds
         timeout = 15.seconds
         maxFrameSize = Long.MAX_VALUE

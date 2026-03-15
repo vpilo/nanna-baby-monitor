@@ -13,6 +13,10 @@ kotlin {
         namespace = "org.vpilo.babymonitor.app.common"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+        androidResources {
+            enable = true
+        }
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }

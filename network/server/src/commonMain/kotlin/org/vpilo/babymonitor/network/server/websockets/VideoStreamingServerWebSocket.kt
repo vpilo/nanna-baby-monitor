@@ -1,9 +1,9 @@
 package org.vpilo.babymonitor.network.server.websockets
 
 import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.server.websocket.sendSerialized
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
-import io.ktor.websocket.send
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.onCompletion
 import org.koin.mp.KoinPlatform
@@ -23,7 +23,7 @@ internal suspend fun DefaultWebSocketServerSession.videoStreamingServerWebSocket
         }
         .dropWhile { !it.isKeyFrame }
         .collect {
-            send(it.data)
+            sendSerialized(it)
         }
 }
 

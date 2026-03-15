@@ -57,7 +57,7 @@ internal actual class VideoCaptureDataSource(
         val imageAnalysis = ImageAnalysis.Builder()
             .setTargetRotation(Surface.ROTATION_0)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_NV21) // FIXME check which ones does the encoder support & if the number of planes needs to be adapted
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
             .build()
             .also {
                 it.setAnalyzer(executor, ::onFrameReceived)

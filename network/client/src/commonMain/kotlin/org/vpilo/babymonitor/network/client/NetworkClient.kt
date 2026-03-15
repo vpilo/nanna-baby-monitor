@@ -2,12 +2,11 @@ package org.vpilo.babymonitor.network.client
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.ClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.HttpMethod
-import io.ktor.serialization.kotlinx.cbor.cbor
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineDispatcher
@@ -24,15 +23,13 @@ import java.net.ConnectException
 
 private val networkClient: HttpClient by lazy {
     HttpClient(CIO) {
-        install(ContentNegotiation) {
-            @OptIn(ExperimentalSerializationApi::class)
-            cbor(
-                Cbor {
-                    ignoreUnknownKeys = false
-                },
-            )
+        install(WebSockets) {
+            contentConverter =
+                KotlinxWebsocketSerializationConverter(
+                    @OptIn(ExperimentalSerializationApi::class)
+                    Cbor,
+                )
         }
-        install(WebSockets)
     }
 }
 
