@@ -2,7 +2,7 @@ package org.vpilo.babymonitor.codec
 
 import android.graphics.Bitmap
 import android.graphics.Bitmap.createBitmap
-import android.graphics.ImageFormat
+import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaFormat
 import androidx.compose.ui.graphics.ImageBitmap
@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.StreamingVideoFlow
-import java.nio.ByteBuffer
 import kotlin.coroutines.CoroutineContext
 
 actual class VideoDecoder actual constructor(
@@ -43,14 +42,11 @@ actual class VideoDecoder actual constructor(
 
                     // Create decoder on first keyframe
                     if (codec == null && chunk.isKeyFrame) {
-                        // Parse width/height from the SPS or use defaults
                         val format = MediaFormat.createVideoFormat(
                             MediaFormat.MIMETYPE_VIDEO_AVC,
                             DEFAULT_WIDTH,
                             DEFAULT_HEIGHT,
-                        ).apply {
-                            setInteger(MediaFormat.KEY_COLOR_FORMAT, ImageFormat.YUV_420_888)
-                        }
+                        )
 
                         codec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
                             it.configure(format, null, null, 0)
@@ -104,18 +100,11 @@ actual class VideoDecoder actual constructor(
 
             try {
                 if (bufferInfo.size > 0) {
-                    val outputFormat = codec.outputFormat
-                    val width = outputFormat.getInteger(MediaFormat.KEY_WIDTH)
-                    val height = outputFormat.getInteger(MediaFormat.KEY_HEIGHT)
-                    val colorFormat = outputFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT)
-
-                    val outputBuffer = codec.getOutputBuffer(outputIndex) ?: continue
-                    outputBuffer.position(bufferInfo.offset)
-                    outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
-
-                    val bitmap = yuvToArgbBitmap(outputBuffer, width, height, colorFormat)
-                    if (bitmap != null) {
+                    val image = codec.getOutputImage(outputIndex)
+                    if (image != null) {
+                        val bitmap = image.toImageBitmap()
                         output.tryEmit(bitmap)
+                        image.close()
                     }
                 }
             } finally {
@@ -125,65 +114,54 @@ actual class VideoDecoder actual constructor(
     }
 
     /**
-     * Converts YUV data from MediaCodec output to an ARGB ImageBitmap.
-     * Handles both NV12 (COLOR_FormatYUV420SemiPlanar = 21) and I420 (COLOR_FormatYUV420Planar = 19).
+     * Converts a YUV [Image] from MediaCodec output to an [ImageBitmap].
+     *
+     * Uses the plane descriptors (row stride, pixel stride) to handle any
+     * YUV 420 layout generically: NV12, NV21, I420, or YUV_420_888.
      */
-    private fun yuvToArgbBitmap(
-        buffer: ByteBuffer,
-        width: Int,
-        height: Int,
-        colorFormat: Int,
-    ): ImageBitmap? {
-        val ySize = width * height
-        val uvSize = ySize / 4
-        val yuvBytes = ByteArray(buffer.remaining())
-        buffer.get(yuvBytes)
+    private fun Image.toImageBitmap(): ImageBitmap {
+        val w = width
+        val h = height
 
-        val argb = IntArray(ySize)
+        val yPlane = planes[0]
+        val uPlane = planes[1]
+        val vPlane = planes[2]
 
-        for (j in 0 until height) {
-            for (i in 0 until width) {
-                val yIndex = j * width + i
-                val y = (yuvBytes[yIndex].toInt() and 0xFF)
+        val yBuf = yPlane.buffer
+        val uBuf = uPlane.buffer
+        val vBuf = vPlane.buffer
+
+        val yRowStride = yPlane.rowStride
+        val uvRowStride = uPlane.rowStride
+        val uvPixelStride = uPlane.pixelStride
+
+        val pixels = IntArray(w * h)
+
+        for (j in 0 until h) {
+            for (i in 0 until w) {
+                val y = yBuf.get(j * yRowStride + i).toInt() and 0xFF
 
                 val uvRow = j / 2
                 val uvCol = i / 2
-                val u: Int
-                val v: Int
+                val uvIndex = uvRow * uvRowStride + uvCol * uvPixelStride
+                val u = (uBuf.get(uvIndex).toInt() and 0xFF) - 128
+                val v = (vBuf.get(uvIndex).toInt() and 0xFF) - 128
 
-                when (colorFormat) {
-                    21 -> {
-                        // NV12: UV interleaved after Y plane
-                        val uvIndex = ySize + uvRow * width + uvCol * 2
-                        u = (yuvBytes[uvIndex].toInt() and 0xFF) - 128
-                        v = (yuvBytes[uvIndex + 1].toInt() and 0xFF) - 128
-                    }
+                // ITU-R BT.601 YUV → RGB
+                var r = y + (1370 * v shr 10)
+                var g = y - (336 * u + 698 * v shr 10)
+                var b = y + (1732 * u shr 10)
 
-                    19 -> {
-                        // I420: U plane then V plane
-                        val uIndex = ySize + uvRow * (width / 2) + uvCol
-                        val vIndex = ySize + uvSize + uvRow * (width / 2) + uvCol
-                        u = (yuvBytes[uIndex].toInt() and 0xFF) - 128
-                        v = (yuvBytes[vIndex].toInt() and 0xFF) - 128
-                    }
+                r = r.coerceIn(0, 255)
+                g = g.coerceIn(0, 255)
+                b = b.coerceIn(0, 255)
 
-                    else -> {
-                        Logger.w(TAG) { "Unsupported color format: $colorFormat" }
-                        return null
-                    }
-                }
-
-                // YUV→RGB BT.601
-                val r = (y + 1.402 * v).toInt().coerceIn(0, 255)
-                val g = (y - 0.344136 * u - 0.714136 * v).toInt().coerceIn(0, 255)
-                val b = (y + 1.772 * u).toInt().coerceIn(0, 255)
-
-                argb[yIndex] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+                pixels[j * w + i] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
             }
         }
 
-        return createBitmap(width, height, Bitmap.Config.ARGB_8888).apply {
-            setPixels(argb, 0, width, 0, 0, width, height)
+        return createBitmap(w, h, Bitmap.Config.ARGB_8888).apply {
+            setPixels(pixels, 0, w, 0, 0, w, h)
         }.asImageBitmap()
     }
 

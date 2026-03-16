@@ -76,7 +76,7 @@ actual class VideoEncoder actual constructor(
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
             setInteger(
                 MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible,
             )
         }
         return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
