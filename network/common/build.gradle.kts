@@ -25,7 +25,7 @@ kotlin {
             implementation(project(":common"))
             implementation(project(":model"))
 
-            implementation(libs.ktor.serialization)
+            implementation(libs.ktor.websockets)
         }
     }
 }

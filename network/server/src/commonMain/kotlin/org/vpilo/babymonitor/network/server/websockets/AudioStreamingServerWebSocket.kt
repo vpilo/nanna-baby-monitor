@@ -3,12 +3,11 @@ package org.vpilo.babymonitor.network.server.websockets
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
-import io.ktor.websocket.send
-import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.onCompletion
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
+import org.vpilo.babymonitor.network.common.protocol.protocolSendAudio
 
 internal suspend fun DefaultWebSocketServerSession.audioStreamingServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
@@ -22,7 +21,7 @@ internal suspend fun DefaultWebSocketServerSession.audioStreamingServerWebSocket
             close(CloseReason(CloseReason.Codes.GOING_AWAY, "Camera feed ended."))
         }
         .collect {
-            send(it.data)
+            protocolSendAudio(it)
         }
 }
 

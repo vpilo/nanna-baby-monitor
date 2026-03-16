@@ -1,6 +1,5 @@
 package org.vpilo.babymonitor.network.server
 
-import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
@@ -14,8 +13,6 @@ import io.ktor.server.websocket.webSocket
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.cbor.Cbor
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
@@ -43,11 +40,6 @@ suspend fun createNetworkServer(coroutineDispatcher: CoroutineDispatcher = Dispa
 
 fun Application.module() {
     install(WebSockets) {
-        contentConverter =
-            KotlinxWebsocketSerializationConverter(
-                @OptIn(ExperimentalSerializationApi::class)
-                Cbor,
-            )
         pingPeriod = 15.seconds
         timeout = 15.seconds
         maxFrameSize = Long.MAX_VALUE
