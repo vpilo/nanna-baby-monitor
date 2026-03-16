@@ -28,6 +28,9 @@ actual class VideoEncoder actual constructor(
     private var videoEncodeJob: Job? = null
     private var videoFrameCount = 0L
 
+    /** SPS/PPS bytes emitted by the encoder as BUFFER_FLAG_CODEC_CONFIG. */
+    private var codecConfigData: ByteArray? = null
+
     actual fun start() {
         if (videoEncodeJob?.isActive == true) return
 
@@ -48,6 +51,7 @@ actual class VideoEncoder actual constructor(
                         codec = createVideoEncoder(configuredWidth, configuredHeight)
                         videoEncoder = codec
                         videoFrameCount = 0
+                        codecConfigData = null
                         Logger.d(TAG) { "Video encoder configured for ${configuredWidth}x${configuredHeight}" }
                     }
 
@@ -72,7 +76,7 @@ actual class VideoEncoder actual constructor(
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
             setInteger(
                 MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
             )
         }
         return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
@@ -81,7 +85,8 @@ actual class VideoEncoder actual constructor(
         }
     }
 
-    private fun encodeVideoFrame(codec: MediaCodec, frame: CameraFrame) {
+    private fun encodeVideoFrame(codec: MediaCodec?, frame: CameraFrame) {
+        if (codec == null) return
         val presentationTimeUs = videoFrameCount * 1_000_000L / MediaFormats.Video.FRAME_RATE
         videoFrameCount++
 
@@ -120,13 +125,26 @@ actual class VideoEncoder actual constructor(
                 outputBuffer.get(data)
 
                 val isKey = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0
+                val isCodecConfig = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0
 
-                output.tryEmit(
-                    EncodedVideoStreamChunk(
-                        data = data,
-                        isKeyFrame = isKey,
-                    ),
-                )
+                if (isCodecConfig) {
+                    // Store SPS/PPS — don't emit as a separate chunk
+                    codecConfigData = data.copyOf()
+                } else {
+                    // Prepend SPS/PPS to every keyframe so the decoder can always start
+                    val emitData = if (isKey && codecConfigData != null) {
+                        codecConfigData!! + data
+                    } else {
+                        data
+                    }
+
+                    output.tryEmit(
+                        EncodedVideoStreamChunk(
+                            data = emitData,
+                            isKeyFrame = isKey,
+                        ),
+                    )
+                }
             }
 
             codec.releaseOutputBuffer(outputIndex, false)
