@@ -9,6 +9,8 @@ feature plan
     - reduce noise
     - detect silence
     - detect no movement
+- rotate video feed to match camera orientation on Android
+- allow capture resolution choice
 
 https://github.com/zeenolife/ai-baby-monitor
 https://github.com/danmacnaughtan/baby-monitor

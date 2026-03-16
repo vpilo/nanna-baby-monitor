@@ -1,11 +1,14 @@
 package org.vpilo.babymonitor.camera.data
 
 import android.content.Context
+import android.util.Size
 import android.view.Surface
 import androidx.annotation.MainThread
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,6 +39,13 @@ internal actual class VideoCaptureDataSource(
 
     private val executor = coroutineDispatcher.asExecutor()
 
+    private val resolutionSelector: ResolutionSelector by lazy {
+        ResolutionSelector.Builder()
+            .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
+            .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER))
+            .build()
+    }
+
     private fun onFrameReceived(image: ImageProxy) {
         val yBuffer = image.planes[0].buffer
         val uBuffer = image.planes[1].buffer
@@ -61,8 +71,10 @@ internal actual class VideoCaptureDataSource(
     fun onCameraReady(camera: ProcessCameraProvider, lifecycleOwner: LifecycleOwner) {
         val imageAnalysis = ImageAnalysis.Builder()
             .setTargetRotation(Surface.ROTATION_0)
+            .setResolutionSelector(resolutionSelector)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+            .setBackgroundExecutor(executor)
             .build()
             .also {
                 it.setAnalyzer(executor, ::onFrameReceived)
