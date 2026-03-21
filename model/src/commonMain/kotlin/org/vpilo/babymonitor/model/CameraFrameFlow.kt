@@ -1,5 +1,5 @@
 package org.vpilo.babymonitor.model
 
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 
-typealias CameraFrameFlow = SharedFlow<CameraFrame>
+typealias CameraFrameFlow = Flow<CameraFrame>

@@ -11,7 +11,7 @@ import org.vpilo.babymonitor.camera.presentation.CameraViewFinder
 import org.vpilo.babymonitor.presentation.Theme
 
 @Composable
-fun ServerPreviewScreenRoot(
+fun ServerViewScreenRoot(
     modifier: Modifier = Modifier,
 ) {
     Column {

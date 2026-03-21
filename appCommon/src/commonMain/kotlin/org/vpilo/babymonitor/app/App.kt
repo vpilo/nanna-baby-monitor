@@ -8,10 +8,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
-import org.vpilo.babymonitor.app.client.ClientPreviewScreenRoot
+import org.vpilo.babymonitor.app.client.ClientHomeScreenRoot
 import org.vpilo.babymonitor.app.navigation.Route
-import org.vpilo.babymonitor.app.server.ServerPreviewScreenRoot
+import org.vpilo.babymonitor.app.server.ServerViewScreenRoot
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
 import org.vpilo.babymonitor.model.di.AppRole
 import org.vpilo.babymonitor.network.client.createNetworkClient
@@ -61,7 +62,9 @@ fun App() {
                     LaunchedEffect(Unit) {
                         createNetworkClient()
                     }
-                    ClientPreviewScreenRoot()
+                    ClientHomeScreenRoot(
+                        viewModel = koinViewModel()
+                    )
                 }
                 composable<Route.ServerPreview>(
                     exitTransition = { slideOutHorizontally() },
@@ -70,7 +73,7 @@ fun App() {
                     LaunchedEffect(Unit) {
                         createNetworkServer()
                     }
-                    ServerPreviewScreenRoot()
+                    ServerViewScreenRoot()
                 }
             }
         }

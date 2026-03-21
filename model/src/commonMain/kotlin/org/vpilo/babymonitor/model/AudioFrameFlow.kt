@@ -1,10 +1,10 @@
 package org.vpilo.babymonitor.model
 
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 
-typealias AudioFrameFlow = SharedFlow<AudioFrame>
+typealias AudioFrameFlow = Flow<AudioFrame>
 typealias MutableAudioFrameFlow = MutableSharedFlow<AudioFrame>
 
 fun makeMutableAudioFrameFlow(): MutableAudioFrameFlow =

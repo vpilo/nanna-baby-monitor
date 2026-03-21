@@ -2,10 +2,7 @@ package org.vpilo.babymonitor.app.client
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,60 +13,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import org.koin.compose.getKoin
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
-import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
-import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
 
-@Composable
-fun ClientPreviewScreenRoot(
-    modifier: Modifier = Modifier,
-) {
-    Column {
-        Text(
-            text = "Monitor",
-            style = MaterialTheme.typography.titleMedium,
-            color = Theme.Colors.text,
-        )
-        Box(modifier = modifier.fillMaxSize()) {
-            ReceiverView()
-        }
-    }
-}
-
-private const val TAG = "ReceiverView"
+private const val TAG = "CameraFeed"
 
 @Composable
-fun ReceiverView(
+fun CameraFeed(
     modifier: Modifier = Modifier,
-    videoReceiverRepository: StreamingVideoReceiverRepository = getKoin().get(),
-   // audioReceiverRepository: StreamingAudioReceiverRepository = getKoin().get(),
+    frames: Flow<ImageBitmap>,
 ) {
     val scope = rememberCoroutineScope()
+
+    CameraFeedView(modifier = modifier, coroutineScope = scope, frames = frames)
+}
+
+@Composable
+private fun CameraFeedView(
+    modifier: Modifier = Modifier,
+    coroutineScope: CoroutineScope,
+    frames: Flow<ImageBitmap>,
+) {
     var img by remember { mutableStateOf<ImageBitmap?>(null) }
 
-    LifecycleResumeEffect(Unit) {
+    LifecycleStartEffect(Unit) {
         Logger.d(TAG) { "Started showing feed" }
-
-        // Start audio playback
-     //   audioReceiverRepository.startPlayback()
-
-        // Collect decoded video frames
-        val frameJob = scope.launch(Dispatchers.Default) {
-            videoReceiverRepository.decodedFrames.collect { frame ->
-                img = frame
+        val frameJob =
+            coroutineScope.launch(Dispatchers.Default) {
+                frames.collect { img = it }
             }
-        }
 
-        onPauseOrDispose {
+        onStopOrDispose {
             Logger.d(TAG) { "Stopped showing feed" }
             frameJob.cancel()
-      //      audioReceiverRepository.stopPlayback()
             img = null
         }
     }
