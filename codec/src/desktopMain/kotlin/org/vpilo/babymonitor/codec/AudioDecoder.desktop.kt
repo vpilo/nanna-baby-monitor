@@ -86,11 +86,19 @@ actual class AudioDecoder actual constructor(
         private val swrCtx: SwrContext,
     ) {
         fun decode(opusData: ByteArray) {
-            val dataPtr = BytePointer(*opusData)
+            val dataPtr = BytePointer(opusData.size.toLong())
+            dataPtr.put(opusData, 0, opusData.size)
+            dataPtr.position(0L)
+
             packet.data(dataPtr)
             packet.size(opusData.size)
 
             var ret = avcodec_send_packet(codecCtx, packet)
+            // Detach the packet from the data pointer before any early return,
+            // so FFmpeg does not attempt to free our manually-managed buffer.
+            packet.data(null as BytePointer?)
+            packet.size(0)
+
             if (ret < 0 && ret != AVERROR_EAGAIN()) {
                 dataPtr.close()
                 Logger.w(TAG) { "audio avcodec_send_packet error: $ret" }
@@ -112,22 +120,25 @@ actual class AudioDecoder actual constructor(
 
                 // Allocate output buffer for S16 interleaved
                 val outPtr = BytePointer(outBufSize.toLong())
-                val outPtrs = PointerPointer<BytePointer>(outPtr)
+                val outPtrs = PointerPointer<BytePointer>(1L).put(0, outPtr)
 
-                val convertedSamples = swr_convert(
-                    swrCtx,
-                    outPtrs, nbSamples,
-                    decodedFrame.data(), nbSamples,
-                )
+                try {
+                    val convertedSamples = swr_convert(
+                        swrCtx,
+                        outPtrs, nbSamples,
+                        decodedFrame.data(), nbSamples,
+                    )
 
-                if (convertedSamples > 0) {
-                    val pcmSize = convertedSamples * channels * bytesPerSample
-                    val pcmBytes = ByteArray(pcmSize)
-                    outPtr.get(pcmBytes)
-                    audioLine.write(pcmBytes, 0, pcmSize)
+                    if (convertedSamples > 0) {
+                        val pcmSize = convertedSamples * channels * bytesPerSample
+                        val pcmBytes = ByteArray(pcmSize)
+                        outPtr.position(0L).get(pcmBytes)
+                        audioLine.write(pcmBytes, 0, pcmSize)
+                    }
+                } finally {
+                    outPtrs.close()
+                    outPtr.close()
                 }
-
-                outPtr.close()
             }
 
             dataPtr.close()

@@ -99,11 +99,19 @@ actual class VideoDecoder actual constructor(
 
         fun decode(nalData: ByteArray, emit: (ImageBitmap) -> Unit) {
             // Fill packet with the raw NAL unit data
-            val dataPtr = BytePointer(*nalData)
+            val dataPtr = BytePointer(nalData.size.toLong())
+            dataPtr.put(nalData, 0, nalData.size)
+            dataPtr.position(0L)
+
             packet.data(dataPtr)
             packet.size(nalData.size)
 
             var ret = avcodec_send_packet(codecCtx, packet)
+            // Detach the packet from the data pointer before any early return,
+            // so FFmpeg does not attempt to free our manually-managed buffer.
+            packet.data(null as BytePointer?)
+            packet.size(0)
+
             if (ret < 0 && ret != AVERROR_EAGAIN()) {
                 dataPtr.close()
                 Logger.w(TAG) { "avcodec_send_packet error: $ret" }
