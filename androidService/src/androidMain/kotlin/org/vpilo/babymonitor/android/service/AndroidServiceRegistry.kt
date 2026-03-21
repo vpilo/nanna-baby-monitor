@@ -10,7 +10,10 @@ import java.lang.ref.WeakReference
 object AndroidServiceRegistry : KoinComponent {
     private val services: MutableSet<WeakReference<AndroidService>> = mutableSetOf()
 
-    private var isServiceRunning: Boolean = false
+    private var serviceInstance: LifecycleService? = null
+
+    val isServiceRunning: Boolean
+        get() = serviceInstance != null
 
     fun register(service: AndroidService) {
         if (services.any { it.get() == service }) {
@@ -25,6 +28,8 @@ object AndroidServiceRegistry : KoinComponent {
             val context: Context = get()
             val intent = Intent(context, AndroidServiceHost::class.java)
             context.startForegroundService(intent)
+        } else {
+            serviceInstance?.let { service.onServiceStarted(it, it) }
         }
     }
 
@@ -41,18 +46,18 @@ object AndroidServiceRegistry : KoinComponent {
             val context: Context = get()
             val intent = Intent(context, AndroidServiceHost::class.java)
             context.stopService(intent)
+        } else {
+            serviceInstance?.let { service.onServiceStopped() }
         }
     }
 
-    fun isServiceRunning() = isServiceRunning
-
     internal fun reportServiceStarted(service: LifecycleService) {
-        isServiceRunning = true
+        serviceInstance = service
         services.forEach { it.get()?.onServiceStarted(service, service) }
     }
 
     internal fun reportServiceStopped() {
-        isServiceRunning = false
+        serviceInstance = null
         services.forEach { it.get()?.onServiceStopped() }
     }
 
