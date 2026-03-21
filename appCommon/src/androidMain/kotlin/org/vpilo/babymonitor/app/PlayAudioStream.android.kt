@@ -50,7 +50,7 @@ actual suspend fun playAudioStream(input: AudioFrameFlow) {
             }
         }
             .invokeOnCompletion {
-                Logger.d(TAG) { "Stopping audio playback" }
+                Logger.d(TAG) { "Stopping audio playback: $it" }
                 audioTrack.stop()
                 audioTrack.release()
             }

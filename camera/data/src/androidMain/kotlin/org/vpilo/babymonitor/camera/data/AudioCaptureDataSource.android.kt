@@ -11,6 +11,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.android.service.AndroidService
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AudioFrame
 import org.vpilo.babymonitor.model.AudioFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
@@ -25,6 +26,7 @@ internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
     actual val samples: AudioFrameFlow = collector.asSharedFlow()
 
     override fun onServiceStarted(context: Context, lifecycleOwner: LifecycleOwner) {
+        Logger.d(TAG) { "Starting mic capture" }
         val audioSource = MediaRecorder.AudioSource.MIC
         val sampleRate = MediaFormats.Audio.SAMPLE_RATE
         val channelConfig = AudioFormat.CHANNEL_IN_MONO
@@ -46,6 +48,7 @@ internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
     }
 
     override fun onServiceStopped() {
+        Logger.d(TAG) { "Stopping mic capture" }
         recordingJob?.cancel()
         audioRecord?.stop()
         audioRecord?.release()

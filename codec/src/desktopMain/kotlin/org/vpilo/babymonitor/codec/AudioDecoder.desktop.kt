@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.codec
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.bytedeco.ffmpeg.avcodec.AVCodecContext
 import org.bytedeco.ffmpeg.avcodec.AVPacket
@@ -33,10 +32,6 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.MutableAudioFrameFlow
 import org.vpilo.babymonitor.model.StreamingAudioFlow
-import javax.sound.sampled.AudioFormat
-import javax.sound.sampled.AudioSystem
-import javax.sound.sampled.DataLine
-import javax.sound.sampled.SourceDataLine
 import kotlin.coroutines.CoroutineContext
 
 actual class AudioDecoder actual constructor(
@@ -54,12 +49,11 @@ actual class AudioDecoder actual constructor(
         }
 
         decodeJob = coroutineScope.launch {
-            val ctx = AudioDecoderContext.create()
+            val ctx = AudioDecoderContext.create(output)
             Logger.d(TAG) { "Audio decoder started" }
 
             try {
                 input.collect { chunk ->
-                    if (!isActive) return@collect
                     ctx.decode(chunk.data)
                 }
             } finally {
@@ -82,7 +76,7 @@ actual class AudioDecoder actual constructor(
         private val codecCtx: AVCodecContext,
         private val decodedFrame: AVFrame,
         private val packet: AVPacket,
-        private val audioLine: SourceDataLine,
+        private val output: MutableAudioFrameFlow,
         private val swrCtx: SwrContext,
     ) {
         fun decode(opusData: ByteArray) {
@@ -133,7 +127,7 @@ actual class AudioDecoder actual constructor(
                         val pcmSize = convertedSamples * channels * bytesPerSample
                         val pcmBytes = ByteArray(pcmSize)
                         outPtr.position(0L).get(pcmBytes)
-                        audioLine.write(pcmBytes, 0, pcmSize)
+                        output.tryEmit(pcmBytes)
                     }
                 } finally {
                     outPtrs.close()
@@ -145,8 +139,6 @@ actual class AudioDecoder actual constructor(
         }
 
         fun release() {
-            audioLine.stop()
-            audioLine.close()
             swr_free(swrCtx)
             avcodec_free_context(codecCtx)
             av_frame_free(decodedFrame)
@@ -156,7 +148,7 @@ actual class AudioDecoder actual constructor(
         companion object {
             private const val TAG = "AudioDecoderContext"
 
-            fun create(): AudioDecoderContext {
+            fun create(output: MutableAudioFrameFlow): AudioDecoderContext {
                 val codec = avcodec_find_decoder(AV_CODEC_ID_OPUS)
                     ?: error("Opus decoder not found.")
 
@@ -189,20 +181,7 @@ actual class AudioDecoder actual constructor(
                 val decodedFrame = av_frame_alloc()
                 val packet = av_packet_alloc()
 
-                // Open audio output line
-                val audioFormat = AudioFormat(
-                    MediaFormats.Audio.SAMPLE_RATE.toFloat(),
-                    MediaFormats.Audio.SAMPLE_SIZE_BITS,
-                    MediaFormats.Audio.CHANNELS,
-                    MediaFormats.Audio.SIGNED,
-                    MediaFormats.Audio.BIG_ENDIAN,
-                )
-                val lineInfo = DataLine.Info(SourceDataLine::class.java, audioFormat)
-                val audioLine = AudioSystem.getLine(lineInfo) as SourceDataLine
-                audioLine.open(audioFormat)
-                audioLine.start()
-
-                return AudioDecoderContext(codecCtx, decodedFrame, packet, audioLine, swrCtx)
+                return AudioDecoderContext(codecCtx, decodedFrame, packet, output, swrCtx)
             }
         }
     }

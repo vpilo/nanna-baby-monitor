@@ -29,19 +29,17 @@ actual suspend fun playAudioStream(input: AudioFrameFlow) {
 
         coroutineScope {
             launch {
+                Logger.d(TAG) { "Starting audio playback" }
                 input.collect { chunk ->
-                    Logger.d(TAG) { "Starting audio playback" }
                     if (!isActive) return@collect
                     audioLine.write(chunk, 0, chunk.size)
                 }
             }
                 .invokeOnCompletion {
-                    Logger.d(TAG) { "Stopping audio playback" }
+                    Logger.d(TAG) { "Stopping audio playback: $it" }
                     audioLine.stop()
                     audioLine.close()
                 }
         }
-    }.onFailure {
-        Logger.e(TAG) { "Failed to play audio stream: ${it.message}" }
     }
 }

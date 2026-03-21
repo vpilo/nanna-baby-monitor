@@ -64,7 +64,7 @@ actual class VideoDecoder actual constructor(
                         Logger.d(TAG) { "Video decoder started" }
                     }
 
-                    ctx?.decode(chunk.data) { bitmap ->
+                    ctx.decode(chunk.data) { bitmap ->
                         output.tryEmit(bitmap)
                     }
                 }

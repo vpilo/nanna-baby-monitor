@@ -23,11 +23,13 @@ actual class AudioEncoder actual constructor(
 
     private var audioEncoder: MediaCodec? = null
     private var audioEncodeJob: Job? = null
+    private var presentationTimeUs = 0L
 
     actual fun start() {
         if (audioEncodeJob?.isActive == true) return
 
         audioEncodeJob = coroutineScope.launch {
+            presentationTimeUs = 0L
             val codec = createAudioEncoder()
             audioEncoder = codec
             Logger.d(TAG) { "Audio encoder started" }
@@ -64,6 +66,7 @@ actual class AudioEncoder actual constructor(
     }
 
     private fun encodeAudioChunk(codec: MediaCodec, pcmData: ByteArray) {
+        val bytesPerSample = MediaFormats.Audio.SAMPLE_SIZE_BITS / 8 * MediaFormats.Audio.CHANNELS
         var offset = 0
         while (offset < pcmData.size) {
             val inputIndex = codec.dequeueInputBuffer(CODEC_TIMEOUT_US)
@@ -73,7 +76,13 @@ actual class AudioEncoder actual constructor(
             inputBuffer.clear()
             val size = minOf(pcmData.size - offset, inputBuffer.remaining())
             inputBuffer.put(pcmData, offset, size)
-            codec.queueInputBuffer(inputIndex, 0, size, 0, 0)
+
+            codec.queueInputBuffer(inputIndex, 0, size, presentationTimeUs, 0)
+
+            // Advance PTS by the duration of the samples queued
+            val samplesQueued = size / bytesPerSample
+            presentationTimeUs += samplesQueued * 1_000_000L / MediaFormats.Audio.SAMPLE_RATE
+
             offset += size
         }
 
