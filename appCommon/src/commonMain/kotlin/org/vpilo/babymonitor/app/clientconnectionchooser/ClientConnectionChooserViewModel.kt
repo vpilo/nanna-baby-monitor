@@ -1,9 +1,7 @@
-package org.vpilo.babymonitor.app.client
+package org.vpilo.babymonitor.app.clientconnectionchooser
 
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
@@ -13,31 +11,27 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.app.clientconnectionchooser.ClientConnectionChooserAction
-import org.vpilo.babymonitor.app.clientconnectionchooser.ClientConnectionChooserState
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.AudioFrame
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
-import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import kotlin.time.Duration.Companion.seconds
 
-class ClientHomeViewModel(
-    videoReceiverRepository: StreamingVideoReceiverRepository,
-    audioReceiverRepository: StreamingAudioReceiverRepository,
+class ClientConnectionChooserViewModel(
     private val networkClientRepository: NetworkClientRepository,
 ) : ViewModel() {
 
-    val frames: Flow<ImageBitmap> = videoReceiverRepository.decodedFrames
-
-    val audio: Flow<AudioFrame> = audioReceiverRepository.chunks
-
-    private val _state = MutableStateFlow(ClientHomeState())
+    private val _state = MutableStateFlow(ClientConnectionChooserState())
     val state = _state
         .onStart {
+            networkClientRepository.discoveredServers
+                .onEach { list ->
+                    Logger.d("ClientConnectionChooserViewModel") { "Discovered server list: $list" }
+                    _state.update { it.copy(availableServers = list) }
+                }
+                .launchIn(viewModelScope)
+
             networkClientRepository.stateFlow
                 .onEach { state ->
-                    Logger.d("ClientHomeViewModel") { "Net state updated: $state" }
+                    Logger.d("ClientConnectionChooserViewModel") { "Net state updated: $state" }
                     _state.update { it.copy(networkState = state) }
                 }
                 .launchIn(viewModelScope)

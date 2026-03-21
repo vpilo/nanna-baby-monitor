@@ -1,54 +1,38 @@
-package org.vpilo.babymonitor.app.client
+package org.vpilo.babymonitor.app.server
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.flow.Flow
-import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.AudioFrame
-import org.vpilo.babymonitor.model.repository.NetworkState
+import org.vpilo.babymonitor.camera.presentation.CameraViewFinder
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.BackButton
 
 @Composable
-fun ClientHomeScreen(
+fun ServerHomeScreen(
     modifier: Modifier = Modifier,
-    viewModel: ClientHomeViewModel,
-    onDisconnected: () -> Unit,
+    viewModel: ServerHomeViewModel,
     onBackClicked: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state.networkState) {
-        with(state.networkState) {
-            if (this is NetworkState.Disconnected) {
-                Logger.d("ClientHomeScreen") { "Disconnecting!" }
-                onDisconnected()
-            }
-        }
-    }
-
-    ClientHomeScreenContent(
-        modifier = modifier.fillMaxSize(),
+    ServerHomeComposable(
+        modifier = modifier,
         onBackClicked = onBackClicked,
-        frames = viewModel.frames,
-        chunks = viewModel.audio,
+        isServerAvailable = state.isAvailable,
     )
 }
 
 @Composable
-private fun ClientHomeScreenContent(
+private fun ServerHomeComposable(
     modifier: Modifier = Modifier,
     onBackClicked: () -> Unit,
-    frames: Flow<ImageBitmap>,
-    chunks: Flow<AudioFrame>,
+    isServerAvailable: Boolean,
 ) {
     Column(modifier = modifier) {
         BackButton(
@@ -57,11 +41,17 @@ private fun ClientHomeScreenContent(
         )
 
         Text(
-            text = "Monitor",
+            text = "Camera",
             style = MaterialTheme.typography.titleMedium,
             color = Theme.Colors.text,
         )
-        AudioFeed(chunks = chunks)
-        CameraFeed(frames = frames)
+        Text(
+            text = if (isServerAvailable) "Available for connections." else "Server not available!",
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isServerAvailable) Theme.Colors.text else Theme.Colors.error,
+        )
+        Box(modifier = modifier.fillMaxSize()) {
+            CameraViewFinder()
+        }
     }
 }

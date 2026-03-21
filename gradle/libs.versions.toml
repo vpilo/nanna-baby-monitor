@@ -4,7 +4,6 @@ kotlinx-coroutines = "1.10.2"
 kotlin-serialization = "1.10.0"
 agp = "9.1.0"
 koin = "4.1.1"
-ktor = "3.4.1"
 coil3 = "3.4.0"
 ksp = "2.3.2"
 slf4j = "2.0.17"
@@ -27,6 +26,9 @@ guava = "33.5.0-android"
 webcam-capture = "0.3.12"
 javacpp = "1.5.13"
 ffmpeg = "8.0.1-1.5.13"
+
+ktor = "3.4.1"
+jmdns = "3.6.3"
 
 junit = "4.13.2"
 
@@ -77,6 +79,7 @@ ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 ktor-server-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
+jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil3" }

@@ -19,7 +19,7 @@ import babymonitor.appcommon.generated.resources.app_role_choice_presentation
 import babymonitor.appcommon.generated.resources.app_role_monitor
 import babymonitor.appcommon.generated.resources.app_role_record
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.model.di.AppRole
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.MaxUserInterfaceWidth
 import org.vpilo.babymonitor.presentation.Theme
 
@@ -47,7 +47,7 @@ fun AppRoleChoiceScreen(
                 color = Theme.Colors.text,
             )
             Button(
-                onClick = { onRoleChosen(AppRole.CAMERA) },
+                onClick = { onRoleChosen(AppRole.SERVER) },
                 modifier = Modifier.padding(vertical = Theme.Paddings.Medium),
             ) {
                 Text(
@@ -63,7 +63,7 @@ fun AppRoleChoiceScreen(
             )
 
             Button(
-                onClick = { onRoleChosen(AppRole.MONITOR) },
+                onClick = { onRoleChosen(AppRole.CLIENT) },
                 modifier = Modifier.padding(vertical = Theme.Paddings.Medium),
             ) {
                 Text(

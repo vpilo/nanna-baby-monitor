@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.app
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,21 +11,18 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
-import org.vpilo.babymonitor.app.client.ClientHomeScreenRoot
+import org.vpilo.babymonitor.app.client.ClientHomeScreen
+import org.vpilo.babymonitor.app.clientconnectionchooser.ClientConnectionChooserScreen
 import org.vpilo.babymonitor.app.navigation.Route
-import org.vpilo.babymonitor.app.server.ServerViewScreenRoot
+import org.vpilo.babymonitor.app.server.ServerHomeScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
-import org.vpilo.babymonitor.model.di.AppRole
-import org.vpilo.babymonitor.network.client.createNetworkClient
-import org.vpilo.babymonitor.network.server.createNetworkServer
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.AppTheme
 
-// Temporary role assignment at startup, until onboarding is implemented.
-var CURRENT_APP_ROLE: AppRole = AppRole.CAMERA
-    private set
-
 @Composable
-fun App() {
+fun App(
+    viewModel: AppUiFlowViewModel = koinViewModel(),
+) {
     AppTheme {
         val navController = rememberNavController()
         val context = rememberCoroutineScope()
@@ -38,12 +34,15 @@ fun App() {
                 composable<Route.AppRoleChooser> {
                     AppRoleChoiceScreen(
                         onRoleChosen = { role ->
-                            CURRENT_APP_ROLE = role
+                            viewModel.onAction(AppUiFlowAction.RoleChosen(role))
+                            when (role) {
+                                AppRole.SERVER ->
+                                    navController.navigate(Route.PermissionCheck)
 
-                            if (CURRENT_APP_ROLE == AppRole.CAMERA) {
-                                navController.navigate(Route.PermissionCheck)
-                            } else {
-                                navController.navigate(Route.ClientPreview)
+                                AppRole.CLIENT ->
+                                    navController.navigate(Route.ClientConnectionChooser)
+
+                                AppRole.UNDECIDED -> error("UNDECIDED role should not be selectable")
                             }
                         },
                     )
@@ -54,39 +53,69 @@ fun App() {
                 ) {
                     PermissionCheckScreen(
                         onAllPermissionsGranted = {
-                            navController.navigate(Route.ServerPreview)
+                            navController.navigate(Route.ServerHome)
                         },
                     )
                 }
-                composable<Route.ClientPreview>(
+                composable<Route.ServerHome>(
                     exitTransition = { slideOutHorizontally() },
                     popEnterTransition = { slideInHorizontally() },
                 ) {
-                    LaunchedEffect(Unit) {
-                        createNetworkClient(
-                            onDisconnect = {
-                                context.launch {
-                                    navController.navigate(Route.RootNavGraph) {
-                                        popUpTo(Route.RootNavGraph) {
-                                            inclusive = true
-                                        }
+                    ServerHomeScreen(
+                        viewModel = koinViewModel(),
+                        onBackClicked = {
+                            context.launch {
+                                navController.navigate(Route.RootNavGraph) {
+                                    popUpTo(Route.RootNavGraph) {
+                                        inclusive = true
                                     }
                                 }
-                            },
-                        )
-                    }
-                    ClientHomeScreenRoot(
-                        viewModel = koinViewModel(),
+                            }
+                        },
                     )
                 }
-                composable<Route.ServerPreview>(
+                composable<Route.ClientConnectionChooser> {
+                    ClientConnectionChooserScreen(
+                        viewModel = koinViewModel(),
+                        onConnected = {
+                            context.launch {
+                                navController.navigate(Route.ClientHome) {
+                                    popUpTo(Route.ClientConnectionChooser) { inclusive = true }
+                                }
+                            }
+                        },
+                        onBackClicked = {
+                            context.launch {
+                                navController.navigate(Route.AppRoleChooser) {
+                                    popUpTo(Route.AppRoleChooser) {
+                                        inclusive = true
+                                    }
+                                }
+                            }
+                        },
+                    )
+                }
+                composable<Route.ClientHome>(
                     exitTransition = { slideOutHorizontally() },
                     popEnterTransition = { slideInHorizontally() },
                 ) {
-                    LaunchedEffect(Unit) {
-                        createNetworkServer()
-                    }
-                    ServerViewScreenRoot()
+                    ClientHomeScreen(
+                        viewModel = koinViewModel(),
+                        onBackClicked = {
+                            context.launch {
+                                navController.navigate(Route.RootNavGraph) {
+                                    popUpTo(Route.RootNavGraph) {
+                                        inclusive = true
+                                    }
+                                }
+                            }
+                        },
+                        onDisconnected = {
+                            context.launch {
+                                navController.popBackStack()
+                            }
+                        },
+                    )
                 }
             }
         }

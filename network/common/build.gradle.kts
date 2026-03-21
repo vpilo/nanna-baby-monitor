@@ -26,6 +26,9 @@ kotlin {
             implementation(project(":model"))
 
             implementation(libs.ktor.websockets)
+            implementation(libs.jmdns)
+
+            implementation(libs.koin.core)
         }
     }
 }

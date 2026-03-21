@@ -14,8 +14,10 @@ sealed interface Route {
     data object PermissionCheck : Route
 
     @Serializable
-    data object ClientPreview : Route
+    data object ClientConnectionChooser : Route
+    @Serializable
+    data object ClientHome : Route
 
     @Serializable
-    data object ServerPreview : Route
+    data object ServerHome : Route
 }
