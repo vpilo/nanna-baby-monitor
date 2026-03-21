@@ -2,14 +2,12 @@ package org.vpilo.babymonitor.network.client
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.websocket.ClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.HttpMethod
-import io.ktor.websocket.CloseReason
-import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
@@ -25,11 +23,32 @@ private val networkClient: HttpClient by lazy {
     }
 }
 
-private var currentSession: ClientWebSocketSession? = null
-
-suspend fun createNetworkClient(coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO) {
+suspend fun createNetworkClient(
+    onDisconnect: suspend (Throwable?) -> Unit,
+    coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO
+) {
     coroutineScope {
-        launch(coroutineDispatcher) {
+        var audioStreamJob: Job? = null
+        var videoStreamJob: Job? = null
+
+        suspend fun onConnectionClosed(exception: Throwable, onDisconnect: suspend (Throwable?) -> Unit) {
+            audioStreamJob?.cancel()
+            audioStreamJob = null
+            videoStreamJob?.cancel()
+            videoStreamJob = null
+
+            onDisconnect(
+                if (exception is ConnectException) {
+                    Logger.i(TAG) { "Connection to server closed." }
+                    null
+                } else {
+                    Logger.w(TAG) { "WebSocket failure (${exception::class.simpleName}): ${exception.localizedMessage}" }
+                    exception
+                },
+            )
+        }
+
+        audioStreamJob = launch(coroutineDispatcher) {
             try {
                 networkClient.webSocket(
                     method = HttpMethod.Get,
@@ -37,17 +56,13 @@ suspend fun createNetworkClient(coroutineDispatcher: CoroutineDispatcher = Dispa
                     port = Constants.COMMUNICATION_PORT,
                     path = Endpoints.STREAM_AUDIO,
                 ) {
-                    if (currentSession != null) {
-                        currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New audio session created."))
-                    }
-                    currentSession = this
                     audioStreamingClientWebSocket()
                 }
-            } catch (ex: ConnectException) {
-                Logger.w("Client") { "Connection to server failed: ${ex.message}" }
+            } catch (ex: Exception) {
+                onConnectionClosed(ex, onDisconnect)
             }
         }
-        launch(coroutineDispatcher) {
+        videoStreamJob = launch(coroutineDispatcher) {
             try {
                 networkClient.webSocket(
                     method = HttpMethod.Get,
@@ -55,15 +70,13 @@ suspend fun createNetworkClient(coroutineDispatcher: CoroutineDispatcher = Dispa
                     port = Constants.COMMUNICATION_PORT,
                     path = Endpoints.STREAM_VIDEO,
                 ) {
-                    if (currentSession != null) {
-                        currentSession?.close(CloseReason(CloseReason.Codes.GOING_AWAY, "New video session created."))
-                    }
-                    currentSession = this
                     videoStreamingClientWebSocket()
                 }
-            } catch (ex: ConnectException) {
-                Logger.w("Client") { "Connection to server failed: ${ex.message}" }
+            } catch (ex: Exception) {
+                onConnectionClosed(ex, onDisconnect)
             }
         }
     }
 }
+
+private const val TAG = "NetworkClient"

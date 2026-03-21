@@ -1,28 +1,29 @@
 package org.vpilo.babymonitor.network.server.websockets
 
 import io.ktor.server.websocket.DefaultWebSocketServerSession
-import io.ktor.websocket.CloseReason
-import io.ktor.websocket.close
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.network.common.protocol.protocolSendAudio
+import kotlin.coroutines.cancellation.CancellationException
 
 internal suspend fun DefaultWebSocketServerSession.audioStreamingServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
 
     Logger.d(TAG) { "New audio streaming client connected" }
 
-    repository.chunks
-        // FIXME SharedFlows don't complete, need to close manually instead of this. maybe make a flow of repo states instead,
-        //  could be useful later, e.g. to show if there's no activity to send.
-        .onCompletion {
-            close(CloseReason(CloseReason.Codes.GOING_AWAY, "Camera feed ended."))
+    runCatching {
+        repository.chunks
+            .collect {
+                protocolSendAudio(it)
+            }
+    }.onFailure { ex ->
+        if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
+            Logger.i(TAG) { "WebSocket closed (${ex::class.simpleName}): ${ex.localizedMessage}" }
         }
-        .collect {
-            protocolSendAudio(it)
-        }
+    }
 }
 
 private const val TAG = "NetworkServer-Audio"

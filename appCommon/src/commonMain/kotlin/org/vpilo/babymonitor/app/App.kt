@@ -4,10 +4,12 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.client.ClientHomeScreenRoot
@@ -27,6 +29,7 @@ var CURRENT_APP_ROLE: AppRole = AppRole.CAMERA
 fun App() {
     AppTheme {
         val navController = rememberNavController()
+        val context = rememberCoroutineScope()
         NavHost(
             navController = navController,
             startDestination = Route.RootNavGraph,
@@ -60,10 +63,20 @@ fun App() {
                     popEnterTransition = { slideInHorizontally() },
                 ) {
                     LaunchedEffect(Unit) {
-                        createNetworkClient()
+                        createNetworkClient(
+                            onDisconnect = {
+                                context.launch {
+                                    navController.navigate(Route.RootNavGraph) {
+                                        popUpTo(Route.RootNavGraph) {
+                                            inclusive = true
+                                        }
+                                    }
+                                }
+                            },
+                        )
                     }
                     ClientHomeScreenRoot(
-                        viewModel = koinViewModel()
+                        viewModel = koinViewModel(),
                     )
                 }
                 composable<Route.ServerPreview>(
