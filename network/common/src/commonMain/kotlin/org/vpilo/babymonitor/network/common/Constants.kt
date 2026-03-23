@@ -11,5 +11,5 @@ object Constants {
     const val DISCOVERY_SERVICE_NAME = "BabyMonitor"
     const val DISCOVERY_SERVICE_DESCRIPTION = "Baby Monitor service"
 
-    val SERVICES_LISTEN_ADDRESS: InetAddress = InetAddress.getLocalHost()
+    const val SERVICES_LISTEN_ADDRESS: String = "0.0.0.0"
 }

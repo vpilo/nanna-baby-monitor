@@ -1,6 +1,9 @@
 package org.vpilo.babymonitor.network.server
 
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.ServerReady
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.EmbeddedServer
@@ -14,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
@@ -42,16 +46,27 @@ internal class DefaultNetworkServerRepository(
         discoveryManager.registerService()
 
         withContext(coroutineContext) {
-            val newServer =
-                embeddedServer(
+            embeddedServer(
                     factory = CIO,
                     module = Application::module,
-                    host = Constants.SERVICES_LISTEN_ADDRESS.hostAddress,
+                    host = Constants.SERVICES_LISTEN_ADDRESS,
                     port = Constants.WEBSOCKET_PORT,
                 )
-            server = newServer
-            newServer.start(wait = true)
-            state.value = true
+                .apply {
+                    server = this
+
+                    monitor.subscribe(ServerReady) {
+                        Logger.i(TAG) { "Server is ready at ${Constants.SERVICES_LISTEN_ADDRESS}" }
+                        state.value = true
+                    }
+                    monitor.subscribe(ApplicationStopped) {
+                        Logger.i(TAG) { "Server is stopping" }
+                        state.value = false
+                        monitor.unsubscribe(ApplicationStarted) {}
+                        monitor.unsubscribe(ApplicationStopped) {}
+                    }
+                    start(wait = false)
+                }
         }
     }
 
@@ -61,12 +76,16 @@ internal class DefaultNetworkServerRepository(
         server = null
         state.value = false
     }
+
+    private companion object {
+        private val TAG = DefaultNetworkServerRepository::class
+    }
 }
 
 private fun Application.module() {
     install(WebSockets) {
-        pingPeriod = 15.seconds
-        timeout = 15.seconds
+        pingPeriod = 5.seconds
+        timeout = 3.seconds
         maxFrameSize = Long.MAX_VALUE
         masking = false
     }
