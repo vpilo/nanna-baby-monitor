@@ -50,7 +50,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(caller.asTag(), LogLevel.WARN, message(), throwable)
+        platformLogger.log(caller.asTag(), LogLevel.INFO, message(), throwable)
     }
 
     /**
@@ -63,7 +63,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(tag, LogLevel.WARN, message(), throwable)
+        platformLogger.log(tag, LogLevel.INFO, message(), throwable)
     }
 
     /**

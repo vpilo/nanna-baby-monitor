@@ -25,3 +25,5 @@ use https://github.com/jmdns/jmdns or https://github.com/faceless2/zeroconf for 
 use https://github.com/pavi2410/kmp-app-updater for app updates
 
 https://dev.to/coltonidle/compose-for-desktop-window-tricks-55mf window tricks for compose desktop
+
+use https://github.com/kinsleykajiva/jopus to replace ffmpeg and android mediacodec for audio.
