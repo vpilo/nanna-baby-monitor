@@ -6,7 +6,7 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "org.vpilo.babymonitor.network.common"
         minSdk = libs.versions.android.minSdk.get().toInt()
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -14,6 +14,10 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
+    }
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
     jvm("desktop")
@@ -26,9 +30,12 @@ kotlin {
             implementation(project(":model"))
 
             implementation(libs.ktor.websockets)
-            implementation(libs.jmdns)
 
             implementation(libs.koin.core)
+        }
+
+        desktopMain.dependencies {
+            implementation(libs.jmdns)
         }
     }
 }
