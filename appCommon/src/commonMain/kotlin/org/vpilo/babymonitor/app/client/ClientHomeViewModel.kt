@@ -12,21 +12,18 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.AudioFrame
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
-import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
+import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 
 class ClientHomeViewModel(
     videoReceiverRepository: StreamingVideoReceiverRepository,
-    audioReceiverRepository: StreamingAudioReceiverRepository,
     private val networkClientRepository: NetworkClientRepository,
+    private val playReceivedAudio: PlayReceivedAudioUseCase,
 ) : ViewModel() {
 
     val frames: Flow<ImageBitmap> = videoReceiverRepository.decodedFrames
-
-    val audio: Flow<AudioFrame> = audioReceiverRepository.chunks
 
     private val _disconnectedEvents = Channel<Unit>(Channel.RENDEZVOUS)
     val disconnectedEvents = _disconnectedEvents.receiveAsFlow()
@@ -44,9 +41,21 @@ class ClientHomeViewModel(
                 }
             }
             .launchIn(viewModelScope)
+
+        playReceivedAudio.isPlaying
+            .onEach { playing ->
+                _state.update { it.copy(isAudioPlaying = playing) }
+            }
+            .launchIn(viewModelScope)
     }
 
-    private companion object {
+    fun onAction(action: ClientHomeAction) {
+        when (action) {
+            ClientHomeAction.ToggleAudio -> playReceivedAudio.toggle(viewModelScope)
+        }
+    }
+
+    companion object {
         private val TAG = ClientHomeViewModel::class
     }
 }

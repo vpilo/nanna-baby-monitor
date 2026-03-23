@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app
+package org.vpilo.babymonitor.data
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
@@ -6,15 +6,15 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AudioFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
+import org.vpilo.babymonitor.model.repository.AudioPlaybackRepository
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.SourceDataLine
 
-private const val TAG = "playAudioStream"
+internal actual class DefaultAudioPlaybackRepository actual constructor() : AudioPlaybackRepository {
 
-actual suspend fun playAudioStream(input: AudioFrameFlow) {
-    runCatching {
+    override suspend fun play(input: AudioFrameFlow) {
         val audioFormat = AudioFormat(
             MediaFormats.Audio.SAMPLE_RATE.toFloat(),
             MediaFormats.Audio.SAMPLE_SIZE_BITS,
@@ -42,4 +42,9 @@ actual suspend fun playAudioStream(input: AudioFrameFlow) {
                 }
         }
     }
+
+    private companion object {
+        private val TAG = DefaultAudioPlaybackRepository::class
+    }
 }
+

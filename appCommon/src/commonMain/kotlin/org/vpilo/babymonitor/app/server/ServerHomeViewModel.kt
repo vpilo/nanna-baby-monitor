@@ -17,15 +17,15 @@ class ServerHomeViewModel(
     val state = _state.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            server.start()
-        }
-
         server.stateFlow
             .onEach { isAvailable ->
                 _state.value = ServerHomeState(isAvailable = isAvailable)
             }
             .launchIn(viewModelScope)
+
+        viewModelScope.launch {
+            server.start()
+        }
     }
 
     override fun onCleared() {

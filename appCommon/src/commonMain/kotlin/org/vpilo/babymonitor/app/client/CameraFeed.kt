@@ -14,8 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.compose.LifecycleStartEffect
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
@@ -28,25 +26,14 @@ fun CameraFeed(
     modifier: Modifier = Modifier,
     frames: Flow<ImageBitmap>,
 ) {
-    val scope = rememberCoroutineScope()
-
-    CameraFeedView(modifier = modifier, coroutineScope = scope, frames = frames)
-}
-
-@Composable
-private fun CameraFeedView(
-    modifier: Modifier = Modifier,
-    coroutineScope: CoroutineScope,
-    frames: Flow<ImageBitmap>,
-) {
     var img by remember { mutableStateOf<ImageBitmap?>(null) }
+    val scope = rememberCoroutineScope()
 
     LifecycleStartEffect(Unit) {
         Logger.d(TAG) { "Started showing feed" }
-        val frameJob =
-            coroutineScope.launch(Dispatchers.Default) {
-                frames.collect { img = it }
-            }
+        val frameJob = scope.launch {
+            frames.collect { img = it }
+        }
 
         onStopOrDispose {
             Logger.d(TAG) { "Stopped showing feed" }

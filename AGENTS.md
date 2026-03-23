@@ -51,7 +51,8 @@ KMP project with `androidLibrary` and `jvm("desktop")` targets.
 ## Conventions
 
 - **Package root:** `org.vpilo.babymonitor`
-- **Logging:** Use `Logger.d(TAG) { "message" }` from `common` module. TAG is typically the class's `KClass` reference. Declare TAG in the companion object of each class: `companion object { private val TAG = MyClass::class }` or as a top level string for anything else needing logging.
+- **Logging:** Use `Logger.d(TAG) { "message" }` from `common` module. TAG is typically the class's `KClass` reference. Declare TAG in the companion object of each class: `companion object { private val TAG = MyClass::class }`, or as a top level string for anything else needing logging.
+- **Companion objects:** Should be at the bottom of a class and made private unless necessary.
 - **Dependencies:** Managed via version catalog at `gradle/libs.versions.toml`. Use `libs.` references in `build.gradle.kts`.
 - **No tests exist yet** — the project has no test source sets.
 
