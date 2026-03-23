@@ -3,20 +3,19 @@ package org.vpilo.babymonitor.app
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.client.ClientHomeScreen
 import org.vpilo.babymonitor.app.clientconnectionchooser.ClientConnectionChooserScreen
+import org.vpilo.babymonitor.app.navigation.NavigationEvent
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.server.ServerHomeScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
-import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.AppTheme
 
 @Composable
@@ -25,7 +24,15 @@ fun App(
 ) {
     AppTheme {
         val navController = rememberNavController()
-        val context = rememberCoroutineScope()
+
+        LaunchedEffect(Unit) {
+            viewModel.navigationEvents.collect { event ->
+                when (event) {
+                    is NavigationEvent.NavigateTo -> navController.navigate(event.route)
+                }
+            }
+        }
+
         NavHost(
             navController = navController,
             startDestination = Route.RootNavGraph,
@@ -35,15 +42,6 @@ fun App(
                     AppRoleChoiceScreen(
                         onRoleChosen = { role ->
                             viewModel.onAction(AppUiFlowAction.RoleChosen(role))
-                            when (role) {
-                                AppRole.SERVER ->
-                                    navController.navigate(Route.PermissionCheck)
-
-                                AppRole.CLIENT ->
-                                    navController.navigate(Route.ClientConnectionChooser)
-
-                                AppRole.UNDECIDED -> error("UNDECIDED role should not be selectable")
-                            }
                         },
                     )
                 }
@@ -64,12 +62,8 @@ fun App(
                     ServerHomeScreen(
                         viewModel = koinViewModel(),
                         onBackClicked = {
-                            context.launch {
-                                navController.navigate(Route.RootNavGraph) {
-                                    popUpTo(Route.RootNavGraph) {
-                                        inclusive = true
-                                    }
-                                }
+                            navController.navigate(Route.RootNavGraph) {
+                                popUpTo(Route.RootNavGraph) { inclusive = true }
                             }
                         },
                     )
@@ -78,19 +72,13 @@ fun App(
                     ClientConnectionChooserScreen(
                         viewModel = koinViewModel(),
                         onConnected = {
-                            context.launch {
-                                navController.navigate(Route.ClientHome) {
-                                    popUpTo(Route.ClientConnectionChooser) { inclusive = true }
-                                }
+                            navController.navigate(Route.ClientHome) {
+                                popUpTo(Route.ClientConnectionChooser) { inclusive = true }
                             }
                         },
                         onBackClicked = {
-                            context.launch {
-                                navController.navigate(Route.AppRoleChooser) {
-                                    popUpTo(Route.AppRoleChooser) {
-                                        inclusive = true
-                                    }
-                                }
+                            navController.navigate(Route.AppRoleChooser) {
+                                popUpTo(Route.AppRoleChooser) { inclusive = true }
                             }
                         },
                     )
@@ -102,18 +90,12 @@ fun App(
                     ClientHomeScreen(
                         viewModel = koinViewModel(),
                         onBackClicked = {
-                            context.launch {
-                                navController.navigate(Route.RootNavGraph) {
-                                    popUpTo(Route.RootNavGraph) {
-                                        inclusive = true
-                                    }
-                                }
+                            navController.navigate(Route.RootNavGraph) {
+                                popUpTo(Route.RootNavGraph) { inclusive = true }
                             }
                         },
                         onDisconnected = {
-                            context.launch {
-                                navController.popBackStack()
-                            }
+                            navController.popBackStack()
                         },
                     )
                 }
