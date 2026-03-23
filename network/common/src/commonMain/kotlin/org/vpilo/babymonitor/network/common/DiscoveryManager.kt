@@ -14,9 +14,7 @@ import javax.jmdns.ServiceInfo
 import javax.jmdns.ServiceListener
 import kotlin.coroutines.CoroutineContext
 
-class DiscoveryManager(
-    private val coroutineContext: CoroutineContext
-) {
+class DiscoveryManager {
     private val discoveryService = JmDNS.create(Constants.SERVICES_LISTEN_ADDRESS)
 
     private val remoteServiceListener = RemoteServiceListener()

@@ -2,7 +2,9 @@ package org.vpilo.babymonitor.network.di
 
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.withOptions
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
@@ -13,6 +15,7 @@ import org.vpilo.babymonitor.network.client.NetworkAudioDataSource
 import org.vpilo.babymonitor.network.client.NetworkAudioReceiverRepository
 import org.vpilo.babymonitor.network.client.NetworkVideoDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoReceiverRepository
+import org.vpilo.babymonitor.network.common.DiscoveryManager
 
 val networkClientKoinModule: Module =
     module {
@@ -26,4 +29,7 @@ val networkClientKoinModule: Module =
 
         singleOf(::DefaultNetworkClientRepository)
             .bind<NetworkClientRepository>()
+
+        singleOf(::DiscoveryManager)
+            .withOptions { createdAtStart() }
     }
