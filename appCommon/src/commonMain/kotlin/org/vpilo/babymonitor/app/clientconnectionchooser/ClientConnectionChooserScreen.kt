@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.app.clientconnectionchooser
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
@@ -40,11 +39,9 @@ fun ClientConnectionChooserScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state.networkState) {
-        with(state.networkState) {
-            if (this is NetworkState.Connected) {
-                onConnected(address)
-            }
+    LaunchedEffect(Unit) {
+        viewModel.connectedEvents.collect { address ->
+            onConnected(address)
         }
     }
 

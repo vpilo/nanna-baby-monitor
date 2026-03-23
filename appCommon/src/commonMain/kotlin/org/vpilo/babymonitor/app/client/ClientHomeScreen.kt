@@ -6,16 +6,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AudioFrame
-import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.BackButton
+
+private const val TAG = "ClientHomeScreen"
 
 @Composable
 fun ClientHomeScreen(
@@ -24,14 +23,10 @@ fun ClientHomeScreen(
     onDisconnected: () -> Unit,
     onBackClicked: () -> Unit,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(state.networkState) {
-        with(state.networkState) {
-            if (this is NetworkState.Disconnected) {
-                Logger.d("ClientHomeScreen") { "Disconnecting!" }
-                onDisconnected()
-            }
+    LaunchedEffect(Unit) {
+        viewModel.disconnectedEvents.collect {
+            Logger.d(TAG) { "Disconnecting!" }
+            onDisconnected()
         }
     }
 
