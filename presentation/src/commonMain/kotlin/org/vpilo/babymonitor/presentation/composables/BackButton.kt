@@ -19,15 +19,18 @@ import androidx.compose.ui.graphics.Color
 import babymonitor.presentation.generated.resources.Res
 import babymonitor.presentation.generated.resources.back
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.material3.MaterialTheme
 import org.vpilo.babymonitor.presentation.Theme
-
-private val buttonBackgroundBrush = Brush.radialGradient(listOf(Theme.Colors.accent, Color.Transparent), radius = 15f)
 
 @Composable
 fun BackButton(
     onBackClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val buttonBackgroundBrush = Brush.radialGradient(
+        listOf(MaterialTheme.colorScheme.secondary, Color.Transparent),
+        radius = 15f
+    )
     Box(
         contentAlignment = Alignment.TopStart,
         modifier = modifier
@@ -42,6 +45,7 @@ fun BackButton(
             Icon(
                 imageVector = Icons.AutoMirrored.Default.ArrowBack,
                 contentDescription = stringResource(Res.string.back),
+                tint = MaterialTheme.colorScheme.onSecondary,
             )
         }
     }

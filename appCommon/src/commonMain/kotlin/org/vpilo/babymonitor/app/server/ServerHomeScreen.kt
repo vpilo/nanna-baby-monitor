@@ -17,38 +17,25 @@ import org.vpilo.babymonitor.presentation.composables.BackButton
 fun ServerHomeScreen(
     modifier: Modifier = Modifier,
     viewModel: ServerHomeViewModel,
-    onBackClicked: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     ServerHomeComposable(
         modifier = modifier,
-        onBackClicked = onBackClicked,
         isServerAvailable = state.isAvailable,
     )
 }
 
 @Composable
 private fun ServerHomeComposable(
-    modifier: Modifier = Modifier,
-    onBackClicked: () -> Unit,
+    modifier: Modifier,
     isServerAvailable: Boolean,
 ) {
     Column(modifier = modifier) {
-        BackButton(
-            modifier = Modifier,
-            onBackClicked = onBackClicked,
-        )
-
-        Text(
-            text = "Camera",
-            style = MaterialTheme.typography.titleMedium,
-            color = Theme.Colors.text,
-        )
         Text(
             text = if (isServerAvailable) "Available for connections." else "Server not available!",
             style = MaterialTheme.typography.bodyMedium,
-            color = if (isServerAvailable) Theme.Colors.text else Theme.Colors.error,
+            color = if (isServerAvailable) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.error,
         )
         Box(modifier = modifier.fillMaxSize()) {
             CameraViewFinder()

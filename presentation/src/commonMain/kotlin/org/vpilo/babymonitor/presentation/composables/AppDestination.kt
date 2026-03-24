@@ -1,0 +1,77 @@
+package org.vpilo.babymonitor.presentation.composables
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import babymonitor.presentation.generated.resources.Res
+import babymonitor.presentation.generated.resources.back
+import babymonitor.presentation.generated.resources.example
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+
+@Composable
+fun AppDestination(
+    modifier: Modifier = Modifier,
+    title: StringResource,
+    onBackClicked: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+    ) {
+        @OptIn(ExperimentalMaterial3Api::class)
+        TopAppBar(
+            modifier = modifier,
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                titleContentColor = MaterialTheme.colorScheme.primary,
+            ),
+            title = {
+                Text(
+                    text = stringResource(title),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = onBackClicked) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(Res.string.back),
+                    )
+                }
+            },
+        )
+        content()
+    }
+}
+
+@Preview
+@Composable
+private fun AppDestinationPreview() {
+    AppDestination(
+        title = Res.string.example,
+        onBackClicked = {},
+    ) {
+        Text(
+            text = "Example content",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}

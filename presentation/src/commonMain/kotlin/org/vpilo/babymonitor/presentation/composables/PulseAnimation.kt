@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material3.MaterialTheme
 import org.vpilo.babymonitor.presentation.Theme
 
 @Composable
@@ -37,7 +38,7 @@ fun PulseAnimation(modifier: Modifier = Modifier) {
             .size(Theme.Sizes.Button)
             .border(
                 width = Theme.Sizes.Button,
-                color = Theme.Colors.accent,
+                color = MaterialTheme.colorScheme.secondary,
                 shape = CircleShape,
             ),
     )

@@ -6,16 +6,8 @@ import androidx.compose.ui.unit.dp
 
 object Theme {
 
-    object Colors {
-        val mainBackground: Color = DarkGreen
-
-        val accent: Color = LightBlue
-
-        val text: Color = White
-        val error: Color = LightRed
-    }
-
     object Sizes {
+        val UserInterfaceMaxWidth: Dp = MaxUserInterfaceWidth
         val Button: Dp = 40.dp
     }
 

@@ -1,12 +1,9 @@
 package org.vpilo.babymonitor.camera.presentation.permissioncheck
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
@@ -20,8 +17,6 @@ import org.vpilo.babymonitor.camera.presentation.RequestCameraPermission
 import org.vpilo.babymonitor.camera.presentation.RequestMicrophonePermission
 import org.vpilo.babymonitor.camera.presentation.hasCameraPermission
 import org.vpilo.babymonitor.camera.presentation.hasMicrophonePermission
-import org.vpilo.babymonitor.presentation.MaxUserInterfaceWidth
-import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 
 @Composable
@@ -54,23 +49,18 @@ fun PermissionCheckScreen(
         return
     }
 
-    Surface(
-        color = Theme.Colors.mainBackground,
+    Box(
         modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding(),
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = modifier
-                .widthIn(max = MaxUserInterfaceWidth)
-                .fillMaxSize()
-                .padding(Theme.Paddings.Medium),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = stringResource(Res.string.permissions_needed),
                 style = MaterialTheme.typography.titleMedium,
-                color = Theme.Colors.error,
+                color = MaterialTheme.colorScheme.error,
             )
             LoadingBox()
         }

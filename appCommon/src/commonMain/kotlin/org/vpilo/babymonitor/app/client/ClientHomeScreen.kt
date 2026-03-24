@@ -22,7 +22,6 @@ fun ClientHomeScreen(
     modifier: Modifier = Modifier,
     viewModel: ClientHomeViewModel,
     onDisconnected: () -> Unit,
-    onBackClicked: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -35,7 +34,6 @@ fun ClientHomeScreen(
 
     ClientHomeScreenContent(
         modifier = modifier.fillMaxSize(),
-        onBackClicked = onBackClicked,
         frames = viewModel.frames,
         isAudioPlaying = state.isAudioPlaying,
         onToggleAudio = { viewModel.onAction(ClientHomeAction.ToggleAudio) },
@@ -45,22 +43,11 @@ fun ClientHomeScreen(
 @Composable
 private fun ClientHomeScreenContent(
     modifier: Modifier = Modifier,
-    onBackClicked: () -> Unit,
     frames: Flow<ImageBitmap>,
     isAudioPlaying: Boolean,
     onToggleAudio: () -> Unit,
 ) {
     Column(modifier = modifier) {
-        BackButton(
-            modifier = Modifier,
-            onBackClicked = onBackClicked,
-        )
-
-        Text(
-            text = "Monitor",
-            style = MaterialTheme.typography.titleMedium,
-            color = Theme.Colors.text,
-        )
         AudioFeed(
             isPlaying = isAudioPlaying,
             onToggle = onToggleAudio,
