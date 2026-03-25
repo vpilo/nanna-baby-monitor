@@ -48,6 +48,12 @@ KMP project with `androidLibrary` and `jvm("desktop")` targets.
 ./gradlew :appAndroid:assembleDebug
 ```
 
+When building to verify changes, since this is a small app, it's quickest to just build the entire project instead of building modules individually over multiple iterations:
+
+```sh
+./gradlew :appDesktop:desktopJar :appAndroid:assembleDebug
+```
+
 ## Conventions
 
 - **Package root:** `org.vpilo.babymonitor`

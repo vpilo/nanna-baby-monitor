@@ -16,12 +16,14 @@ object AndroidServiceRegistry : KoinComponent {
         get() = serviceInstance != null
 
     fun register(service: AndroidService) {
-        if (services.any { it.get() == service }) {
-            Logger.w(TAG) { "Service $service is already registered" }
-            return
-        }
+        synchronized(services) {
+            if (services.any { it.get() == service }) {
+                Logger.w(TAG) { "Service $service is already registered" }
+                return
+            }
 
-        services.add(WeakReference(service))
+            services.add(WeakReference(service))
+        }
 
         if (services.size == 1) {
             Logger.d(TAG) { "Requesting service start" }
@@ -39,7 +41,9 @@ object AndroidServiceRegistry : KoinComponent {
             return
         }
 
-        services.removeIf { with(it.get()) { this == service || this == null } }
+        synchronized(services) {
+            services.removeIf { with(it.get()) { this == service || this == null } }
+        }
 
         if (services.isEmpty()) {
             Logger.d(TAG) { "Requesting service stop" }
@@ -53,12 +57,18 @@ object AndroidServiceRegistry : KoinComponent {
 
     internal fun reportServiceStarted(service: LifecycleService) {
         serviceInstance = service
-        services.forEach { it.get()?.onServiceStarted(service, service) }
+
+        synchronized(services) {
+            services.forEach { it.get()?.onServiceStarted(service, service) }
+        }
     }
 
     internal fun reportServiceStopped() {
         serviceInstance = null
-        services.forEach { it.get()?.onServiceStopped() }
+
+        synchronized(services) {
+            services.forEach { it.get()?.onServiceStopped() }
+        }
     }
 
     private val TAG = AndroidServiceRegistry::class
