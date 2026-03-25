@@ -28,6 +28,11 @@ actual class VideoEncoder actual constructor(
     private var videoEncodeJob: Job? = null
     private var videoFrameCount = 0L
 
+    /** Stride (in bytes) the encoder expects for the Y plane. */
+    private var encoderStride = 0
+    /** Vertical stride (slice height) the encoder uses before the UV plane starts. */
+    private var encoderSliceHeight = 0
+
     /** SPS/PPS bytes emitted by the encoder as BUFFER_FLAG_CODEC_CONFIG. */
     private var codecConfigData: ByteArray? = null
 
@@ -52,7 +57,7 @@ actual class VideoEncoder actual constructor(
                         videoEncoder = codec
                         videoFrameCount = 0
                         codecConfigData = null
-                        Logger.d(TAG) { "Video encoder configured for ${configuredWidth}x${configuredHeight}" }
+                        Logger.d(TAG) { "Video encoder configured for ${configuredWidth}x${configuredHeight}, stride=$encoderStride, sliceHeight=$encoderSliceHeight" }
                     }
 
                     encodeVideoFrame(codec, frame)
@@ -83,6 +88,22 @@ actual class VideoEncoder actual constructor(
         return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
             it.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             it.start()
+
+            // Query the actual stride / slice-height the encoder expects.
+            // These may differ from width / height due to hardware alignment.
+            val inputFormat = it.inputFormat
+            encoderStride = if (inputFormat.containsKey(MediaFormat.KEY_STRIDE)) {
+                inputFormat.getInteger(MediaFormat.KEY_STRIDE)
+            } else {
+                width
+            }
+            encoderSliceHeight = if (inputFormat.containsKey(MediaFormat.KEY_SLICE_HEIGHT)) {
+                inputFormat.getInteger(MediaFormat.KEY_SLICE_HEIGHT)
+            } else {
+                height
+            }
+            if (encoderStride < width) encoderStride = width
+            if (encoderSliceHeight < height) encoderSliceHeight = height
         }
     }
 
@@ -100,9 +121,35 @@ actual class VideoEncoder actual constructor(
         if (inputIndex >= 0) {
             val inputBuffer = codec.getInputBuffer(inputIndex) ?: return
             inputBuffer.clear()
-            val size = minOf(frame.bytes.size, inputBuffer.remaining())
-            inputBuffer.put(frame.bytes, 0, size)
-            codec.queueInputBuffer(inputIndex, 0, size, presentationTimeUs, 0)
+
+            val w = frame.width
+            val h = frame.height
+
+            if (encoderStride == w && encoderSliceHeight == h) {
+                // No padding needed — copy tightly-packed NV12 directly
+                val size = minOf(frame.bytes.size, inputBuffer.remaining())
+                inputBuffer.put(frame.bytes, 0, size)
+            } else {
+                // Copy Y plane row-by-row with stride padding
+                val src = frame.bytes
+                for (row in 0 until h) {
+                    inputBuffer.position(row * encoderStride)
+                    inputBuffer.put(src, row * w, w)
+                }
+                // Copy UV plane row-by-row with stride padding.
+                // UV plane starts at encoderStride * encoderSliceHeight in the buffer.
+                val uvSrcOffset = w * h
+                val uvDstOffset = encoderStride * encoderSliceHeight
+                val uvHeight = h / 2
+                for (row in 0 until uvHeight) {
+                    inputBuffer.position(uvDstOffset + row * encoderStride)
+                    inputBuffer.put(src, uvSrcOffset + row * w, w)
+                }
+            }
+
+            // Use the buffer's actual capacity — not the computed stride×sliceHeight total,
+            // which may exceed the buffer size on some hardware.
+            codec.queueInputBuffer(inputIndex, 0, inputBuffer.capacity(), presentationTimeUs, 0)
         }
 
         drainEncoder(codec)

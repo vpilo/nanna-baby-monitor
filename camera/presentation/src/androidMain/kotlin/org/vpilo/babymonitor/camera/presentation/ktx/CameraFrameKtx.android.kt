@@ -1,50 +1,49 @@
 package org.vpilo.babymonitor.camera.presentation.ktx
 
-import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Rect
+import android.graphics.YuvImage
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import org.vpilo.babymonitor.model.CameraFrame
-import androidx.core.graphics.createBitmap
+import java.io.ByteArrayOutputStream
 
 /**
- * Converts a tightly-packed NV12 [CameraFrame] directly to an [ImageBitmap].
+ * Converts a tightly-packed NV12 [CameraFrame] to an [ImageBitmap]
+ * using Android's native [YuvImage] + [BitmapFactory] path.
  *
- * NV12 layout: width×height Y bytes, then (width×height/2) interleaved U,V bytes.
- * Falls back to grayscale if the chroma plane is missing.
+ * NV12 layout (as produced by VideoCaptureDataSource):
+ *   width×height Y bytes, then width×height/2 interleaved U,V bytes.
+ *
+ * [YuvImage] expects NV21 (V,U order), so the UV pairs are swapped
+ * in-place before compression. This swap + JPEG round-trip is still
+ * significantly faster than per-pixel Kotlin YUV→RGB math because
+ * YuvImage and BitmapFactory run in native C code.
  */
 internal actual fun CameraFrame.toImageBitmap(): ImageBitmap {
+    val nv21 = nv12ToNv21(bytes, width, height)
+    val yuvImage = YuvImage(nv21, android.graphics.ImageFormat.NV21, width, height, null)
+    val out = ByteArrayOutputStream(width * height)
+    yuvImage.compressToJpeg(Rect(0, 0, width, height), 90, out)
+    val jpegBytes = out.toByteArray()
+    val bitmap = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+    return bitmap.asImageBitmap()
+}
+
+/**
+ * Swaps interleaved UV pairs from NV12 (U,V) order to NV21 (V,U) order.
+ * The Y plane is identical and copied as-is.
+ */
+private fun nv12ToNv21(nv12: ByteArray, width: Int, height: Int): ByteArray {
     val ySize = width * height
-    val hasChroma = bytes.size >= ySize * 3 / 2
-    val pixels = IntArray(ySize)
-
-    for (i in 0 until ySize) {
-        val y = bytes[i].toInt() and 0xFF
-
-        if (hasChroma) {
-            val row = i / width
-            val col = i % width
-
-            // NV12: UV pairs interleaved as U,V,U,V,…
-            val uvIndex = ySize + (row shr 1) * width + (col and 1.inv())
-            val u = (bytes[uvIndex].toInt() and 0xFF) - 128
-            val v = (bytes[uvIndex + 1].toInt() and 0xFF) - 128
-
-            // ITU-R BT.601 YUV → RGB
-            var r = y + (1370 * v shr 10)
-            var g = y - ((336 * u + 698 * v) shr 10)
-            var b = y + (1732 * u shr 10)
-
-            r = r.coerceIn(0, 255)
-            g = g.coerceIn(0, 255)
-            b = b.coerceIn(0, 255)
-
-            pixels[i] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
-        } else {
-            pixels[i] = (0xFF shl 24) or (y shl 16) or (y shl 8) or y
-        }
+    val nv21 = nv12.copyOf()
+    // Swap each UV pair in the chroma plane
+    var i = ySize
+    while (i + 1 < nv21.size) {
+        val tmp = nv21[i]
+        nv21[i] = nv21[i + 1]
+        nv21[i + 1] = tmp
+        i += 2
     }
-
-    return createBitmap(width, height)
-        .apply { setPixels(pixels, 0, width, 0, 0, width, height) }
-        .asImageBitmap()
+    return nv21
 }

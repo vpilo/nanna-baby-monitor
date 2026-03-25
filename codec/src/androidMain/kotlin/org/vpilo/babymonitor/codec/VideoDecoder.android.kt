@@ -5,6 +5,7 @@ import android.graphics.Bitmap.createBitmap
 import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaFormat
+import android.os.Build
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +15,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
+import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.StreamingVideoFlow
 import kotlin.coroutines.CoroutineContext
 
@@ -47,8 +49,8 @@ actual class VideoDecoder actual constructor(
                             // Initial size hint; the actual resolution is determined
                             // by the SPS/PPS in the bitstream and will be reported
                             // via INFO_OUTPUT_FORMAT_CHANGED.
-                            1280,
-                            720,
+                            MediaFormats.Video.ENCODE_WIDTH,
+                            MediaFormats.Video.ENCODE_HEIGHT,
                         )
 
                         codec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
@@ -91,10 +93,13 @@ actual class VideoDecoder actual constructor(
             val outputIndex = codec.dequeueOutputBuffer(bufferInfo, CODEC_TIMEOUT_US)
 
             if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                val outputFormat = codec.outputFormat
                 Logger.d(TAG) {
-                    "Output format changed: ${outputFormat.getInteger(MediaFormat.KEY_WIDTH)}x${outputFormat.getInteger(MediaFormat.KEY_HEIGHT)}, " +
-                            "color=${outputFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT)}"
+                    with(codec.outputFormat) {
+                        "Output format changed: " +
+                                "${getInteger(MediaFormat.KEY_WIDTH)}" +
+                                "x" +
+                                "${getInteger(MediaFormat.KEY_HEIGHT)}"
+                    }
                 }
                 continue
             }
@@ -105,8 +110,10 @@ actual class VideoDecoder actual constructor(
                 if (bufferInfo.size > 0) {
                     val image = codec.getOutputImage(outputIndex)
                     if (image != null) {
-                        val bitmap = image.toImageBitmap()
-                        output.tryEmit(bitmap)
+                        val bitmap = image.toBitmap()
+                        if (bitmap != null) {
+                            output.tryEmit(bitmap.asImageBitmap())
+                        }
                         image.close()
                     }
                 }
@@ -117,12 +124,35 @@ actual class VideoDecoder actual constructor(
     }
 
     /**
-     * Converts a YUV [Image] from MediaCodec output to an [ImageBitmap].
-     *
-     * Uses the plane descriptors (row stride, pixel stride) to handle any
-     * YUV 420 layout generically: NV12, NV21, I420, or YUV_420_888.
+     * Converts a decoded [Image] to a [Bitmap] using hardware buffer (zero-copy on API 30+)
+     * with a fallback to manual YUV→RGB conversion on older devices.
      */
-    private fun Image.toImageBitmap(): ImageBitmap {
+    private fun Image.toBitmap(): Bitmap? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return manualYuvToBitmap()
+        }
+
+        return hardwareBuffer
+            ?.let { hwBuffer ->
+                try {
+                    Bitmap.wrapHardwareBuffer(hwBuffer, null)
+                        ?.apply {
+                            hwBuffer.close()
+                            copy(Bitmap.Config.ARGB_8888, false)
+                                .also { it.recycle() }
+                        }
+                } catch (e: Exception) {
+                    Logger.w(TAG, e) { "wrapHardwareBuffer failed!" }
+                    manualYuvToBitmap()
+                }
+            }
+    }
+
+    /**
+     * Fallback: manual YUV→RGB conversion using plane descriptors.
+     * Handles any YUV 420 layout generically: NV12, NV21, I420, or YUV_420_888.
+     */
+    private fun Image.manualYuvToBitmap(): Bitmap {
         val w = width
         val h = height
 
@@ -142,13 +172,13 @@ actual class VideoDecoder actual constructor(
 
         for (j in 0 until h) {
             for (i in 0 until w) {
-                val y = yBuf.get(j * yRowStride + i).toInt() and 0xFF
+                val y = yBuf[j * yRowStride + i].toInt() and 0xFF
 
                 val uvRow = j / 2
                 val uvCol = i / 2
                 val uvIndex = uvRow * uvRowStride + uvCol * uvPixelStride
-                val u = (uBuf.get(uvIndex).toInt() and 0xFF) - 128
-                val v = (vBuf.get(uvIndex).toInt() and 0xFF) - 128
+                val u = (uBuf[uvIndex].toInt() and 0xFF) - 128
+                val v = (vBuf[uvIndex].toInt() and 0xFF) - 128
 
                 // ITU-R BT.601 YUV → RGB
                 var r = y + (1370 * v shr 10)
@@ -163,9 +193,10 @@ actual class VideoDecoder actual constructor(
             }
         }
 
-        return createBitmap(w, h, Bitmap.Config.ARGB_8888).apply {
-            setPixels(pixels, 0, w, 0, 0, w, h)
-        }.asImageBitmap()
+        return createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            .apply {
+                setPixels(pixels, 0, w, 0, 0, w, h)
+            }
     }
 
     private fun releaseCodec(codec: MediaCodec) {

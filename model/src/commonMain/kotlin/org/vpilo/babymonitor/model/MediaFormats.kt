@@ -15,6 +15,9 @@ object MediaFormats {
     }
 
     object Video {
+        const val ENCODE_WIDTH = 1280
+        const val ENCODE_HEIGHT = 720
+
         const val BIT_RATE = 2_000_000
         const val FRAME_RATE = 30
 
