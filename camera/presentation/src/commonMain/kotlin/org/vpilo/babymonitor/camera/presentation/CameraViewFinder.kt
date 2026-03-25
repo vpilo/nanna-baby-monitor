@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.compose.LifecycleStartEffect
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.camera.presentation.ktx.toImageBitmap
@@ -29,31 +28,31 @@ fun CameraViewFinder(
     viewModel: CameraViewFinderViewModel = koinViewModel()
 ) {
     val scope = rememberCoroutineScope()
-    var img by remember { mutableStateOf<ImageBitmap?>(null) }
+    var lastFrame by remember { mutableStateOf<ImageBitmap?>(null) }
 
     LifecycleStartEffect(Unit) {
         Logger.d(TAG) { "Started showing preview" }
         val frameJob =
-            scope.launch(Dispatchers.Default) {
-                viewModel.frames.collect { img = it.toImageBitmap() }
+            scope.launch {
+                viewModel.frames.collect { lastFrame = it.toImageBitmap() }
             }
 
         onStopOrDispose {
             Logger.d(TAG) { "Stopped showing preview" }
             frameJob.cancel()
-            img = null
+            lastFrame = null
         }
     }
 
-    if (img != null) {
+    lastFrame?.let { frame ->
         Box(contentAlignment = Alignment.TopStart) {
             Image(
-                bitmap = img!!,
+                bitmap = frame,
                 contentScale = ContentScale.FillWidth,
                 contentDescription = null,
                 modifier = modifier.fillMaxSize(),
             )
-            FpsCounter(frameKey = img!!)
+            FpsCounter(frameKey = frame)
         }
     }
 }

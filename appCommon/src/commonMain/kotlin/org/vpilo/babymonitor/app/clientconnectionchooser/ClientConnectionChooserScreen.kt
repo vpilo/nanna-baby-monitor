@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.app.clientconnectionchooser
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,6 +34,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
+import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import java.net.InetAddress
 
 @Composable
@@ -123,13 +126,20 @@ private fun ClientConnectionChooserContent(
                 )
             }
 
-        LazyColumn(state = lazyListState, modifier = Modifier) {
+        LazyColumn(
+            state = lazyListState,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth(fraction = .75f)
+                .align(Alignment.CenterHorizontally),
+        ) {
             if (servers.isEmpty()) {
                 item {
                     Text(
                         text = stringResource(Res.string.client_connection_chooser_no_servers_found),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    LoadingBox()
                 }
             }
             items(servers.toList()) { server ->
@@ -143,7 +153,7 @@ private fun ClientConnectionChooserContent(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-            Spacer(modifier = Modifier.size(Theme.Paddings.Tiny))
+                Spacer(modifier = Modifier.size(Theme.Paddings.Tiny))
             }
         }
     }

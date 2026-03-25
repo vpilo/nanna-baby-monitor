@@ -19,14 +19,15 @@ val LightColorScheme = lightColorScheme(
 )
 
 val DarkColorScheme = darkColorScheme(
-    primary = DarkGreen,
+    primary = LighterGreen,
     onPrimary = White,
+    primaryContainer = DarkBlueSurface,
     secondary = LightBlue,
     onSecondary = Color.Black,
     error = LightRed,
     onError = Color.Black,
-    background = DarkerGreen,
+    background = OffBlack,
     onBackground = White,
-    surface = DarkerGreen,
+    surface = OffBlack,
     onSurface = White,
 )
