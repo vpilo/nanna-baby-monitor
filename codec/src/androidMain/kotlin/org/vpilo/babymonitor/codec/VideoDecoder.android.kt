@@ -44,8 +44,11 @@ actual class VideoDecoder actual constructor(
                     if (codec == null && chunk.isKeyFrame) {
                         val format = MediaFormat.createVideoFormat(
                             MediaFormat.MIMETYPE_VIDEO_AVC,
-                            DEFAULT_WIDTH,
-                            DEFAULT_HEIGHT,
+                            // Initial size hint; the actual resolution is determined
+                            // by the SPS/PPS in the bitstream and will be reported
+                            // via INFO_OUTPUT_FORMAT_CHANGED.
+                            1280,
+                            720,
                         )
 
                         codec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
@@ -149,7 +152,7 @@ actual class VideoDecoder actual constructor(
 
                 // ITU-R BT.601 YUV → RGB
                 var r = y + (1370 * v shr 10)
-                var g = y - (336 * u + 698 * v shr 10)
+                var g = y - ((336 * u + 698 * v) shr 10)
                 var b = y + (1732 * u shr 10)
 
                 r = r.coerceIn(0, 255)
@@ -178,7 +181,5 @@ actual class VideoDecoder actual constructor(
         private val TAG = VideoDecoder::class
 
         const val CODEC_TIMEOUT_US = 10_000L
-        const val DEFAULT_WIDTH = 640
-        const val DEFAULT_HEIGHT = 480
     }
 }

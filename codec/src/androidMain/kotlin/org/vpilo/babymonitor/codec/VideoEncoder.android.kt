@@ -74,9 +74,10 @@ actual class VideoEncoder actual constructor(
             setInteger(MediaFormat.KEY_BIT_RATE, MediaFormats.Video.BIT_RATE)
             setInteger(MediaFormat.KEY_FRAME_RATE, MediaFormats.Video.FRAME_RATE)
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
+            // NV12 (semi-planar): matches the tightly-packed NV12 bytes from capture
             setInteger(
                 MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
             )
         }
         return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
@@ -129,13 +130,14 @@ actual class VideoEncoder actual constructor(
 
                 if (isCodecConfig) {
                     // Store SPS/PPS — don't emit as a separate chunk
-                    codecConfigData = data.copyOf()
+                    codecConfigData = ensureAnnexB(data)
                 } else {
+                    val annexBData = ensureAnnexB(data)
                     // Prepend SPS/PPS to every keyframe so the decoder can always start
                     val emitData = if (isKey && codecConfigData != null) {
-                        codecConfigData!! + data
+                        codecConfigData!! + annexBData
                     } else {
-                        data
+                        annexBData
                     }
 
                     output.tryEmit(
@@ -165,8 +167,42 @@ actual class VideoEncoder actual constructor(
 
         const val CODEC_TIMEOUT_US = 10_000L
 
+        private val ANNEX_B_START_CODE = byteArrayOf(0x00, 0x00, 0x00, 0x01)
+
         private val keyframeRequest = Bundle().apply {
             putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0)
+        }
+
+        /**
+         * Ensures the NAL unit data uses Annex-B start codes (0x00000001).
+         * Some devices emit AVCC length-prefixed NALUs; this converts them.
+         */
+        private fun ensureAnnexB(data: ByteArray): ByteArray {
+            if (data.size >= 4 &&
+                data[0] == 0x00.toByte() &&
+                data[1] == 0x00.toByte() &&
+                (data[2] == 0x01.toByte() || (data[2] == 0x00.toByte() && data[3] == 0x01.toByte()))
+            ) {
+                // Already Annex-B
+                return data
+            }
+
+            // Convert AVCC (4-byte big-endian length prefix) → Annex-B
+            val result = java.io.ByteArrayOutputStream(data.size + 16)
+            var offset = 0
+            while (offset + 4 <= data.size) {
+                val nalLen = ((data[offset].toInt() and 0xFF) shl 24) or
+                        ((data[offset + 1].toInt() and 0xFF) shl 16) or
+                        ((data[offset + 2].toInt() and 0xFF) shl 8) or
+                        (data[offset + 3].toInt() and 0xFF)
+                offset += 4
+                if (nalLen <= 0 || offset + nalLen > data.size) break
+                result.write(ANNEX_B_START_CODE)
+                result.write(data, offset, nalLen)
+                offset += nalLen
+            }
+            val converted = result.toByteArray()
+            return if (converted.isNotEmpty()) converted else data
         }
     }
 }

@@ -150,9 +150,8 @@ actual class VideoEncoder actual constructor(
                     srcFrame.data(0).put(pixels, 0, pixels.size)
                 }
 
-                BufferedImage.TYPE_INT_RGB, BufferedImage.TYPE_INT_ARGB, BufferedImage.TYPE_INT_BGR -> {
-                    // Convert int-packed pixels to BGR24 for sws_scale.
-                    // INT_RGB stores 0x00RRGGBB, so: bits 0-7=B, 8-15=G, 16-23=R.
+                BufferedImage.TYPE_INT_RGB, BufferedImage.TYPE_INT_ARGB -> {
+                    // INT_RGB / INT_ARGB store 0x(AA)RRGGBB: bits 0-7=B, 8-15=G, 16-23=R.
                     val intPixels = (dataBuffer as DataBufferInt).data
                     val bgr = ByteArray(width * height * 3)
                     for (i in intPixels.indices) {
@@ -161,6 +160,20 @@ actual class VideoEncoder actual constructor(
                         bgr[offset] = (px and 0xFF).toByte()              // B
                         bgr[offset + 1] = ((px shr 8) and 0xFF).toByte()  // G
                         bgr[offset + 2] = ((px shr 16) and 0xFF).toByte() // R
+                    }
+                    srcFrame.data(0).put(bgr, 0, bgr.size)
+                }
+
+                BufferedImage.TYPE_INT_BGR -> {
+                    // INT_BGR stores 0x00BBGGRR: bits 0-7=R, 8-15=G, 16-23=B.
+                    val intPixels = (dataBuffer as DataBufferInt).data
+                    val bgr = ByteArray(width * height * 3)
+                    for (i in intPixels.indices) {
+                        val px = intPixels[i]
+                        val offset = i * 3
+                        bgr[offset] = ((px shr 16) and 0xFF).toByte()     // B
+                        bgr[offset + 1] = ((px shr 8) and 0xFF).toByte()  // G
+                        bgr[offset + 2] = (px and 0xFF).toByte()          // R
                     }
                     srcFrame.data(0).put(bgr, 0, bgr.size)
                 }

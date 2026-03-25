@@ -46,24 +46,51 @@ internal actual class VideoCaptureDataSource(
             .build()
     }
 
+    /**
+     * Converts a YUV_420_888 [ImageProxy] to tightly-packed NV12 bytes
+     * (Y plane followed by interleaved UV pairs), respecting per-plane
+     * row strides and pixel strides so it works on all devices.
+     */
     private fun onFrameReceived(image: ImageProxy) {
-        val yBuffer = image.planes[0].buffer
-        val uBuffer = image.planes[1].buffer
-        val vBuffer = image.planes[2].buffer
+        val w = image.width
+        val h = image.height
 
-        val ySize = yBuffer.remaining()
-        val vSize = vBuffer.remaining()
-        // V buffer (plane 2) contains interleaved VU pairs but is 1 byte short;
-        // the trailing U byte comes from plane 1.
-        val bytes = ByteArray(ySize + vSize + 1)
+        val yPlane = image.planes[0]
+        val uPlane = image.planes[1]
+        val vPlane = image.planes[2]
 
-        yBuffer.get(bytes, 0, ySize)
-        vBuffer.get(bytes, ySize, vSize)
-        uBuffer.position(uBuffer.limit() - 1)
-        bytes[ySize + vSize] = uBuffer.get()
+        val yRowStride = yPlane.rowStride
+        val uvRowStride = uPlane.rowStride
+        val uvPixelStride = uPlane.pixelStride
+
+        val yBuf = yPlane.buffer
+        val uBuf = uPlane.buffer
+        val vBuf = vPlane.buffer
+
+        // Tightly-packed NV12: w*h Y bytes + w*h/2 interleaved UV bytes
+        val nv12 = ByteArray(w * h * 3 / 2)
+
+        // Copy Y plane row-by-row, stripping any padding
+        var destPos = 0
+        for (row in 0 until h) {
+            yBuf.position(row * yRowStride)
+            yBuf.get(nv12, destPos, w)
+            destPos += w
+        }
+
+        // Copy UV planes interleaved as NV12 (U, V, U, V, …)
+        val uvHeight = h / 2
+        val uvWidth = w / 2
+        for (row in 0 until uvHeight) {
+            for (col in 0 until uvWidth) {
+                val uvIndex = row * uvRowStride + col * uvPixelStride
+                nv12[destPos++] = uBuf.get(uvIndex)
+                nv12[destPos++] = vBuf.get(uvIndex)
+            }
+        }
 
         image.close()
-        collector.tryEmit(CameraFrame(bytes = bytes, width = image.width, height = image.height))
+        collector.tryEmit(CameraFrame(bytes = nv12, width = w, height = h))
     }
 
 

@@ -7,9 +7,9 @@ import org.vpilo.babymonitor.model.CameraFrame
 import androidx.core.graphics.createBitmap
 
 /**
- * Converts an NV21 [CameraFrame] directly to an [ImageBitmap].
+ * Converts a tightly-packed NV12 [CameraFrame] directly to an [ImageBitmap].
  *
- * NV21 layout: width×height Y bytes, then (width×height/2) interleaved V,U bytes.
+ * NV12 layout: width×height Y bytes, then (width×height/2) interleaved U,V bytes.
  * Falls back to grayscale if the chroma plane is missing.
  */
 internal actual fun CameraFrame.toImageBitmap(): ImageBitmap {
@@ -24,14 +24,14 @@ internal actual fun CameraFrame.toImageBitmap(): ImageBitmap {
             val row = i / width
             val col = i % width
 
-            // VU pair index: each 2×2 block shares one V and one U byte
+            // NV12: UV pairs interleaved as U,V,U,V,…
             val uvIndex = ySize + (row shr 1) * width + (col and 1.inv())
-            val v = (bytes[uvIndex].toInt() and 0xFF) - 128
-            val u = (bytes[uvIndex + 1].toInt() and 0xFF) - 128
+            val u = (bytes[uvIndex].toInt() and 0xFF) - 128
+            val v = (bytes[uvIndex + 1].toInt() and 0xFF) - 128
 
             // ITU-R BT.601 YUV → RGB
             var r = y + (1370 * v shr 10)
-            var g = y - (336 * u + 698 * v shr 10)
+            var g = y - ((336 * u + 698 * v) shr 10)
             var b = y + (1732 * u shr 10)
 
             r = r.coerceIn(0, 255)
