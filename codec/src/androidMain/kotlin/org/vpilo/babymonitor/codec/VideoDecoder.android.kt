@@ -110,10 +110,7 @@ actual class VideoDecoder actual constructor(
                 if (bufferInfo.size > 0) {
                     val image = codec.getOutputImage(outputIndex)
                     if (image != null) {
-                        val bitmap = image.toBitmap()
-                        if (bitmap != null) {
-                            output.tryEmit(bitmap.asImageBitmap())
-                        }
+                        output.tryEmit(image.toBitmap())
                         image.close()
                     }
                 }
@@ -124,35 +121,10 @@ actual class VideoDecoder actual constructor(
     }
 
     /**
-     * Converts a decoded [Image] to a [Bitmap] using hardware buffer (zero-copy on API 30+)
-     * with a fallback to manual YUV→RGB conversion on older devices.
-     */
-    private fun Image.toBitmap(): Bitmap? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            return manualYuvToBitmap()
-        }
-
-        return hardwareBuffer
-            ?.let { hwBuffer ->
-                try {
-                    Bitmap.wrapHardwareBuffer(hwBuffer, null)
-                        ?.apply {
-                            hwBuffer.close()
-                            copy(Bitmap.Config.ARGB_8888, false)
-                                .also { it.recycle() }
-                        }
-                } catch (e: Exception) {
-                    Logger.w(TAG, e) { "wrapHardwareBuffer failed!" }
-                    manualYuvToBitmap()
-                }
-            }
-    }
-
-    /**
-     * Fallback: manual YUV→RGB conversion using plane descriptors.
+     * YUV→RGB conversion using plane descriptors.
      * Handles any YUV 420 layout generically: NV12, NV21, I420, or YUV_420_888.
      */
-    private fun Image.manualYuvToBitmap(): Bitmap {
+    private fun Image.toBitmap(): ImageBitmap {
         val w = width
         val h = height
 
@@ -197,6 +169,7 @@ actual class VideoDecoder actual constructor(
             .apply {
                 setPixels(pixels, 0, w, 0, 0, w, h)
             }
+            .asImageBitmap()
     }
 
     private fun releaseCodec(codec: MediaCodec) {

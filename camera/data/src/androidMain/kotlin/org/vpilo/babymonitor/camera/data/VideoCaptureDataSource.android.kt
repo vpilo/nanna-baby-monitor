@@ -2,11 +2,13 @@ package org.vpilo.babymonitor.camera.data
 
 import android.content.Context
 import android.util.Size
+import android.view.OrientationEventListener
 import android.view.Surface
 import androidx.annotation.MainThread
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.camera.core.UseCase
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -24,6 +26,8 @@ import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.repository.SharedResourceHolder
+import java.lang.ref.WeakReference
+
 
 internal actual class VideoCaptureDataSource(
     private val mainDispatcher: CoroutineDispatcher,
@@ -45,6 +49,8 @@ internal actual class VideoCaptureDataSource(
             .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER))
             .build()
     }
+
+    private var orientationListener: OrientationEventListener? = null
 
     /**
      * Converts a YUV_420_888 [ImageProxy] to tightly-packed NV12 bytes
@@ -95,9 +101,9 @@ internal actual class VideoCaptureDataSource(
 
 
     @MainThread
-    fun onCameraReady(camera: ProcessCameraProvider, lifecycleOwner: LifecycleOwner) {
+    fun onCameraReady(camera: ProcessCameraProvider, context: Context, lifecycleOwner: LifecycleOwner) {
         val imageAnalysis = ImageAnalysis.Builder()
-            .setTargetRotation(Surface.ROTATION_0)
+            .setOutputImageRotationEnabled(true)
             .setResolutionSelector(resolutionSelector)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
@@ -119,6 +125,23 @@ internal actual class VideoCaptureDataSource(
         } catch (ex: Exception) {
             Logger.e(this::class) { "Failed to bind camera: ${ex.message}" }
         }
+
+        orientationListener = object : OrientationEventListener(context) {
+            init {
+                enable()
+            }
+
+            private var lastRotation = ORIENTATION_UNKNOWN
+            private val target = WeakReference(imageAnalysis)
+
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation == ORIENTATION_UNKNOWN || orientation == lastRotation) return
+                lastRotation = orientation
+                target.get()
+                    ?.setTargetRotation(UseCase.snapToSurfaceRotation(orientation))
+                    ?: this.disable()
+            }
+        }
     }
 
     override fun onServiceStarted(context: Context, lifecycleOwner: LifecycleOwner) {
@@ -128,7 +151,7 @@ internal actual class VideoCaptureDataSource(
                 cameraProvider = cameraProviderFuture.get()
                     .also {
                         CoroutineScope(mainDispatcher).launch {
-                            onCameraReady(it, lifecycleOwner)
+                            onCameraReady(it, context, lifecycleOwner)
                         }
                     }
             },
@@ -137,8 +160,10 @@ internal actual class VideoCaptureDataSource(
     }
 
     override fun onServiceStopped() {
-        cameraProvider?.unbindAll()
-        cameraProvider = null
+        CoroutineScope(mainDispatcher).launch {
+            cameraProvider?.unbindAll()
+            cameraProvider = null
+        }
     }
 
     override fun start() {
