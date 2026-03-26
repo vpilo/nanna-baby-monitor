@@ -82,7 +82,7 @@ internal class DefaultNetworkClientRepository(
                 onConnectionClosed(ex)
             }
         }
-        state.value = NetworkState.Connecting
+        state.value = NetworkState.Connecting(address)
         Logger.d(TAG) { "Connecting to server at ${address.hostAddress}..." }
     }
 

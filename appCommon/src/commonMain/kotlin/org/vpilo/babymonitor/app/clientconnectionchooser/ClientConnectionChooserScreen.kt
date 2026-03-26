@@ -35,6 +35,7 @@ import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
+import org.vpilo.babymonitor.presentation.composables.LoadingIcon
 import java.net.InetAddress
 
 @Composable
@@ -144,8 +145,9 @@ private fun ClientConnectionChooserContent(
                     LoadingBox()
                 }
             }
-            items(servers.toList()) { server ->
+            items(items = servers.toList()) { server ->
                 Button(
+                    enabled = networkState !is NetworkState.Connecting,
                     onClick = { onConnectRequested(server) },
                     modifier = Modifier,
                 ) {
@@ -154,6 +156,9 @@ private fun ClientConnectionChooserContent(
                         text = server.hostAddress ?: server.toString(),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    if ((networkState as? NetworkState.Connecting)?.address == server) {
+                        LoadingIcon()
+                    }
                 }
                 Spacer(modifier = Modifier.size(Theme.Paddings.Tiny))
             }
@@ -166,6 +171,16 @@ private fun ClientConnectionChooserContent(
 private fun ClientConnectionChooserScreenPreview() = AppTheme {
     ClientConnectionChooserContent(
         networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
+        servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
+        onConnectRequested = {},
+    )
+}
+
+@Preview
+@Composable
+private fun ClientConnectionChooserScreenConnectingPreview() = AppTheme {
+    ClientConnectionChooserContent(
+        networkState = NetworkState.Connecting(InetAddress.getLoopbackAddress()),
         servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
         onConnectRequested = {},
     )
