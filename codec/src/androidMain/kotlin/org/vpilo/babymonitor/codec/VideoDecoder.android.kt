@@ -1,11 +1,12 @@
 package org.vpilo.babymonitor.codec
 
-import android.graphics.Bitmap
-import android.graphics.Bitmap.createBitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaFormat
-import android.os.Build
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +18,8 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.StreamingVideoFlow
+import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
 import kotlin.coroutines.CoroutineContext
 
 actual class VideoDecoder actual constructor(
@@ -28,6 +31,7 @@ actual class VideoDecoder actual constructor(
 
     private var decodeJob: Job? = null
     private var decoder: MediaCodec? = null
+    private var frameIndex = 0L
 
     actual fun start() {
         if (decodeJob?.isActive == true) {
@@ -53,11 +57,20 @@ actual class VideoDecoder actual constructor(
                             MediaFormats.Video.ENCODE_HEIGHT,
                         )
 
+                        // Extract SPS and PPS NAL units from the keyframe data
+                        // and set them as codec-specific data so the decoder is
+                        // fully initialized before it receives any frames.
+                        val csd = extractCodecSpecificData(chunk.data)
+                        if (csd != null) {
+                            format.setByteBuffer("csd-0", ByteBuffer.wrap(csd))
+                        }
+
                         codec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
                             it.configure(format, null, null, 0)
                             it.start()
                         }
                         decoder = codec
+                        frameIndex = 0
                         Logger.d(TAG) { "Video decoder started" }
                     }
 
@@ -77,20 +90,22 @@ actual class VideoDecoder actual constructor(
 
     private fun decodeFrame(codec: MediaCodec, chunk: EncodedVideoStreamChunk) {
         // Feed encoded data
-        val inputIndex = codec.dequeueInputBuffer(CODEC_TIMEOUT_US)
+        val inputIndex = codec.dequeueInputBuffer(INPUT_TIMEOUT_US)
         if (inputIndex >= 0) {
             val inputBuffer = codec.getInputBuffer(inputIndex) ?: return
             inputBuffer.clear()
             val size = minOf(chunk.data.size, inputBuffer.remaining())
             inputBuffer.put(chunk.data, 0, size)
             val flags = if (chunk.isKeyFrame) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0
-            codec.queueInputBuffer(inputIndex, 0, size, 0, flags)
+            val presentationTimeUs = frameIndex * 1_000_000L / MediaFormats.Video.FRAME_RATE
+            frameIndex++
+            codec.queueInputBuffer(inputIndex, 0, size, presentationTimeUs, flags)
         }
 
-        // Drain decoded frames
+        // Drain all available decoded frames without blocking
         val bufferInfo = MediaCodec.BufferInfo()
         while (true) {
-            val outputIndex = codec.dequeueOutputBuffer(bufferInfo, CODEC_TIMEOUT_US)
+            val outputIndex = codec.dequeueOutputBuffer(bufferInfo, OUTPUT_TIMEOUT_US)
 
             if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 Logger.d(TAG) {
@@ -121,8 +136,10 @@ actual class VideoDecoder actual constructor(
     }
 
     /**
-     * YUV→RGB conversion using plane descriptors.
-     * Handles any YUV 420 layout generically: NV12, NV21, I420, or YUV_420_888.
+     * Converts a YUV_420_888 [Image] to an [ImageBitmap] using Android's
+     * hardware-accelerated [YuvImage] JPEG path. This is dramatically faster
+     * than a per-pixel Kotlin loop and prevents frame drops that cause
+     * pixelation/corruption during fast motion.
      */
     private fun Image.toBitmap(): ImageBitmap {
         val w = width
@@ -132,44 +149,131 @@ actual class VideoDecoder actual constructor(
         val uPlane = planes[1]
         val vPlane = planes[2]
 
-        val yBuf = yPlane.buffer
-        val uBuf = uPlane.buffer
-        val vBuf = vPlane.buffer
-
         val yRowStride = yPlane.rowStride
         val uvRowStride = uPlane.rowStride
         val uvPixelStride = uPlane.pixelStride
 
-        val pixels = IntArray(w * h)
+        // Build a tightly-packed NV21 byte array (Y plane followed by interleaved VU).
+        // NV21 is the format YuvImage supports natively.
+        val nv21 = ByteArray(w * h + w * (h / 2))
 
-        for (j in 0 until h) {
-            for (i in 0 until w) {
-                val y = yBuf[j * yRowStride + i].toInt() and 0xFF
-
-                val uvRow = j / 2
-                val uvCol = i / 2
-                val uvIndex = uvRow * uvRowStride + uvCol * uvPixelStride
-                val u = (uBuf[uvIndex].toInt() and 0xFF) - 128
-                val v = (vBuf[uvIndex].toInt() and 0xFF) - 128
-
-                // ITU-R BT.601 YUV → RGB
-                var r = y + (1370 * v shr 10)
-                var g = y - ((336 * u + 698 * v) shr 10)
-                var b = y + (1732 * u shr 10)
-
-                r = r.coerceIn(0, 255)
-                g = g.coerceIn(0, 255)
-                b = b.coerceIn(0, 255)
-
-                pixels[j * w + i] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+        // Copy Y plane
+        val yBuf = yPlane.buffer
+        if (yRowStride == w) {
+            yBuf.position(0)
+            yBuf.get(nv21, 0, w * h)
+        } else {
+            for (row in 0 until h) {
+                yBuf.position(row * yRowStride)
+                yBuf.get(nv21, row * w, w)
             }
         }
 
-        return createBitmap(w, h, Bitmap.Config.ARGB_8888)
-            .apply {
-                setPixels(pixels, 0, w, 0, 0, w, h)
+        // Copy UV planes into interleaved VU order (NV21)
+        val uBuf = uPlane.buffer
+        val vBuf = vPlane.buffer
+        val uvHeight = h / 2
+        val uvWidth = w / 2
+        var nv21Offset = w * h
+
+        if (uvPixelStride == 2 && uvRowStride == w) {
+            // Semi-planar layout (NV12 or NV21) — the V and U buffers overlap
+            // and are already interleaved in VU order at pixelStride=2.
+            // Bulk-copy each row of interleaved VU data directly.
+            // On the last row the buffer may be 1 byte shorter (no trailing
+            // stride padding), so clamp to the number of bytes remaining.
+            vBuf.position(0)
+            for (row in 0 until uvHeight) {
+                vBuf.position(row * uvRowStride)
+                val bytesToRead = minOf(w, vBuf.remaining())
+                vBuf.get(nv21, nv21Offset, bytesToRead)
+                nv21Offset += w
             }
-            .asImageBitmap()
+        } else {
+            // Generic path: works for any pixel stride / row stride
+            for (row in 0 until uvHeight) {
+                for (col in 0 until uvWidth) {
+                    val uvIdx = row * uvRowStride + col * uvPixelStride
+                    nv21[nv21Offset++] = vBuf[uvIdx]
+                    nv21[nv21Offset++] = uBuf[uvIdx]
+                }
+            }
+        }
+
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, w, h, null)
+        val jpegStream = ByteArrayOutputStream()
+        yuvImage.compressToJpeg(Rect(0, 0, w, h), 100, jpegStream)
+        val jpegBytes = jpegStream.toByteArray()
+
+        return BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size).asImageBitmap()
+    }
+
+    /**
+     * Extracts all SPS (type 7) and PPS (type 8) NAL units from Annex-B data.
+     * Returns them concatenated (with their start codes) as a single ByteArray
+     * suitable for MediaFormat "csd-0", or null if none were found.
+     */
+    private fun extractCodecSpecificData(annexBData: ByteArray): ByteArray? {
+        val nalUnits = splitNalUnits(annexBData)
+        val csdParts = mutableListOf<ByteArray>()
+
+        for ((startCodeLen, offset, length) in nalUnits) {
+            if (length <= startCodeLen) continue
+            val nalType = annexBData[offset + startCodeLen].toInt() and 0x1F
+            // SPS = 7, PPS = 8
+            if (nalType == 7 || nalType == 8) {
+                csdParts.add(annexBData.copyOfRange(offset, offset + length))
+            }
+        }
+
+        if (csdParts.isEmpty()) return null
+        // Concatenate all SPS/PPS NAL units (each already includes its start code)
+        val totalSize = csdParts.sumOf { it.size }
+        val result = ByteArray(totalSize)
+        var pos = 0
+        for (part in csdParts) {
+            part.copyInto(result, pos)
+            pos += part.size
+        }
+        return result
+    }
+
+    /**
+     * Splits Annex-B byte stream into individual NAL units.
+     * Returns a list of (startCodeLength, offset, totalLength) triples.
+     */
+    private fun splitNalUnits(data: ByteArray): List<Triple<Int, Int, Int>> {
+        val units = mutableListOf<Triple<Int, Int, Int>>()
+        val startPositions = mutableListOf<Pair<Int, Int>>() // (offset, startCodeLen)
+
+        // First pass: find all start code positions
+        var i = 0
+        val zero = 0x00.toByte()
+        val one = 0x01.toByte()
+        while (i < data.size - 2) {
+            if (data[i] == zero && data[i + 1] == zero) {
+                if (i + 3 < data.size && data[i + 2] == zero && data[i + 3] == one) {
+                    startPositions.add(Pair(i, 4))
+                    i += 4
+                } else if (data[i + 2] == one) {
+                    startPositions.add(Pair(i, 3))
+                    i += 3
+                } else {
+                    i++
+                }
+            } else {
+                i++
+            }
+        }
+
+        // Second pass: determine each NAL unit's extent
+        for (idx in startPositions.indices) {
+            val (offset, startCodeLen) = startPositions[idx]
+            val end = if (idx + 1 < startPositions.size) startPositions[idx + 1].first else data.size
+            units.add(Triple(startCodeLen, offset, end - offset))
+        }
+
+        return units
     }
 
     private fun releaseCodec(codec: MediaCodec) {
@@ -184,6 +288,14 @@ actual class VideoDecoder actual constructor(
     private companion object {
         private val TAG = VideoDecoder::class
 
-        const val CODEC_TIMEOUT_US = 10_000L
+        /** Timeout when waiting for a free input buffer to submit encoded data. */
+        const val INPUT_TIMEOUT_US = 10_000L
+
+        /**
+         * Timeout when draining decoded output frames. Use 0 (non-blocking) so
+         * that the collect-loop is never stalled waiting for the decoder,
+         * preventing back-pressure that causes the SharedFlow to drop chunks.
+         */
+        const val OUTPUT_TIMEOUT_US = 0L
     }
 }

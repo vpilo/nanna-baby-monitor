@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.camera.data
 import android.content.Context
 import android.util.Size
 import android.view.OrientationEventListener
-import android.view.Surface
 import androidx.annotation.MainThread
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -101,8 +100,8 @@ internal actual class VideoCaptureDataSource(
 
 
     @MainThread
-    fun onCameraReady(camera: ProcessCameraProvider, context: Context, lifecycleOwner: LifecycleOwner) {
-        val imageAnalysis = ImageAnalysis.Builder()
+    fun onCameraReady(cameraProvider: ProcessCameraProvider, context: Context, lifecycleOwner: LifecycleOwner) {
+        val imageAnalyzer = ImageAnalysis.Builder()
             .setOutputImageRotationEnabled(true)
             .setResolutionSelector(resolutionSelector)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -118,12 +117,13 @@ internal actual class VideoCaptureDataSource(
             .build()
 
         try {
-            camera.unbindAll()
-            camera.bindToLifecycle(
-                lifecycleOwner, cameraSelector, imageAnalysis,
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner, cameraSelector, imageAnalyzer,
             )
         } catch (ex: Exception) {
             Logger.e(this::class) { "Failed to bind camera: ${ex.message}" }
+            return
         }
 
         orientationListener = object : OrientationEventListener(context) {
@@ -132,7 +132,7 @@ internal actual class VideoCaptureDataSource(
             }
 
             private var lastRotation = ORIENTATION_UNKNOWN
-            private val target = WeakReference(imageAnalysis)
+            private val target = WeakReference(imageAnalyzer)
 
             override fun onOrientationChanged(orientation: Int) {
                 if (orientation == ORIENTATION_UNKNOWN || orientation == lastRotation) return
