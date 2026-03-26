@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app.clientconnectionchooser
+package org.vpilo.babymonitor.app.cameraselection
 
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -6,10 +6,10 @@ import org.vpilo.babymonitor.model.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
 
-class ClientConnectionChooserViewModel(
+class CameraSelectionScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,
-) : AppViewModel<ClientConnectionChooserAction, ClientConnectionChooserState, ClientConnectionChooserEffect>(
-    initialState = ClientConnectionChooserState(),
+) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
+    initialState = CameraSelectionScreenState(),
 ) {
     override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.discoveredServers
@@ -22,14 +22,14 @@ class ClientConnectionChooserViewModel(
             .subscribe { netState ->
                 state.copy(networkState = netState).update()
                 if (netState is NetworkState.Connected) {
-                    ClientConnectionChooserEffect.Connected(netState.address).sendEffect()
+                    CameraSelectionScreenEffect.Connected(netState.address).sendEffect()
                 }
             }
     }
 
-    override fun onAction(action: ClientConnectionChooserAction) {
+    override fun onAction(action: CameraSelectionScreenAction) {
         when (action) {
-            is ClientConnectionChooserAction.ConnectToServer -> {
+            is CameraSelectionScreenAction.ConnectToServer -> {
                 vmScope.launch {
                     networkClientRepository.connect(action.address)
                 }

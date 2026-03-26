@@ -9,12 +9,12 @@ import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 
-class ClientHomeViewModel(
+class ClientHomeScreenViewModel(
     videoReceiverRepository: StreamingVideoReceiverRepository,
     private val networkClientRepository: NetworkClientRepository,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
-) : AppViewModel<ClientHomeAction, ClientHomeState, ClientHomeEffect>(
-    initialState = ClientHomeState(),
+) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
+    initialState = ClientHomeScreenState(),
 ) {
     val frames: Flow<ImageBitmap> = videoReceiverRepository.decodedFrames
 
@@ -24,7 +24,7 @@ class ClientHomeViewModel(
             .subscribe { netState ->
                 state.copy(networkState = netState).update()
                 if (netState is NetworkState.Disconnected) {
-                    ClientHomeEffect.DisconnectFromServer.sendEffect()
+                    ClientHomeScreenEffect.DisconnectFromServer.sendEffect()
                 }
             }
 
@@ -34,9 +34,9 @@ class ClientHomeViewModel(
             }
     }
 
-    override fun onAction(action: ClientHomeAction) {
+    override fun onAction(action: ClientHomeScreenAction) {
         when (action) {
-            ClientHomeAction.ToggleAudio -> playReceivedAudio.toggle(vmScope)
+            ClientHomeScreenAction.ToggleAudio -> playReceivedAudio.toggle(vmScope)
         }
     }
 }

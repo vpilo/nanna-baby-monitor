@@ -1,7 +1,7 @@
 package org.vpilo.babymonitor.app.client
 
-sealed interface ClientHomeEffect {
-        object DisconnectFromServer : ClientHomeEffect {
+sealed interface ClientHomeScreenEffect {
+        object DisconnectFromServer : ClientHomeScreenEffect {
             override fun toString() = "DisconnectFromServer"
         }
 }

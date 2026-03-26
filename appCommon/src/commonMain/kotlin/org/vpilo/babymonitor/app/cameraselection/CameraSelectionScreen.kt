@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app.clientconnectionchooser
+package org.vpilo.babymonitor.app.cameraselection
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -39,9 +39,9 @@ import org.vpilo.babymonitor.presentation.composables.LoadingIcon
 import java.net.InetAddress
 
 @Composable
-fun ClientConnectionChooserScreen(
+fun CameraSelectionScreen(
     modifier: Modifier = Modifier,
-    viewModel: ClientConnectionChooserViewModel,
+    viewModel: CameraSelectionScreenViewModel,
     onConnected: (serverAddress: InetAddress) -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
@@ -49,21 +49,21 @@ fun ClientConnectionChooserScreen(
     LaunchedEffect(Unit) {
         viewModel.effectsFlow.collect { effect ->
             when (effect) {
-                is ClientConnectionChooserEffect.Connected -> onConnected(effect.address)
+                is CameraSelectionScreenEffect.Connected -> onConnected(effect.address)
             }
         }
     }
 
-    ClientConnectionChooserContent(
+    CameraSelectionScreenContent(
         modifier = modifier.fillMaxSize(),
         networkState = state.networkState,
         servers = state.availableServers,
-        onConnectRequested = { viewModel.onAction(ClientConnectionChooserAction.ConnectToServer(it)) },
+        onConnectRequested = { viewModel.onAction(CameraSelectionScreenAction.ConnectToServer(it)) },
     )
 }
 
 @Composable
-private fun ClientConnectionChooserContent(
+private fun CameraSelectionScreenContent(
     modifier: Modifier = Modifier,
     networkState: NetworkState,
     servers: Set<InetAddress>,
@@ -168,8 +168,8 @@ private fun ClientConnectionChooserContent(
 
 @Preview
 @Composable
-private fun ClientConnectionChooserScreenPreview() = AppTheme {
-    ClientConnectionChooserContent(
+private fun CameraSelectionScreenPreview() = AppTheme {
+    CameraSelectionScreenContent(
         networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
         servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
         onConnectRequested = {},
@@ -178,8 +178,8 @@ private fun ClientConnectionChooserScreenPreview() = AppTheme {
 
 @Preview
 @Composable
-private fun ClientConnectionChooserScreenConnectingPreview() = AppTheme {
-    ClientConnectionChooserContent(
+private fun CameraSelectionScreenConnectingPreview() = AppTheme {
+    CameraSelectionScreenContent(
         networkState = NetworkState.Connecting(InetAddress.getLoopbackAddress()),
         servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
         onConnectRequested = {},
@@ -188,8 +188,8 @@ private fun ClientConnectionChooserScreenConnectingPreview() = AppTheme {
 
 @Preview
 @Composable
-private fun ClientConnectionChooserScreenNoServersPreview() = AppTheme {
-    ClientConnectionChooserContent(
+private fun CameraSelectionScreenNoServersPreview() = AppTheme {
+    CameraSelectionScreenContent(
         networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
         servers = emptySet(),
         onConnectRequested = {},

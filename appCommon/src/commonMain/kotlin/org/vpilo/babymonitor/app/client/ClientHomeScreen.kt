@@ -16,7 +16,7 @@ private const val TAG = "ClientHomeScreen"
 @Composable
 fun ClientHomeScreen(
     modifier: Modifier = Modifier,
-    viewModel: ClientHomeViewModel,
+    viewModel: ClientHomeScreenViewModel,
     onDisconnected: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
@@ -24,7 +24,7 @@ fun ClientHomeScreen(
     LaunchedEffect(Unit) {
         viewModel.effectsFlow.collect {
             when (it) {
-                ClientHomeEffect.DisconnectFromServer -> {
+                ClientHomeScreenEffect.DisconnectFromServer -> {
                     Logger.d(TAG) { "Disconnecting!" }
                     onDisconnected()
                 }
@@ -36,7 +36,7 @@ fun ClientHomeScreen(
         modifier = modifier.fillMaxSize(),
         frames = viewModel.frames,
         isAudioPlaying = state.isAudioPlaying,
-        onToggleAudio = { viewModel.onAction(ClientHomeAction.ToggleAudio) },
+        onToggleAudio = { viewModel.onAction(ClientHomeScreenAction.ToggleAudio) },
     )
 }
 

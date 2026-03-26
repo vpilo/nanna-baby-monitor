@@ -10,24 +10,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.vpilo.babymonitor.camera.presentation.CameraViewFinder
-import org.vpilo.babymonitor.presentation.Theme
-import org.vpilo.babymonitor.presentation.composables.BackButton
 
 @Composable
 fun ServerHomeScreen(
     modifier: Modifier = Modifier,
-    viewModel: ServerHomeViewModel,
+    viewModel: ServerHomeScreenViewModel,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
-    ServerHomeComposable(
+    ServerHomeContent(
         modifier = modifier,
         isServerAvailable = state.isAvailable,
     )
 }
 
 @Composable
-private fun ServerHomeComposable(
+private fun ServerHomeContent(
     modifier: Modifier,
     isServerAvailable: Boolean,
 ) {

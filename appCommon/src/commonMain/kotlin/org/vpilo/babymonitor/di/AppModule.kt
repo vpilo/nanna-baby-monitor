@@ -6,9 +6,9 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import org.vpilo.babymonitor.app.AppUiFlowViewModel
-import org.vpilo.babymonitor.app.client.ClientHomeViewModel
-import org.vpilo.babymonitor.app.clientconnectionchooser.ClientConnectionChooserViewModel
-import org.vpilo.babymonitor.app.server.ServerHomeViewModel
+import org.vpilo.babymonitor.app.client.ClientHomeScreenViewModel
+import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreenViewModel
+import org.vpilo.babymonitor.app.server.ServerHomeScreenViewModel
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import kotlin.coroutines.CoroutineContext
 
@@ -21,9 +21,9 @@ val appSharedKoinModules = listOf(
         factoryOf(::PlayReceivedAudioUseCase)
 
         viewModelOf(::AppUiFlowViewModel)
-        viewModelOf(::ServerHomeViewModel)
-        viewModelOf(::ClientConnectionChooserViewModel)
-        viewModelOf(::ClientHomeViewModel)
+        viewModelOf(::ServerHomeScreenViewModel)
+        viewModelOf(::CameraSelectionScreenViewModel)
+        viewModelOf(::ClientHomeScreenViewModel)
     },
     appPlatformModule,
 )

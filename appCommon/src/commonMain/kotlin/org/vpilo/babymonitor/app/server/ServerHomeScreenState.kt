@@ -1,5 +1,5 @@
 package org.vpilo.babymonitor.app.server
 
-data class ServerHomeState(
+data class ServerHomeScreenState(
     val isAvailable: Boolean = false,
 )

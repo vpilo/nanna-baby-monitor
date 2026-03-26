@@ -4,10 +4,10 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 
-class ServerHomeViewModel(
+class ServerHomeScreenViewModel(
     private val server: NetworkServerRepository,
-) : AppViewModel<Unit, ServerHomeState, Unit>(
-    initialState = ServerHomeState(),
+) : AppViewModel<Unit, ServerHomeScreenState, Unit>(
+    initialState = ServerHomeScreenState(),
 ) {
     override fun SubscriptionScope.onSubscribed() {
         server.stateFlow

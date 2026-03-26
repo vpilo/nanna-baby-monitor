@@ -24,7 +24,7 @@ import babymonitor.appcommon.generated.resources.app_title_server_home
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.client.ClientHomeScreen
-import org.vpilo.babymonitor.app.clientconnectionchooser.ClientConnectionChooserScreen
+import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.navigation.NavigationEffect
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.server.ServerHomeScreen
@@ -129,7 +129,7 @@ private fun NavigationRoutes(
                         }
                     },
                 ) {
-                    ClientConnectionChooserScreen(
+                    CameraSelectionScreen(
                         viewModel = koinViewModel(),
                         onConnected = {
                             navController.navigate(Route.ClientHome)
