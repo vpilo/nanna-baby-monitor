@@ -13,7 +13,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.vpilo.babymonitor.presentation.Theme
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -40,9 +44,30 @@ fun FpsCounter(frameKey: Any?, modifier: Modifier = Modifier) {
         }
     }
 
+    val color = when (fps) {
+        in 0.0..15.0 -> Color.Red
+        in 15.0..25.0 -> Color.Yellow
+        else -> Color.Green
+    }
     Text(
         text = "%.02f FPS".format(fps),
-        modifier = modifier.padding(8.dp),
-        color = Color.Green,
+        modifier = modifier
+            .padding(Theme.Paddings.Small),
+        style = TextStyle(
+            color = color,
+            shadow = Shadow(
+                color = Color.Black,
+                blurRadius = 2.dp.value,
+            ),
+        ),
+    )
+}
+
+@Preview
+@Composable
+private fun FpsCounterPreview() {
+    FpsCounter(
+        modifier = Modifier,
+        frameKey = Any(),
     )
 }

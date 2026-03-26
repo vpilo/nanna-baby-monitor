@@ -2,13 +2,17 @@ package org.vpilo.babymonitor.app.client
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import org.vpilo.babymonitor.common.Logger
 
 private const val TAG = "ClientHomeScreen"
@@ -52,6 +56,21 @@ private fun ClientHomeScreenContent(
             isPlaying = isAudioPlaying,
             onToggle = onToggleAudio,
         )
-        CameraFeed(frames = frames)
+        CameraFeed(
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.FillWidth,
+            frames = frames,
+        )
     }
+}
+
+@Preview
+@Composable
+private fun ClientHomeScreenPreview() {
+    ClientHomeScreenContent(
+        modifier = Modifier.fillMaxSize(),
+        frames = flowOf(placeholderFrame),
+        isAudioPlaying = false,
+        onToggleAudio = { },
+    )
 }

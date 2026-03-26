@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.app.client
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,10 +10,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.LifecycleStartEffect
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
@@ -24,33 +33,55 @@ private const val TAG = "CameraFeed"
 @Composable
 fun CameraFeed(
     modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.FillWidth,
     frames: Flow<ImageBitmap>,
 ) {
-    var img by remember { mutableStateOf<ImageBitmap?>(null) }
+    var frame by remember { mutableStateOf<ImageBitmap?>(null) }
     val scope = rememberCoroutineScope()
 
     LifecycleStartEffect(Unit) {
         Logger.d(TAG) { "Started showing feed" }
         val frameJob = scope.launch {
-            frames.collect { img = it }
+            frames.collect { frame = it }
         }
 
         onStopOrDispose {
             Logger.d(TAG) { "Stopped showing feed" }
             frameJob.cancel()
-            img = null
+            frame = null
         }
     }
 
-    if (img != null) {
-        Box(contentAlignment = Alignment.TopStart) {
+    if (frame != null) {
+        Box(contentAlignment = Alignment.BottomEnd) {
             Image(
-                bitmap = img!!,
-                contentScale = ContentScale.FillWidth,
+                bitmap = frame!!,
+                contentScale = contentScale,
                 contentDescription = null,
-                modifier = modifier.fillMaxSize(),
+                modifier = modifier,
             )
-            FpsCounter(frameKey = img!!)
+            FpsCounter(frameKey = frame!!)
         }
     }
+}
+
+internal val placeholderFrame: ImageBitmap
+    get() {
+        val image = ImageBitmap(800, 600)
+        val size = Size(image.width.toFloat(), image.height.toFloat())
+        val brush = Brush.radialGradient(listOf(Color.Red, Color.Green, Color.Blue), tileMode = TileMode.Mirror)
+        val canvas = Canvas(image = image)
+        CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, canvas, size) {
+            drawRect(brush = brush)
+        }
+        return image
+    }
+
+@Preview
+@Composable
+private fun CameraFeedPreview() {
+    CameraFeed(
+        modifier = Modifier,
+        frames = flowOf(placeholderFrame),
+    )
 }
