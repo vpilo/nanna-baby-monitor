@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -91,6 +92,7 @@ internal class DefaultNetworkClientRepository(
         videoStreamJob?.cancel()
         videoStreamJob = null
         state.value = NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
+        Logger.i(TAG) { "Client state: ${state.value}" }
     }
 
     private fun onConnectionOpened(address: InetAddress, isAudio: Boolean) {
@@ -105,7 +107,7 @@ internal class DefaultNetworkClientRepository(
 
                 else -> NetworkState.Connected(address, hasAudio = isAudio, hasVideo = !isAudio)
             }
-        Logger.i(TAG) { "Connected: ${state.value}" }
+        Logger.i(TAG) { "Client state: ${state.value}" }
     }
 
     private fun onConnectionClosed(exception: Throwable) {
@@ -115,6 +117,8 @@ internal class DefaultNetworkClientRepository(
         videoStreamJob = null
 
         state.value = when (exception) {
+            is ClosedReceiveChannelException -> return
+
             is ConnectException -> {
                 Logger.i(TAG) { "Connection refused." }
                 NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
@@ -130,6 +134,7 @@ internal class DefaultNetworkClientRepository(
                 NetworkState.Disconnected(NetworkState.ErrorReason.ServerQuit, exception)
             }
         }
+        Logger.i(TAG) { "Client state: ${state.value}" }
     }
 
     private companion object {

@@ -30,4 +30,8 @@ kotlin {
             implementation(libs.kotlinx.serialization)
         }
     }
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
 }

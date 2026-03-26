@@ -50,6 +50,7 @@ internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
     override fun onServiceStopped() {
         Logger.d(TAG) { "Stopping mic capture" }
         recordingJob?.cancel()
+        recordingJob = null
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null

@@ -151,7 +151,7 @@ private fun ClientConnectionChooserContent(
                 ) {
                     Text(
                         modifier = Modifier.padding(Theme.Paddings.Small),
-                        text = server.hostAddress,
+                        text = server.hostAddress ?: server.toString(),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
