@@ -25,6 +25,7 @@ kotlin {
             implementation(project(":common"))
 
             implementation(libs.compose.ui)
+            implementation(libs.jetbrains.lifecycle.viewmodel)
             implementation(libs.koin.core)
             implementation(libs.kotlinx.serialization)
         }

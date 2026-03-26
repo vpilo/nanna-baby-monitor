@@ -1,17 +1,9 @@
 package org.vpilo.babymonitor.app.client
 
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
-import org.vpilo.babymonitor.common.Logger
+import kotlinx.coroutines.flow.distinctUntilChanged
+import org.vpilo.babymonitor.model.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
@@ -21,41 +13,30 @@ class ClientHomeViewModel(
     videoReceiverRepository: StreamingVideoReceiverRepository,
     private val networkClientRepository: NetworkClientRepository,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
-) : ViewModel() {
-
+) : AppViewModel<ClientHomeAction, ClientHomeState, ClientHomeEffect>(
+    initialState = ClientHomeState(),
+) {
     val frames: Flow<ImageBitmap> = videoReceiverRepository.decodedFrames
 
-    private val _disconnectedEvents = Channel<Unit>(Channel.RENDEZVOUS)
-    val disconnectedEvents = _disconnectedEvents.receiveAsFlow()
-
-    private val _state = MutableStateFlow(ClientHomeState())
-    val state = _state.asStateFlow()
-
-    init {
+    override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.stateFlow
-            .onEach { netState ->
-                Logger.d(TAG) { "Net state updated: $netState" }
-                _state.update { it.copy(networkState = netState) }
+            .distinctUntilChanged { old, new -> old::class == new::class }
+            .subscribe { netState ->
+                state.copy(networkState = netState).update()
                 if (netState is NetworkState.Disconnected) {
-                    _disconnectedEvents.send(Unit)
+                    ClientHomeEffect.DisconnectFromServer.sendEffect()
                 }
             }
-            .launchIn(viewModelScope)
 
         playReceivedAudio.isPlaying
-            .onEach { playing ->
-                _state.update { it.copy(isAudioPlaying = playing) }
+            .subscribe { playing ->
+                state.copy(isAudioPlaying = playing).update()
             }
-            .launchIn(viewModelScope)
     }
 
-    fun onAction(action: ClientHomeAction) {
+    override fun onAction(action: ClientHomeAction) {
         when (action) {
-            ClientHomeAction.ToggleAudio -> playReceivedAudio.toggle(viewModelScope)
+            ClientHomeAction.ToggleAudio -> playReceivedAudio.toggle(vmScope)
         }
-    }
-
-    companion object {
-        private val TAG = ClientHomeViewModel::class
     }
 }

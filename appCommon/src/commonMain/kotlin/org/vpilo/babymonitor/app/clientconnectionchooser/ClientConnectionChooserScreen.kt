@@ -43,11 +43,13 @@ fun ClientConnectionChooserScreen(
     viewModel: ClientConnectionChooserViewModel,
     onConnected: (serverAddress: InetAddress) -> Unit,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.connectedEvents.collect { address ->
-            onConnected(address)
+        viewModel.effectsFlow.collect { effect ->
+            when (effect) {
+                is ClientConnectionChooserEffect.Connected -> onConnected(effect.address)
+            }
         }
     }
 

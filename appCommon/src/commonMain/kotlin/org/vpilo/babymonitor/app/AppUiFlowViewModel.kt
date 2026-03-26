@@ -1,39 +1,29 @@
 package org.vpilo.babymonitor.app
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.app.navigation.NavigationEvent
+import org.vpilo.babymonitor.app.navigation.NavigationEffect
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.model.AppRole
+import org.vpilo.babymonitor.model.AppViewModel
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 
 class AppUiFlowViewModel(
     private val appRoleRepository: AppRoleRepository,
-) : ViewModel() {
+) : AppViewModel<AppUiFlowAction, Unit, NavigationEffect>(initialState = Unit) {
 
-    private val _navigationEvents = Channel<NavigationEvent>(Channel.RENDEZVOUS)
-    val navigationEvents = _navigationEvents.receiveAsFlow()
-
-    fun onAction(action: AppUiFlowAction) {
+    override fun onAction(action: AppUiFlowAction) {
         when (action) {
             is AppUiFlowAction.RoleChosen -> {
-                viewModelScope.launch {
+                vmScope.launch {
                     appRoleRepository.chooseRole(action.appRole)
-                    val destination = when (action.appRole) {
-                        AppRole.SERVER -> Route.PermissionCheck
-                        AppRole.CLIENT -> Route.ClientConnectionChooser
-                        AppRole.UNDECIDED -> error("UNDECIDED role should not be selectable")
-                    }
-                    _navigationEvents.send(NavigationEvent.NavigateTo(destination))
                 }
+                val destination = when (action.appRole) {
+                    AppRole.SERVER -> Route.PermissionCheck
+                    AppRole.CLIENT -> Route.ClientConnectionChooser
+                    AppRole.UNDECIDED -> error("UNDECIDED role should not be selectable")
+                }
+                NavigationEffect.NavigateTo(destination).sendEffect()
             }
         }
-    }
-
-    private companion object {
-        private val TAG = AppUiFlowViewModel::class
     }
 }

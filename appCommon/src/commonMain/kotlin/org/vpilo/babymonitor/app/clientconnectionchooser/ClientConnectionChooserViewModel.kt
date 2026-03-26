@@ -1,57 +1,36 @@
 package org.vpilo.babymonitor.app.clientconnectionchooser
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
-import java.net.InetAddress
 
 class ClientConnectionChooserViewModel(
     private val networkClientRepository: NetworkClientRepository,
-) : ViewModel() {
-
-    companion object {
-        private val TAG = ClientConnectionChooserViewModel::class
-    }
-
-    private val _connectedEvents = Channel<InetAddress>(Channel.RENDEZVOUS)
-    val connectedEvents = _connectedEvents.receiveAsFlow()
-
-    private val _state = MutableStateFlow(ClientConnectionChooserState())
-    val state = _state.asStateFlow()
-
-    init {
+) : AppViewModel<ClientConnectionChooserAction, ClientConnectionChooserState, ClientConnectionChooserEffect>(
+    initialState = ClientConnectionChooserState(),
+) {
+    override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.discoveredServers
-            .onEach { list ->
-                Logger.d(TAG) { "Discovered server list: $list" }
-                _state.update { it.copy(availableServers = list) }
+            .subscribe { list ->
+                state.copy(availableServers = list).update()
             }
-            .launchIn(viewModelScope)
 
         networkClientRepository.stateFlow
-            .onEach { netState ->
-                Logger.d(TAG) { "Net state updated: $netState" }
-                _state.update { it.copy(networkState = netState) }
+            .distinctUntilChanged { old, new -> old::class == new::class }
+            .subscribe { netState ->
+                state.copy(networkState = netState).update()
                 if (netState is NetworkState.Connected) {
-                    _connectedEvents.send(netState.address)
+                    ClientConnectionChooserEffect.Connected(netState.address).sendEffect()
                 }
             }
-            .launchIn(viewModelScope)
     }
 
-    fun onAction(action: ClientConnectionChooserAction) {
+    override fun onAction(action: ClientConnectionChooserAction) {
         when (action) {
             is ClientConnectionChooserAction.ConnectToServer -> {
-                viewModelScope.launch {
+                vmScope.launch {
                     networkClientRepository.connect(action.address)
                 }
             }

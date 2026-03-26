@@ -18,7 +18,7 @@ fun ServerHomeScreen(
     modifier: Modifier = Modifier,
     viewModel: ServerHomeViewModel,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
     ServerHomeComposable(
         modifier = modifier,

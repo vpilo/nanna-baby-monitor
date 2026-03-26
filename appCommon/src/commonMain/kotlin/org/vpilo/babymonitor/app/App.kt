@@ -25,23 +25,34 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.client.ClientHomeScreen
 import org.vpilo.babymonitor.app.clientconnectionchooser.ClientConnectionChooserScreen
-import org.vpilo.babymonitor.app.navigation.NavigationEvent
+import org.vpilo.babymonitor.app.navigation.NavigationEffect
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.server.ServerHomeScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
+
+private const val TAG = "App"
 
 @Composable
 fun App(
     viewModel: AppUiFlowViewModel = koinViewModel(),
 ) {
     val navController = rememberNavController()
-    LaunchedEffect(Unit) {
-        viewModel.navigationEvents.collect { event ->
+    LaunchedEffect(navController) {
+        navController.addOnDestinationChangedListener { controller, destination, _ ->
+            val route = destination.route
+            val backStack = controller.currentBackStack.value.joinToString(" -> ") { it.destination.route.toString() }
+
+            Logger.d(TAG) { "Navigated to: $route" }
+            Logger.d(TAG) { "-- Back stack: $backStack" }
+        }
+
+        viewModel.effectsFlow.collect { event ->
             when (event) {
-                is NavigationEvent.NavigateTo -> navController.navigate(event.route)
+                is NavigationEffect.NavigateTo -> navController.navigate(event.route)
             }
         }
     }
@@ -121,9 +132,7 @@ private fun NavigationRoutes(
                     ClientConnectionChooserScreen(
                         viewModel = koinViewModel(),
                         onConnected = {
-                            navController.navigate(Route.ClientHome) {
-                                popUpTo(Route.ClientConnectionChooser) { inclusive = true }
-                            }
+                            navController.navigate(Route.ClientHome)
                         },
                     )
                 }
