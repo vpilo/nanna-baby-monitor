@@ -14,8 +14,6 @@ sealed interface NetworkState {
 
     data class Connected(
         val address: InetAddress,
-        val hasAudio: Boolean,
-        val hasVideo: Boolean,
     ) : NetworkState
 
     enum class ErrorReason {

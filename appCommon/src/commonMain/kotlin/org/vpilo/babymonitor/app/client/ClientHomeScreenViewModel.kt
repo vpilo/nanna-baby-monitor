@@ -19,7 +19,7 @@ class ClientHomeScreenViewModel(
     val frames: Flow<ImageBitmap> = videoReceiverRepository.decodedFrames
 
     override fun SubscriptionScope.onSubscribed() {
-        networkClientRepository.stateFlow
+        networkClientRepository.connectionStateFlow
             .distinctUntilChanged { old, new -> old::class == new::class }
             .subscribe { netState ->
                 state.copy(networkState = netState).update()

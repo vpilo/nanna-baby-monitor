@@ -23,7 +23,7 @@ internal suspend fun DefaultWebSocketServerSession.videoStreamingServerWebSocket
             }
     }.onFailure { ex ->
         if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-            Logger.i(TAG) { "WebSocket closed (${ex::class.simpleName}): ${ex.localizedMessage}" }
+            Logger.w(TAG) { "WebSocket closed (${ex::class.simpleName}): ${ex.localizedMessage}" }
         }
     }
 }

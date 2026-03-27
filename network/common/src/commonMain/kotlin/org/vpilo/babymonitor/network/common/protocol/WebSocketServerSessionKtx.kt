@@ -2,8 +2,10 @@ package org.vpilo.babymonitor.network.common.protocol
 
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
+import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
+import org.vpilo.babymonitor.model.repository.ServerState
 
 private val byteArrayTrue by lazy { byteArrayOf(1) }
 private val byteArrayFalse by lazy { byteArrayOf(0) }
@@ -29,4 +31,20 @@ suspend fun WebSocketSession.protocolReceiveVideo(): EncodedVideoStreamChunk {
             flag[0].toInt() != 0
         }
     return EncodedVideoStreamChunk(data, isKeyFrame)
+}
+
+suspend fun WebSocketSession.protocolSendServerState(state: ServerState) {
+    val contents = byteArrayOf(
+        state.captureMode.ordinal.toByte()
+    )
+    send(Frame.Binary(fin = true, data = contents))
+}
+
+suspend fun WebSocketSession.protocolReceiveServerState(): ServerState {
+    val rawData = incoming.receive().data
+
+    val captureModeInt = rawData[0].toInt()
+    val captureMode = CaptureMode.entries.getOrNull(captureModeInt)
+        ?: throw IllegalArgumentException("Invalid capture mode value: $captureModeInt")
+    return ServerState(isAvailable = true, captureMode = captureMode)
 }

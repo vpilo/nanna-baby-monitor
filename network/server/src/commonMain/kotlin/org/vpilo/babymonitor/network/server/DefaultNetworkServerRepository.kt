@@ -29,6 +29,7 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
+import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
@@ -114,6 +115,9 @@ internal class DefaultNetworkServerRepository(
         }
 
         routing {
+            webSocket(Endpoints.CONTROL) {
+                controlServerWebSocket()
+            }
             webSocket(Endpoints.STREAM_AUDIO) {
                 if (currentCaptureMode == CaptureMode.VIDEO_ONLY) {
                     close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Audio streaming is disabled"))

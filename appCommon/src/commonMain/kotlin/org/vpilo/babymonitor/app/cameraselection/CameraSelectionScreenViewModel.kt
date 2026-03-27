@@ -12,12 +12,12 @@ class CameraSelectionScreenViewModel(
         initialState = CameraSelectionScreenState(),
     ) {
     override fun SubscriptionScope.onSubscribed() {
-        networkClientRepository.discoveredServers
+        networkClientRepository.discoveredServersFlow
             .subscribe { list ->
                 state.copy(availableServers = list).update()
             }
 
-        networkClientRepository.stateFlow
+        networkClientRepository.connectionStateFlow
             .distinctUntilChanged { old, new -> old::class == new::class }
             .subscribe { netState ->
                 state.copy(networkState = netState).update()

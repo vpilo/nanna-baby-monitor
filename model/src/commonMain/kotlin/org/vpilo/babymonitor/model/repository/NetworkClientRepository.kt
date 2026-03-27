@@ -4,9 +4,11 @@ import kotlinx.coroutines.flow.Flow
 import java.net.InetAddress
 
 interface NetworkClientRepository {
-    val stateFlow: Flow<NetworkState>
+    val connectionStateFlow: Flow<NetworkState>
 
-    val discoveredServers: Flow<Set<InetAddress>>
+    val serverStateFlow: Flow<ServerState>
+
+    val discoveredServersFlow: Flow<Set<InetAddress>>
 
     suspend fun connect(address: InetAddress)
 
