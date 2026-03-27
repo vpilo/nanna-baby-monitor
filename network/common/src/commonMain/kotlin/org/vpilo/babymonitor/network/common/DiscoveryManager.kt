@@ -7,7 +7,10 @@ expect class DiscoveryManager {
     val discoveredServers: Flow<Set<InetAddress>>
 
     fun registerService()
+
     fun unregisterService()
+
     fun startDiscovery()
+
     fun stopDiscovery()
 }

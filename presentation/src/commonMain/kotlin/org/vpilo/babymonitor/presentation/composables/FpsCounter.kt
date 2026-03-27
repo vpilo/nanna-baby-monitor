@@ -27,7 +27,10 @@ import kotlin.time.TimeSource
  * given as the [frameKey] parameter.
  */
 @Composable
-fun FpsCounter(frameKey: Any?, modifier: Modifier = Modifier) {
+fun FpsCounter(
+    frameKey: Any?,
+    modifier: Modifier = Modifier,
+) {
     var frameCount by remember { mutableIntStateOf(0) }
     var fps by remember { mutableDoubleStateOf(0.0) }
     var lastMark by remember { mutableStateOf(TimeSource.Monotonic.markNow()) }
@@ -44,22 +47,26 @@ fun FpsCounter(frameKey: Any?, modifier: Modifier = Modifier) {
         }
     }
 
-    val color = when (fps) {
-        in 0.0..15.0 -> Color.Red
-        in 15.0..25.0 -> Color.Yellow
-        else -> Color.Green
-    }
+    val color =
+        when (fps) {
+            in 0.0..15.0 -> Color.Red
+            in 15.0..25.0 -> Color.Yellow
+            else -> Color.Green
+        }
     Text(
         text = "%.02f FPS".format(fps),
-        modifier = modifier
-            .padding(Theme.Paddings.Small),
-        style = TextStyle(
-            color = color,
-            shadow = Shadow(
-                color = Color.Black,
-                blurRadius = 2.dp.value,
+        modifier =
+            modifier
+                .padding(Theme.Paddings.Small),
+        style =
+            TextStyle(
+                color = color,
+                shadow =
+                    Shadow(
+                        color = Color.Black,
+                        blurRadius = 2.dp.value,
+                    ),
             ),
-        ),
     )
 }
 

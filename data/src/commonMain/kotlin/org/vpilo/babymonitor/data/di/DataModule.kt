@@ -7,7 +7,8 @@ import org.vpilo.babymonitor.data.DefaultAudioPlaybackRepository
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.model.repository.AudioPlaybackRepository
 
-val dataKoinModule: Module = module {
-    single<AppRoleRepository> { DefaultAppRoleRepository() }
-    single<AudioPlaybackRepository> { DefaultAudioPlaybackRepository() }
-}
+val dataKoinModule: Module =
+    module {
+        single<AppRoleRepository> { DefaultAppRoleRepository() }
+        single<AudioPlaybackRepository> { DefaultAudioPlaybackRepository() }
+    }

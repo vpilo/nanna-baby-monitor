@@ -34,7 +34,11 @@ internal actual fun CameraFrame.toImageBitmap(): ImageBitmap {
  * Swaps interleaved UV pairs from NV12 (U,V) order to NV21 (V,U) order.
  * The Y plane is identical and copied as-is.
  */
-private fun nv12ToNv21(nv12: ByteArray, width: Int, height: Int): ByteArray {
+private fun nv12ToNv21(
+    nv12: ByteArray,
+    width: Int,
+    height: Int,
+): ByteArray {
     val ySize = width * height
     val nv21 = nv12.copyOf()
     // Swap each UV pair in the chroma plane

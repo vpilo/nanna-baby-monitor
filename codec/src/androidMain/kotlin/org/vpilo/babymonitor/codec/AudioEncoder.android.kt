@@ -28,22 +28,23 @@ actual class AudioEncoder actual constructor(
     actual fun start() {
         if (audioEncodeJob?.isActive == true) return
 
-        audioEncodeJob = coroutineScope.launch {
-            presentationTimeUs = 0L
-            val codec = createAudioEncoder()
-            audioEncoder = codec
-            Logger.d(TAG) { "Audio encoder started" }
+        audioEncodeJob =
+            coroutineScope.launch {
+                presentationTimeUs = 0L
+                val codec = createAudioEncoder()
+                audioEncoder = codec
+                Logger.d(TAG) { "Audio encoder started" }
 
-            try {
-                input.collect { pcmChunk ->
-                    if (!isActive) return@collect
-                    encodeAudioChunk(codec, pcmChunk)
+                try {
+                    input.collect { pcmChunk ->
+                        if (!isActive) return@collect
+                        encodeAudioChunk(codec, pcmChunk)
+                    }
+                } finally {
+                    releaseCodec(codec)
+                    audioEncoder = null
                 }
-            } finally {
-                releaseCodec(codec)
-                audioEncoder = null
             }
-        }
     }
 
     actual fun stop() {
@@ -52,20 +53,25 @@ actual class AudioEncoder actual constructor(
     }
 
     private fun createAudioEncoder(): MediaCodec {
-        val format = MediaFormat.createAudioFormat(
-            MediaFormat.MIMETYPE_AUDIO_OPUS,
-            MediaFormats.Audio.SAMPLE_RATE,
-            MediaFormats.Audio.CHANNELS,
-        ).apply {
-            setInteger(MediaFormat.KEY_BIT_RATE, MediaFormats.Audio.BIT_RATE)
-        }
+        val format =
+            MediaFormat
+                .createAudioFormat(
+                    MediaFormat.MIMETYPE_AUDIO_OPUS,
+                    MediaFormats.Audio.SAMPLE_RATE,
+                    MediaFormats.Audio.CHANNELS,
+                ).apply {
+                    setInteger(MediaFormat.KEY_BIT_RATE, MediaFormats.Audio.BIT_RATE)
+                }
         return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS).also {
             it.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             it.start()
         }
     }
 
-    private fun encodeAudioChunk(codec: MediaCodec, pcmData: ByteArray) {
+    private fun encodeAudioChunk(
+        codec: MediaCodec,
+        pcmData: ByteArray,
+    ) {
         val bytesPerSample = MediaFormats.Audio.SAMPLE_SIZE_BITS / 8 * MediaFormats.Audio.CHANNELS
         var offset = 0
         while (offset < pcmData.size) {
@@ -95,10 +101,11 @@ actual class AudioEncoder actual constructor(
             val outputIndex = codec.dequeueOutputBuffer(bufferInfo, CODEC_TIMEOUT_US)
             if (outputIndex < 0) break
 
-            val outputBuffer: ByteBuffer = codec.getOutputBuffer(outputIndex) ?: run {
-                codec.releaseOutputBuffer(outputIndex, false)
-                continue
-            }
+            val outputBuffer: ByteBuffer =
+                codec.getOutputBuffer(outputIndex) ?: run {
+                    codec.releaseOutputBuffer(outputIndex, false)
+                    continue
+                }
 
             if (bufferInfo.size > 0) {
                 val data = ByteArray(bufferInfo.size)

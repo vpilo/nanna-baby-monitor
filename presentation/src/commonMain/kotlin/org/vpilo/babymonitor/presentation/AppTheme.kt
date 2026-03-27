@@ -30,9 +30,10 @@ fun AppTheme(
     ) {
         Surface(
             color = MaterialTheme.colorScheme.background,
-            modifier = modifier
-                .fillMaxSize()
-                .statusBarsPadding(),
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .statusBarsPadding(),
             content = content,
         )
     }

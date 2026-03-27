@@ -20,8 +20,8 @@ import kotlin.time.Duration.Companion.milliseconds
 internal actual class VideoCaptureDataSource(
     webcamGetter: () -> Webcam,
 ) : SharedResourceHolder<CameraFrame>(
-    bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
-) {
+        bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
+    ) {
     actual constructor() : this(webcamGetter = { Webcam.getDefault() })
 
     actual val frames: CameraFrameFlow = collector.asSharedFlow()
@@ -30,13 +30,13 @@ internal actual class VideoCaptureDataSource(
 
     private val webcam: Webcam = webcamGetter()
 
-
     override fun start() {
         if (videoCaptureJob?.isActive == true) {
             Logger.w(TAG) { "Camera is already running, ignoring start request." }
             return
         }
 
+        @Suppress("SpreadOperator")
         webcam.setCustomViewSizes(*customResolutions)
         for (size in customResolutions) {
             webcam.setViewSize(size)
@@ -56,23 +56,24 @@ internal actual class VideoCaptureDataSource(
         }
 
         videoCaptureJob =
-            coroutineScope.launch {
-                while (isActive && webcam.isOpen) {
-                    if (!webcam.isImageNew) {
-                        delay(10.milliseconds)
-                        continue
-                    }
-                    webcam.getImage()
-                        ?.let { image -> collector.tryEmit(CameraFrame(image)) }
-                        ?: run {
-                            Logger.w(TAG) { "Failed to capture image" }
-                            delay(100.milliseconds)
+            coroutineScope
+                .launch {
+                    while (isActive && webcam.isOpen) {
+                        if (!webcam.isImageNew) {
+                            delay(10.milliseconds)
+                            continue
                         }
-                }
+                        webcam
+                            .getImage()
+                            ?.let { image -> collector.tryEmit(CameraFrame(image)) }
+                            ?: run {
+                                Logger.w(TAG) { "Failed to capture image" }
+                                delay(100.milliseconds)
+                            }
+                    }
 
-                delay(1.milliseconds)
-            }
-                .apply {
+                    delay(1.milliseconds)
+                }.apply {
                     invokeOnCompletion { ex ->
                         if (ex == null || ex is CancellationException) {
                             Logger.d(TAG) { "Camera stopped" }
@@ -91,18 +92,17 @@ internal actual class VideoCaptureDataSource(
         videoCaptureJob = null
     }
 
-    override val TAG = VideoCaptureDataSource::class
-
     private companion object {
-        private val customResolutions = arrayOf<Dimension>(
-            WebcamResolution.UHD4K.size,
-            WebcamResolution.WUXGA.size,
-            WebcamResolution.FHD.size,
-            WebcamResolution.UXGA.size,
-            WebcamResolution.HDP.size,
-            WebcamResolution.SXGA.size,
-            WebcamResolution.HD.size,
-            WebcamResolution.XGA.size,
-        )
+        private val customResolutions =
+            arrayOf<Dimension>(
+                WebcamResolution.UHD4K.size,
+                WebcamResolution.WUXGA.size,
+                WebcamResolution.FHD.size,
+                WebcamResolution.UXGA.size,
+                WebcamResolution.HDP.size,
+                WebcamResolution.SXGA.size,
+                WebcamResolution.HD.size,
+                WebcamResolution.XGA.size,
+            )
     }
 }

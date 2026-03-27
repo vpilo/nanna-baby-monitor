@@ -63,30 +63,31 @@ actual class VideoEncoder actual constructor(
             return
         }
 
-        videoEncodeJob = coroutineScope.launch {
-            var encoderCtx: VideoEncoderContext? = null
-            try {
-                input.collect { frame ->
-                    if (!isActive) return@collect
+        videoEncodeJob =
+            coroutineScope.launch {
+                var encoderCtx: VideoEncoderContext? = null
+                try {
+                    input.collect { frame ->
+                        if (!isActive) return@collect
 
-                    val w = frame.image.width
-                    val h = frame.image.height
+                        val w = frame.image.width
+                        val h = frame.image.height
 
-                    // (Re)create encoder if resolution changed
-                    if (encoderCtx == null || encoderCtx!!.width != w || encoderCtx!!.height != h) {
-                        encoderCtx?.release()
-                        encoderCtx = VideoEncoderContext.create(w, h)
-                        Logger.d(TAG) { "Video encoder configured for ${w}x${h}" }
+                        // (Re)create encoder if resolution changed
+                        if (encoderCtx == null || encoderCtx!!.width != w || encoderCtx!!.height != h) {
+                            encoderCtx?.release()
+                            encoderCtx = VideoEncoderContext.create(w, h)
+                            Logger.d(TAG) { "Video encoder configured for ${w}x$h" }
+                        }
+
+                        encoderCtx.encode(frame) { chunk ->
+                            output.tryEmit(chunk)
+                        }
                     }
-
-                    encoderCtx.encode(frame) { chunk ->
-                        output.tryEmit(chunk)
-                    }
+                } finally {
+                    encoderCtx?.release()
                 }
-            } finally {
-                encoderCtx?.release()
             }
-        }
     }
 
     actual fun stop() {
@@ -108,7 +109,10 @@ actual class VideoEncoder actual constructor(
     ) {
         private var pts = 0L
 
-        fun encode(frame: CameraFrame, emit: (EncodedVideoStreamChunk) -> Unit) {
+        fun encode(
+            frame: CameraFrame,
+            emit: (EncodedVideoStreamChunk) -> Unit,
+        ) {
             fillSourceFrame(frame.image)
             convertToYuv()
 
@@ -157,8 +161,8 @@ actual class VideoEncoder actual constructor(
                     for (i in intPixels.indices) {
                         val px = intPixels[i]
                         val offset = i * 3
-                        bgr[offset] = (px and 0xFF).toByte()              // B
-                        bgr[offset + 1] = ((px shr 8) and 0xFF).toByte()  // G
+                        bgr[offset] = (px and 0xFF).toByte() // B
+                        bgr[offset + 1] = ((px shr 8) and 0xFF).toByte() // G
                         bgr[offset + 2] = ((px shr 16) and 0xFF).toByte() // R
                     }
                     srcFrame.data(0).put(bgr, 0, bgr.size)
@@ -171,9 +175,9 @@ actual class VideoEncoder actual constructor(
                     for (i in intPixels.indices) {
                         val px = intPixels[i]
                         val offset = i * 3
-                        bgr[offset] = ((px shr 16) and 0xFF).toByte()     // B
-                        bgr[offset + 1] = ((px shr 8) and 0xFF).toByte()  // G
-                        bgr[offset + 2] = (px and 0xFF).toByte()          // R
+                        bgr[offset] = ((px shr 16) and 0xFF).toByte() // B
+                        bgr[offset + 1] = ((px shr 8) and 0xFF).toByte() // G
+                        bgr[offset + 2] = (px and 0xFF).toByte() // R
                     }
                     srcFrame.data(0).put(bgr, 0, bgr.size)
                 }
@@ -209,28 +213,33 @@ actual class VideoEncoder actual constructor(
         }
 
         companion object {
-            fun create(width: Int, height: Int): VideoEncoderContext {
+            fun create(
+                width: Int,
+                height: Int,
+            ): VideoEncoderContext {
                 // Prefer libx264 if available, fall back to libopenh264
-                val codec = avcodec_find_encoder_by_name("libx264")
-                    ?: avcodec_find_encoder_by_name("libopenh264")
-                    ?: avcodec_find_encoder(AV_CODEC_ID_H264)
-                    ?: error("H.264 encoder not found.")
+                val codec =
+                    avcodec_find_encoder_by_name("libx264")
+                        ?: avcodec_find_encoder_by_name("libopenh264")
+                        ?: avcodec_find_encoder(AV_CODEC_ID_H264)
+                        ?: error("H.264 encoder not found.")
 
                 val encoderName = codec.name().getString()
 
-                val codecCtx = avcodec_alloc_context3(codec).apply {
-                    width(width)
-                    height(height)
-                    pix_fmt(AV_PIX_FMT_YUV420P)
-                    time_base(av_make_q(1, MediaFormats.Video.FRAME_RATE))
-                    framerate(av_make_q(MediaFormats.Video.FRAME_RATE, 1))
-                    bit_rate(MediaFormats.Video.BIT_RATE.toLong())
-                    gop_size(MediaFormats.Video.FRAME_RATE * MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
-                    max_b_frames(0)
-                    // Ensure Annex-B output: clear the GLOBAL_HEADER flag so
-                    // SPS/PPS are emitted inline with the bitstream.
-                    flags(flags() and AV_CODEC_FLAG_GLOBAL_HEADER.inv())
-                }
+                val codecCtx =
+                    avcodec_alloc_context3(codec).apply {
+                        width(width)
+                        height(height)
+                        pix_fmt(AV_PIX_FMT_YUV420P)
+                        time_base(av_make_q(1, MediaFormats.Video.FRAME_RATE))
+                        framerate(av_make_q(MediaFormats.Video.FRAME_RATE, 1))
+                        bit_rate(MediaFormats.Video.BIT_RATE.toLong())
+                        gop_size(MediaFormats.Video.FRAME_RATE * MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
+                        max_b_frames(0)
+                        // Ensure Annex-B output: clear the GLOBAL_HEADER flag so
+                        // SPS/PPS are emitted inline with the bitstream.
+                        flags(flags() and AV_CODEC_FLAG_GLOBAL_HEADER.inv())
+                    }
 
                 val opts = AVDictionary()
                 when (encoderName) {
@@ -250,25 +259,35 @@ actual class VideoEncoder actual constructor(
                 av_dict_free(opts)
                 check(ret >= 0) { "Could not open H.264 codec ($encoderName): $ret" }
 
-                val srcFrame = av_frame_alloc().apply {
-                    format(AV_PIX_FMT_BGR24)
-                    width(width)
-                    height(height)
-                }
+                val srcFrame =
+                    av_frame_alloc().apply {
+                        format(AV_PIX_FMT_BGR24)
+                        width(width)
+                        height(height)
+                    }
                 av_frame_get_buffer(srcFrame, 0)
 
-                val yuvFrame = av_frame_alloc().apply {
-                    format(AV_PIX_FMT_YUV420P)
-                    width(width)
-                    height(height)
-                }
+                val yuvFrame =
+                    av_frame_alloc().apply {
+                        format(AV_PIX_FMT_YUV420P)
+                        width(width)
+                        height(height)
+                    }
                 av_frame_get_buffer(yuvFrame, 0)
 
-                val swsCtx = sws_getContext(
-                    width, height, AV_PIX_FMT_BGR24,
-                    width, height, AV_PIX_FMT_YUV420P,
-                    SWS_BILINEAR, null, null, DoublePointer(),
-                ) ?: error("Could not initialise sws_getContext")
+                val swsCtx =
+                    sws_getContext(
+                        width,
+                        height,
+                        AV_PIX_FMT_BGR24,
+                        width,
+                        height,
+                        AV_PIX_FMT_YUV420P,
+                        SWS_BILINEAR,
+                        null,
+                        null,
+                        DoublePointer(),
+                    ) ?: error("Could not initialise sws_getContext")
 
                 val packet = av_packet_alloc()
 

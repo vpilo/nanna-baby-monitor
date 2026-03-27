@@ -10,5 +10,6 @@ expect class AudioDecoder(
     coroutineContext: CoroutineContext,
 ) {
     fun start()
+
     fun stop()
 }

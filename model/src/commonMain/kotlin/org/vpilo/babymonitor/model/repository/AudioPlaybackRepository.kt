@@ -5,4 +5,3 @@ import org.vpilo.babymonitor.model.AudioFrameFlow
 interface AudioPlaybackRepository {
     suspend fun play(input: AudioFrameFlow)
 }
-

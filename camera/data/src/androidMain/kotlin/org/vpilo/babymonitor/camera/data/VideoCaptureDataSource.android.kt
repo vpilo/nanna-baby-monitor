@@ -27,13 +27,12 @@ import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 import java.lang.ref.WeakReference
 
-
 internal actual class VideoCaptureDataSource(
     private val mainDispatcher: CoroutineDispatcher,
 ) : SharedResourceHolder<CameraFrame>(
-    bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
-), AndroidService {
-
+        bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
+    ),
+    AndroidService {
     actual constructor() : this(mainDispatcher = Dispatchers.Main)
 
     actual val frames: CameraFrameFlow = collector.asSharedFlow()
@@ -43,7 +42,8 @@ internal actual class VideoCaptureDataSource(
     private val executor = coroutineDispatcher.asExecutor()
 
     private val resolutionSelector: ResolutionSelector by lazy {
-        ResolutionSelector.Builder()
+        ResolutionSelector
+            .Builder()
             .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
             .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER))
             .build()
@@ -98,62 +98,79 @@ internal actual class VideoCaptureDataSource(
         collector.tryEmit(CameraFrame(bytes = nv12, width = w, height = h))
     }
 
-
     @MainThread
-    fun onCameraReady(cameraProvider: ProcessCameraProvider, context: Context, lifecycleOwner: LifecycleOwner) {
-        val imageAnalyzer = ImageAnalysis.Builder()
-            .setOutputImageRotationEnabled(true)
-            .setResolutionSelector(resolutionSelector)
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-            .setBackgroundExecutor(executor)
-            .build()
-            .also {
-                it.setAnalyzer(executor, ::onFrameReceived)
-            }
+    fun onCameraReady(
+        cameraProvider: ProcessCameraProvider,
+        context: Context,
+        lifecycleOwner: LifecycleOwner,
+    ) {
+        val imageAnalyzer =
+            ImageAnalysis
+                .Builder()
+                .setOutputImageRotationEnabled(true)
+                .setResolutionSelector(resolutionSelector)
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                .setBackgroundExecutor(executor)
+                .build()
+                .also {
+                    it.setAnalyzer(executor, ::onFrameReceived)
+                }
 
-        val cameraSelector = CameraSelector.Builder()
-            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-            .build()
+        val cameraSelector =
+            CameraSelector
+                .Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build()
 
+        @Suppress("TooGenericExceptionCaught")
         try {
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(
-                lifecycleOwner, cameraSelector, imageAnalyzer,
+                lifecycleOwner,
+                cameraSelector,
+                imageAnalyzer,
             )
         } catch (ex: Exception) {
             Logger.e(this::class) { "Failed to bind camera: ${ex.message}" }
             return
         }
 
-        orientationListener = object : OrientationEventListener(context) {
-            init {
-                enable()
-            }
+        orientationListener =
+            object : OrientationEventListener(context) {
+                init {
+                    enable()
+                }
 
-            private var lastRotation = ORIENTATION_UNKNOWN
-            private val target = WeakReference(imageAnalyzer)
+                private var lastRotation = ORIENTATION_UNKNOWN
+                private val target = WeakReference(imageAnalyzer)
 
-            override fun onOrientationChanged(orientation: Int) {
-                if (orientation == ORIENTATION_UNKNOWN || orientation == lastRotation) return
-                lastRotation = orientation
-                target.get()
-                    ?.setTargetRotation(UseCase.snapToSurfaceRotation(orientation))
-                    ?: this.disable()
+                override fun onOrientationChanged(orientation: Int) {
+                    if (orientation == ORIENTATION_UNKNOWN || orientation == lastRotation) return
+                    lastRotation = orientation
+                    target
+                        .get()
+                        ?.setTargetRotation(UseCase.snapToSurfaceRotation(orientation))
+                        ?: this.disable()
+                }
             }
-        }
     }
 
-    override fun onServiceStarted(context: Context, lifecycleOwner: LifecycleOwner) {
+    override fun onServiceStarted(
+        context: Context,
+        lifecycleOwner: LifecycleOwner,
+    ) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener(
             {
-                cameraProvider = cameraProviderFuture.get()
-                    .also {
-                        CoroutineScope(mainDispatcher).launch {
-                            onCameraReady(it, context, lifecycleOwner)
+                cameraProvider =
+                    cameraProviderFuture
+                        .get()
+                        .also {
+                            CoroutineScope(mainDispatcher).launch {
+                                onCameraReady(it, context, lifecycleOwner)
+                            }
                         }
-                    }
             },
             executor,
         )
@@ -173,6 +190,4 @@ internal actual class VideoCaptureDataSource(
     override fun stop() {
         AndroidServiceRegistry.unregister(this)
     }
-
-    override val TAG = VideoCaptureDataSource::class
 }

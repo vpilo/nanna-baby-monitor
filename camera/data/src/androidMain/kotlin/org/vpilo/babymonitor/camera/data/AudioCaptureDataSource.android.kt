@@ -17,15 +17,20 @@ import org.vpilo.babymonitor.model.AudioFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 
-internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
-    bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
-), AndroidService {
+internal actual class AudioCaptureDataSource :
+    SharedResourceHolder<AudioFrame>(
+        bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
+    ),
+    AndroidService {
     private var audioRecord: AudioRecord? = null
     private var recordingJob: Job? = null
 
     actual val samples: AudioFrameFlow = collector.asSharedFlow()
 
-    override fun onServiceStarted(context: Context, lifecycleOwner: LifecycleOwner) {
+    override fun onServiceStarted(
+        context: Context,
+        lifecycleOwner: LifecycleOwner,
+    ) {
         Logger.d(TAG) { "Starting mic capture" }
         val audioSource = MediaRecorder.AudioSource.MIC
         val sampleRate = MediaFormats.Audio.SAMPLE_RATE
@@ -34,17 +39,18 @@ internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
         val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
         audioRecord = AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize)
-        recordingJob = coroutineScope.launch {
-            val buffer = ByteArray(bufferSize)
-            audioRecord?.startRecording()
-            while (isActive) {
-                audioRecord?.read(buffer, 0, buffer.size)?.let { read ->
-                    if (isActive && read > 0) {
-                        collector.tryEmit(buffer.copyOf(read))
+        recordingJob =
+            coroutineScope.launch {
+                val buffer = ByteArray(bufferSize)
+                audioRecord?.startRecording()
+                while (isActive) {
+                    audioRecord?.read(buffer, 0, buffer.size)?.let { read ->
+                        if (isActive && read > 0) {
+                            collector.tryEmit(buffer.copyOf(read))
+                        }
                     }
                 }
             }
-        }
     }
 
     override fun onServiceStopped() {
@@ -63,6 +69,4 @@ internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
     override fun stop() {
         AndroidServiceRegistry.unregister(this)
     }
-
-    override val TAG = AudioCaptureDataSource::class
 }

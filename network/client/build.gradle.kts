@@ -8,10 +8,16 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "org.vpilo.babymonitor.network.client"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
+        compileSdk =
+            libs.versions.android.compileSdk
+                .get()
+                .toInt()
 
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)

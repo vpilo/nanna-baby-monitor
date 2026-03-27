@@ -14,7 +14,10 @@ actual fun hasCameraPermission(): Boolean =
     ContextCompat.checkSelfPermission(LocalContext.current, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
 
 @Composable
-actual fun RequestCameraPermission(onGranted: () -> Unit, onDenied: () -> Unit) {
+actual fun RequestCameraPermission(
+    onGranted: () -> Unit,
+    onDenied: () -> Unit,
+) {
     if (hasCameraPermission()) {
         LaunchedEffect(Unit) { onGranted() }
     } else {
@@ -34,7 +37,10 @@ actual fun hasMicrophonePermission(): Boolean =
     ContextCompat.checkSelfPermission(LocalContext.current, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
 @Composable
-actual fun RequestMicrophonePermission(onGranted: () -> Unit, onDenied: () -> Unit) {
+actual fun RequestMicrophonePermission(
+    onGranted: () -> Unit,
+    onDenied: () -> Unit,
+) {
     if (hasMicrophonePermission()) {
         LaunchedEffect(Unit) { onGranted() }
     } else {

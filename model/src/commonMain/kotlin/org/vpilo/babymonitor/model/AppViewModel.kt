@@ -22,27 +22,28 @@ abstract class AppViewModel<A, S, E>(
     private val initialState: S,
     scope: CoroutineScope? = null,
 ) : ViewModel() {
-
+    @Suppress("VariableNaming", "ktlint:standard:property-naming")
     protected val TAG = this::class
 
     protected val vmScope: CoroutineScope = scope ?: viewModelScope
 
-    private var vmActionsChannel: Channel<A> = Channel(capacity = Channel.BUFFERED)
+    private var internalActionsChannel: Channel<A> = Channel(capacity = Channel.BUFFERED)
     private var actionsJob: Job? = null
 
-    private val _vmStateFlow: MutableStateFlow<S> = MutableStateFlow(initialState)
+    private val internalStateFlow: MutableStateFlow<S> = MutableStateFlow(initialState)
     val stateFlow: StateFlow<S> by lazy {
-        _vmStateFlow
+        internalStateFlow
             .onSubscription {
                 Logger.d(TAG) { "Subscribed" }
                 actionsJob?.cancel()
-                actionsJob = vmScope.launch {
-                    vmActionsChannel.receiveAsFlow().collect { action ->
-                        Logger.d(TAG) { "Received action: $action" }
-                        onAction(action)
+                actionsJob =
+                    vmScope.launch {
+                        internalActionsChannel.receiveAsFlow().collect { action ->
+                            Logger.d(TAG) { "Received action: $action" }
+                            onAction(action)
+                        }
                     }
-                }
-                vmActionsChannel = Channel(capacity = Channel.BUFFERED)
+                internalActionsChannel = Channel(capacity = Channel.BUFFERED)
 
                 object : SubscriptionScope {
                     override fun <T> Flow<T>.subscribe(collector: suspend (value: T) -> Unit) {
@@ -51,7 +52,7 @@ abstract class AppViewModel<A, S, E>(
                 }.onSubscribed()
             }.onCompletion {
                 Logger.d(TAG) { "Unsubscribed" }
-                vmActionsChannel.cancel()
+                internalActionsChannel.cancel()
                 actionsJob?.cancel()
                 actionsJob = null
                 onUnsubscribed()
@@ -62,10 +63,10 @@ abstract class AppViewModel<A, S, E>(
             )
     }
     protected val state: S
-        get() = _vmStateFlow.value
+        get() = internalStateFlow.value
 
-    private val _vmEffectsChannel: Channel<E> = Channel(capacity = Channel.BUFFERED)
-    val effectsFlow: Flow<E> = _vmEffectsChannel.receiveAsFlow()
+    private val internalEffectsChannel: Channel<E> = Channel(capacity = Channel.BUFFERED)
+    val effectsFlow: Flow<E> = internalEffectsChannel.receiveAsFlow()
 
     protected interface SubscriptionScope {
         /**
@@ -76,11 +77,11 @@ abstract class AppViewModel<A, S, E>(
     }
 
     protected open fun SubscriptionScope.onSubscribed() {
-        /* Nothing gets subscribed */
+        // Nothing gets subscribed
     }
 
     protected open fun onUnsubscribed() {
-        /* Nothing gets unsubscribed */
+        // Nothing gets unsubscribed
     }
 
     open fun onAction(action: A) {
@@ -89,7 +90,7 @@ abstract class AppViewModel<A, S, E>(
 
     protected fun A.sendAction() {
         Logger.d(TAG) { "Send action: $this" }
-        vmActionsChannel
+        internalActionsChannel
             .trySend(this)
             .onFailure { ex ->
                 Logger.e(TAG, ex) { "Unable to send action: $this (${ex?.message ?: ex?.let { it::class.simpleName }})" }
@@ -99,14 +100,14 @@ abstract class AppViewModel<A, S, E>(
     protected fun S.update() {
         check(this !is Unit) { "Cannot update a Unit VM state" }
         Logger.d(TAG) { "Updated state: $this" }
-        _vmStateFlow.update { this }
+        internalStateFlow.update { this }
     }
 
     protected fun E.sendEffect() {
         check(this !is Unit) { "Cannot send a Unit VM effect" }
         Logger.d(TAG) { "Send effect: $this" }
         vmScope.launch {
-            _vmEffectsChannel.send(this@sendEffect)
+            internalEffectsChannel.send(this@sendEffect)
         }
     }
 }

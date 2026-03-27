@@ -30,6 +30,10 @@ ffmpeg = "8.0.1-1.5.13"
 ktor = "3.4.1"
 jmdns = "3.6.3"
 
+ktlint-gradle = "14.2.0"
+ktlint = "1.8.0"
+detekt = "1.23.8"
+
 junit = "4.13.2"
 
 [libraries]
@@ -102,6 +106,8 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-gradle" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 
 [bundles]
 ktor-client = [

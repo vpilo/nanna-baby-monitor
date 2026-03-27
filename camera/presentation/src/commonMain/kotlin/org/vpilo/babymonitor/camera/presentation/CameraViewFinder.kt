@@ -25,7 +25,7 @@ private const val TAG = "CameraViewFinder"
 @Composable
 fun CameraViewFinder(
     modifier: Modifier = Modifier,
-    viewModel: CameraViewFinderViewModel = koinViewModel()
+    viewModel: CameraViewFinderViewModel = koinViewModel(),
 ) {
     val scope = rememberCoroutineScope()
     var lastFrame by remember { mutableStateOf<ImageBitmap?>(null) }

@@ -19,7 +19,7 @@ data class EncodedVideoStreamChunk(
         if (this === other) return true
         if (other !is EncodedVideoStreamChunk) return false
         return isKeyFrame == other.isKeyFrame &&
-                data.contentEquals(other.data)
+            data.contentEquals(other.data)
     }
 
     override fun hashCode(): Int {

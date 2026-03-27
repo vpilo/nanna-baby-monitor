@@ -48,18 +48,19 @@ actual class AudioDecoder actual constructor(
             return
         }
 
-        decodeJob = coroutineScope.launch {
-            val ctx = AudioDecoderContext.create(output)
-            Logger.d(TAG) { "Audio decoder started" }
+        decodeJob =
+            coroutineScope.launch {
+                val ctx = AudioDecoderContext.create(output)
+                Logger.d(TAG) { "Audio decoder started" }
 
-            try {
-                input.collect { chunk ->
-                    ctx.decode(chunk.data)
+                try {
+                    input.collect { chunk ->
+                        ctx.decode(chunk.data)
+                    }
+                } finally {
+                    ctx.release()
                 }
-            } finally {
-                ctx.release()
             }
-        }
     }
 
     actual fun stop() {
@@ -117,11 +118,14 @@ actual class AudioDecoder actual constructor(
                 val outPtrs = PointerPointer<BytePointer>(1L).put(0, outPtr)
 
                 try {
-                    val convertedSamples = swr_convert(
-                        swrCtx,
-                        outPtrs, nbSamples,
-                        decodedFrame.data(), nbSamples,
-                    )
+                    val convertedSamples =
+                        swr_convert(
+                            swrCtx,
+                            outPtrs,
+                            nbSamples,
+                            decodedFrame.data(),
+                            nbSamples,
+                        )
 
                     if (convertedSamples > 0) {
                         val pcmSize = convertedSamples * channels * bytesPerSample
@@ -149,30 +153,42 @@ actual class AudioDecoder actual constructor(
             private const val TAG = "AudioDecoderContext"
 
             fun create(output: MutableAudioFrameFlow): AudioDecoderContext {
-                val codec = avcodec_find_decoder(AV_CODEC_ID_OPUS)
-                    ?: error("Opus decoder not found.")
+                val codec =
+                    avcodec_find_decoder(AV_CODEC_ID_OPUS)
+                        ?: error("Opus decoder not found.")
 
-                val codecCtx = avcodec_alloc_context3(codec).apply {
-                    sample_rate(MediaFormats.Audio.SAMPLE_RATE)
-                    av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
-                }
+                val codecCtx =
+                    avcodec_alloc_context3(codec).apply {
+                        sample_rate(MediaFormats.Audio.SAMPLE_RATE)
+                        av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
+                    }
 
                 val ret = avcodec_open2(codecCtx, codec, null as org.bytedeco.ffmpeg.avutil.AVDictionary?)
                 check(ret >= 0) { "Could not open Opus decoder: $ret" }
 
                 // Set up resampler: decoder output format (FLTP) → S16 interleaved
                 val swrCtx = SwrContext()
-                val outLayout = org.bytedeco.ffmpeg.avutil.AVChannelLayout()
+                val outLayout =
+                    org.bytedeco.ffmpeg.avutil
+                        .AVChannelLayout()
                 av_channel_layout_default(outLayout, MediaFormats.Audio.CHANNELS)
-                val inLayout = org.bytedeco.ffmpeg.avutil.AVChannelLayout()
+                val inLayout =
+                    org.bytedeco.ffmpeg.avutil
+                        .AVChannelLayout()
                 av_channel_layout_default(inLayout, MediaFormats.Audio.CHANNELS)
 
-                val swrRet = swr_alloc_set_opts2(
-                    swrCtx,
-                    outLayout, AV_SAMPLE_FMT_S16, MediaFormats.Audio.SAMPLE_RATE,
-                    inLayout, codecCtx.sample_fmt(), MediaFormats.Audio.SAMPLE_RATE,
-                    0, null,
-                )
+                val swrRet =
+                    swr_alloc_set_opts2(
+                        swrCtx,
+                        outLayout,
+                        AV_SAMPLE_FMT_S16,
+                        MediaFormats.Audio.SAMPLE_RATE,
+                        inLayout,
+                        codecCtx.sample_fmt(),
+                        MediaFormats.Audio.SAMPLE_RATE,
+                        0,
+                        null,
+                    )
                 check(swrRet >= 0) { "Could not set swr options: $swrRet" }
 
                 val initRet = swr_init(swrCtx)

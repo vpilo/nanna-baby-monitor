@@ -6,24 +6,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.io.IOException
 import org.vpilo.babymonitor.common.Logger
 import java.net.InetAddress
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceEvent
 import javax.jmdns.ServiceInfo
 import javax.jmdns.ServiceListener
-import kotlin.coroutines.CoroutineContext
 
-actual class DiscoveryManager(
-    private val coroutineContext: CoroutineContext,
-) {
+actual class DiscoveryManager {
     private val discoveryService = JmDNS.create(Constants.SERVICES_LISTEN_ADDRESS)
 
     private val remoteServiceListener = RemoteServiceListener()
 
-    actual val discoveredServers: Flow<Set<InetAddress>> = remoteServiceListener.discoveredServers
-        .map { it.toSortedSet { a, b -> a.hostAddress.compareTo(b.hostAddress) } }
-        .distinctUntilChanged()
+    actual val discoveredServers: Flow<Set<InetAddress>> =
+        remoteServiceListener.discoveredServers
+            .map { it.toSortedSet { a, b -> a.hostAddress.compareTo(b.hostAddress) } }
+            .distinctUntilChanged()
 
     init {
         startDiscovery()
@@ -33,37 +32,25 @@ actual class DiscoveryManager(
         Logger.d(TAG) { "Service registered: $SERVICE_TYPE on ${Constants.SERVICES_LISTEN_ADDRESS}" }
         try {
             discoveryService.registerService(createServiceInfo())
-        } catch (ex: Exception) {
+        } catch (ex: IOException) {
             Logger.e(TAG, ex) { "Failed to register service: $SERVICE_TYPE" }
         }
     }
 
     actual fun unregisterService() {
         Logger.d(TAG) { "Service unregistered: $SERVICE_TYPE" }
-        try {
-            discoveryService.unregisterAllServices()
-        } catch (ex: Exception) {
-            Logger.e(TAG, ex) { "Failed to unregister service: $SERVICE_TYPE" }
-        }
+        discoveryService.unregisterAllServices()
     }
 
     actual fun startDiscovery() {
         Logger.d(TAG) { "discovering services: $SERVICE_TYPE" }
-        try {
-            discoveryService.addServiceListener(SERVICE_TYPE, remoteServiceListener)
-        } catch (ex: Exception) {
-            Logger.e(TAG, ex) { "Failed discovering services: $SERVICE_TYPE" }
-        }
+        discoveryService.addServiceListener(SERVICE_TYPE, remoteServiceListener)
     }
 
     actual fun stopDiscovery() {
         Logger.d(TAG) { "stopped discovering services: $SERVICE_TYPE" }
-        try {
-            discoveryService.removeServiceListener(SERVICE_TYPE, remoteServiceListener)
-            remoteServiceListener.reset()
-        } catch (ex: Exception) {
-            Logger.e(TAG, ex) { "Failed stopped discovering services: $SERVICE_TYPE" }
-        }
+        discoveryService.removeServiceListener(SERVICE_TYPE, remoteServiceListener)
+        remoteServiceListener.reset()
     }
 
     private class RemoteServiceListener : ServiceListener {

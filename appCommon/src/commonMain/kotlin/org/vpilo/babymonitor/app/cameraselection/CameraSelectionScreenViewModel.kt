@@ -9,8 +9,8 @@ import org.vpilo.babymonitor.model.repository.NetworkState
 class CameraSelectionScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
-    initialState = CameraSelectionScreenState(),
-) {
+        initialState = CameraSelectionScreenState(),
+    ) {
     override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.discoveredServers
             .subscribe { list ->

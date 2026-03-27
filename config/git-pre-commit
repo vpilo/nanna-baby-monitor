@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo "Running pre-commit check ktlint..."
+./gradlew ktlintFormat --daemon --quiet
+if [ $? -ne 0 ]; then
+    echo
+    echo "❌ ktlint formatting failed."
+    exit 1
+fi
+
+echo "Running pre-commit check detekt..."
+./gradlew detekt --daemon --quiet
+if [ $? -ne 0 ]; then
+    echo
+    echo "❌ detekt check failed."
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed."
+exit 0

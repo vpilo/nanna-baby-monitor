@@ -12,9 +12,7 @@ suspend fun WebSocketSession.protocolSendAudio(chunk: EncodedAudioStreamChunk) {
     send(Frame.Binary(fin = true, data = chunk.data))
 }
 
-suspend fun WebSocketSession.protocolReceiveAudio(): EncodedAudioStreamChunk {
-    return EncodedAudioStreamChunk(incoming.receive().data)
-}
+suspend fun WebSocketSession.protocolReceiveAudio(): EncodedAudioStreamChunk = EncodedAudioStreamChunk(incoming.receive().data)
 
 suspend fun WebSocketSession.protocolSendVideo(chunk: EncodedVideoStreamChunk) {
     send(Frame.Binary(fin = true, data = chunk.data))
@@ -24,10 +22,11 @@ suspend fun WebSocketSession.protocolSendVideo(chunk: EncodedVideoStreamChunk) {
 suspend fun WebSocketSession.protocolReceiveVideo(): EncodedVideoStreamChunk {
     val data = incoming.receive().data
 
-    val isKeyFrame = incoming.receive().let { frame ->
-        val flag = frame.data
-        check(flag.size == 1) { "Expected 1 byte for key frame flag" }
-        flag[0].toInt() != 0
-    }
+    val isKeyFrame =
+        incoming.receive().let { frame ->
+            val flag = frame.data
+            check(flag.size == 1) { "Expected 1 byte for key frame flag" }
+            flag[0].toInt() != 0
+        }
     return EncodedVideoStreamChunk(data, isKeyFrame)
 }

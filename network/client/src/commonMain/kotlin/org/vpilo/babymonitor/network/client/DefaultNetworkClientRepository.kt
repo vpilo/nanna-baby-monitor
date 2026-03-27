@@ -6,9 +6,7 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.HttpMethod
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -32,7 +30,6 @@ internal class DefaultNetworkClientRepository(
     discoveryManager: DiscoveryManager,
     private val coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
-
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
 
     private val networkClient: HttpClient by lazy {
@@ -51,37 +48,41 @@ internal class DefaultNetworkClientRepository(
     private var videoStreamJob: Job? = null
 
     override suspend fun connect(address: InetAddress) {
-        audioStreamJob = scope.launch {
-            try {
-                networkClient.webSocket(
-                    method = HttpMethod.Get,
-                    host = address.hostAddress,
-                    port = Constants.WEBSOCKET_PORT,
-                    path = Endpoints.STREAM_AUDIO,
-                ) {
-                    onConnectionOpened(address, isAudio = true)
-                    audioStreamingClientWebSocket()
+        audioStreamJob =
+            scope.launch {
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    networkClient.webSocket(
+                        method = HttpMethod.Get,
+                        host = address.hostAddress,
+                        port = Constants.WEBSOCKET_PORT,
+                        path = Endpoints.STREAM_AUDIO,
+                    ) {
+                        onConnectionOpened(address, isAudio = true)
+                        audioStreamingClientWebSocket()
+                    }
+                } catch (ex: Exception) {
+                    onConnectionClosed(ex)
                 }
-            } catch (ex: Exception) {
-                onConnectionClosed(ex)
             }
-        }
 
-        videoStreamJob = scope.launch {
-            try {
-                networkClient.webSocket(
-                    method = HttpMethod.Get,
-                    host = address.hostAddress,
-                    port = Constants.WEBSOCKET_PORT,
-                    path = Endpoints.STREAM_VIDEO,
-                ) {
-                    onConnectionOpened(address, isAudio = false)
-                    videoStreamingClientWebSocket()
+        videoStreamJob =
+            scope.launch {
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    networkClient.webSocket(
+                        method = HttpMethod.Get,
+                        host = address.hostAddress,
+                        port = Constants.WEBSOCKET_PORT,
+                        path = Endpoints.STREAM_VIDEO,
+                    ) {
+                        onConnectionOpened(address, isAudio = false)
+                        videoStreamingClientWebSocket()
+                    }
+                } catch (ex: Exception) {
+                    onConnectionClosed(ex)
                 }
-            } catch (ex: Exception) {
-                onConnectionClosed(ex)
             }
-        }
         state.value = NetworkState.Connecting(address)
         Logger.d(TAG) { "Connecting to server at ${address.hostAddress}..." }
     }
@@ -95,7 +96,10 @@ internal class DefaultNetworkClientRepository(
         Logger.i(TAG) { "Client state: ${state.value}" }
     }
 
-    private fun onConnectionOpened(address: InetAddress, isAudio: Boolean) {
+    private fun onConnectionOpened(
+        address: InetAddress,
+        isAudio: Boolean,
+    ) {
         val old = state.value
         state.value =
             when (old) {
@@ -105,7 +109,9 @@ internal class DefaultNetworkClientRepository(
                     NetworkState.Connected(address, newAudioState, newVideoState)
                 }
 
-                else -> NetworkState.Connected(address, hasAudio = isAudio, hasVideo = !isAudio)
+                else -> {
+                    NetworkState.Connected(address, hasAudio = isAudio, hasVideo = !isAudio)
+                }
             }
         Logger.i(TAG) { "Client state: ${state.value}" }
     }
@@ -116,24 +122,27 @@ internal class DefaultNetworkClientRepository(
         videoStreamJob?.cancel()
         videoStreamJob = null
 
-        state.value = when (exception) {
-            is ClosedReceiveChannelException -> return
+        state.value =
+            when (exception) {
+                is ClosedReceiveChannelException -> {
+                    return
+                }
 
-            is ConnectException -> {
-                Logger.i(TAG) { "Connection refused." }
-                NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
-            }
+                is ConnectException -> {
+                    Logger.i(TAG) { "Connection refused." }
+                    NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
+                }
 
-            is CancellationException -> {
-                Logger.i(TAG) { "Connection closed by client." }
-                NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
-            }
+                is CancellationException -> {
+                    Logger.i(TAG) { "Connection closed by client." }
+                    NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
+                }
 
-            else -> {
-                Logger.w(TAG) { "WebSocket failed: ${exception::class.simpleName} - ${exception.localizedMessage}" }
-                NetworkState.Disconnected(NetworkState.ErrorReason.ServerQuit, exception)
+                else -> {
+                    Logger.w(TAG) { "WebSocket failed: ${exception::class.simpleName} - ${exception.localizedMessage}" }
+                    NetworkState.Disconnected(NetworkState.ErrorReason.ServerQuit, exception)
+                }
             }
-        }
         Logger.i(TAG) { "Client state: ${state.value}" }
     }
 

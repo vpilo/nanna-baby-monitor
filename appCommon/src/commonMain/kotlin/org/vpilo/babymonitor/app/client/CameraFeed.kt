@@ -41,9 +41,10 @@ fun CameraFeed(
 
     LifecycleStartEffect(Unit) {
         Logger.d(TAG) { "Started showing feed" }
-        val frameJob = scope.launch {
-            frames.collect { frame = it }
-        }
+        val frameJob =
+            scope.launch {
+                frames.collect { frame = it }
+            }
 
         onStopOrDispose {
             Logger.d(TAG) { "Stopped showing feed" }

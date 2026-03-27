@@ -1,7 +1,6 @@
 package org.vpilo.babymonitor.model
 
 object MediaFormats {
-
     object Audio {
         const val SAMPLE_RATE = 48_000 // native sample rate for Opus
         const val SAMPLE_SIZE_BITS = 16
@@ -39,6 +38,5 @@ object MediaFormats {
          * Maximum amount of compressed video streaming chunks to keep queued before starting to drop older ones.
          */
         const val MAX_VIDEO_STREAM_BUFFER_SIZE: Int = 16
-
     }
 }

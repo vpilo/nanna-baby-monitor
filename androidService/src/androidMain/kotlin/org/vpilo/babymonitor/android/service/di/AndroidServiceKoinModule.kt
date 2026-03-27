@@ -6,6 +6,7 @@ import org.koin.dsl.module
 import org.vpilo.babymonitor.android.service.AndroidServiceHost
 import org.vpilo.babymonitor.android.service.LifecycleService
 
-val androidServiceKoinModule = module {
-    singleOf(::AndroidServiceHost).bind(LifecycleService::class)
-}
+val androidServiceKoinModule =
+    module {
+        singleOf(::AndroidServiceHost).bind(LifecycleService::class)
+    }

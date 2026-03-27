@@ -23,8 +23,5 @@ data class EncodedAudioStreamChunk(
         return true
     }
 
-    override fun hashCode(): Int {
-        return data.contentHashCode()
-    }
-
+    override fun hashCode(): Int = data.contentHashCode()
 }

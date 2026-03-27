@@ -11,7 +11,6 @@ import org.vpilo.babymonitor.common.Logger
  * Empty service to keep the app running in the background while the camera is active.
  */
 internal class AndroidServiceHost : LifecycleService() {
-
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -19,7 +18,11 @@ internal class AndroidServiceHost : LifecycleService() {
         AndroidServiceRegistry.reportServiceStarted(this)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         Logger.d(TAG) { "Starting service in foreground" }
         super.onStartCommand(intent, flags, startId)
         startForeground(NOTIFICATION_ID, createNotification())
@@ -33,17 +36,19 @@ internal class AndroidServiceHost : LifecycleService() {
     }
 
     private fun createNotificationChannel() {
-        val serviceChannel = NotificationChannel(
-            CHANNEL_ID,
-            "Camera active",
-            NotificationManager.IMPORTANCE_DEFAULT,
-        )
+        val serviceChannel =
+            NotificationChannel(
+                CHANNEL_ID,
+                "Camera active",
+                NotificationManager.IMPORTANCE_DEFAULT,
+            )
         getSystemService(NotificationManager::class.java)
             .createNotificationChannel(serviceChannel)
     }
 
     private fun createNotification(): Notification =
-        NotificationCompat.Builder(this, CHANNEL_ID)
+        NotificationCompat
+            .Builder(this, CHANNEL_ID)
             .setContentTitle("Baby Monitor")
             .setContentText("Camera is recording.")
             .setSmallIcon(R.drawable.ic_launcher)

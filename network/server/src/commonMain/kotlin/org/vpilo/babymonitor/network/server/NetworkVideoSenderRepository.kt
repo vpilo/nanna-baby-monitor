@@ -16,17 +16,18 @@ import kotlin.coroutines.CoroutineContext
 internal class NetworkVideoSenderRepository(
     videoRepository: VideoCaptureRepository,
     coroutineContext: CoroutineContext,
-) : StreamingVideoSenderRepository, SharedResourceHolder<EncodedVideoStreamChunk>(
-    bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
-) {
-
+) : SharedResourceHolder<EncodedVideoStreamChunk>(
+        bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
+    ),
+    StreamingVideoSenderRepository {
     override val chunks: StreamingVideoFlow = collector.asSharedFlow()
 
-    private val encoder: VideoEncoder = VideoEncoder(
-        input = videoRepository.frames,
-        output = collector,
-        coroutineContext = coroutineContext,
-    )
+    private val encoder: VideoEncoder =
+        VideoEncoder(
+            input = videoRepository.frames,
+            output = collector,
+            coroutineContext = coroutineContext,
+        )
 
     override fun start() {
         encoder.start()
@@ -35,6 +36,4 @@ internal class NetworkVideoSenderRepository(
     override fun stop() {
         encoder.stop()
     }
-
-    override val TAG = NetworkVideoSenderRepository::class
 }

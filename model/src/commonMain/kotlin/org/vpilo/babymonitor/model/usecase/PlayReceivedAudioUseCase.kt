@@ -29,9 +29,10 @@ class PlayReceivedAudioUseCase(
             playbackJob?.cancel()
             playbackJob = null
         } else {
-            playbackJob = scope.launch {
-                audioPlaybackRepository.play(audioReceiverRepository.chunks)
-            }
+            playbackJob =
+                scope.launch {
+                    audioPlaybackRepository.play(audioReceiverRepository.chunks)
+                }
             playbackJob?.invokeOnCompletion {
                 _isPlaying.value = false
                 playbackJob = null
@@ -40,6 +41,3 @@ class PlayReceivedAudioUseCase(
         }
     }
 }
-
-
-

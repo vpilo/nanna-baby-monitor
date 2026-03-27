@@ -9,11 +9,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.material3.MaterialTheme
 import org.vpilo.babymonitor.presentation.Theme
 
 @Composable
@@ -22,24 +22,25 @@ fun PulseAnimation(modifier: Modifier = Modifier) {
     val progress by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1_000),
-            repeatMode = RepeatMode.Restart,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(1_000),
+                repeatMode = RepeatMode.Restart,
+            ),
     )
 
     Box(
-        modifier = modifier
-            .graphicsLayer {
-                scaleX = progress
-                scaleY = progress
-                alpha = 1f - progress
-            }
-            .size(Theme.Sizes.Button)
-            .border(
-                width = Theme.Sizes.Button,
-                color = MaterialTheme.colorScheme.secondary,
-                shape = CircleShape,
-            ),
+        modifier =
+            modifier
+                .graphicsLayer {
+                    scaleX = progress
+                    scaleY = progress
+                    alpha = 1f - progress
+                }.size(Theme.Sizes.Button)
+                .border(
+                    width = Theme.Sizes.Button,
+                    color = MaterialTheme.colorScheme.secondary,
+                    shape = CircleShape,
+                ),
     )
 }

@@ -14,9 +14,10 @@ import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
 
-internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
-    bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
-) {
+internal actual class AudioCaptureDataSource :
+    SharedResourceHolder<AudioFrame>(
+        bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
+    ) {
     actual val samples: AudioFrameFlow = collector.asSharedFlow()
 
     private var targetLine: TargetDataLine? = null
@@ -29,13 +30,14 @@ internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
             return
         }
 
-        val format = AudioFormat(
-            MediaFormats.Audio.SAMPLE_RATE.toFloat(),
-            MediaFormats.Audio.SAMPLE_SIZE_BITS,
-            MediaFormats.Audio.CHANNELS,
-            MediaFormats.Audio.SIGNED,
-            MediaFormats.Audio.BIG_ENDIAN,
-        )
+        val format =
+            AudioFormat(
+                MediaFormats.Audio.SAMPLE_RATE.toFloat(),
+                MediaFormats.Audio.SAMPLE_SIZE_BITS,
+                MediaFormats.Audio.CHANNELS,
+                MediaFormats.Audio.SIGNED,
+                MediaFormats.Audio.BIG_ENDIAN,
+            )
         val info = DataLine.Info(TargetDataLine::class.java, format)
 
         if (!AudioSystem.isLineSupported(info)) {
@@ -49,28 +51,28 @@ internal actual class AudioCaptureDataSource : SharedResourceHolder<AudioFrame>(
         targetLine = line
         Logger.d(TAG) { "Audio line opened: ${line.format}" }
 
-        audioJob = coroutineScope.launch {
-            val buffer = ByteArray(line.bufferSize / 2)
-            while (isActive && line.isOpen) {
-                val read = line.read(buffer, 0, buffer.size)
-                if (read > 0) {
-                    collector.tryEmit(buffer.copyOf(read))
+        audioJob =
+            coroutineScope
+                .launch {
+                    val buffer = ByteArray(line.bufferSize / 2)
+                    while (isActive && line.isOpen) {
+                        val read = line.read(buffer, 0, buffer.size)
+                        if (read > 0) {
+                            collector.tryEmit(buffer.copyOf(read))
+                        }
+                    }
+                }.apply {
+                    invokeOnCompletion {
+                        line.stop()
+                        line.close()
+                        targetLine = null
+                        Logger.d(TAG) { "Audio line closed" }
+                    }
                 }
-            }
-        }.apply {
-            invokeOnCompletion {
-                line.stop()
-                line.close()
-                targetLine = null
-                Logger.d(TAG) { "Audio line closed" }
-            }
-        }
     }
 
     override fun stop() {
         audioJob?.cancel()
         audioJob = null
     }
-
-    override val TAG = AudioCaptureDataSource::class
 }

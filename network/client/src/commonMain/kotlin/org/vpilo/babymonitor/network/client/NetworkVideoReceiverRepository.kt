@@ -12,18 +12,19 @@ import kotlin.coroutines.CoroutineContext
 internal class NetworkVideoReceiverRepository(
     dataSource: NetworkVideoDataSource,
     coroutineContext: CoroutineContext,
-) : StreamingVideoReceiverRepository, SharedResourceHolder<ImageBitmap>(
-    bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
-) {
-
+) : SharedResourceHolder<ImageBitmap>(
+        bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
+    ),
+    StreamingVideoReceiverRepository {
     // TODO probably want to change the raw frame format for the camera, for fewer conversions on either end.
     override val decodedFrames: SharedFlow<ImageBitmap> = collector.asSharedFlow()
 
-    private val decoder: VideoDecoder = VideoDecoder(
-        input = dataSource.collector,
-        output = collector,
-        coroutineContext = coroutineContext,
-    )
+    private val decoder: VideoDecoder =
+        VideoDecoder(
+            input = dataSource.collector,
+            output = collector,
+            coroutineContext = coroutineContext,
+        )
 
     override fun start() {
         decoder.start()
@@ -32,6 +33,4 @@ internal class NetworkVideoReceiverRepository(
     override fun stop() {
         decoder.stop()
     }
-
-    override val TAG = NetworkVideoReceiverRepository::class
 }

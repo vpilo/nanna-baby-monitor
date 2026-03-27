@@ -3,14 +3,16 @@
 feature plan
 
 - Play and pause independently audio or video
+  - buttons in client screen to toggle
+  - server can also toggle audio and video capture independently
 - Secure lan-only communication channel, with clients (monitors) pairing with server (camera).
-- network discovery
 - Plugins for raw AV streams to:
     - reduce noise
     - detect silence
     - detect no movement
-- rotate video feed to match camera orientation on Android
 - allow capture resolution choice
+- settings system to save audio and video quality preferences, and other settings
+- settings screen in menu
 
 https://github.com/zeenolife/ai-baby-monitor
 https://github.com/danmacnaughtan/baby-monitor
@@ -19,8 +21,6 @@ https://github.com/codeperfectplus/AI-Baby-Monitor
 https://github.com/timrappold/WeeBro
 https://github.com/sdaniel631/BabyMonitor
 https://github.com/enguerrand/child-monitor
-
-use https://github.com/jmdns/jmdns or https://github.com/faceless2/zeroconf for service discovery and registration
 
 use https://github.com/pavi2410/kmp-app-updater for app updates
 

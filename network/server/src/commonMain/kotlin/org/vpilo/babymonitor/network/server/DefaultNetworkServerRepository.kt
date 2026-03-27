@@ -31,9 +31,7 @@ internal class DefaultNetworkServerRepository(
     private val discoveryManager: DiscoveryManager,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
-
     private var server: EmbeddedServer<*, *>? = null
-
 
     private val state = MutableStateFlow(false)
     override val stateFlow: Flow<Boolean> = state.asStateFlow()
@@ -47,26 +45,25 @@ internal class DefaultNetworkServerRepository(
 
         withContext(coroutineContext) {
             embeddedServer(
-                    factory = CIO,
-                    module = Application::module,
-                    host = Constants.SERVICES_LISTEN_ADDRESS,
-                    port = Constants.WEBSOCKET_PORT,
-                )
-                .apply {
-                    server = this
+                factory = CIO,
+                module = Application::module,
+                host = Constants.SERVICES_LISTEN_ADDRESS,
+                port = Constants.WEBSOCKET_PORT,
+            ).apply {
+                server = this
 
-                    monitor.subscribe(ServerReady) {
-                        Logger.i(TAG) { "Server is ready at ${Constants.SERVICES_LISTEN_ADDRESS}" }
-                        state.value = true
-                    }
-                    monitor.subscribe(ApplicationStopped) {
-                        Logger.i(TAG) { "Server is stopping" }
-                        state.value = false
-                        monitor.unsubscribe(ApplicationStarted) {}
-                        monitor.unsubscribe(ApplicationStopped) {}
-                    }
-                    start(wait = false)
+                monitor.subscribe(ServerReady) {
+                    Logger.i(TAG) { "Server is ready at ${Constants.SERVICES_LISTEN_ADDRESS}" }
+                    state.value = true
                 }
+                monitor.subscribe(ApplicationStopped) {
+                    Logger.i(TAG) { "Server is stopping" }
+                    state.value = false
+                    monitor.unsubscribe(ApplicationStarted) {}
+                    monitor.unsubscribe(ApplicationStopped) {}
+                }
+                start(wait = false)
+            }
         }
     }
 

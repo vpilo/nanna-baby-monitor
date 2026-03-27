@@ -13,15 +13,15 @@ import javax.sound.sampled.DataLine
 import javax.sound.sampled.SourceDataLine
 
 internal actual class DefaultAudioPlaybackRepository actual constructor() : AudioPlaybackRepository {
-
     override suspend fun play(input: AudioFrameFlow) {
-        val audioFormat = AudioFormat(
-            MediaFormats.Audio.SAMPLE_RATE.toFloat(),
-            MediaFormats.Audio.SAMPLE_SIZE_BITS,
-            MediaFormats.Audio.CHANNELS,
-            MediaFormats.Audio.SIGNED,
-            MediaFormats.Audio.BIG_ENDIAN,
-        )
+        val audioFormat =
+            AudioFormat(
+                MediaFormats.Audio.SAMPLE_RATE.toFloat(),
+                MediaFormats.Audio.SAMPLE_SIZE_BITS,
+                MediaFormats.Audio.CHANNELS,
+                MediaFormats.Audio.SIGNED,
+                MediaFormats.Audio.BIG_ENDIAN,
+            )
         val lineInfo = DataLine.Info(SourceDataLine::class.java, audioFormat)
         val audioLine = AudioSystem.getLine(lineInfo) as SourceDataLine
         audioLine.open(audioFormat)
@@ -34,12 +34,11 @@ internal actual class DefaultAudioPlaybackRepository actual constructor() : Audi
                     if (!isActive) return@collect
                     audioLine.write(chunk, 0, chunk.size)
                 }
+            }.invokeOnCompletion {
+                Logger.d(TAG) { "Stopping audio playback: $it" }
+                audioLine.stop()
+                audioLine.close()
             }
-                .invokeOnCompletion {
-                    Logger.d(TAG) { "Stopping audio playback: $it" }
-                    audioLine.stop()
-                    audioLine.close()
-                }
         }
     }
 
@@ -47,4 +46,3 @@ internal actual class DefaultAudioPlaybackRepository actual constructor() : Audi
         private val TAG = DefaultAudioPlaybackRepository::class
     }
 }
-

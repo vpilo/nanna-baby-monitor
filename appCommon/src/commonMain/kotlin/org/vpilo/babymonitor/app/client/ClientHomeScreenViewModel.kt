@@ -14,8 +14,8 @@ class ClientHomeScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
 ) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
-    initialState = ClientHomeScreenState(),
-) {
+        initialState = ClientHomeScreenState(),
+    ) {
     val frames: Flow<ImageBitmap> = videoReceiverRepository.decodedFrames
 
     override fun SubscriptionScope.onSubscribed() {

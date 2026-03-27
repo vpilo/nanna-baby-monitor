@@ -39,48 +39,51 @@ actual class VideoDecoder actual constructor(
             return
         }
 
-        decodeJob = coroutineScope.launch {
-            var codec: MediaCodec? = null
+        decodeJob =
+            coroutineScope.launch {
+                var codec: MediaCodec? = null
 
-            try {
-                input.collect { chunk ->
-                    if (!isActive) return@collect
+                try {
+                    input.collect { chunk ->
+                        if (!isActive) return@collect
 
-                    // Create decoder on first keyframe
-                    if (codec == null && chunk.isKeyFrame) {
-                        val format = MediaFormat.createVideoFormat(
-                            MediaFormat.MIMETYPE_VIDEO_AVC,
-                            // Initial size hint; the actual resolution is determined
-                            // by the SPS/PPS in the bitstream and will be reported
-                            // via INFO_OUTPUT_FORMAT_CHANGED.
-                            MediaFormats.Video.ENCODE_WIDTH,
-                            MediaFormats.Video.ENCODE_HEIGHT,
-                        )
+                        // Create decoder on first keyframe
+                        if (codec == null && chunk.isKeyFrame) {
+                            val format =
+                                MediaFormat.createVideoFormat(
+                                    MediaFormat.MIMETYPE_VIDEO_AVC,
+                                    // Initial size hint; the actual resolution is determined
+                                    // by the SPS/PPS in the bitstream and will be reported
+                                    // via INFO_OUTPUT_FORMAT_CHANGED.
+                                    MediaFormats.Video.ENCODE_WIDTH,
+                                    MediaFormats.Video.ENCODE_HEIGHT,
+                                )
 
-                        // Extract SPS and PPS NAL units from the keyframe data
-                        // and set them as codec-specific data so the decoder is
-                        // fully initialized before it receives any frames.
-                        val csd = extractCodecSpecificData(chunk.data)
-                        if (csd != null) {
-                            format.setByteBuffer("csd-0", ByteBuffer.wrap(csd))
+                            // Extract SPS and PPS NAL units from the keyframe data
+                            // and set them as codec-specific data so the decoder is
+                            // fully initialized before it receives any frames.
+                            val csd = extractCodecSpecificData(chunk.data)
+                            if (csd != null) {
+                                format.setByteBuffer("csd-0", ByteBuffer.wrap(csd))
+                            }
+
+                            codec =
+                                MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
+                                    it.configure(format, null, null, 0)
+                                    it.start()
+                                }
+                            decoder = codec
+                            frameIndex = 0
+                            Logger.d(TAG) { "Video decoder started" }
                         }
 
-                        codec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
-                            it.configure(format, null, null, 0)
-                            it.start()
-                        }
-                        decoder = codec
-                        frameIndex = 0
-                        Logger.d(TAG) { "Video decoder started" }
+                        codec?.let { decodeFrame(it, chunk) }
                     }
-
-                    codec?.let { decodeFrame(it, chunk) }
+                } finally {
+                    codec?.let { releaseCodec(it) }
+                    decoder = null
                 }
-            } finally {
-                codec?.let { releaseCodec(it) }
-                decoder = null
             }
-        }
     }
 
     actual fun stop() {
@@ -88,7 +91,10 @@ actual class VideoDecoder actual constructor(
         decodeJob = null
     }
 
-    private fun decodeFrame(codec: MediaCodec, chunk: EncodedVideoStreamChunk) {
+    private fun decodeFrame(
+        codec: MediaCodec,
+        chunk: EncodedVideoStreamChunk,
+    ) {
         // Feed encoded data
         val inputIndex = codec.dequeueInputBuffer(INPUT_TIMEOUT_US)
         if (inputIndex >= 0) {
@@ -111,9 +117,9 @@ actual class VideoDecoder actual constructor(
                 Logger.d(TAG) {
                     with(codec.outputFormat) {
                         "Output format changed: " +
-                                "${getInteger(MediaFormat.KEY_WIDTH)}" +
-                                "x" +
-                                "${getInteger(MediaFormat.KEY_HEIGHT)}"
+                            "${getInteger(MediaFormat.KEY_WIDTH)}" +
+                            "x" +
+                            "${getInteger(MediaFormat.KEY_HEIGHT)}"
                     }
                 }
                 continue

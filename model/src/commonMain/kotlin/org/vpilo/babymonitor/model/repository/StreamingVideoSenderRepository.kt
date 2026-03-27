@@ -6,5 +6,6 @@ interface StreamingVideoSenderRepository {
     val chunks: StreamingVideoFlow
 
     fun start()
+
     fun stop()
 }

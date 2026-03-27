@@ -7,7 +7,6 @@ import org.vpilo.babymonitor.model.VideoCaptureRepository
 class CameraViewFinderViewModel(
     videoCaptureRepository: VideoCaptureRepository,
 ) : ViewModel() {
-
     val frames: CameraFrameFlow =
         videoCaptureRepository.frames
 }

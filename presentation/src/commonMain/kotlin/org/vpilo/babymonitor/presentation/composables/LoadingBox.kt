@@ -12,8 +12,9 @@ import androidx.compose.ui.tooling.preview.Preview
 fun LoadingBox(modifier: Modifier = Modifier) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
-            .fillMaxSize(),
+        modifier =
+            modifier
+                .fillMaxSize(),
     ) {
         PulseAnimation()
     }

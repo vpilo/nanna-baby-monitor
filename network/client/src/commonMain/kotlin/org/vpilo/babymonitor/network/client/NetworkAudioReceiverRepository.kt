@@ -12,17 +12,18 @@ import kotlin.coroutines.CoroutineContext
 internal class NetworkAudioReceiverRepository(
     dataSource: NetworkAudioDataSource,
     coroutineContext: CoroutineContext,
-) : StreamingAudioReceiverRepository, SharedResourceHolder<AudioFrame>(
-    bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
-) {
-
+) : SharedResourceHolder<AudioFrame>(
+        bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
+    ),
+    StreamingAudioReceiverRepository {
     override val chunks: AudioFrameFlow = collector.asSharedFlow()
 
-    private val decoder: AudioDecoder = AudioDecoder(
-        input = dataSource.audioFrames,
-        output = collector,
-        coroutineContext = coroutineContext,
-    )
+    private val decoder: AudioDecoder =
+        AudioDecoder(
+            input = dataSource.audioFrames,
+            output = collector,
+            coroutineContext = coroutineContext,
+        )
 
     override fun start() {
         decoder.start()
@@ -31,6 +32,4 @@ internal class NetworkAudioReceiverRepository(
     override fun stop() {
         decoder.stop()
     }
-
-    override val TAG = NetworkAudioReceiverRepository::class
 }

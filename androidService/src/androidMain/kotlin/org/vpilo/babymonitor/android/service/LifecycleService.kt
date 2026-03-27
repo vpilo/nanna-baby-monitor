@@ -11,7 +11,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-internal abstract class LifecycleService : Service(), LifecycleOwner {
+internal abstract class LifecycleService :
+    Service(),
+    LifecycleOwner {
     private val scope = CoroutineScope(Dispatchers.Main.immediate)
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
 
@@ -30,7 +32,11 @@ internal abstract class LifecycleService : Service(), LifecycleOwner {
         return null
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         dispatch(Lifecycle.Event.ON_START)
         return super.onStartCommand(intent, flags, startId)
     }

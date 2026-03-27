@@ -8,9 +8,12 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "org.vpilo.babymonitor.presentation"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        compileSdk =
+            libs.versions.android.compileSdk
+                .get()
+                .toInt()
 
         androidResources {
             enable = true

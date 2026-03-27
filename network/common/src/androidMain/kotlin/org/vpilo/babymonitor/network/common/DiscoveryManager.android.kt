@@ -32,9 +32,10 @@ actual class DiscoveryManager(
     private val _discoveredServers: MutableStateFlow<Set<InetAddress>> =
         MutableStateFlow(emptySet())
 
-    actual val discoveredServers: Flow<Set<InetAddress>> = _discoveredServers
-        .map { it.toSortedSet(compareBy { address -> address.hostAddress }) }
-        .distinctUntilChanged()
+    actual val discoveredServers: Flow<Set<InetAddress>> =
+        _discoveredServers
+            .map { it.toSortedSet(compareBy { address -> address.hostAddress }) }
+            .distinctUntilChanged()
 
     private var discoveryListener: NsdManager.DiscoveryListener? = null
     private var registrationListener: NsdManager.RegistrationListener? = null
@@ -45,19 +46,23 @@ actual class DiscoveryManager(
 
     actual fun registerService() {
         scope.launch {
-            try {
-                val serviceInfo = NsdServiceInfo().apply {
+            val serviceInfo =
+                NsdServiceInfo().apply {
                     serviceName = Constants.DISCOVERY_SERVICE_NAME
                     serviceType = Constants.DISCOVERY_SERVICE_TYPE
                     port = Constants.DISCOVERY_PORT
                 }
 
-                val listener = object : NsdManager.RegistrationListener {
+            val listener =
+                object : NsdManager.RegistrationListener {
                     override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {
                         Logger.d(TAG) { "Service registered: ${serviceInfo.serviceName}" }
                     }
 
-                    override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                    override fun onRegistrationFailed(
+                        serviceInfo: NsdServiceInfo,
+                        errorCode: Int,
+                    ) {
                         Logger.e(TAG) { "Service registration failed: errorCode=$errorCode" }
                     }
 
@@ -65,25 +70,26 @@ actual class DiscoveryManager(
                         Logger.d(TAG) { "Service unregistered: ${serviceInfo.serviceName}" }
                     }
 
-                    override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+                    override fun onUnregistrationFailed(
+                        serviceInfo: NsdServiceInfo,
+                        errorCode: Int,
+                    ) {
                         Logger.e(TAG) { "Service unregistration failed: errorCode=$errorCode" }
                     }
                 }
-                registrationListener = listener
+            registrationListener = listener
 
-                nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, listener)
-            } catch (ex: Exception) {
-                Logger.e(TAG, ex) { "Failed to register service" }
-            }
+            nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, listener)
         }
     }
 
     actual fun unregisterService() {
         try {
             registrationListener?.let { nsdManager.unregisterService(it) }
-            registrationListener = null
-        } catch (ex: Exception) {
+        } catch (ex: IllegalArgumentException) {
             Logger.e(TAG, ex) { "Failed to unregister service" }
+        } finally {
+            registrationListener = null
         }
     }
 
@@ -91,10 +97,10 @@ actual class DiscoveryManager(
         if (discoveryListener != null) return
 
         scope.launch {
-            try {
-                acquireMulticastLock()
+            acquireMulticastLock()
 
-                val listener = object : NsdManager.DiscoveryListener {
+            val listener =
+                object : NsdManager.DiscoveryListener {
                     override fun onDiscoveryStarted(serviceType: String) {
                         Logger.d(TAG) { "Discovery started: $serviceType" }
                     }
@@ -117,66 +123,69 @@ actual class DiscoveryManager(
                         Logger.d(TAG) { "Discovery stopped: $serviceType" }
                     }
 
-                    override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
+                    override fun onStartDiscoveryFailed(
+                        serviceType: String,
+                        errorCode: Int,
+                    ) {
                         Logger.e(TAG) { "Start discovery failed: errorCode=$errorCode" }
                         releaseMulticastLock()
                     }
 
-                    override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
+                    override fun onStopDiscoveryFailed(
+                        serviceType: String,
+                        errorCode: Int,
+                    ) {
                         Logger.e(TAG) { "Stop discovery failed: errorCode=$errorCode" }
                     }
                 }
-                discoveryListener = listener
+            discoveryListener = listener
 
-                nsdManager.discoverServices(
-                    Constants.DISCOVERY_SERVICE_TYPE,
-                    NsdManager.PROTOCOL_DNS_SD,
-                    listener,
-                )
-            } catch (ex: Exception) {
-                Logger.e(TAG, ex) { "Failed to start discovery" }
-                releaseMulticastLock()
-            }
+            nsdManager.discoverServices(
+                Constants.DISCOVERY_SERVICE_TYPE,
+                NsdManager.PROTOCOL_DNS_SD,
+                listener,
+            )
+            releaseMulticastLock()
         }
     }
 
     actual fun stopDiscovery() {
         try {
             discoveryListener?.let { nsdManager.stopServiceDiscovery(it) }
+        } catch (ex: IllegalArgumentException) {
+            Logger.e(TAG, ex) { "Failed to stop discovery" }
+        } finally {
             discoveryListener = null
             _discoveredServers.value = emptySet()
             releaseMulticastLock()
-        } catch (ex: Exception) {
-            Logger.e(TAG, ex) { "Failed to stop discovery" }
         }
     }
 
     private fun resolveService(serviceInfo: NsdServiceInfo) {
         scope.launch {
-            try {
-                @Suppress("DEPRECATION")
-                nsdManager.resolveService(
-                    serviceInfo,
-                    object : NsdManager.ResolveListener {
-                        override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                            Logger.w(TAG) { "Resolve failed for ${serviceInfo.serviceName}: errorCode=$errorCode" }
-                        }
+            @Suppress("DEPRECATION")
+            nsdManager.resolveService(
+                serviceInfo,
+                object : NsdManager.ResolveListener {
+                    override fun onResolveFailed(
+                        serviceInfo: NsdServiceInfo,
+                        errorCode: Int,
+                    ) {
+                        Logger.w(TAG) { "Resolve failed for ${serviceInfo.serviceName}: errorCode=$errorCode" }
+                    }
 
-                        override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
-                            @Suppress("DEPRECATION")
-                            val host = serviceInfo.host
-                            if (host != null) {
-                                Logger.d(TAG) { "Service resolved: ${serviceInfo.serviceName} -> $host" }
-                                _discoveredServers.value += host
-                            } else {
-                                Logger.w(TAG) { "Service resolved but no host: ${serviceInfo.serviceName}" }
-                            }
+                    override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
+                        @Suppress("DEPRECATION")
+                        val host = serviceInfo.host
+                        if (host != null) {
+                            Logger.d(TAG) { "Service resolved: ${serviceInfo.serviceName} -> $host" }
+                            _discoveredServers.value += host
+                        } else {
+                            Logger.w(TAG) { "Service resolved but no host: ${serviceInfo.serviceName}" }
                         }
-                    },
-                )
-            } catch (ex: Exception) {
-                Logger.e(TAG, ex) { "Failed to resolve service: ${serviceInfo.serviceName}" }
-            }
+                    }
+                },
+            )
         }
     }
 
@@ -200,7 +209,6 @@ actual class DiscoveryManager(
     }
 
     private companion object {
-
         private val TAG = DiscoveryManager::class
     }
 }

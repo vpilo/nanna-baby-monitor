@@ -36,6 +36,7 @@ abstract class SharedResourceHolder<T>(
         get() = collector.subscriptionCount.value > 0
 
     protected abstract fun start()
+
     protected abstract fun stop()
 
     private fun onActive() {
@@ -48,5 +49,6 @@ abstract class SharedResourceHolder<T>(
         stop()
     }
 
-    abstract val TAG: KClass<*>
+    @Suppress("VariableNaming")
+    open val TAG: KClass<*> = this::class
 }

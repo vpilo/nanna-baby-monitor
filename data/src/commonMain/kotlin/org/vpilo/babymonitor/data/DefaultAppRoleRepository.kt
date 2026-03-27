@@ -14,5 +14,4 @@ internal class DefaultAppRoleRepository : AppRoleRepository {
     override suspend fun chooseRole(appRole: AppRole) {
         _appRole.value = appRole
     }
-
 }

@@ -12,35 +12,38 @@ import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.repository.AudioPlaybackRepository
 
 internal actual class DefaultAudioPlaybackRepository actual constructor() : AudioPlaybackRepository {
-
     override suspend fun play(input: AudioFrameFlow) {
-        val channelConfig = when (MediaFormats.Audio.CHANNELS) {
-            1 -> AudioFormat.CHANNEL_OUT_MONO
-            else -> AudioFormat.CHANNEL_OUT_STEREO
-        }
-        val minBufferSize = AudioTrack.getMinBufferSize(
-            MediaFormats.Audio.SAMPLE_RATE,
-            channelConfig,
-            AudioFormat.ENCODING_PCM_16BIT,
-        )
+        val channelConfig =
+            when (MediaFormats.Audio.CHANNELS) {
+                1 -> AudioFormat.CHANNEL_OUT_MONO
+                else -> AudioFormat.CHANNEL_OUT_STEREO
+            }
+        val minBufferSize =
+            AudioTrack.getMinBufferSize(
+                MediaFormats.Audio.SAMPLE_RATE,
+                channelConfig,
+                AudioFormat.ENCODING_PCM_16BIT,
+            )
 
-        val audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build(),
-            )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(MediaFormats.Audio.SAMPLE_RATE)
-                    .setChannelMask(channelConfig)
-                    .build(),
-            )
-            .setBufferSizeInBytes(minBufferSize * 2)
-            .setTransferMode(AudioTrack.MODE_STREAM)
-            .build()
+        val audioTrack =
+            AudioTrack
+                .Builder()
+                .setAudioAttributes(
+                    AudioAttributes
+                        .Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build(),
+                ).setAudioFormat(
+                    AudioFormat
+                        .Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(MediaFormats.Audio.SAMPLE_RATE)
+                        .setChannelMask(channelConfig)
+                        .build(),
+                ).setBufferSizeInBytes(minBufferSize * 2)
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .build()
 
         audioTrack.play()
 
@@ -51,12 +54,11 @@ internal actual class DefaultAudioPlaybackRepository actual constructor() : Audi
                     if (!isActive) return@collect
                     audioTrack.write(chunk, 0, chunk.size)
                 }
+            }.invokeOnCompletion {
+                Logger.d(TAG) { "Stopping audio playback: $it" }
+                audioTrack.stop()
+                audioTrack.release()
             }
-                .invokeOnCompletion {
-                    Logger.d(TAG) { "Stopping audio playback: $it" }
-                    audioTrack.stop()
-                    audioTrack.release()
-                }
         }
     }
 
@@ -64,4 +66,3 @@ internal actual class DefaultAudioPlaybackRepository actual constructor() : Audi
         private val TAG = DefaultAudioPlaybackRepository::class
     }
 }
-

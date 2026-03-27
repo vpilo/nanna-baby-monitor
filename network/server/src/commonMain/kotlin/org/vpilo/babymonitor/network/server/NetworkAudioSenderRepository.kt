@@ -16,17 +16,18 @@ import kotlin.reflect.KClass
 internal class NetworkAudioSenderRepository(
     audioRepository: AudioCaptureRepository,
     coroutineContext: CoroutineContext,
-) : StreamingAudioSenderRepository, SharedResourceHolder<EncodedAudioStreamChunk>(
-    bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
-) {
-
+) : SharedResourceHolder<EncodedAudioStreamChunk>(
+        bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
+    ),
+    StreamingAudioSenderRepository {
     override val chunks: StreamingAudioFlow = collector.asSharedFlow()
 
-    private val encoder: AudioEncoder = AudioEncoder(
-        input = audioRepository.samples,
-        output = collector,
-        coroutineContext = coroutineContext,
-    )
+    private val encoder: AudioEncoder =
+        AudioEncoder(
+            input = audioRepository.samples,
+            output = collector,
+            coroutineContext = coroutineContext,
+        )
 
     override fun start() {
         encoder.start()
@@ -35,6 +36,4 @@ internal class NetworkAudioSenderRepository(
     override fun stop() {
         encoder.stop()
     }
-
-    override val TAG = NetworkAudioSenderRepository::class
 }

@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.app.navigation
 import kotlinx.serialization.Serializable
 
 sealed interface Route {
-
     @Serializable
     data object RootNavGraph : Route
 
@@ -15,6 +14,7 @@ sealed interface Route {
 
     @Serializable
     data object ClientConnectionChooser : Route
+
     @Serializable
     data object ClientHome : Route
 

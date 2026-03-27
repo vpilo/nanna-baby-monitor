@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.onEach
 fun <T> MutableSharedFlow<T>.reactor(
     scope: CoroutineScope,
     onActive: () -> Unit,
-    onInactive: () -> Unit
+    onInactive: () -> Unit,
 ): Job {
     var neverActivated = true
     return subscriptionCount
@@ -30,11 +30,12 @@ fun <T> MutableSharedFlow<T>.reactor(
                 }
 
                 neverActivated -> {
-                    /* Do nothing */
+                    // Do nothing
                 }
 
-                else -> onInactive()
+                else -> {
+                    onInactive()
+                }
             }
-        }
-        .launchIn(scope)
+        }.launchIn(scope)
 }

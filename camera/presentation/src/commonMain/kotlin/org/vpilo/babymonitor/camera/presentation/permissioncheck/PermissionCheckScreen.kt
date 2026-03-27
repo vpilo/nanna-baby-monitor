@@ -27,17 +27,19 @@ fun PermissionCheckScreen(
     val deniedPermissions = remember { mutableIntStateOf(2) }
 
     when {
-        !hasCameraPermission() ->
+        !hasCameraPermission() -> {
             RequestCameraPermission(
                 onGranted = { deniedPermissions.intValue-- },
                 onDenied = {},
             )
+        }
 
-        !hasMicrophonePermission() ->
+        !hasMicrophonePermission() -> {
             RequestMicrophonePermission(
                 onGranted = { deniedPermissions.intValue-- },
                 onDenied = {},
             )
+        }
 
         else -> {
             onAllPermissionsGranted()
@@ -50,8 +52,9 @@ fun PermissionCheckScreen(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize(),
+        modifier =
+            modifier
+                .fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         Column(

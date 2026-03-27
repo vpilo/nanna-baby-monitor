@@ -7,7 +7,10 @@ import androidx.compose.runtime.remember
 actual fun hasCameraPermission(): Boolean = true
 
 @Composable
-actual fun RequestCameraPermission(onGranted: () -> Unit, onDenied: () -> Unit) {
+actual fun RequestCameraPermission(
+    onGranted: () -> Unit,
+    onDenied: () -> Unit,
+) {
     remember {
         onGranted()
     }
@@ -17,7 +20,10 @@ actual fun RequestCameraPermission(onGranted: () -> Unit, onDenied: () -> Unit) 
 actual fun hasMicrophonePermission(): Boolean = true
 
 @Composable
-actual fun RequestMicrophonePermission(onGranted: () -> Unit, onDenied: () -> Unit) {
+actual fun RequestMicrophonePermission(
+    onGranted: () -> Unit,
+    onDenied: () -> Unit,
+) {
     remember {
         onGranted()
     }

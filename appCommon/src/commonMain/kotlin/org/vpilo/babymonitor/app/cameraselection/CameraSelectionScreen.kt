@@ -72,51 +72,7 @@ private fun CameraSelectionScreenContent(
     val lazyListState = rememberLazyListState()
 
     Column(modifier = modifier) {
-        val label: StringResource
-        var argument: String? = null
-        var labelColor: Color = MaterialTheme.colorScheme.onBackground
-
-        when (networkState) {
-            is NetworkState.Connecting -> {
-                label = Res.string.client_connection_chooser_connecting
-            }
-
-            is NetworkState.Connected -> {
-                label = Res.string.client_connection_chooser_connected
-                argument = networkState.address.hostAddress
-            }
-
-            is NetworkState.Disconnected ->
-                when (networkState.reason) {
-                    NetworkState.ErrorReason.NotConnectedYet -> {
-                        label = Res.string.client_connection_chooser_choose
-                    }
-
-                    NetworkState.ErrorReason.ServerNotFound -> {
-                        label = Res.string.client_connection_chooser_server_not_found
-                        labelColor = MaterialTheme.colorScheme.error
-                    }
-
-                    NetworkState.ErrorReason.ServerQuit -> {
-                        label = Res.string.client_connection_chooser_server_quit
-                        labelColor = MaterialTheme.colorScheme.error
-                    }
-
-                    NetworkState.ErrorReason.ClientQuit -> {
-                        label = Res.string.client_connection_chooser_client_quit
-                    }
-
-                    else -> {
-                        label = Res.string.client_connection_chooser_unknown_error
-                        labelColor = MaterialTheme.colorScheme.error
-                    }
-                }
-        }
-        Text(
-            text = argument?.let { stringResource(label, argument) } ?: stringResource(label),
-            style = MaterialTheme.typography.bodyMedium,
-            color = labelColor,
-        )
+        InfoLabel(networkState)
         Spacer(modifier = Modifier.size(Theme.Paddings.Medium))
 
         (networkState as? NetworkState.Disconnected)
@@ -132,9 +88,10 @@ private fun CameraSelectionScreenContent(
         LazyColumn(
             state = lazyListState,
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth(fraction = .75f)
-                .align(Alignment.CenterHorizontally),
+            modifier =
+                Modifier
+                    .fillMaxWidth(fraction = .75f)
+                    .align(Alignment.CenterHorizontally),
         ) {
             if (servers.isEmpty()) {
                 item {
@@ -166,32 +123,85 @@ private fun CameraSelectionScreenContent(
     }
 }
 
-@Preview
 @Composable
-private fun CameraSelectionScreenPreview() = AppTheme {
-    CameraSelectionScreenContent(
-        networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
-        servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
-        onConnectRequested = {},
+private fun InfoLabel(networkState: NetworkState) {
+    val label: StringResource
+    var argument: String? = null
+    var labelColor: Color = MaterialTheme.colorScheme.onBackground
+
+    when (networkState) {
+        is NetworkState.Connecting -> {
+            label = Res.string.client_connection_chooser_connecting
+        }
+
+        is NetworkState.Connected -> {
+            label = Res.string.client_connection_chooser_connected
+            argument = networkState.address.hostAddress
+        }
+
+        is NetworkState.Disconnected -> {
+            when (networkState.reason) {
+                NetworkState.ErrorReason.NotConnectedYet -> {
+                    label = Res.string.client_connection_chooser_choose
+                }
+
+                NetworkState.ErrorReason.ServerNotFound -> {
+                    label = Res.string.client_connection_chooser_server_not_found
+                    labelColor = MaterialTheme.colorScheme.error
+                }
+
+                NetworkState.ErrorReason.ServerQuit -> {
+                    label = Res.string.client_connection_chooser_server_quit
+                    labelColor = MaterialTheme.colorScheme.error
+                }
+
+                NetworkState.ErrorReason.ClientQuit -> {
+                    label = Res.string.client_connection_chooser_client_quit
+                }
+
+                else -> {
+                    label = Res.string.client_connection_chooser_unknown_error
+                    labelColor = MaterialTheme.colorScheme.error
+                }
+            }
+        }
+    }
+    Text(
+        text = argument?.let { stringResource(label, argument) } ?: stringResource(label),
+        style = MaterialTheme.typography.bodyMedium,
+        color = labelColor,
     )
 }
 
 @Preview
 @Composable
-private fun CameraSelectionScreenConnectingPreview() = AppTheme {
-    CameraSelectionScreenContent(
-        networkState = NetworkState.Connecting(InetAddress.getLoopbackAddress()),
-        servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
-        onConnectRequested = {},
-    )
-}
+private fun CameraSelectionScreenPreview() =
+    AppTheme {
+        CameraSelectionScreenContent(
+            networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
+            servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
+            onConnectRequested = {},
+        )
+    }
 
 @Preview
 @Composable
-private fun CameraSelectionScreenNoServersPreview() = AppTheme {
-    CameraSelectionScreenContent(
-        networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
-        servers = emptySet(),
-        onConnectRequested = {},
-    )
-}
+private fun CameraSelectionScreenConnectingPreview() =
+    AppTheme {
+        CameraSelectionScreenContent(
+            networkState = NetworkState.Connecting(InetAddress.getLoopbackAddress()),
+            servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
+            onConnectRequested = {},
+        )
+    }
+
+@Preview
+@Composable
+private fun CameraSelectionScreenNoServersPreview() =
+    AppTheme {
+        CameraSelectionScreenContent(
+            networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
+            servers = emptySet(),
+            onConnectRequested = {},
+        )
+    }

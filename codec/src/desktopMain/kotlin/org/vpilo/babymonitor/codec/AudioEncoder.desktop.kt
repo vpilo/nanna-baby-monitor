@@ -50,21 +50,22 @@ actual class AudioEncoder actual constructor(
             return
         }
 
-        audioEncodeJob = coroutineScope.launch {
-            val audioCtx = AudioEncoderContext.create()
-            Logger.d(TAG) { "Audio encoder started" }
+        audioEncodeJob =
+            coroutineScope.launch {
+                val audioCtx = AudioEncoderContext.create()
+                Logger.d(TAG) { "Audio encoder started" }
 
-            try {
-                input.collect { pcmChunk ->
-                    if (!isActive) return@collect
-                    audioCtx.encode(pcmChunk) { chunk ->
-                        output.tryEmit(chunk)
+                try {
+                    input.collect { pcmChunk ->
+                        if (!isActive) return@collect
+                        audioCtx.encode(pcmChunk) { chunk ->
+                            output.tryEmit(chunk)
+                        }
                     }
+                } finally {
+                    audioCtx.release()
                 }
-            } finally {
-                audioCtx.release()
             }
-        }
     }
 
     actual fun stop() {
@@ -84,7 +85,10 @@ actual class AudioEncoder actual constructor(
         private var pts = 0L
         private var residualBuf = ByteArray(0) // leftover PCM from previous encode() call
 
-        fun encode(pcmData: ByteArray, emit: (EncodedAudioStreamChunk) -> Unit) {
+        fun encode(
+            pcmData: ByteArray,
+            emit: (EncodedAudioStreamChunk) -> Unit,
+        ) {
             val combined = residualBuf + pcmData
             val bytesPerFrame = sampleFrameSize * (MediaFormats.Audio.SAMPLE_SIZE_BITS / 8)
             var offset = 0
@@ -121,11 +125,12 @@ actual class AudioEncoder actual constructor(
                 }
             }
 
-            residualBuf = if (offset < combined.size) {
-                combined.copyOfRange(offset, combined.size)
-            } else {
-                ByteArray(0)
-            }
+            residualBuf =
+                if (offset < combined.size) {
+                    combined.copyOfRange(offset, combined.size)
+                } else {
+                    ByteArray(0)
+                }
         }
 
         fun release() {
@@ -136,16 +141,18 @@ actual class AudioEncoder actual constructor(
 
         companion object {
             fun create(): AudioEncoderContext {
-                val codec = avcodec_find_encoder_by_name("libopus")
-                    ?: avcodec_find_encoder(AV_CODEC_ID_OPUS)
-                    ?: error("Opus encoder not found.")
+                val codec =
+                    avcodec_find_encoder_by_name("libopus")
+                        ?: avcodec_find_encoder(AV_CODEC_ID_OPUS)
+                        ?: error("Opus encoder not found.")
 
-                val codecCtx = avcodec_alloc_context3(codec).apply {
-                    sample_fmt(AV_SAMPLE_FMT_S16)
-                    sample_rate(MediaFormats.Audio.SAMPLE_RATE)
-                    av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
-                    bit_rate(MediaFormats.Audio.BIT_RATE.toLong())
-                }
+                val codecCtx =
+                    avcodec_alloc_context3(codec).apply {
+                        sample_fmt(AV_SAMPLE_FMT_S16)
+                        sample_rate(MediaFormats.Audio.SAMPLE_RATE)
+                        av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
+                        bit_rate(MediaFormats.Audio.BIT_RATE.toLong())
+                    }
 
                 val opts = AVDictionary()
                 try {
@@ -161,12 +168,13 @@ actual class AudioEncoder actual constructor(
 
                 val frameSize = codecCtx.frame_size()
 
-                val frame = av_frame_alloc().apply {
-                    format(AV_SAMPLE_FMT_S16)
-                    sample_rate(MediaFormats.Audio.SAMPLE_RATE)
-                    av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
-                    nb_samples(frameSize)
-                }
+                val frame =
+                    av_frame_alloc().apply {
+                        format(AV_SAMPLE_FMT_S16)
+                        sample_rate(MediaFormats.Audio.SAMPLE_RATE)
+                        av_channel_layout_default(ch_layout(), MediaFormats.Audio.CHANNELS)
+                        nb_samples(frameSize)
+                    }
                 av_frame_get_buffer(frame, 0)
 
                 val packet = av_packet_alloc()

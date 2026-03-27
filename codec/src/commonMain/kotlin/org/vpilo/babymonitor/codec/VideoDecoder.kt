@@ -11,5 +11,6 @@ expect class VideoDecoder(
     coroutineContext: CoroutineContext,
 ) {
     fun start()
+
     fun stop()
 }

@@ -6,8 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun LoadingIcon(modifier: Modifier = Modifier) =
-    PulseAnimation(modifier)
+fun LoadingIcon(modifier: Modifier = Modifier) = PulseAnimation(modifier)
 
 @Preview
 @Composable

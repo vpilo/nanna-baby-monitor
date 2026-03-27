@@ -53,25 +53,26 @@ actual class VideoDecoder actual constructor(
             return
         }
 
-        decodeJob = coroutineScope.launch {
-            var ctx: VideoDecoderContext? = null
-            try {
-                input.collect { chunk ->
-                    if (!isActive) return@collect
+        decodeJob =
+            coroutineScope.launch {
+                var ctx: VideoDecoderContext? = null
+                try {
+                    input.collect { chunk ->
+                        if (!isActive) return@collect
 
-                    if (ctx == null) {
-                        ctx = VideoDecoderContext.create()
-                        Logger.d(TAG) { "Video decoder started" }
-                    }
+                        if (ctx == null) {
+                            ctx = VideoDecoderContext.create()
+                            Logger.d(TAG) { "Video decoder started" }
+                        }
 
-                    ctx.decode(chunk.data) { bitmap ->
-                        output.tryEmit(bitmap)
+                        ctx.decode(chunk.data) { bitmap ->
+                            output.tryEmit(bitmap)
+                        }
                     }
+                } finally {
+                    ctx?.release()
                 }
-            } finally {
-                ctx?.release()
             }
-        }
     }
 
     actual fun stop() {
@@ -97,7 +98,10 @@ actual class VideoDecoder actual constructor(
         private var lastWidth = 0
         private var lastHeight = 0
 
-        fun decode(nalData: ByteArray, emit: (ImageBitmap) -> Unit) {
+        fun decode(
+            nalData: ByteArray,
+            emit: (ImageBitmap) -> Unit,
+        ) {
             // Fill packet with the raw NAL unit data
             val dataPtr = BytePointer(nalData.size.toLong())
             dataPtr.put(nalData, 0, nalData.size)
@@ -135,22 +139,30 @@ actual class VideoDecoder actual constructor(
                     swsCtx?.let { sws_freeContext(it) }
                     bgrFrame?.let { av_frame_free(it) }
 
-                    bgrFrame = av_frame_alloc().apply {
-                        format(AV_PIX_FMT_BGR24)
-                        width(w)
-                        height(h)
-                    }
+                    bgrFrame =
+                        av_frame_alloc().apply {
+                            format(AV_PIX_FMT_BGR24)
+                            width(w)
+                            height(h)
+                        }
                     av_frame_get_buffer(bgrFrame, 0)
 
                     swsCtx = sws_getContext(
-                        w, h, decodedFrame.format(),
-                        w, h, AV_PIX_FMT_BGR24,
-                        SWS_BILINEAR, null, null, DoublePointer(),
+                        w,
+                        h,
+                        decodedFrame.format(),
+                        w,
+                        h,
+                        AV_PIX_FMT_BGR24,
+                        SWS_BILINEAR,
+                        null,
+                        null,
+                        DoublePointer(),
                     ) ?: error("Could not initialise sws_getContext for decoding")
 
                     lastWidth = w
                     lastHeight = h
-                    Logger.d(TAG) { "Decoder sws context configured for ${w}x${h}" }
+                    Logger.d(TAG) { "Decoder sws context configured for ${w}x$h" }
                 }
 
                 // Convert YUV → BGR
@@ -158,7 +170,8 @@ actual class VideoDecoder actual constructor(
                     swsCtx,
                     decodedFrame.data(),
                     decodedFrame.linesize(),
-                    0, h,
+                    0,
+                    h,
                     bgrFrame!!.data(),
                     bgrFrame!!.linesize(),
                 )
@@ -186,8 +199,9 @@ actual class VideoDecoder actual constructor(
             private const val TAG = "VideoDecoderContext"
 
             fun create(): VideoDecoderContext {
-                val codec = avcodec_find_decoder(AV_CODEC_ID_H264)
-                    ?: error("H.264 decoder not found.")
+                val codec =
+                    avcodec_find_decoder(AV_CODEC_ID_H264)
+                        ?: error("H.264 decoder not found.")
 
                 val codecCtx = avcodec_alloc_context3(codec)
                 // Enable low-delay decoding

@@ -6,10 +6,16 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "org.vpilo.babymonitor.android.service"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
-        minSdk = libs.versions.android.minSdk.get().toInt()
+        compileSdk =
+            libs.versions.android.compileSdk
+                .get()
+                .toInt()
+        minSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
 
         androidResources {
             enable = true

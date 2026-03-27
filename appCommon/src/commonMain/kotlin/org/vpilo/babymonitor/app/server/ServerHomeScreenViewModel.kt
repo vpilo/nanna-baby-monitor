@@ -7,8 +7,8 @@ import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 class ServerHomeScreenViewModel(
     private val server: NetworkServerRepository,
 ) : AppViewModel<Unit, ServerHomeScreenState, Unit>(
-    initialState = ServerHomeScreenState(),
-) {
+        initialState = ServerHomeScreenState(),
+    ) {
     override fun SubscriptionScope.onSubscribed() {
         server.stateFlow
             .subscribe { isAvailable ->

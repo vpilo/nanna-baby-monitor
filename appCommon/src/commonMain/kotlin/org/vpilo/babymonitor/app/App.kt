@@ -23,8 +23,8 @@ import babymonitor.appcommon.generated.resources.app_title_permissions
 import babymonitor.appcommon.generated.resources.app_title_server_home
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
-import org.vpilo.babymonitor.app.client.ClientHomeScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
+import org.vpilo.babymonitor.app.client.ClientHomeScreen
 import org.vpilo.babymonitor.app.navigation.NavigationEffect
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.server.ServerHomeScreen
@@ -37,9 +37,7 @@ import org.vpilo.babymonitor.presentation.composables.AppDestination
 private const val TAG = "App"
 
 @Composable
-fun App(
-    viewModel: AppUiFlowViewModel = koinViewModel(),
-) {
+fun App(viewModel: AppUiFlowViewModel = koinViewModel()) {
     val navController = rememberNavController()
     LaunchedEffect(navController) {
         navController.addOnDestinationChangedListener { controller, destination, _ ->
@@ -68,6 +66,7 @@ fun App(
 }
 
 @Composable
+@Suppress("LongMethod")
 private fun NavigationRoutes(
     sendAction: (AppUiFlowAction) -> Unit,
     navController: NavHostController,
@@ -167,10 +166,11 @@ private fun MainContainer(
     content: @Composable () -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .widthIn(max = Theme.Sizes.UserInterfaceMaxWidth)
-            .fillMaxSize()
-            .padding(Theme.Paddings.Medium),
+        modifier =
+            modifier
+                .widthIn(max = Theme.Sizes.UserInterfaceMaxWidth)
+                .fillMaxSize()
+                .padding(Theme.Paddings.Medium),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top,
     ) {
