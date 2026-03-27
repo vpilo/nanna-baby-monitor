@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,6 +39,8 @@ private const val TAG = "App"
 
 @Composable
 fun App(viewModel: AppUiFlowViewModel = koinViewModel()) {
+    val state = viewModel.stateFlow.collectAsStateWithLifecycle()
+
     val navController = rememberNavController()
     LaunchedEffect(navController) {
         navController.addOnDestinationChangedListener { controller, destination, _ ->
@@ -58,7 +61,7 @@ fun App(viewModel: AppUiFlowViewModel = koinViewModel()) {
     AppTheme {
         MainContainer {
             NavigationRoutes(
-                sendAction = { viewModel.onAction(it) },
+                sendAction = { viewModel.send(it) },
                 navController = navController,
             )
         }

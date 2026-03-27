@@ -58,7 +58,7 @@ fun CameraSelectionScreen(
         modifier = modifier.fillMaxSize(),
         networkState = state.networkState,
         servers = state.availableServers,
-        onConnectRequested = { viewModel.onAction(CameraSelectionScreenAction.ConnectToServer(it)) },
+        onConnectRequested = { viewModel.send(CameraSelectionScreenAction.ConnectToServer(it)) },
     )
 }
 

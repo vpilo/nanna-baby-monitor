@@ -40,7 +40,7 @@ fun ClientHomeScreen(
         modifier = modifier.fillMaxSize(),
         frames = viewModel.frames,
         isAudioPlaying = state.isAudioPlaying,
-        onToggleAudio = { viewModel.onAction(ClientHomeScreenAction.ToggleAudio) },
+        onToggleAudio = { viewModel.send(ClientHomeScreenAction.ToggleAudio) },
     )
 }
 

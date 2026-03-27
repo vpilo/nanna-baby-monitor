@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.model
+package org.vpilo.babymonitor.model.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,7 +22,7 @@ abstract class AppViewModel<A, S, E>(
     private val initialState: S,
     scope: CoroutineScope? = null,
 ) : ViewModel() {
-    @Suppress("VariableNaming", "ktlint:standard:property-naming")
+    @Suppress("VariableNaming", "ktlint:standard:property-naming", "PropertyName")
     protected val TAG = this::class
 
     protected val vmScope: CoroutineScope = scope ?: viewModelScope
@@ -84,16 +84,16 @@ abstract class AppViewModel<A, S, E>(
         // Nothing gets unsubscribed
     }
 
-    open fun onAction(action: A) {
+    protected open fun onAction(action: A) {
         Logger.w(TAG) { "Received unhandled action: $action" }
     }
 
-    protected fun A.sendAction() {
-        Logger.d(TAG) { "Send action: $this" }
+    fun send(action: A) {
+        Logger.d(TAG) { "Send action: $action" }
         internalActionsChannel
-            .trySend(this)
+            .trySend(action)
             .onFailure { ex ->
-                Logger.e(TAG, ex) { "Unable to send action: $this (${ex?.message ?: ex?.let { it::class.simpleName }})" }
+                Logger.e(TAG, ex) { "Unable to send action: $action (${ex?.message ?: ex?.let { it::class.simpleName }})" }
             }
     }
 

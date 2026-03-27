@@ -3,7 +3,7 @@ package org.vpilo.babymonitor.app.client
 import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import org.vpilo.babymonitor.model.AppViewModel
+import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository

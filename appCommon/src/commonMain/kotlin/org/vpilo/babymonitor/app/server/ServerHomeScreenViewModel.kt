@@ -1,19 +1,18 @@
 package org.vpilo.babymonitor.app.server
 
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.model.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
+import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 
 class ServerHomeScreenViewModel(
     private val server: NetworkServerRepository,
-) : AppViewModel<Unit, ServerHomeScreenState, Unit>(
-        initialState = ServerHomeScreenState(),
-    ) {
+) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, Unit>(
+    initialState = ServerHomeScreenState(),
+) {
     override fun SubscriptionScope.onSubscribed() {
-        server.stateFlow
-            .subscribe { isAvailable ->
-                state.copy(isAvailable = isAvailable).update()
-            }
+        server.serverStateFlow.subscribe { serverState ->
+            state.copy(isAvailable = serverState.isAvailable, captureMode = serverState.captureMode).update()
+        }
 
         vmScope.launch {
             server.start()
@@ -21,7 +20,17 @@ class ServerHomeScreenViewModel(
     }
 
     override fun onCleared() {
-        super.onCleared()
-        server.stop()
+        vmScope.launch {
+            // TODO probably won't be executed if vm is going away
+            server.stop()
+        }
+    }
+
+    override fun onAction(action: ServerHomeScreenAction) {
+        when (action) {
+            is ServerHomeScreenAction.CaptureModeSelected -> {
+                vmScope.launch { server.setCaptureMode(action.captureMode) }
+            }
+        }
     }
 }

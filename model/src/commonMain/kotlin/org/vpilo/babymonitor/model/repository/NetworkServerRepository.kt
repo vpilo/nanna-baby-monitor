@@ -1,11 +1,14 @@
 package org.vpilo.babymonitor.model.repository
 
 import kotlinx.coroutines.flow.Flow
+import org.vpilo.babymonitor.model.CaptureMode
 
 interface NetworkServerRepository {
-    val stateFlow: Flow<Boolean>
+    val serverStateFlow: Flow<ServerState>
 
     suspend fun start()
 
-    fun stop()
+    suspend fun stop()
+
+    suspend fun setCaptureMode(mode: CaptureMode)
 }

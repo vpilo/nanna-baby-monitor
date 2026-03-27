@@ -2,7 +2,7 @@ package org.vpilo.babymonitor.app.cameraselection
 
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.model.AppViewModel
+import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
 

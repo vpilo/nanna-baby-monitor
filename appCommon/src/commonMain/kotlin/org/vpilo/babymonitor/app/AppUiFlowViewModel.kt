@@ -4,7 +4,7 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.navigation.NavigationEffect
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.model.AppRole
-import org.vpilo.babymonitor.model.AppViewModel
+import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 
 class AppUiFlowViewModel(
