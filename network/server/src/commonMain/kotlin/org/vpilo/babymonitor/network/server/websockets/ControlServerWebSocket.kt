@@ -8,9 +8,7 @@ import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
-import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
-import org.vpilo.babymonitor.network.common.protocol.protocolSendAudio
-import org.vpilo.babymonitor.network.common.protocol.protocolSendServerState
+import org.vpilo.babymonitor.network.common.protocol.makeServerMessageFrame
 import kotlin.coroutines.cancellation.CancellationException
 
 internal suspend fun DefaultWebSocketServerSession.controlServerWebSocket() {
@@ -18,9 +16,9 @@ internal suspend fun DefaultWebSocketServerSession.controlServerWebSocket() {
 
     Logger.d(TAG) { "New client connected" }
 
-    val frameSenderJob = launch {
+    val stateSendingJob = launch {
         repository.serverStateFlow.collect { state ->
-            protocolSendServerState(state)
+            send(makeServerMessageFrame(state))
         }
     }
 
@@ -33,7 +31,7 @@ internal suspend fun DefaultWebSocketServerSession.controlServerWebSocket() {
             Logger.i(TAG) { "WebSocket closed (${ex::class.simpleName}): ${ex.localizedMessage}" }
         }
     }.also {
-        frameSenderJob.cancel()
+        stateSendingJob.cancel()
     }
 }
 

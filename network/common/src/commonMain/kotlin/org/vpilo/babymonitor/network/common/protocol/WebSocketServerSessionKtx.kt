@@ -2,6 +2,8 @@ package org.vpilo.babymonitor.network.common.protocol
 
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
+import io.ktor.websocket.readText
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
@@ -33,18 +35,33 @@ suspend fun WebSocketSession.protocolReceiveVideo(): EncodedVideoStreamChunk {
     return EncodedVideoStreamChunk(data, isKeyFrame)
 }
 
-suspend fun WebSocketSession.protocolSendServerState(state: ServerState) {
-    val contents = byteArrayOf(
-        state.captureMode.ordinal.toByte()
-    )
-    send(Frame.Binary(fin = true, data = contents))
+sealed interface ServerMessage {
+    val key: Key
+
+    data class State(val payload: ServerState) : ServerMessage {
+        override val key = Key.State
+    }
+
+    enum class Key {
+        State,
+    }
 }
 
-suspend fun WebSocketSession.protocolReceiveServerState(): ServerState {
-    val rawData = incoming.receive().data
+fun makeServerMessageFrame(payload: ServerState): Frame =
+    Frame.Text("${ServerMessage.Key.State}\n${payload.captureMode}")
 
-    val captureModeInt = rawData[0].toInt()
-    val captureMode = CaptureMode.entries.getOrNull(captureModeInt)
-        ?: throw IllegalArgumentException("Invalid capture mode value: $captureModeInt")
-    return ServerState(isAvailable = true, captureMode = captureMode)
+suspend fun WebSocketSession.receiveServerMessage(): ServerMessage {
+    val frame = incoming.receive()
+    check(frame is Frame.Text) { "Expected a text frame" }
+    val content = frame.readText().split('\n', limit = 2)
+    check(content.size == 2) { "Invalid frame format, expected type key and payload" }
+    val (key, payload) = content
+    return when (key) {
+        ServerMessage.Key.State.name ->
+            ServerMessage.State(
+                ServerState(isAvailable = true, captureMode = CaptureMode.valueOf(payload))
+            )
+
+        else -> error("Incoming message key $key was not recognized")
+    }
 }

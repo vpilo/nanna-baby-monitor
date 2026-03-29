@@ -40,13 +40,14 @@ internal class DefaultNetworkServerRepository(
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
 
-    private var currentCaptureMode: CaptureMode = CaptureMode.AUDIO_AND_VIDEO
-
     private val activeAudioSessions = mutableListOf<WebSocketSession>()
     private val activeVideoSessions = mutableListOf<WebSocketSession>()
 
     private val state = MutableStateFlow(ServerState(isAvailable = false, captureMode = CaptureMode.AUDIO_AND_VIDEO))
     override val serverStateFlow: Flow<ServerState> = state.asStateFlow()
+
+    private val currentCaptureMode: CaptureMode
+        get() = state.value.captureMode
 
     override suspend fun start() {
         if (server != null) {
@@ -93,11 +94,12 @@ internal class DefaultNetworkServerRepository(
         when (mode) {
             CaptureMode.VIDEO_ONLY -> activeAudioSessions.closeAll()
             CaptureMode.AUDIO_ONLY -> activeVideoSessions.closeAll()
-            else -> { /* Nothing to do */
+            else -> {
+                /* Nothing to do */
             }
         }
 
-        currentCaptureMode = mode
+        Logger.i(TAG) { "Requested update to $mode" }
         state.update { it.copy(captureMode = mode) }
     }
 

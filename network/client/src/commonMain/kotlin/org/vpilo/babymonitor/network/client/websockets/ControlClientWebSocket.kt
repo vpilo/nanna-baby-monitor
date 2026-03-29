@@ -3,12 +3,12 @@ package org.vpilo.babymonitor.network.client.websockets
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.network.client.NetworkControlDataSource
-import org.vpilo.babymonitor.network.common.protocol.protocolReceiveServerState
+import org.vpilo.babymonitor.network.common.protocol.ServerMessage
+import org.vpilo.babymonitor.network.common.protocol.receiveServerMessage
 import kotlin.coroutines.cancellation.CancellationException
 
 internal suspend fun DefaultClientWebSocketSession.controlClientWebSocket() {
@@ -21,9 +21,10 @@ internal suspend fun DefaultClientWebSocketSession.controlClientWebSocket() {
     }
 
     runCatching {
-        incoming.consumeEach {
-            val state = protocolReceiveServerState()
-            dataSource.onServerStateReceived(state)
+        while (true) {
+            when (val message = receiveServerMessage()) {
+                is ServerMessage.State -> dataSource.onServerStateReceived(message.payload)
+            }
         }
     }.onFailure { ex ->
         if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
