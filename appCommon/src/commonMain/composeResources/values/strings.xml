@@ -22,4 +22,8 @@
     <string name="server_mode_audio_and_video">Audio and Video</string>
     <string name="server_mode_audio_only">Audio only</string>
     <string name="server_mode_video_only">Video only</string>
+
+    <string name="client_no_audio">Camera disabled audio</string>
+    <string name="client_play_audio">Start listening</string>
+    <string name="client_pause_audio">Stop listening</string>
 </resources>

@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
+import org.vpilo.babymonitor.presentation.preview.placeholderFrame
 
 private const val TAG = "CameraFeed"
 
@@ -65,18 +66,6 @@ fun CameraFeed(
         }
     }
 }
-
-internal val placeholderFrame: ImageBitmap
-    get() {
-        val image = ImageBitmap(800, 600)
-        val size = Size(image.width.toFloat(), image.height.toFloat())
-        val brush = Brush.radialGradient(listOf(Color.Red, Color.Green, Color.Blue), tileMode = TileMode.Mirror)
-        val canvas = Canvas(image = image)
-        CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, canvas, size) {
-            drawRect(brush = brush)
-        }
-        return image
-    }
 
 @Preview
 @Composable

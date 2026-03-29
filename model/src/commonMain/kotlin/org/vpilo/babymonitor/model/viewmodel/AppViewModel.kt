@@ -49,6 +49,10 @@ abstract class AppViewModel<A, S, E>(
                     override fun <T> Flow<T>.subscribe(collector: suspend (value: T) -> Unit) {
                         vmScope.launch { this@subscribe.collect(collector) }
                     }
+
+                    override fun <T> Flow<T>.collectLatest(collector: suspend (value: T) -> Unit) {
+                        vmScope.launch { this@collectLatest.collectLatest(collector) }
+                    }
                 }.onSubscribed()
             }.onCompletion {
                 Logger.d(TAG) { "Unsubscribed" }
@@ -74,6 +78,12 @@ abstract class AppViewModel<A, S, E>(
          * Automatically cancels the subscription when the [AppViewModel] is unsubscribed.
          */
         fun <T> Flow<T>.subscribe(collector: suspend (value: T) -> Unit)
+
+        /**
+         * Collect the latest values from this [Flow] to the optional [collector], cancelling the previous collection
+         * if a new value is emitted.
+         */
+        fun <T> Flow<T>.collectLatest(collector: suspend (value: T) -> Unit = {})
     }
 
     protected open fun SubscriptionScope.onSubscribed() {

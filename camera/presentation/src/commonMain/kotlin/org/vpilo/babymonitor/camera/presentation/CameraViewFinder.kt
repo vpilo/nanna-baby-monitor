@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.camera.presentation.ktx.toImageBitmap
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
 
 private const val TAG = "CameraViewFinder"
@@ -25,6 +26,7 @@ private const val TAG = "CameraViewFinder"
 @Composable
 fun CameraViewFinder(
     modifier: Modifier = Modifier,
+    captureMode: CaptureMode,
     viewModel: CameraViewFinderViewModel = koinViewModel(),
 ) {
     val scope = rememberCoroutineScope()
@@ -46,6 +48,11 @@ fun CameraViewFinder(
 
     lastFrame?.let { frame ->
         Box(contentAlignment = Alignment.TopStart) {
+            if (captureMode == CaptureMode.AUDIO_ONLY) {
+//                Image(
+//                    painter = painterResource(Res.drawable.) // must move resources in a new module or in presentation
+//                )
+            }
             Image(
                 bitmap = frame,
                 contentScale = ContentScale.FillWidth,

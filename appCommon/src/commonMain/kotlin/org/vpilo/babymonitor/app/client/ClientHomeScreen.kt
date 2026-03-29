@@ -14,6 +14,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.presentation.preview.placeholderFrame
 
 private const val TAG = "ClientHomeScreen"
 
@@ -39,6 +41,7 @@ fun ClientHomeScreen(
     ClientHomeScreenContent(
         modifier = modifier.fillMaxSize(),
         frames = viewModel.frames,
+        captureMode = state.captureMode,
         isAudioPlaying = state.isAudioPlaying,
         onToggleAudio = { viewModel.send(ClientHomeScreenAction.ToggleAudio) },
     )
@@ -48,11 +51,13 @@ fun ClientHomeScreen(
 private fun ClientHomeScreenContent(
     modifier: Modifier = Modifier,
     frames: Flow<ImageBitmap>,
+    captureMode: CaptureMode,
     isAudioPlaying: Boolean,
     onToggleAudio: () -> Unit,
 ) {
     Column(modifier = modifier) {
         AudioFeed(
+            canPlay = captureMode != CaptureMode.VIDEO_ONLY,
             isPlaying = isAudioPlaying,
             onToggle = onToggleAudio,
         )
@@ -70,6 +75,19 @@ private fun ClientHomeScreenPreview() {
     ClientHomeScreenContent(
         modifier = Modifier.fillMaxSize(),
         frames = flowOf(placeholderFrame),
+        captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        isAudioPlaying = false,
+        onToggleAudio = { },
+    )
+}
+
+@Preview
+@Composable
+private fun ClientHomeScreenVideoOnlyPreview() {
+    ClientHomeScreenContent(
+        modifier = Modifier.fillMaxSize(),
+        frames = flowOf(placeholderFrame),
+        captureMode = CaptureMode.VIDEO_ONLY,
         isAudioPlaying = false,
         onToggleAudio = { },
     )
