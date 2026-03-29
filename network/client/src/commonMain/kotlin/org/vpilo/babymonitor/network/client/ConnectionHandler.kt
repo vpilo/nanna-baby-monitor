@@ -5,7 +5,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 internal class ConnectionHandler(
-    private val doConnect: suspend () -> Unit,
+    private val connectLambda: suspend () -> Unit,
     private val onDisconnected: suspend (exception: Throwable) -> Unit,
 ) {
     private var connectionJob: Job? = null
@@ -20,7 +20,7 @@ internal class ConnectionHandler(
             launch {
                 @Suppress("TooGenericExceptionCaught")
                 try {
-                    doConnect()
+                    connectLambda()
                 } catch (ex: Exception) {
                     disconnect()
                     onDisconnected(ex)

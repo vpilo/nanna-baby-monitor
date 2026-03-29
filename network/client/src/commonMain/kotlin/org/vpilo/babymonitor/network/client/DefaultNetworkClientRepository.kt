@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,6 @@ import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.ServerState
-import org.vpilo.babymonitor.network.client.ConnectionHandler
 import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
@@ -30,6 +30,7 @@ import org.vpilo.babymonitor.network.common.Endpoints
 import java.net.ConnectException
 import java.net.InetAddress
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 internal class DefaultNetworkClientRepository(
     discoveryManager: DiscoveryManager,
@@ -60,7 +61,7 @@ internal class DefaultNetworkClientRepository(
     override suspend fun connect(address: InetAddress) {
         controlConnectionHandler?.disconnect()
         controlConnectionHandler = ConnectionHandler(
-            doConnect = {
+            connectLambda = {
                 networkClient.webSocket(
                     method = HttpMethod.Get,
                     host = address.hostAddress,
@@ -85,7 +86,7 @@ internal class DefaultNetworkClientRepository(
             return
         }
         audioConnectionHandler = ConnectionHandler(
-            doConnect = {
+            connectLambda = {
                 networkClient.webSocket(
                     method = HttpMethod.Get,
                     host = address.hostAddress,
@@ -96,9 +97,14 @@ internal class DefaultNetworkClientRepository(
                     audioStreamingClientWebSocket()
                 }
             },
-            onDisconnected = { audioConnectionHandler?.connect() },
+            onDisconnected = {
+                Logger.i(TAG) { "Audio disconnected, reconnecting" }
+                delay(1.seconds)
+                audioConnectionHandler?.connect()
+            },
         )
             .apply { connect() }
+        Logger.d(TAG) { "Audio stream started" }
     }
 
     private suspend fun startVideoStream(address: InetAddress) {
@@ -107,7 +113,7 @@ internal class DefaultNetworkClientRepository(
             return
         }
         videoConnectionHandler = ConnectionHandler(
-            doConnect = {
+            connectLambda = {
                 networkClient.webSocket(
                     method = HttpMethod.Get,
                     host = address.hostAddress,
@@ -117,9 +123,14 @@ internal class DefaultNetworkClientRepository(
                     videoStreamingClientWebSocket()
                 }
             },
-            onDisconnected = { videoConnectionHandler?.connect() },
+            onDisconnected = {
+                Logger.i(TAG) { "Video disconnected, reconnecting" }
+                delay(1.seconds)
+                videoConnectionHandler?.connect()
+            },
         )
             .apply { connect() }
+        Logger.d(TAG) { "Video stream started" }
     }
 
     private suspend fun stopAudioStream() {
@@ -173,7 +184,6 @@ internal class DefaultNetworkClientRepository(
                 }
             }
         }
-
     }
 
     private suspend fun onControlConnectionClosed(exception: Throwable) {

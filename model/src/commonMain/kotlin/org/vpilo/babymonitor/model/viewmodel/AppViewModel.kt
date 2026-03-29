@@ -36,6 +36,7 @@ abstract class AppViewModel<A, S, E>(
             .onSubscription {
                 Logger.d(TAG) { "Subscribed" }
                 actionsJob?.cancel()
+                internalActionsChannel = Channel(capacity = Channel.BUFFERED)
                 actionsJob =
                     vmScope.launch {
                         internalActionsChannel.receiveAsFlow().collect { action ->
@@ -43,7 +44,6 @@ abstract class AppViewModel<A, S, E>(
                             onAction(action)
                         }
                     }
-                internalActionsChannel = Channel(capacity = Channel.BUFFERED)
 
                 object : SubscriptionScope {
                     override fun <T> Flow<T>.subscribe(collector: suspend (value: T) -> Unit) {
