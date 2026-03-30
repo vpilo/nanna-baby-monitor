@@ -81,13 +81,15 @@ internal class DefaultNetworkServerRepository(
     }
 
     override suspend fun stop() {
-        Logger.i(TAG) { "Requested server stop" }
-        activeAudioSessions.closeAll()
-        activeVideoSessions.closeAll()
-        discoveryManager.unregisterService()
-        server?.stop(gracePeriodMillis = 1000, timeoutMillis = 5000)
-        server = null
-        state.update { it.copy(isAvailable = false) }
+        withContext(coroutineContext) {
+            Logger.i(TAG) { "Requested server stop" }
+            activeAudioSessions.closeAll()
+            activeVideoSessions.closeAll()
+            discoveryManager.unregisterService()
+            server?.stop(gracePeriodMillis = 1000, timeoutMillis = 5000)
+            server = null
+            state.update { it.copy(isAvailable = false) }
+        }
     }
 
     override suspend fun setCaptureMode(mode: CaptureMode) {

@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.network.common.protocol
 
+import io.ktor.util.moveToByteArray
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
@@ -8,6 +9,7 @@ import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.repository.ServerState
+import java.nio.ByteBuffer
 
 private val byteArrayTrue by lazy { byteArrayOf(1) }
 private val byteArrayFalse by lazy { byteArrayOf(0) }
@@ -19,20 +21,18 @@ suspend fun WebSocketSession.protocolSendAudio(chunk: EncodedAudioStreamChunk) {
 suspend fun WebSocketSession.protocolReceiveAudio(): EncodedAudioStreamChunk = EncodedAudioStreamChunk(incoming.receive().data)
 
 suspend fun WebSocketSession.protocolSendVideo(chunk: EncodedVideoStreamChunk) {
-    send(Frame.Binary(fin = true, data = chunk.data))
-    send(Frame.Binary(fin = true, data = if (chunk.isKeyFrame) byteArrayTrue else byteArrayFalse))
+    val data = ByteBuffer.allocate(chunk.data.size + 1)
+        .put(if (chunk.isKeyFrame) byteArrayTrue else byteArrayFalse)
+        .put(chunk.data)
+        .flip()
+        .moveToByteArray()
+    send(Frame.Binary(fin = true, data = data))
 }
 
 suspend fun WebSocketSession.protocolReceiveVideo(): EncodedVideoStreamChunk {
-    val data = incoming.receive().data
-
-    val isKeyFrame =
-        incoming.receive().let { frame ->
-            val flag = frame.data
-            check(flag.size == 1) { "Expected 1 byte for key frame flag" }
-            flag[0].toInt() != 0
-        }
-    return EncodedVideoStreamChunk(data, isKeyFrame)
+    val data = ByteBuffer.wrap(incoming.receive().data)
+    val isKeyFrame = data.get().toInt() != 0
+    return EncodedVideoStreamChunk(data.moveToByteArray(), isKeyFrame)
 }
 
 sealed interface ServerMessage {
