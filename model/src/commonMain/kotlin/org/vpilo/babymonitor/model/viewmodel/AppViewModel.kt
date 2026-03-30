@@ -51,7 +51,7 @@ abstract class AppViewModel<A, S, E>(
                     }
 
                     override fun <T> Flow<T>.collectLatest(collector: suspend (value: T) -> Unit) {
-                        vmScope.launch { this@collectLatest.collectLatest(collector) }
+                        vmScope.launch { this@collectLatest.collect(collector) }
                     }
                 }.onSubscribed()
             }.onCompletion {

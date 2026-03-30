@@ -61,6 +61,7 @@ internal class DefaultNetworkClientRepository(
     override suspend fun connect(address: InetAddress) {
         controlConnectionHandler?.disconnect()
         controlConnectionHandler = ConnectionHandler(
+            coroutineScope = scope,
             connectLambda = {
                 networkClient.webSocket(
                     method = HttpMethod.Get,
@@ -86,6 +87,7 @@ internal class DefaultNetworkClientRepository(
             return
         }
         audioConnectionHandler = ConnectionHandler(
+            coroutineScope = scope,
             connectLambda = {
                 networkClient.webSocket(
                     method = HttpMethod.Get,
@@ -113,6 +115,7 @@ internal class DefaultNetworkClientRepository(
             return
         }
         videoConnectionHandler = ConnectionHandler(
+            coroutineScope = scope,
             connectLambda = {
                 networkClient.webSocket(
                     method = HttpMethod.Get,
@@ -165,6 +168,9 @@ internal class DefaultNetworkClientRepository(
 
         serverStateJob = scope.launch {
             dataSource.serverState.collect { serverState ->
+                if (!serverState.isAvailable) {
+                    return@collect
+                }
                 Logger.i(TAG) { "Server changed capture mode: ${serverState.captureMode}" }
                 when (serverState.captureMode) {
                     CaptureMode.AUDIO_ONLY -> {

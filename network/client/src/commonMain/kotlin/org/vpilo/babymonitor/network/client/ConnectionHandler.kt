@@ -1,35 +1,34 @@
 package org.vpilo.babymonitor.network.client
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 internal class ConnectionHandler(
     private val connectLambda: suspend () -> Unit,
     private val onDisconnected: suspend (exception: Throwable) -> Unit,
+    private val coroutineScope: CoroutineScope,
 ) {
     private var connectionJob: Job? = null
 
-    suspend fun connect() {
+    fun connect() {
         if (connectionJob?.isActive == true) {
             // Already connected, or connecting
             return
         }
 
-        connectionJob = coroutineScope {
-            launch {
-                @Suppress("TooGenericExceptionCaught")
-                try {
-                    connectLambda()
-                } catch (ex: Exception) {
-                    disconnect()
-                    onDisconnected(ex)
-                }
+        connectionJob = coroutineScope.launch {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                connectLambda()
+            } catch (ex: Exception) {
+                disconnect()
+                onDisconnected(ex)
             }
         }
     }
 
-    suspend fun disconnect() {
+    fun disconnect() {
         connectionJob?.cancel()
         connectionJob = null
     }
