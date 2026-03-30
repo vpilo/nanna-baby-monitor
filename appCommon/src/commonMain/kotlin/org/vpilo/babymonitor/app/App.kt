@@ -150,8 +150,7 @@ private fun MainContainer(
         modifier =
             modifier
                 .widthIn(max = Theme.Sizes.UserInterfaceMaxWidth)
-                .fillMaxSize()
-                .padding(Theme.Paddings.Medium),
+                .fillMaxSize(),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top,
     ) {
