@@ -19,7 +19,7 @@ class AppUiFlowViewModel(
                 val destination =
                     when (action.appRole) {
                         AppRole.SERVER -> Route.PermissionCheck
-                        AppRole.CLIENT -> Route.ClientConnectionChooser
+                        AppRole.CLIENT -> Route.CameraSelection
                         AppRole.UNDECIDED -> error("UNDECIDED role should not be selectable")
                     }
                 NavigationEffect.NavigateTo(destination).sendEffect()

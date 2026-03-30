@@ -3,7 +3,7 @@ package org.vpilo.babymonitor.app.client
 import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
@@ -22,11 +22,10 @@ class ClientHomeScreenViewModel(
 
     override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.connectionStateFlow
-            .distinctUntilChanged { old, new -> old::class == new::class }
             .subscribe { netState ->
                 state.copy(networkState = netState).update()
                 if (netState is NetworkState.Disconnected) {
-                    ClientHomeScreenEffect.DisconnectFromServer.sendEffect()
+                    ClientHomeScreenEffect.DisconnectedFromServer.sendEffect()
                 }
             }
 
@@ -47,6 +46,12 @@ class ClientHomeScreenViewModel(
                 onAction(ClientHomeScreenAction.ToggleAudio)
             }
         }.collectLatest()
+    }
+
+    fun disconnect() {
+        vmScope.launch {
+            networkClientRepository.disconnect()
+        }
     }
 
     override fun onAction(action: ClientHomeScreenAction) {

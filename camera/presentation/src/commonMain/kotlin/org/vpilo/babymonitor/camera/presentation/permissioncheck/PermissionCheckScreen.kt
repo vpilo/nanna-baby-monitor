@@ -11,61 +11,69 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import babymonitor.camera.presentation.generated.resources.Res
+import babymonitor.camera.presentation.generated.resources.navigation_title_permissions
 import babymonitor.camera.presentation.generated.resources.permissions_needed
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.camera.presentation.RequestCameraPermission
 import org.vpilo.babymonitor.camera.presentation.RequestMicrophonePermission
 import org.vpilo.babymonitor.camera.presentation.hasCameraPermission
 import org.vpilo.babymonitor.camera.presentation.hasMicrophonePermission
+import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 
 @Composable
 fun PermissionCheckScreen(
     modifier: Modifier = Modifier,
+    onBackClicked: () -> Unit,
     onAllPermissionsGranted: () -> Unit,
 ) {
-    val deniedPermissions = remember { mutableIntStateOf(2) }
-
-    when {
-        !hasCameraPermission() -> {
-            RequestCameraPermission(
-                onGranted = { deniedPermissions.intValue-- },
-                onDenied = {},
-            )
-        }
-
-        !hasMicrophonePermission() -> {
-            RequestMicrophonePermission(
-                onGranted = { deniedPermissions.intValue-- },
-                onDenied = {},
-            )
-        }
-
-        else -> {
-            onAllPermissionsGranted()
-            return
-        }
-    }
-
-    if (deniedPermissions.intValue == 0) {
-        return
-    }
-
-    Box(
-        modifier =
-            modifier
-                .fillMaxSize(),
-        contentAlignment = Alignment.Center,
+    AppDestination(
+        title = Res.string.navigation_title_permissions,
+        onBackClicked = onBackClicked,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        val deniedPermissions = remember { mutableIntStateOf(2) }
+
+        when {
+            !hasCameraPermission() -> {
+                RequestCameraPermission(
+                    onGranted = { deniedPermissions.intValue-- },
+                    onDenied = {},
+                )
+            }
+
+            !hasMicrophonePermission() -> {
+                RequestMicrophonePermission(
+                    onGranted = { deniedPermissions.intValue-- },
+                    onDenied = {},
+                )
+            }
+
+            else -> {
+                onAllPermissionsGranted()
+                return@AppDestination
+            }
+        }
+
+        if (deniedPermissions.intValue == 0) {
+            return@AppDestination
+        }
+
+        Box(
+            modifier =
+                modifier
+                    .fillMaxSize(),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = stringResource(Res.string.permissions_needed),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
-            LoadingBox()
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(Res.string.permissions_needed),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                LoadingBox()
+            }
         }
     }
 }

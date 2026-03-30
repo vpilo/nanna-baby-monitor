@@ -17,11 +17,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import babymonitor.appcommon.generated.resources.Res
-import babymonitor.appcommon.generated.resources.app_title_client_connect
-import babymonitor.appcommon.generated.resources.app_title_client_home
-import babymonitor.appcommon.generated.resources.app_title_permissions
-import babymonitor.appcommon.generated.resources.app_title_server_home
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
@@ -33,7 +28,6 @@ import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheck
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
-import org.vpilo.babymonitor.presentation.composables.AppDestination
 
 private const val TAG = "App"
 
@@ -90,74 +84,58 @@ private fun NavigationRoutes(
                 exitTransition = { slideOutHorizontally() },
                 popEnterTransition = { slideInHorizontally() },
             ) {
-                AppDestination(
-                    title = Res.string.app_title_permissions,
+                PermissionCheckScreen(
+                    onAllPermissionsGranted = {
+                        navController.navigate(Route.ServerHome)
+                    },
                     onBackClicked = {
                         navController.navigate(Route.AppRoleChooser) {
                             popUpTo(Route.AppRoleChooser) { inclusive = true }
                         }
                     },
-                ) {
-                    PermissionCheckScreen(
-                        onAllPermissionsGranted = {
-                            navController.navigate(Route.ServerHome)
-                        },
-                    )
-                }
+                )
             }
             composable<Route.ServerHome>(
                 exitTransition = { slideOutHorizontally() },
                 popEnterTransition = { slideInHorizontally() },
             ) {
-                AppDestination(
-                    title = Res.string.app_title_server_home,
+                ServerHomeScreen(
+                    viewModel = koinViewModel(),
                     onBackClicked = {
                         navController.navigate(Route.RootNavGraph) {
                             popUpTo(Route.RootNavGraph) { inclusive = true }
                         }
                     },
-                ) {
-                    ServerHomeScreen(
-                        viewModel = koinViewModel(),
-                    )
-                }
+                )
             }
-            composable<Route.ClientConnectionChooser> {
-                AppDestination(
-                    title = Res.string.app_title_client_connect,
+            composable<Route.CameraSelection> {
+                CameraSelectionScreen(
+                    viewModel = koinViewModel(),
+                    onConnected = {
+                        navController.navigate(Route.ClientHome)
+                    },
                     onBackClicked = {
                         navController.navigate(Route.AppRoleChooser) {
                             popUpTo(Route.AppRoleChooser) { inclusive = true }
                         }
                     },
-                ) {
-                    CameraSelectionScreen(
-                        viewModel = koinViewModel(),
-                        onConnected = {
-                            navController.navigate(Route.ClientHome)
-                        },
-                    )
-                }
+                )
             }
             composable<Route.ClientHome>(
                 exitTransition = { slideOutHorizontally() },
                 popEnterTransition = { slideInHorizontally() },
             ) {
-                AppDestination(
-                    title = Res.string.app_title_client_home,
+                ClientHomeScreen(
+                    viewModel = koinViewModel(),
+                    onDisconnected = {
+                        navController.popBackStack()
+                    },
                     onBackClicked = {
                         navController.navigate(Route.RootNavGraph) {
                             popUpTo(Route.RootNavGraph) { inclusive = true }
                         }
                     },
-                ) {
-                    ClientHomeScreen(
-                        viewModel = koinViewModel(),
-                        onDisconnected = {
-                            navController.popBackStack()
-                        },
-                    )
-                }
+                )
             }
         }
     }

@@ -13,7 +13,7 @@ sealed interface Route {
     data object PermissionCheck : Route
 
     @Serializable
-    data object ClientConnectionChooser : Route
+    data object CameraSelection : Route
 
     @Serializable
     data object ClientHome : Route

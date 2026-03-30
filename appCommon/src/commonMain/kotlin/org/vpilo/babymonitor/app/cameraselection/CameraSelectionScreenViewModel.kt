@@ -1,6 +1,5 @@
 package org.vpilo.babymonitor.app.cameraselection
 
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
@@ -18,7 +17,6 @@ class CameraSelectionScreenViewModel(
             }
 
         networkClientRepository.connectionStateFlow
-            .distinctUntilChanged { old, new -> old::class == new::class }
             .subscribe { netState ->
                 state.copy(networkState = netState).update()
                 if (netState is NetworkState.Connected) {

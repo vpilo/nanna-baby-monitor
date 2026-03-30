@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
-    <string name="app_title_permissions">App permissions</string>
     <string name="app_title_server_home">Camera</string>
     <string name="app_title_client_connect">Connect to a camera</string>
     <string name="app_title_client_home">Monitor</string>

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
+import babymonitor.appcommon.generated.resources.app_title_client_connect
 import babymonitor.appcommon.generated.resources.client_connection_chooser_choose
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connected
@@ -34,6 +35,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
+import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.LoadingIcon
 import java.net.InetAddress
@@ -43,6 +45,7 @@ fun CameraSelectionScreen(
     modifier: Modifier = Modifier,
     viewModel: CameraSelectionScreenViewModel,
     onConnected: (serverAddress: InetAddress) -> Unit,
+    onBackClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
@@ -54,12 +57,17 @@ fun CameraSelectionScreen(
         }
     }
 
-    CameraSelectionScreenContent(
-        modifier = modifier.fillMaxSize(),
-        networkState = state.networkState,
-        servers = state.availableServers,
-        onConnectRequested = { viewModel.send(CameraSelectionScreenAction.ConnectToServer(it)) },
-    )
+    AppDestination(
+        title = Res.string.app_title_client_connect,
+        onBackClicked = onBackClicked,
+    ) {
+        CameraSelectionScreenContent(
+            modifier = modifier.fillMaxSize(),
+            networkState = state.networkState,
+            servers = state.availableServers,
+            onConnectRequested = { viewModel.send(CameraSelectionScreenAction.ConnectToServer(it)) },
+        )
+    }
 }
 
 @Composable

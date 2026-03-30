@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.presentation.composables
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -30,6 +31,7 @@ fun AppDestination(
     modifier: Modifier = Modifier,
     title: StringResource,
     onBackClicked: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     Column(
@@ -61,6 +63,7 @@ fun AppDestination(
                     )
                 }
             },
+            actions = actions,
         )
         Spacer(modifier = Modifier.size(Theme.Paddings.Small))
         content()
