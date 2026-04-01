@@ -1,6 +1,5 @@
 package org.vpilo.babymonitor.network.common.protocol
 
-import io.ktor.util.moveToByteArray
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
@@ -8,6 +7,7 @@ import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.repository.ServerState
+import org.vpilo.babymonitor.network.common.ktx.moveToByteArray
 import java.nio.ByteBuffer
 
 private val byteArrayTrue by lazy { byteArrayOf(1) }
@@ -24,8 +24,9 @@ suspend fun WebSocketSession.protocolSendVideo(chunk: EncodedVideoStreamChunk) {
         .put(if (chunk.isKeyFrame) byteArrayTrue else byteArrayFalse)
         .put(chunk.data)
         .flip()
-        .moveToByteArray()
-    send(Frame.Binary(fin = true, data = data))
+            as ByteBuffer // Type inference fails without this cast, even if the type is correct.
+
+    send(Frame.Binary(fin = true, data = data.moveToByteArray()))
 }
 
 suspend fun WebSocketSession.protocolReceiveVideo(): EncodedVideoStreamChunk {
@@ -58,7 +59,7 @@ suspend fun WebSocketSession.receiveServerMessage(): ServerMessage {
     return when (key) {
         ServerMessage.Key.State.name ->
             ServerMessage.State(
-                ServerState(isAvailable = true, captureMode = CaptureMode.valueOf(payload))
+                ServerState(isAvailable = true, captureMode = CaptureMode.valueOf(payload)),
             )
 
         else -> error("Incoming message key $key was not recognized")
