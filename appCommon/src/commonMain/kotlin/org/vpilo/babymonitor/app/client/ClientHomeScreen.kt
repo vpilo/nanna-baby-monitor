@@ -1,10 +1,10 @@
 package org.vpilo.babymonitor.app.client
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
+import org.vpilo.babymonitor.presentation.client.BatteryState
+import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.preview.placeholderFrame
 
@@ -62,6 +65,8 @@ fun ClientHomeScreen(
             captureMode = state.captureMode,
             isAudioPlaying = state.isAudioPlaying,
             onToggleAudio = { viewModel.send(ClientHomeScreenAction.ToggleAudio) },
+            batteryLevel = state.batteryLevel,
+            signalQuality = state.signalQuality,
         )
     }
 }
@@ -73,18 +78,26 @@ private fun ClientHomeScreenContent(
     captureMode: CaptureMode,
     isAudioPlaying: Boolean,
     onToggleAudio: () -> Unit,
+    batteryLevel: Int,
+    signalQuality: Int,
 ) {
-    Column(modifier = modifier) {
-        AudioFeed(
-            canPlay = captureMode != CaptureMode.VIDEO_ONLY,
-            isPlaying = isAudioPlaying,
-            onToggle = onToggleAudio,
-        )
+    Box(modifier = modifier) {
         CameraFeed(
             modifier = Modifier.fillMaxWidth(),
             contentScale = ContentScale.FillWidth,
             frames = frames,
         )
+        AudioFeed(
+            canPlay = captureMode != CaptureMode.VIDEO_ONLY,
+            isPlaying = isAudioPlaying,
+            onToggle = onToggleAudio,
+        )
+        Row(
+            modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd),
+        ) {
+            BatteryState(batteryLevel = batteryLevel)
+            SignalState(signalQuality = signalQuality)
+        }
     }
 }
 
@@ -97,6 +110,8 @@ private fun ClientHomeScreenPreview() {
         captureMode = CaptureMode.AUDIO_AND_VIDEO,
         isAudioPlaying = false,
         onToggleAudio = { },
+        batteryLevel = 5,
+        signalQuality = 3,
     )
 }
 
@@ -109,5 +124,21 @@ private fun ClientHomeScreenVideoOnlyPreview() {
         captureMode = CaptureMode.VIDEO_ONLY,
         isAudioPlaying = false,
         onToggleAudio = { },
+        batteryLevel = 95,
+        signalQuality = 93,
+    )
+}
+
+@Preview
+@Composable
+private fun ClientHomeScreenNoSignalOrBatteryPreview() {
+    ClientHomeScreenContent(
+        modifier = Modifier.fillMaxSize(),
+        frames = flowOf(placeholderFrame),
+        captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        isAudioPlaying = false,
+        onToggleAudio = { },
+        batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
+        signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
     )
 }

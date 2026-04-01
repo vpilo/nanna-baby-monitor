@@ -30,7 +30,11 @@ class ClientHomeScreenViewModel(
             }
 
         networkClientRepository.serverStateFlow.subscribe { serverState ->
-            state.copy(captureMode = serverState.captureMode).update()
+            state.copy(
+                captureMode = serverState.captureMode,
+                batteryLevel = serverState.batteryLevel,
+                signalQuality = serverState.signalQuality,
+            ).update()
         }
 
         playReceivedAudio.isPlaying

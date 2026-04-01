@@ -6,6 +6,7 @@ import io.ktor.websocket.readText
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
+import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.ktx.moveToByteArray
 import java.nio.ByteBuffer
@@ -48,7 +49,7 @@ sealed interface ServerMessage {
 }
 
 fun makeServerMessageFrame(payload: ServerState): Frame =
-    Frame.Text("${ServerMessage.Key.State}\n${payload.captureMode}")
+    Frame.Text("${ServerMessage.Key.State}\n${payload.captureMode},${payload.batteryLevel},${payload.signalQuality}")
 
 suspend fun WebSocketSession.receiveServerMessage(): ServerMessage {
     val frame = incoming.receive()
@@ -57,10 +58,17 @@ suspend fun WebSocketSession.receiveServerMessage(): ServerMessage {
     check(content.size == 2) { "Invalid frame format, expected type key and payload" }
     val (key, payload) = content
     return when (key) {
-        ServerMessage.Key.State.name ->
+        ServerMessage.Key.State.name -> {
+            val (captureMode, batteryLevel, signalQuality) = payload.split(',')
             ServerMessage.State(
-                ServerState(isAvailable = true, captureMode = CaptureMode.valueOf(payload)),
+                ServerState(
+                    isAvailable = true,
+                    captureMode = CaptureMode.valueOf(captureMode),
+                    batteryLevel = batteryLevel.toIntOrNull() ?: DEVICE_STATE_DATA_UNAVAILABLE,
+                    signalQuality = signalQuality.toIntOrNull() ?: DEVICE_STATE_DATA_UNAVAILABLE,
+                ),
             )
+        }
 
         else -> error("Incoming message key $key was not recognized")
     }

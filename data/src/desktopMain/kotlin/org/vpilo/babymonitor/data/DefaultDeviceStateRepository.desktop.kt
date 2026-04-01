@@ -3,8 +3,10 @@ package org.vpilo.babymonitor.data
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onCompletion
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
+import org.vpilo.babymonitor.model.repository.DEVICE_STATE_UPDATE_INTERVAL
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import oshi.SystemInfo
 import java.io.File
@@ -23,9 +25,12 @@ internal actual class DefaultDeviceStateRepository : DeviceStateRepository {
             }
 
             val remainingCapacity = (powerSources[0].remainingCapacityPercent * 100).toInt()
-            Logger.d(TAG) { "Battery level updated: $remainingCapacity%" }
             emit(remainingCapacity)
-            delay(1.minutes)
+            delay(DEVICE_STATE_UPDATE_INTERVAL)
+        }
+    }.onCompletion { ex ->
+        if (ex != null) {
+            Logger.e(TAG) { "Battery level retrieval error: ${ex.message}" }
         }
     }
 
@@ -39,9 +44,12 @@ internal actual class DefaultDeviceStateRepository : DeviceStateRepository {
 
         while (true) {
             val quality = readWifiSignalQuality(wirelessFile)
-            Logger.d(TAG) { "Signal quality updated: $quality%" }
             emit(quality)
-            delay(1.minutes)
+            delay(DEVICE_STATE_UPDATE_INTERVAL)
+        }
+    }.onCompletion { ex ->
+        if (ex != null) {
+            Logger.e(TAG) { "Signal quality retrieval error: ${ex.message}" }
         }
     }
 
@@ -53,7 +61,7 @@ internal actual class DefaultDeviceStateRepository : DeviceStateRepository {
         // Fields after the colon: status, link, level, noise, ...
         val fields = dataLine.substringAfter(":").trim().split("\\s+".toRegex())
         val linkStr = fields.getOrNull(1) ?: return DEVICE_STATE_DATA_UNAVAILABLE
-        val linkQuality = linkStr.trimEnd('.').toIntOrNull() ?: return 100
+        val linkQuality = linkStr.trimEnd('.').toIntOrNull() ?: 100
         return (linkQuality * 100 / MAX_LINK_QUALITY).coerceIn(0, 100)
     }
 

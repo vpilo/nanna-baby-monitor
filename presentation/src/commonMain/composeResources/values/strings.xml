@@ -2,4 +2,8 @@
 <resources>
     <string name="example">Example</string>
     <string name="back">Back</string>
+
+    <string name="client_battery_level">Battery level</string>
+    <string name="client_signal_quality">Signal quality</string>
+    <string name="client_battery_level_percent">%1$d%</string>
 </resources>
