@@ -33,6 +33,9 @@ kotlin {
             implementation(libs.koin.core)
         }
         val desktopMain by getting
+        desktopMain.dependencies {
+            implementation(libs.oshi)
+        }
     }
 
     targets.configureEach {

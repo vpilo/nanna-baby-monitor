@@ -19,7 +19,7 @@ val networkServerKoinModule: Module =
         single<StreamingAudioSenderRepository> { NetworkAudioSenderRepository(get(), get()) }
         single<StreamingVideoSenderRepository> { NetworkVideoSenderRepository(get(), get()) }
 
-        single<NetworkServerRepository> { DefaultNetworkServerRepository(get(), get()) }
+        single<NetworkServerRepository> { DefaultNetworkServerRepository(get(), get(), get()) }
 
         singleOf(::DiscoveryManager)
             .withOptions { createdAtStart() }

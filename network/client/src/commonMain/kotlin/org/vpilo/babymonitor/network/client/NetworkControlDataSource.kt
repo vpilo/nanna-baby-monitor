@@ -11,7 +11,7 @@ import org.vpilo.babymonitor.model.repository.ServerState
 
 internal class NetworkControlDataSource {
     private val collector: MutableStateFlow<ServerState> =
-        MutableStateFlow(ServerState(isAvailable = false, captureMode = CaptureMode.AUDIO_AND_VIDEO))
+        MutableStateFlow(ServerState())
 
     val serverState: StateFlow<ServerState> = collector.asStateFlow()
 

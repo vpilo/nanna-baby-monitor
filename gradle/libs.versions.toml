@@ -29,6 +29,7 @@ ffmpeg = "8.0.1-1.5.13"
 
 ktor = "3.4.1"
 jmdns = "3.6.3"
+oshi = "6.10.0"
 
 ktlint-gradle = "14.2.0"
 ktlint = "1.8.0"
@@ -84,6 +85,7 @@ ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.re
 ktor-server-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
 jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
+oshi = { module = "com.github.oshi:oshi-core-java11", version.ref = "oshi" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil3" }
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil3" }

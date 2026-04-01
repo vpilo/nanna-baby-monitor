@@ -16,13 +16,20 @@ import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.Constants
@@ -36,6 +43,7 @@ import kotlin.time.Duration.Companion.seconds
 
 internal class DefaultNetworkServerRepository(
     private val discoveryManager: DiscoveryManager,
+    private val deviceStateRepository: DeviceStateRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
@@ -43,20 +51,34 @@ internal class DefaultNetworkServerRepository(
     private val activeAudioSessions = mutableListOf<WebSocketSession>()
     private val activeVideoSessions = mutableListOf<WebSocketSession>()
 
-    private val state = MutableStateFlow(ServerState(isAvailable = false, captureMode = CaptureMode.AUDIO_AND_VIDEO))
+    private val state = MutableStateFlow(ServerState())
     override val serverStateFlow: Flow<ServerState> = state.asStateFlow()
 
     private val currentCaptureMode: CaptureMode
         get() = state.value.captureMode
+
+    private var deviceStateMonitor: Job? = null
 
     override suspend fun start() {
         if (server != null) {
             return
         }
 
+        val supervisor = CoroutineScope(coroutineContext + SupervisorJob())
+
+        supervisor.launch {
+            deviceStateMonitor =
+                combine(
+                    deviceStateRepository.batteryLevel,
+                    deviceStateRepository.signalQuality,
+                ) { batteryLevel, signalQuality ->
+                    state.update { it.copy(signalQuality = signalQuality, batteryLevel = batteryLevel) }
+                }.launchIn(this)
+        }
+
         discoveryManager.registerService()
 
-        withContext(coroutineContext) {
+        supervisor.launch {
             embeddedServer(
                 factory = CIO,
                 module = { serverModule() },
@@ -78,6 +100,8 @@ internal class DefaultNetworkServerRepository(
                 start(wait = false)
             }
         }
+
+        Logger.i(TAG) { "Requested server start" }
     }
 
     override suspend fun stop() {
@@ -85,6 +109,8 @@ internal class DefaultNetworkServerRepository(
             Logger.i(TAG) { "Requested server stop" }
             activeAudioSessions.closeAll()
             activeVideoSessions.closeAll()
+            deviceStateMonitor?.cancel()
+            deviceStateMonitor = null
             discoveryManager.unregisterService()
             server?.stop(gracePeriodMillis = 1000, timeoutMillis = 5000)
             server = null
