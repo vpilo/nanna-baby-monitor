@@ -1,9 +1,12 @@
 package org.vpilo.babymonitor.presentation.client
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,6 +20,7 @@ import babymonitor.presentation.generated.resources.signal_5
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppTheme
+import org.vpilo.babymonitor.presentation.Theme
 
 private val signalLowQualityColor = Color(0xFF880000)
 
@@ -37,41 +41,58 @@ fun SignalState(
             else -> return
         }
 
-    Image(
-        painter = painterResource(drawable),
-        contentDescription = stringResource(Res.string.client_signal_quality),
-        colorFilter = ColorFilter.tint(color = color),
-        modifier = modifier,
-    )
+    Box {
+        Image(
+            modifier = modifier.blur(Theme.Sizes.Blur),
+            painter = painterResource(drawable),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.secondaryContainer),
+        )
+        Image(
+            painter = painterResource(drawable),
+            contentDescription = stringResource(Res.string.client_signal_quality),
+            colorFilter = ColorFilter.tint(color = color),
+        )
+    }
 }
 
 @Preview
 @Composable
 private fun SignalState1Preview() = AppTheme {
-    SignalState(signalQuality = 1)
+    Surface(color = MaterialTheme.colorScheme.onSurface) {
+        SignalState(signalQuality = 1)
+    }
 }
 
 @Preview
 @Composable
 private fun SignalState2Preview() = AppTheme {
-    SignalState(signalQuality = 30)
+    Surface(color = MaterialTheme.colorScheme.onSurface) {
+        SignalState(signalQuality = 30)
+    }
 }
 
 @Preview
 @Composable
 private fun SignalState3Preview() = AppTheme {
-    SignalState(signalQuality = 50)
+    Surface(color = MaterialTheme.colorScheme.onSurface) {
+        SignalState(signalQuality = 50)
+    }
 }
 
 @Preview
 @Composable
 private fun SignalState4Preview() = AppTheme {
-    SignalState(signalQuality = 75)
+    Surface(color = MaterialTheme.colorScheme.onSurface) {
+        SignalState(signalQuality = 75)
+    }
 }
 
 @Preview
 @Composable
 private fun SignalState5Preview() = AppTheme {
-    SignalState(signalQuality = 100)
+    Surface(color = MaterialTheme.colorScheme.onSurface) {
+        SignalState(signalQuality = 100)
+    }
 }
 

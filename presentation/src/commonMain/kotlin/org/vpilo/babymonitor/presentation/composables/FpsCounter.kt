@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.presentation.composables
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -63,8 +64,8 @@ fun FpsCounter(
                 color = color,
                 shadow =
                     Shadow(
-                        color = Color.Black,
-                        blurRadius = 2.dp.value,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        blurRadius = Theme.Sizes.Blur.value,
                     ),
             ),
     )

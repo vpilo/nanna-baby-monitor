@@ -8,6 +8,7 @@ object Theme {
     object Sizes {
         val UserInterfaceMaxWidth: Dp = MaxUserInterfaceWidth
         val Button: Dp = 40.dp
+        val Blur: Dp = 2.dp
     }
 
     object Paddings {
@@ -17,4 +18,6 @@ object Theme {
         val Large: Dp = 32.dp
         val Huge: Dp = 128.dp
     }
+
+
 }

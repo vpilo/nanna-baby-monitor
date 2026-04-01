@@ -1,16 +1,20 @@
 package org.vpilo.babymonitor.presentation.client
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.tooling.preview.Preview
 import babymonitor.presentation.generated.resources.Res
 import babymonitor.presentation.generated.resources.battery_1
@@ -56,28 +60,47 @@ fun BatteryState(
         Text(
             text = stringResource(Res.string.client_battery_level_percent, batteryLevel),
             color = MaterialTheme.colorScheme.onSecondary,
-            style = MaterialTheme.typography.bodySmall,
+            style =
+                MaterialTheme.typography.bodySmall.copy(
+                    color = color,
+                    shadow =
+                        Shadow(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            blurRadius = Theme.Sizes.Blur.value,
+                        ),
+                ),
         )
         Spacer(modifier = Modifier.width(Theme.Paddings.Tiny))
-        Image(
-            painter = painterResource(drawable),
-            contentDescription = stringResource(Res.string.client_battery_level),
-            colorFilter = ColorFilter.tint(color = color),
-            modifier = modifier,
-        )
+        Box {
+            Image(
+                modifier = modifier.blur(Theme.Sizes.Blur),
+                painter = painterResource(drawable),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.secondaryContainer),
+            )
+            Image(
+                painter = painterResource(drawable),
+                contentDescription = stringResource(Res.string.client_battery_level),
+                colorFilter = ColorFilter.tint(color = color),
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 private fun BatteryState1Preview() = AppTheme {
-    BatteryState(batteryLevel = 1)
+    Surface(color = MaterialTheme.colorScheme.onSurface) {
+        BatteryState(batteryLevel = 1)
+    }
 }
 
 @Preview
 @Composable
 private fun BatteryState2Preview() = AppTheme {
-    BatteryState(batteryLevel = 10)
+    Surface(color = MaterialTheme.colorScheme.onSurface) {
+        BatteryState(batteryLevel = 10)
+    }
 }
 
 @Preview
