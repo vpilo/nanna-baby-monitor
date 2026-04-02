@@ -1,4 +1,6 @@
-package org.vpilo.babymonitor.model
+package org.vpilo.babymonitor.camera.model
+
+import org.vpilo.babymonitor.model.AudioFrameFlow
 
 /**
  * Repository for raw audio recording.
