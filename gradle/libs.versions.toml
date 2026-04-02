@@ -19,6 +19,7 @@ compose-navigation = "2.9.2"
 
 androidx-activityCompose = "1.12.4"
 androidx-core = "1.17.0"
+androidx-datastore = "1.2.1"
 jetbrains-lifecycle = "2.9.6"
 
 androidx-camera = "1.5.3"
@@ -55,6 +56,7 @@ jetbrains-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycl
 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
+androidx-datastore = { module = "androidx.datastore:datastore-preferences-core", version.ref = "androidx-datastore" }
 
 # Camera libraries
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "androidx-camera" }

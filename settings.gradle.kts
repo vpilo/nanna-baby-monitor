@@ -46,6 +46,10 @@ include(":camera:data")
 include(":camera:model")
 include(":camera:presentation")
 
+include(":settings:data")
+include(":settings:model")
+include(":settings:presentation")
+
 include(":model")
 include(":data")
 include(":presentation")
