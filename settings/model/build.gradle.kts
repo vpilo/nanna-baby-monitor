@@ -26,6 +26,7 @@ kotlin {
             implementation(project(":model"))
 
             implementation(libs.koin.core)
+            implementation(libs.compose.resources)
         }
     }
 }

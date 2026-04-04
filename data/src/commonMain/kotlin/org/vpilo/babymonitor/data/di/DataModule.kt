@@ -1,6 +1,8 @@
 package org.vpilo.babymonitor.data.di
 
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.vpilo.babymonitor.data.DefaultAppRoleRepository
 import org.vpilo.babymonitor.data.DefaultAudioPlaybackRepository
@@ -11,8 +13,12 @@ import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 
 val dataKoinModule: Module =
     module {
-        single<AppRoleRepository> { DefaultAppRoleRepository() }
-        single<AudioPlaybackRepository> { DefaultAudioPlaybackRepository() }
+        singleOf(::DefaultAppRoleRepository)
+            .bind<AppRoleRepository>()
 
-        single<DeviceStateRepository> { DefaultDeviceStateRepository() }
+        singleOf(::DefaultAudioPlaybackRepository)
+            .bind<AudioPlaybackRepository>()
+
+        singleOf(::DefaultDeviceStateRepository)
+            .bind<DeviceStateRepository>()
     }

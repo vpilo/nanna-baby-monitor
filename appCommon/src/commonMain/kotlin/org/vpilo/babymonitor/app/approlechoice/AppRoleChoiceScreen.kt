@@ -7,19 +7,47 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_role_choice_alternative
 import babymonitor.appcommon.generated.resources.app_role_choice_presentation
 import babymonitor.appcommon.generated.resources.app_role_monitor
 import babymonitor.appcommon.generated.resources.app_role_record
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.Theme
 
 @Composable
 fun AppRoleChoiceScreen(
+    modifier: Modifier = Modifier,
+    onRoleChosen: (role: AppRole) -> Unit,
+    viewModel: AppRoleChoiceScreenViewModel = koinViewModel(),
+) {
+    viewModel.stateFlow.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel.effectsFlow) {
+        viewModel.send(AppRoleChoiceScreenAction.FirstRunDone)
+        viewModel.effectsFlow.collect { effect ->
+            when (effect) {
+                is AppRoleChoiceScreenEffect.RoleChosen -> onRoleChosen(effect.role)
+            }
+        }
+    }
+
+    AppRoleChoiceScreenContent(
+        modifier = modifier,
+        onRoleChosen = {
+            viewModel.send(AppRoleChoiceScreenAction.RoleChosen(it))
+        },
+    )
+}
+
+@Composable
+private fun AppRoleChoiceScreenContent(
     modifier: Modifier = Modifier,
     onRoleChosen: (role: AppRole) -> Unit,
 ) {

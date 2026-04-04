@@ -5,18 +5,11 @@ import org.vpilo.babymonitor.settings.model.Setting
 
 interface SettingsRepository {
 
-    fun <T : Any> getAsFlow(
-        key: Setting<T>,
-    ): Flow<T>
+    fun <T : Any> flowOf(setting: Setting<T>): Flow<T>
 
-    suspend fun <T : Any> get(
-        key: Setting<T>,
-    ): T
+    suspend fun <T : Any> load(setting: Setting<T>): T
 
-    suspend fun <T : Any> set(
-        key: Setting<T>,
-        value: T,
-    )
+    suspend fun <T : Any> save(setting: Setting<T>, value: T)
 
-    suspend fun <T : Any> clear(key: Setting<T>)
+    suspend fun <T : Any> clear(setting: Setting<T>)
 }

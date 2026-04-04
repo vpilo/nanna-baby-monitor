@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,20 +20,18 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.ClientHomeScreen
-import org.vpilo.babymonitor.app.navigation.NavigationEffect
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.server.ServerHomeScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 
 private const val TAG = "App"
 
 @Composable
-fun App(viewModel: AppUiFlowViewModel = koinViewModel()) {
-    val state = viewModel.stateFlow.collectAsStateWithLifecycle()
-
+fun App() {
     val navController = rememberNavController()
     LaunchedEffect(navController) {
         navController.addOnDestinationChangedListener { controller, destination, _ ->
@@ -44,20 +41,11 @@ fun App(viewModel: AppUiFlowViewModel = koinViewModel()) {
             Logger.d(TAG) { "Navigated to: $route" }
             Logger.d(TAG) { "-- Back stack: $backStack" }
         }
-
-        viewModel.effectsFlow.collect { event ->
-            when (event) {
-                is NavigationEffect.NavigateTo -> navController.navigate(event.route)
-            }
-        }
     }
 
     AppTheme {
         MainContainer {
-            NavigationRoutes(
-                sendAction = { viewModel.send(it) },
-                navController = navController,
-            )
+            NavigationRoutes(navController = navController)
         }
     }
 }
@@ -65,7 +53,6 @@ fun App(viewModel: AppUiFlowViewModel = koinViewModel()) {
 @Composable
 @Suppress("LongMethod")
 private fun NavigationRoutes(
-    sendAction: (AppUiFlowAction) -> Unit,
     navController: NavHostController,
 ) {
     NavHost(
@@ -76,7 +63,14 @@ private fun NavigationRoutes(
             composable<Route.AppRoleChooser> {
                 AppRoleChoiceScreen(
                     onRoleChosen = { role ->
-                        sendAction(AppUiFlowAction.RoleChosen(role))
+                        Logger.d(TAG) { "Role chosen: $role" }
+                        navController.navigate(
+                            when (role) {
+                                AppRole.SERVER -> Route.PermissionCheck
+                                AppRole.CLIENT -> Route.CameraSelection
+                                AppRole.UNDECIDED -> error("UNDECIDED role should not be selectable")
+                            },
+                        )
                     },
                 )
             }
