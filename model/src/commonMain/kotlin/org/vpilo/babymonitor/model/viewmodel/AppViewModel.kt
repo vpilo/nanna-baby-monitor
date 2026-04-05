@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -109,8 +110,10 @@ abstract class AppViewModel<A, S, E>(
 
     protected fun S.update() {
         check(this !is Unit) { "Cannot update a Unit VM state" }
-        Logger.d(TAG) { "Updated state: $this" }
-        internalStateFlow.update { this }
+        val old = internalStateFlow.getAndUpdate { this }
+        if (old != this) {
+            Logger.d(TAG) { "Updated state: $this" }
+        }
     }
 
     protected fun E.sendEffect() {
