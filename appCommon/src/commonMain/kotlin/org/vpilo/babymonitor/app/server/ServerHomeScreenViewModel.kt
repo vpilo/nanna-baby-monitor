@@ -1,8 +1,10 @@
 package org.vpilo.babymonitor.app.server
 
 import kotlinx.coroutines.launch
+import org.vpilo.babymonitor.app.settings.LastCaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 
 class ServerHomeScreenViewModel(
@@ -15,6 +17,10 @@ class ServerHomeScreenViewModel(
         server.serverStateFlow.subscribe { serverState ->
             state.copy(isAvailable = serverState.isAvailable, captureMode = serverState.captureMode).update()
         }
+        settings.flowOf(Setting.LastCaptureMode).subscribe {
+            state.copy(captureMode = it).update()
+            server.setCaptureMode(it)
+        }
 
         vmScope.launch {
             server.start()
@@ -23,7 +29,6 @@ class ServerHomeScreenViewModel(
 
     override fun onCleared() {
         vmScope.launch {
-            // TODO probably won't be executed if vm is going away
             server.stop()
         }
     }
@@ -31,7 +36,10 @@ class ServerHomeScreenViewModel(
     override fun onAction(action: ServerHomeScreenAction) {
         when (action) {
             is ServerHomeScreenAction.CaptureModeSelected -> {
-                vmScope.launch { server.setCaptureMode(action.captureMode) }
+                vmScope.launch {
+                    settings.save(Setting.LastCaptureMode, action.captureMode)
+                    server.setCaptureMode(action.captureMode)
+                }
             }
         }
     }
