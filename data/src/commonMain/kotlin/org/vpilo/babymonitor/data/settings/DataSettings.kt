@@ -6,7 +6,7 @@ import org.vpilo.babymonitor.settings.model.makeSetting
 
 val Setting.Companion.AppRole by makeSetting {
     Setting(
-        id = "test",
+        id = "selected_app_role",
         type = AppRole::class,
         default = AppRole.UNDECIDED,
     )

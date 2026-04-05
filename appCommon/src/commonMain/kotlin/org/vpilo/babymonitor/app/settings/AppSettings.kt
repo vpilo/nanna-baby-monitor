@@ -5,7 +5,7 @@ import org.vpilo.babymonitor.settings.model.makeSetting
 
 val Setting.Companion.IsFirstRun by makeSetting {
     Setting(
-        id = "test",
+        id = "is_app_first_run",
         type = Boolean::class,
         default = true,
     )

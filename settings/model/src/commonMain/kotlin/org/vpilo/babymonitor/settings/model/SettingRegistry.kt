@@ -1,7 +1,5 @@
 package org.vpilo.babymonitor.settings.model
 
-import org.vpilo.babymonitor.common.Logger
-
 object SettingRegistry {
 
     private val registry: MutableSet<Setting<*>> = mutableSetOf()
@@ -9,7 +7,10 @@ object SettingRegistry {
     val settings: Set<Setting<*>> = registry.toSet()
 
     fun register(vararg settings: Setting<*>) {
-        Logger.w("SETTINGREGISTRY") { "Registering ${settings.map { it.id }}"}
+        val ids = settings.map { it.id }
+        check(ids.none { newId -> registry.any { it.id == newId } }) {
+            "Duplicate setting id: ${ids.filter { newId -> registry.any { it.id == newId } }}"
+        }
         registry.addAll(settings)
     }
 }

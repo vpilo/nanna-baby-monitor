@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import java.io.IOException
@@ -37,15 +38,22 @@ class DefaultSettingsRepository(
             Float::class,
             Double::class,
             ByteArray::class,
-            String::class -> (preferences[toDataStoreKey()] ?: default) as T
+            String::class ->
+                preferences[toDataStoreKey()] ?: default
 
-            Enum::class -> {
-                (preferences[stringPreferencesKey(id)]
-                    ?.let { enumValue -> type.java.enumConstants.firstOrNull { (it as Enum<*>).name == enumValue } }
-                    ?: default) as T
-            }
-
-            else -> error("Unsupported type $type for setting $id")
+            else ->
+                if (type.java.isEnum) {
+                    val savedString = preferences[stringPreferencesKey(id)] ?: return default
+                    type.java.enumConstants.firstOrNull { (it as Enum<*>).name == savedString }
+                        ?: run {
+                            Logger.w(TAG) {
+                                "Saved value '$savedString' for setting '$id' does not match any enum constant!"
+                            }
+                            default
+                        }
+                } else {
+                    error("Unsupported type $type for setting $id")
+                }
         }
     }
 
@@ -58,20 +66,26 @@ class DefaultSettingsRepository(
                 Float::class,
                 Double::class,
                 ByteArray::class,
-                String::class -> settings[setting.toDataStoreKey()] = value
+                String::class ->
+                    settings[setting.toDataStoreKey()] = value
 
-                Enum::class -> {
-                    check(value is Enum<*>) { "Value $value is not an enum for setting ${setting.id}" }
-                    settings[stringPreferencesKey(setting.id)] = value.name
-                }
-
-                else -> error("Unsupported type ${setting.type} for setting ${setting.id}")
+                else ->
+                    if (setting.type.java.isEnum) {
+                        check(value is Enum<*>) { "Value $value is not an enum for setting ${setting.id}" }
+                        settings[stringPreferencesKey(setting.id)] = value.name
+                    } else {
+                        error("Unsupported type ${setting.type} for setting ${setting.id}")
+                    }
             }
         }
     }
 
     override suspend fun <T : Any> clear(setting: Setting<T>) {
-        val key = setting.toDataStoreKey()
+        val key = if (setting.type.java.isEnum) {
+            stringPreferencesKey(setting.id)
+        } else {
+            setting.toDataStoreKey()
+        }
         dataStore.edit { settings ->
             settings.remove(key)
         }
@@ -79,7 +93,6 @@ class DefaultSettingsRepository(
 
     private fun DataStore<Preferences>.getSafeFlow(): Flow<Preferences> =
         data.catch {
-            // throws an IOException when an error is encountered when reading data
             if (it is IOException) {
                 emit(emptyPreferences())
             } else {
@@ -100,8 +113,7 @@ class DefaultSettingsRepository(
         } as Preferences.Key<T>
     }
 
-    private fun <T : Enum<*>> Setting<T>.toEnumDataStoreKey(): Preferences.Key<String> {
-        check(type is Enum<*>) { "Unsupported type $type for enum setting $id" }
-        return stringPreferencesKey(id)
+    private companion object {
+        private val TAG = DefaultSettingsRepository::class
     }
 }

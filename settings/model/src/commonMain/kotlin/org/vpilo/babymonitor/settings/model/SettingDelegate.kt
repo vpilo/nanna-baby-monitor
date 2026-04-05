@@ -11,9 +11,11 @@ class SettingDelegate<T : Any, S : Setting<T>>(
     getSetting: () -> S,
 ) : ReadOnlyProperty<Setting.Companion, S> {
     private val loadedSetting = getSetting()
+        .also {
+            SettingRegistry.register(it)
+        }
 
     override fun getValue(thisRef: Setting.Companion, property: KProperty<*>): S {
-        SettingRegistry.register(loadedSetting)
         return loadedSetting
     }
 }
