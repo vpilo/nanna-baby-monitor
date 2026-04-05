@@ -7,6 +7,9 @@ sealed interface Route {
     data object RootNavGraph : Route
 
     @Serializable
+    data object Onboarding : Route
+
+    @Serializable
     data object AppRoleChooser : Route
 
     @Serializable

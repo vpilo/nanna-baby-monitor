@@ -21,6 +21,7 @@ import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.ClientHomeScreen
 import org.vpilo.babymonitor.app.navigation.Route
+import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
 import org.vpilo.babymonitor.app.server.ServerHomeScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
 import org.vpilo.babymonitor.common.Logger
@@ -59,7 +60,31 @@ private fun NavigationRoutes(
         navController = navController,
         startDestination = Route.RootNavGraph,
     ) {
-        navigation<Route.RootNavGraph>(startDestination = Route.AppRoleChooser) {
+        navigation<Route.RootNavGraph>(startDestination = Route.Onboarding) {
+            composable<Route.Onboarding> {
+                OnboardingScreen(
+                    onSavedRole = { role ->
+                        when (role) {
+                            AppRole.SERVER ->
+                                navController.navigate(Route.PermissionCheck) {
+                                    popUpTo(Route.Onboarding) { inclusive = true }
+                                }
+
+                            AppRole.CLIENT ->
+                                navController.navigate(Route.CameraSelection) {
+                                    popUpTo(Route.Onboarding) { inclusive = true }
+                                }
+
+                            AppRole.UNDECIDED ->
+                                navController.navigate(Route.AppRoleChooser) {
+                                    popUpTo(Route.Onboarding) { inclusive = true }
+                                }
+                        }
+
+                    },
+                )
+            }
+
             composable<Route.AppRoleChooser> {
                 AppRoleChoiceScreen(
                     onRoleChosen = { role ->
@@ -96,7 +121,7 @@ private fun NavigationRoutes(
                 ServerHomeScreen(
                     viewModel = koinViewModel(),
                     onBackClicked = {
-                        navController.navigate(Route.RootNavGraph) {
+                        navController.navigate(Route.AppRoleChooser) {
                             popUpTo(Route.RootNavGraph) { inclusive = true }
                         }
                     },

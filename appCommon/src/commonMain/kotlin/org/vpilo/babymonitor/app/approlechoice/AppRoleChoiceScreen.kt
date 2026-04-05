@@ -30,7 +30,6 @@ fun AppRoleChoiceScreen(
     viewModel.stateFlow.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel.effectsFlow) {
-        viewModel.send(AppRoleChoiceScreenAction.FirstRunDone)
         viewModel.effectsFlow.collect { effect ->
             when (effect) {
                 is AppRoleChoiceScreenEffect.RoleChosen -> onRoleChosen(effect.role)
