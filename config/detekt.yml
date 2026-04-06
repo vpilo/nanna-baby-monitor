@@ -4,6 +4,8 @@ build:
 complexity:
   LongMethod:
     threshold: 60
+    ignoreAnnotated:
+      - "Composable"
   LongParameterList:
     functionThreshold: 8
     constructorThreshold: 10

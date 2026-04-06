@@ -4,10 +4,10 @@
     <string name="app_title_client_connect">Connect to a camera</string>
     <string name="app_title_client_home">Monitor</string>
 
-    <string name="app_role_choice_presentation">Do you want to:</string>
-    <string name="app_role_record">Record something with this device's camera?</string>
+    <string name="app_role_choice_presentation">What will this device do?</string>
+    <string name="app_role_record">Record something with this device's camera</string>
     <string name="app_role_choice_alternative">or</string>
-    <string name="app_role_monitor">Monitor what another device is recording?</string>
+    <string name="app_role_monitor">Watch what another device is recording</string>
 
     <string name="client_connection_chooser_choose">Choose the recording camera app to connect to.</string>
     <string name="client_connection_chooser_connecting">Connecting to camera...</string>
