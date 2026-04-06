@@ -30,8 +30,6 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun OnboardingScreenContent(
-    modifier: Modifier,
-) {
+private fun OnboardingScreenContent(modifier: Modifier) {
     LoadingBox(modifier)
 }

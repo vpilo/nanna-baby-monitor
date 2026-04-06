@@ -1,7 +1,6 @@
 package org.vpilo.babymonitor.settings.model
 
 object SettingRegistry {
-
     private val registry: MutableSet<Setting<*>> = mutableSetOf()
 
     val settings: Set<Setting<*>> = registry.toSet()

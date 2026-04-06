@@ -1,9 +1,9 @@
 package org.vpilo.babymonitor.app.cameraselection
 
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
+import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 
 class CameraSelectionScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,

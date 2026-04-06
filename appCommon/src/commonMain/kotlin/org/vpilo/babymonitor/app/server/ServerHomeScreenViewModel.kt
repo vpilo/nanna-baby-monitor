@@ -11,8 +11,8 @@ class ServerHomeScreenViewModel(
     private val server: NetworkServerRepository,
     private val settings: SettingsRepository,
 ) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, Unit>(
-    initialState = ServerHomeScreenState(),
-) {
+        initialState = ServerHomeScreenState(),
+    ) {
     override fun SubscriptionScope.onSubscribed() {
         server.serverStateFlow.subscribe { serverState ->
             state.copy(isAvailable = serverState.isAvailable, captureMode = serverState.captureMode).update()

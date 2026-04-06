@@ -10,18 +10,19 @@ import kotlin.reflect.KProperty
 class SettingDelegate<T : Any, S : Setting<T>>(
     getSetting: () -> S,
 ) : ReadOnlyProperty<Setting.Companion, S> {
-    private val loadedSetting = getSetting()
-        .also {
-            SettingRegistry.register(it)
-        }
+    private val loadedSetting =
+        getSetting()
+            .also {
+                SettingRegistry.register(it)
+            }
 
-    override fun getValue(thisRef: Setting.Companion, property: KProperty<*>): S {
-        return loadedSetting
-    }
+    override fun getValue(
+        thisRef: Setting.Companion,
+        property: KProperty<*>,
+    ): S = loadedSetting
 }
 
 /**
  * Use to register a new setting.
  */
-fun <T : Any> makeSetting(getSetting: () -> Setting<T>): ReadOnlyProperty<Setting.Companion, Setting<T>> =
-    SettingDelegate(getSetting)
+fun <T : Any> makeSetting(getSetting: () -> Setting<T>): ReadOnlyProperty<Setting.Companion, Setting<T>> = SettingDelegate(getSetting)

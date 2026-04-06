@@ -49,6 +49,6 @@ abstract class SharedResourceHolder<T>(
         stop()
     }
 
-    @Suppress("VariableNaming")
+    @Suppress("VariableNaming", "ktlint:standard:property-naming")
     open val TAG: KClass<*> = this::class
 }

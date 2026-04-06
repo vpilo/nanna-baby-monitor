@@ -39,16 +39,17 @@ fun ClientHomeScreen(
     val scope = rememberCoroutineScope()
 
     LifecycleResumeEffect(Unit) {
-        val job = scope.launch {
-            viewModel.effectsFlow.collect {
-                when (it) {
-                    ClientHomeScreenEffect.DisconnectedFromServer -> {
-                        Logger.d(TAG) { "Was disconnected!" }
-                        onDisconnected()
+        val job =
+            scope.launch {
+                viewModel.effectsFlow.collect {
+                    when (it) {
+                        ClientHomeScreenEffect.DisconnectedFromServer -> {
+                            Logger.d(TAG) { "Was disconnected!" }
+                            onDisconnected()
+                        }
                     }
                 }
             }
-        }
         onPauseOrDispose { job.cancel() }
     }
 

@@ -17,6 +17,7 @@ import org.vpilo.babymonitor.model.MutableStreamingVideoFlow
 import java.nio.ByteBuffer
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("LoopWithTooManyJumpStatements", "ComplexCondition")
 actual class VideoEncoder actual constructor(
     private val input: CameraFrameFlow,
     private val output: MutableStreamingVideoFlow,
@@ -24,7 +25,7 @@ actual class VideoEncoder actual constructor(
 ) {
     private val coroutineScope = CoroutineScope(coroutineContext)
 
-    private var videoEncoder: MediaCodec? = null
+    private var encoder: MediaCodec? = null
     private var videoEncodeJob: Job? = null
     private var videoFrameCount = 0L
 
@@ -56,11 +57,12 @@ actual class VideoEncoder actual constructor(
                             configuredWidth = frame.width
                             configuredHeight = frame.height
                             codec = createVideoEncoder(configuredWidth, configuredHeight)
-                            videoEncoder = codec
+                            encoder = codec
                             videoFrameCount = 0
                             codecConfigData = null
                             Logger.d(TAG) {
-                                "Video encoder configured for ${configuredWidth}x$configuredHeight, stride=$encoderStride, sliceHeight=$encoderSliceHeight"
+                                "Video encoder configured for ${configuredWidth}x$configuredHeight" +
+                                    ", stride=$encoderStride, sliceHeight=$encoderSliceHeight"
                             }
                         }
 
@@ -68,7 +70,7 @@ actual class VideoEncoder actual constructor(
                     }
                 } finally {
                     codec?.let { releaseCodec(it) }
-                    videoEncoder = null
+                    encoder = null
                 }
             }
     }
@@ -174,41 +176,39 @@ actual class VideoEncoder actual constructor(
             val outputIndex = codec.dequeueOutputBuffer(bufferInfo, CODEC_TIMEOUT_US)
             if (outputIndex < 0) break
 
-            val outputBuffer: ByteBuffer =
-                codec.getOutputBuffer(outputIndex) ?: run {
-                    codec.releaseOutputBuffer(outputIndex, false)
-                    continue
-                }
+            val outputBuffer: ByteBuffer? = codec.getOutputBuffer(outputIndex)
+            if (outputBuffer == null || bufferInfo.size <= 0) {
+                codec.releaseOutputBuffer(outputIndex, false)
+                continue
+            }
 
-            if (bufferInfo.size > 0) {
-                val data = ByteArray(bufferInfo.size)
-                outputBuffer.position(bufferInfo.offset)
-                outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
-                outputBuffer.get(data)
+            val data = ByteArray(bufferInfo.size)
+            outputBuffer.position(bufferInfo.offset)
+            outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
+            outputBuffer.get(data)
 
-                val isKey = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0
-                val isCodecConfig = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0
+            val isKey = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0
+            val isCodecConfig = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0
 
-                if (isCodecConfig) {
-                    // Store SPS/PPS — don't emit as a separate chunk
-                    codecConfigData = ensureAnnexB(data)
-                } else {
-                    val annexBData = ensureAnnexB(data)
-                    // Prepend SPS/PPS to every keyframe so the decoder can always start
-                    val emitData =
-                        if (isKey && codecConfigData != null) {
-                            codecConfigData!! + annexBData
-                        } else {
-                            annexBData
-                        }
+            if (isCodecConfig) {
+                // Store SPS/PPS — don't emit as a separate chunk
+                codecConfigData = ensureAnnexB(data)
+            } else {
+                val annexBData = ensureAnnexB(data)
+                // Prepend SPS/PPS to every keyframe so the decoder can always start
+                val emitData =
+                    if (isKey && codecConfigData != null) {
+                        codecConfigData!! + annexBData
+                    } else {
+                        annexBData
+                    }
 
-                    output.tryEmit(
-                        EncodedVideoStreamChunk(
-                            data = emitData,
-                            isKeyFrame = isKey,
-                        ),
-                    )
-                }
+                output.tryEmit(
+                    EncodedVideoStreamChunk(
+                        data = emitData,
+                        isKeyFrame = isKey,
+                    ),
+                )
             }
 
             codec.releaseOutputBuffer(outputIndex, false)
@@ -219,8 +219,8 @@ actual class VideoEncoder actual constructor(
         try {
             codec.stop()
             codec.release()
-        } catch (e: Exception) {
-            Logger.w(TAG, e) { "Error releasing codec" }
+        } catch (ex: IllegalStateException) {
+            Logger.w(TAG, ex) { "Error releasing codec" }
         }
     }
 
@@ -242,9 +242,9 @@ actual class VideoEncoder actual constructor(
          */
         private fun ensureAnnexB(data: ByteArray): ByteArray {
             if (data.size >= 4 &&
-                data[0] == 0x00.toByte() &&
-                data[1] == 0x00.toByte() &&
-                (data[2] == 0x01.toByte() || (data[2] == 0x00.toByte() && data[3] == 0x01.toByte()))
+                data[0] == byteFalse &&
+                data[1] == byteFalse &&
+                (data[2] == byteTrue || data[3] == byteTrue)
             ) {
                 // Already Annex-B
                 return data

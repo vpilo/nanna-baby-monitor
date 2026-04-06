@@ -16,15 +16,16 @@ internal suspend fun DefaultWebSocketServerSession.controlServerWebSocket() {
 
     Logger.d(TAG) { "New client connected" }
 
-    val stateSendingJob = launch {
-        repository.serverStateFlow.collect { state ->
-            send(makeServerMessageFrame(state))
+    val stateSendingJob =
+        launch {
+            repository.serverStateFlow.collect { state ->
+                send(makeServerMessageFrame(state))
+            }
         }
-    }
 
     runCatching {
         incoming.consumeEach {
-            // TODO: Handle incoming control messages from client
+            Logger.w(TAG) { "Unexpected message received from client: $it" }
         }
     }.onFailure { ex ->
         if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {

@@ -17,15 +17,16 @@ internal class ConnectionHandler(
             return
         }
 
-        connectionJob = coroutineScope.launch {
-            @Suppress("TooGenericExceptionCaught")
-            try {
-                connectLambda()
-            } catch (ex: Exception) {
-                disconnect()
-                onDisconnected(ex)
+        connectionJob =
+            coroutineScope.launch {
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    connectLambda()
+                } catch (ex: Exception) {
+                    disconnect()
+                    onDisconnected(ex)
+                }
             }
-        }
     }
 
     fun disconnect() {

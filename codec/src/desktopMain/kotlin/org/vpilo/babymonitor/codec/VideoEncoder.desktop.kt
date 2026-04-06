@@ -48,6 +48,7 @@ import java.awt.image.DataBufferByte
 import java.awt.image.DataBufferInt
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("LongMethod", "LoopWithTooManyJumpStatements")
 actual class VideoEncoder actual constructor(
     private val input: CameraFrameFlow,
     private val output: MutableStreamingVideoFlow,

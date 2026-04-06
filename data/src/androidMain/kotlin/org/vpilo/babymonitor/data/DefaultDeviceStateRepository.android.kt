@@ -16,48 +16,51 @@ import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_UPDATE_INTERVAL
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 
-
-internal actual class DefaultDeviceStateRepository : DeviceStateRepository, KoinComponent {
+internal actual class DefaultDeviceStateRepository :
+    DeviceStateRepository,
+    KoinComponent {
     private val context: Context = get()
 
-    override val batteryLevel: Flow<Int> = flow {
-        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        while (true) {
-            val batteryStatus: Intent? = context.registerReceiver(null, filter)
-            if (batteryStatus == null) {
-                emit(DEVICE_STATE_DATA_UNAVAILABLE)
-                return@flow
+    override val batteryLevel: Flow<Int> =
+        flow {
+            val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+            while (true) {
+                val batteryStatus: Intent? = context.registerReceiver(null, filter)
+                if (batteryStatus == null) {
+                    emit(DEVICE_STATE_DATA_UNAVAILABLE)
+                    return@flow
+                }
+                val level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, DEVICE_STATE_DATA_UNAVAILABLE)
+
+                emit(level.coerceIn(0, 100))
+                delay(DEVICE_STATE_UPDATE_INTERVAL)
             }
-            val level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, DEVICE_STATE_DATA_UNAVAILABLE)
+        }.onCompletion { ex ->
+            if (ex != null) {
+                Logger.e(TAG) { "Battery level retrieval error: ${ex.message}" }
+            }
+        }
 
-            emit(level.coerceIn(0, 100))
-            delay(DEVICE_STATE_UPDATE_INTERVAL)
+    override val signalQuality: Flow<Int> =
+        flow {
+            val wifiManager =
+                context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            while (true) {
+                emit(
+                    if (wifiManager.wifiState != WifiManager.WIFI_STATE_ENABLED) {
+                        DEVICE_STATE_DATA_UNAVAILABLE
+                    } else {
+                        val quality = getWifiSignalQuality(wifiManager)
+                        quality
+                    },
+                )
+                delay(DEVICE_STATE_UPDATE_INTERVAL)
+            }
+        }.onCompletion { ex ->
+            if (ex != null) {
+                Logger.e(TAG) { "Signal quality retrieval error: ${ex.message}" }
+            }
         }
-    }.onCompletion { ex ->
-        if (ex != null) {
-            Logger.e(TAG) { "Battery level retrieval error: ${ex.message}" }
-        }
-    }
-
-    override val signalQuality: Flow<Int> = flow {
-        val wifiManager =
-            context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-        while (true) {
-            emit(
-                if (wifiManager.wifiState != WifiManager.WIFI_STATE_ENABLED) {
-                    DEVICE_STATE_DATA_UNAVAILABLE
-                } else {
-                    val quality = getWifiSignalQuality(wifiManager)
-                    quality
-                },
-            )
-            delay(DEVICE_STATE_UPDATE_INTERVAL)
-        }
-    }.onCompletion { ex ->
-        if (ex != null) {
-            Logger.e(TAG) { "Signal quality retrieval error: ${ex.message}" }
-        }
-    }
 
     @Suppress("DEPRECATION")
     private fun getWifiSignalQuality(wifiManager: WifiManager): Int {

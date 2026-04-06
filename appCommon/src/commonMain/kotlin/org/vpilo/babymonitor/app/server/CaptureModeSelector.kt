@@ -30,28 +30,34 @@ internal fun CaptureModeSelector(
         CaptureMode.entries.forEachIndexed { index, mode ->
             SegmentedButton(
                 label = {
-                    val (label, icon) = when (mode) {
-                        CaptureMode.AUDIO_AND_VIDEO ->
-                            Res.string.server_mode_audio_and_video to Res.drawable.capture_audio_and_video
+                    val (label, icon) =
+                        when (mode) {
+                            CaptureMode.AUDIO_AND_VIDEO -> {
+                                Res.string.server_mode_audio_and_video to Res.drawable.capture_audio_and_video
+                            }
 
-                        CaptureMode.VIDEO_ONLY ->
-                            Res.string.server_mode_video_only to Res.drawable.capture_video_only
+                            CaptureMode.VIDEO_ONLY -> {
+                                Res.string.server_mode_video_only to Res.drawable.capture_video_only
+                            }
 
-                        CaptureMode.AUDIO_ONLY ->
-                            Res.string.server_mode_audio_only to Res.drawable.capture_audio_only
-                    }
+                            CaptureMode.AUDIO_ONLY -> {
+                                Res.string.server_mode_audio_only to Res.drawable.capture_audio_only
+                            }
+                        }
                     Icon(
                         painter = painterResource(icon),
                         contentDescription = stringResource(label),
                     )
                 },
-                shape = SegmentedButtonDefaults.itemShape(
-                    index = index,
-                    count = CaptureMode.entries.size,
-                ),
-                colors = SegmentedButtonDefaults.colors(
-                    inactiveContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
+                shape =
+                    SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = CaptureMode.entries.size,
+                    ),
+                colors =
+                    SegmentedButtonDefaults.colors(
+                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
                 selected = mode == captureMode,
                 onClick = { onModeSelected(mode) },
             )

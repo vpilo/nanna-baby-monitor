@@ -10,7 +10,6 @@ import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 internal class DefaultAppRoleRepository(
     private val settingsRepository: SettingsRepository,
 ) : AppRoleRepository {
-
     override val appRole: Flow<AppRole> = settingsRepository.flowOf(Setting.AppRole)
 
     override suspend fun chooseRole(appRole: AppRole) {

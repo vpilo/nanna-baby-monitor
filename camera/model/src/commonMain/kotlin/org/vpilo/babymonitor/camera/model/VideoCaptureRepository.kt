@@ -7,4 +7,5 @@ import org.vpilo.babymonitor.model.CameraFrameFlow
  * This repository provides uncompressed camera frames, as captured by a webcam or camera.
  */
 interface VideoCaptureRepository {
-    val frames: CameraFrameFlow}
+    val frames: CameraFrameFlow
+}

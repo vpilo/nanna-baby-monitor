@@ -60,22 +60,22 @@ internal class DefaultNetworkClientRepository(
 
     override suspend fun connect(address: InetAddress) {
         controlConnectionHandler?.disconnect()
-        controlConnectionHandler = ConnectionHandler(
-            coroutineScope = scope,
-            connectLambda = {
-                networkClient.webSocket(
-                    method = HttpMethod.Get,
-                    host = address.hostAddress,
-                    port = Constants.WEBSOCKET_PORT,
-                    path = Endpoints.CONTROL,
-                ) {
-                    onControlConnectionOpened(address)
-                    controlClientWebSocket()
-                }
-            },
-            onDisconnected = { ex -> onControlConnectionClosed(ex) },
-        )
-            .apply { connect() }
+        controlConnectionHandler =
+            ConnectionHandler(
+                coroutineScope = scope,
+                connectLambda = {
+                    networkClient.webSocket(
+                        method = HttpMethod.Get,
+                        host = address.hostAddress,
+                        port = Constants.WEBSOCKET_PORT,
+                        path = Endpoints.CONTROL,
+                    ) {
+                        onControlConnectionOpened(address)
+                        controlClientWebSocket()
+                    }
+                },
+                onDisconnected = { ex -> onControlConnectionClosed(ex) },
+            ).apply { connect() }
 
         connectionState.value = NetworkState.Connecting(address)
         Logger.d(TAG) { "Connecting to server at ${address.hostAddress}..." }
@@ -86,26 +86,26 @@ internal class DefaultNetworkClientRepository(
             Logger.w(TAG) { "Audio stream is already running" }
             return
         }
-        audioConnectionHandler = ConnectionHandler(
-            coroutineScope = scope,
-            connectLambda = {
-                networkClient.webSocket(
-                    method = HttpMethod.Get,
-                    host = address.hostAddress,
-                    port = Constants.WEBSOCKET_PORT,
-                    path = Endpoints.STREAM_AUDIO,
-                ) {
-                    //TODO if needed, report whether audio or video are connected or not to the UI
-                    audioStreamingClientWebSocket()
-                }
-            },
-            onDisconnected = {
-                Logger.i(TAG) { "Audio disconnected, reconnecting" }
-                delay(1.seconds)
-                audioConnectionHandler?.connect()
-            },
-        )
-            .apply { connect() }
+        audioConnectionHandler =
+            ConnectionHandler(
+                coroutineScope = scope,
+                connectLambda = {
+                    networkClient.webSocket(
+                        method = HttpMethod.Get,
+                        host = address.hostAddress,
+                        port = Constants.WEBSOCKET_PORT,
+                        path = Endpoints.STREAM_AUDIO,
+                    ) {
+                        // TODO if needed, report whether audio or video are connected or not to the UI
+                        audioStreamingClientWebSocket()
+                    }
+                },
+                onDisconnected = {
+                    Logger.i(TAG) { "Audio disconnected, reconnecting" }
+                    delay(1.seconds)
+                    audioConnectionHandler?.connect()
+                },
+            ).apply { connect() }
         Logger.d(TAG) { "Audio stream started" }
     }
 
@@ -114,25 +114,25 @@ internal class DefaultNetworkClientRepository(
             Logger.w(TAG) { "Video stream is already running" }
             return
         }
-        videoConnectionHandler = ConnectionHandler(
-            coroutineScope = scope,
-            connectLambda = {
-                networkClient.webSocket(
-                    method = HttpMethod.Get,
-                    host = address.hostAddress,
-                    port = Constants.WEBSOCKET_PORT,
-                    path = Endpoints.STREAM_VIDEO,
-                ) {
-                    videoStreamingClientWebSocket()
-                }
-            },
-            onDisconnected = {
-                Logger.i(TAG) { "Video disconnected, reconnecting" }
-                delay(1.seconds)
-                videoConnectionHandler?.connect()
-            },
-        )
-            .apply { connect() }
+        videoConnectionHandler =
+            ConnectionHandler(
+                coroutineScope = scope,
+                connectLambda = {
+                    networkClient.webSocket(
+                        method = HttpMethod.Get,
+                        host = address.hostAddress,
+                        port = Constants.WEBSOCKET_PORT,
+                        path = Endpoints.STREAM_VIDEO,
+                    ) {
+                        videoStreamingClientWebSocket()
+                    }
+                },
+                onDisconnected = {
+                    Logger.i(TAG) { "Video disconnected, reconnecting" }
+                    delay(1.seconds)
+                    videoConnectionHandler?.connect()
+                },
+            ).apply { connect() }
         Logger.d(TAG) { "Video stream started" }
     }
 
@@ -166,30 +166,31 @@ internal class DefaultNetworkClientRepository(
         connectionState.value = NetworkState.Connected(address)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
 
-        serverStateJob = scope.launch {
-            dataSource.serverState.collect { serverState ->
-                if (!serverState.isAvailable) {
-                    return@collect
-                }
-                Logger.i(TAG) { "Server changed capture mode: ${serverState.captureMode}" }
-                when (serverState.captureMode) {
-                    CaptureMode.AUDIO_ONLY -> {
-                        stopVideoStream()
-                        startAudioStream(address)
+        serverStateJob =
+            scope.launch {
+                dataSource.serverState.collect { serverState ->
+                    if (!serverState.isAvailable) {
+                        return@collect
                     }
+                    Logger.i(TAG) { "Server changed capture mode: ${serverState.captureMode}" }
+                    when (serverState.captureMode) {
+                        CaptureMode.AUDIO_ONLY -> {
+                            stopVideoStream()
+                            startAudioStream(address)
+                        }
 
-                    CaptureMode.VIDEO_ONLY -> {
-                        stopAudioStream()
-                        startVideoStream(address)
-                    }
+                        CaptureMode.VIDEO_ONLY -> {
+                            stopAudioStream()
+                            startVideoStream(address)
+                        }
 
-                    CaptureMode.AUDIO_AND_VIDEO -> {
-                        startAudioStream(address)
-                        startVideoStream(address)
+                        CaptureMode.AUDIO_AND_VIDEO -> {
+                            startAudioStream(address)
+                            startVideoStream(address)
+                        }
                     }
                 }
             }
-        }
     }
 
     private suspend fun onControlConnectionClosed(exception: Throwable) {

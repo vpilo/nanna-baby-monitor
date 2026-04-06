@@ -120,10 +120,16 @@ internal class DefaultNetworkServerRepository(
 
     override suspend fun setCaptureMode(mode: CaptureMode) {
         when (mode) {
-            CaptureMode.VIDEO_ONLY -> activeAudioSessions.closeAll()
-            CaptureMode.AUDIO_ONLY -> activeVideoSessions.closeAll()
+            CaptureMode.VIDEO_ONLY -> {
+                activeAudioSessions.closeAll()
+            }
+
+            CaptureMode.AUDIO_ONLY -> {
+                activeVideoSessions.closeAll()
+            }
+
             else -> {
-                /* Nothing to do */
+                // Nothing to do
             }
         }
 

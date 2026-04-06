@@ -53,9 +53,7 @@ fun App() {
 
 @Composable
 @Suppress("LongMethod")
-private fun NavigationRoutes(
-    navController: NavHostController,
-) {
+private fun NavigationRoutes(navController: NavHostController) {
     NavHost(
         navController = navController,
         startDestination = Route.RootNavGraph,
@@ -65,22 +63,24 @@ private fun NavigationRoutes(
                 OnboardingScreen(
                     onSavedRole = { role ->
                         when (role) {
-                            AppRole.SERVER ->
+                            AppRole.SERVER -> {
                                 navController.navigate(Route.PermissionCheck) {
                                     popUpTo(Route.Onboarding) { inclusive = true }
                                 }
+                            }
 
-                            AppRole.CLIENT ->
+                            AppRole.CLIENT -> {
                                 navController.navigate(Route.CameraSelection) {
                                     popUpTo(Route.Onboarding) { inclusive = true }
                                 }
+                            }
 
-                            AppRole.UNDECIDED ->
+                            AppRole.UNDECIDED -> {
                                 navController.navigate(Route.AppRoleChooser) {
                                     popUpTo(Route.Onboarding) { inclusive = true }
                                 }
+                            }
                         }
-
                     },
                 )
             }

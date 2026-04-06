@@ -11,4 +11,3 @@ val Setting.Companion.AppRole by makeSetting {
         default = AppRole.UNDECIDED,
     )
 }
-

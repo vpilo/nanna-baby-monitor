@@ -38,6 +38,7 @@ import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("LongMethod", "LoopWithTooManyJumpStatements")
 actual class VideoDecoder actual constructor(
     private val input: StreamingVideoFlow,
     private val output: MutableSharedFlow<ImageBitmap>,

@@ -13,46 +13,48 @@ import java.io.File
 import kotlin.time.Duration.Companion.minutes
 
 internal actual class DefaultDeviceStateRepository : DeviceStateRepository {
-
     // Get a new Oshi instance every time, as it will cache data.
-    override val batteryLevel: Flow<Int> = flow {
-        while (true) {
-            val powerSources = SystemInfo().hardware.powerSources
-            if (powerSources.isEmpty()) {
-                Logger.i(TAG) { "No power sources found." }
+    override val batteryLevel: Flow<Int> =
+        flow {
+            while (true) {
+                val powerSources = SystemInfo().hardware.powerSources
+                if (powerSources.isEmpty()) {
+                    Logger.i(TAG) { "No power sources found." }
+                    emit(DEVICE_STATE_DATA_UNAVAILABLE)
+                    return@flow
+                }
+
+                val remainingCapacity = (powerSources[0].remainingCapacityPercent * 100).toInt()
+                emit(remainingCapacity)
+                delay(DEVICE_STATE_UPDATE_INTERVAL)
+            }
+        }.onCompletion { ex ->
+            if (ex != null) {
+                Logger.e(TAG) { "Battery level retrieval error: ${ex.message}" }
+            }
+        }
+
+    override val signalQuality: Flow<Int> =
+        flow {
+            val wirelessFile = File(PROC_NET_WIRELESS)
+            if (!wirelessFile.exists()) {
+                Logger.w(TAG) { "Wireless info file not found: $PROC_NET_WIRELESS" }
                 emit(DEVICE_STATE_DATA_UNAVAILABLE)
                 return@flow
             }
 
-            val remainingCapacity = (powerSources[0].remainingCapacityPercent * 100).toInt()
-            emit(remainingCapacity)
-            delay(DEVICE_STATE_UPDATE_INTERVAL)
-        }
-    }.onCompletion { ex ->
-        if (ex != null) {
-            Logger.e(TAG) { "Battery level retrieval error: ${ex.message}" }
-        }
-    }
-
-    override val signalQuality: Flow<Int> = flow {
-        val wirelessFile = File(PROC_NET_WIRELESS)
-        if (!wirelessFile.exists()) {
-            Logger.w(TAG) { "Wireless info file not found: $PROC_NET_WIRELESS" }
-            emit(DEVICE_STATE_DATA_UNAVAILABLE)
-            return@flow
+            while (true) {
+                val quality = readWifiSignalQuality(wirelessFile)
+                emit(quality)
+                delay(DEVICE_STATE_UPDATE_INTERVAL)
+            }
+        }.onCompletion { ex ->
+            if (ex != null) {
+                Logger.e(TAG) { "Signal quality retrieval error: ${ex.message}" }
+            }
         }
 
-        while (true) {
-            val quality = readWifiSignalQuality(wirelessFile)
-            emit(quality)
-            delay(DEVICE_STATE_UPDATE_INTERVAL)
-        }
-    }.onCompletion { ex ->
-        if (ex != null) {
-            Logger.e(TAG) { "Signal quality retrieval error: ${ex.message}" }
-        }
-    }
-
+    @Suppress("ReturnCount")
     private fun readWifiSignalQuality(wirelessFile: File): Int {
         val lines = wirelessFile.readLines()
         // First two lines are headers; data lines start at index 2

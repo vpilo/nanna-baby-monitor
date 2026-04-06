@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("NestedBlockDepth", "LoopWithTooManyJumpStatements")
 actual class VideoDecoder actual constructor(
     private val input: StreamingVideoFlow,
     private val output: MutableSharedFlow<ImageBitmap>,
@@ -254,14 +255,12 @@ actual class VideoDecoder actual constructor(
 
         // First pass: find all start code positions
         var i = 0
-        val zero = 0x00.toByte()
-        val one = 0x01.toByte()
         while (i < data.size - 2) {
-            if (data[i] == zero && data[i + 1] == zero) {
-                if (i + 3 < data.size && data[i + 2] == zero && data[i + 3] == one) {
+            if (data[i] == byteFalse && data[i + 1] == byteFalse) {
+                if (i + 3 < data.size && data[i + 2] == byteFalse && data[i + 3] == byteTrue) {
                     startPositions.add(Pair(i, 4))
                     i += 4
-                } else if (data[i + 2] == one) {
+                } else if (data[i + 2] == byteTrue) {
                     startPositions.add(Pair(i, 3))
                     i += 3
                 } else {
@@ -286,8 +285,8 @@ actual class VideoDecoder actual constructor(
         try {
             codec.stop()
             codec.release()
-        } catch (e: Exception) {
-            Logger.w(TAG, e) { "Error releasing decoder" }
+        } catch (ex: IllegalStateException) {
+            Logger.w(TAG, ex) { "Error releasing decoder" }
         }
     }
 

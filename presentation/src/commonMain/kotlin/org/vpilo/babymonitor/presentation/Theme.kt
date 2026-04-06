@@ -18,6 +18,4 @@ object Theme {
         val Large: Dp = 32.dp
         val Huge: Dp = 128.dp
     }
-
-
 }

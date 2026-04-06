@@ -58,41 +58,45 @@ fun SignalState(
 
 @Preview
 @Composable
-private fun SignalState1Preview() = AppTheme {
-    Surface(color = MaterialTheme.colorScheme.onSurface) {
-        SignalState(signalQuality = 1)
+private fun SignalState1Preview() =
+    AppTheme {
+        Surface(color = MaterialTheme.colorScheme.onSurface) {
+            SignalState(signalQuality = 1)
+        }
     }
-}
 
 @Preview
 @Composable
-private fun SignalState2Preview() = AppTheme {
-    Surface(color = MaterialTheme.colorScheme.onSurface) {
-        SignalState(signalQuality = 30)
+private fun SignalState2Preview() =
+    AppTheme {
+        Surface(color = MaterialTheme.colorScheme.onSurface) {
+            SignalState(signalQuality = 30)
+        }
     }
-}
 
 @Preview
 @Composable
-private fun SignalState3Preview() = AppTheme {
-    Surface(color = MaterialTheme.colorScheme.onSurface) {
-        SignalState(signalQuality = 50)
+private fun SignalState3Preview() =
+    AppTheme {
+        Surface(color = MaterialTheme.colorScheme.onSurface) {
+            SignalState(signalQuality = 50)
+        }
     }
-}
 
 @Preview
 @Composable
-private fun SignalState4Preview() = AppTheme {
-    Surface(color = MaterialTheme.colorScheme.onSurface) {
-        SignalState(signalQuality = 75)
+private fun SignalState4Preview() =
+    AppTheme {
+        Surface(color = MaterialTheme.colorScheme.onSurface) {
+            SignalState(signalQuality = 75)
+        }
     }
-}
 
 @Preview
 @Composable
-private fun SignalState5Preview() = AppTheme {
-    Surface(color = MaterialTheme.colorScheme.onSurface) {
-        SignalState(signalQuality = 100)
+private fun SignalState5Preview() =
+    AppTheme {
+        Surface(color = MaterialTheme.colorScheme.onSurface) {
+            SignalState(signalQuality = 100)
+        }
     }
-}
-

@@ -54,9 +54,10 @@ private fun ServerHomeContent(
         )
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
             CaptureModeSelector(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .zIndex(1f),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .zIndex(1f),
                 captureMode = captureMode,
                 onModeSelected = onModeSelected,
             )
@@ -77,4 +78,3 @@ private fun ServerHomeContentPreview() {
         onModeSelected = {},
     )
 }
-

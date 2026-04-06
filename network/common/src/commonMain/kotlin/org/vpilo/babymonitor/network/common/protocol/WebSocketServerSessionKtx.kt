@@ -21,10 +21,12 @@ suspend fun WebSocketSession.protocolSendAudio(chunk: EncodedAudioStreamChunk) {
 suspend fun WebSocketSession.protocolReceiveAudio(): EncodedAudioStreamChunk = EncodedAudioStreamChunk(incoming.receive().data)
 
 suspend fun WebSocketSession.protocolSendVideo(chunk: EncodedVideoStreamChunk) {
-    val data = ByteBuffer.allocate(chunk.data.size + 1)
-        .put(if (chunk.isKeyFrame) byteArrayTrue else byteArrayFalse)
-        .put(chunk.data)
-        .flip()
+    val data =
+        ByteBuffer
+            .allocate(chunk.data.size + 1)
+            .put(if (chunk.isKeyFrame) byteArrayTrue else byteArrayFalse)
+            .put(chunk.data)
+            .flip()
             as ByteBuffer // Type inference fails without this cast, even if the type is correct.
 
     send(Frame.Binary(fin = true, data = data.moveToByteArray()))
@@ -39,7 +41,9 @@ suspend fun WebSocketSession.protocolReceiveVideo(): EncodedVideoStreamChunk {
 sealed interface ServerMessage {
     val key: Key
 
-    data class State(val payload: ServerState) : ServerMessage {
+    data class State(
+        val payload: ServerState,
+    ) : ServerMessage {
         override val key = Key.State
     }
 
@@ -70,6 +74,8 @@ suspend fun WebSocketSession.receiveServerMessage(): ServerMessage {
             )
         }
 
-        else -> error("Incoming message key $key was not recognized")
+        else -> {
+            error("Incoming message key $key was not recognized")
+        }
     }
 }

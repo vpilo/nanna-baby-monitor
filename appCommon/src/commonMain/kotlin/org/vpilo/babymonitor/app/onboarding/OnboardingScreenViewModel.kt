@@ -14,7 +14,6 @@ class OnboardingScreenViewModel(
     private val appRoleRepository: AppRoleRepository,
     private val settingsRepository: SettingsRepository,
 ) : AppViewModel<OnboardingScreenAction, OnboardingScreenState, OnboardingScreenEffect>(initialState = OnboardingScreenState()) {
-
     override fun SubscriptionScope.onSubscribed() {
         vmScope.launch {
             combine(

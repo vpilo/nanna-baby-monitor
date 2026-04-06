@@ -16,8 +16,8 @@ class ClientHomeScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
 ) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
-    initialState = ClientHomeScreenState(),
-) {
+        initialState = ClientHomeScreenState(),
+    ) {
     val frames: Flow<ImageBitmap> = videoReceiverRepository.decodedFrames
 
     override fun SubscriptionScope.onSubscribed() {
@@ -30,11 +30,12 @@ class ClientHomeScreenViewModel(
             }
 
         networkClientRepository.serverStateFlow.subscribe { serverState ->
-            state.copy(
-                captureMode = serverState.captureMode,
-                batteryLevel = serverState.batteryLevel,
-                signalQuality = serverState.signalQuality,
-            ).update()
+            state
+                .copy(
+                    captureMode = serverState.captureMode,
+                    batteryLevel = serverState.batteryLevel,
+                    signalQuality = serverState.signalQuality,
+                ).update()
         }
 
         playReceivedAudio.isPlaying

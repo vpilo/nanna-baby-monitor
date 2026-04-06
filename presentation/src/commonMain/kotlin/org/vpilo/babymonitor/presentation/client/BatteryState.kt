@@ -89,46 +89,53 @@ fun BatteryState(
 
 @Preview
 @Composable
-private fun BatteryState1Preview() = AppTheme {
-    Surface(color = MaterialTheme.colorScheme.onSurface) {
-        BatteryState(batteryLevel = 1)
+private fun BatteryState1Preview() =
+    AppTheme {
+        Surface(color = MaterialTheme.colorScheme.onSurface) {
+            BatteryState(batteryLevel = 1)
+        }
     }
-}
 
 @Preview
 @Composable
-private fun BatteryState2Preview() = AppTheme {
-    Surface(color = MaterialTheme.colorScheme.onSurface) {
-        BatteryState(batteryLevel = 10)
+private fun BatteryState2Preview() =
+    AppTheme {
+        Surface(color = MaterialTheme.colorScheme.onSurface) {
+            BatteryState(batteryLevel = 10)
+        }
     }
-}
 
 @Preview
 @Composable
-private fun BatteryState3Preview() = AppTheme {
-    BatteryState(batteryLevel = 25)
-}
+private fun BatteryState3Preview() =
+    AppTheme {
+        BatteryState(batteryLevel = 25)
+    }
 
 @Preview
 @Composable
-private fun BatteryState4Preview() = AppTheme {
-    BatteryState(batteryLevel = 42)
-}
+private fun BatteryState4Preview() =
+    AppTheme {
+        BatteryState(batteryLevel = 42)
+    }
 
 @Preview
 @Composable
-private fun BatteryState5Preview() = AppTheme {
-    BatteryState(batteryLevel = 69)
-}
+private fun BatteryState5Preview() =
+    AppTheme {
+        BatteryState(batteryLevel = 69)
+    }
 
 @Preview
 @Composable
-private fun BatteryState6Preview() = AppTheme {
-    BatteryState(batteryLevel = 80)
-}
+private fun BatteryState6Preview() =
+    AppTheme {
+        BatteryState(batteryLevel = 80)
+    }
 
 @Preview
 @Composable
-private fun BatteryState7Preview() = AppTheme {
-    BatteryState(batteryLevel = 95)
-}
+private fun BatteryState7Preview() =
+    AppTheme {
+        BatteryState(batteryLevel = 95)
+    }

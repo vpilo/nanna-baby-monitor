@@ -16,9 +16,10 @@ internal suspend fun DefaultClientWebSocketSession.controlClientWebSocket() {
 
     Logger.d(TAG) { "Connection established" }
 
-    val frameSenderJob = launch {
-        // TODO: Handle sending messages to server
-    }
+    val frameSenderJob =
+        launch {
+            // None yet.
+        }
 
     runCatching {
         while (true) {

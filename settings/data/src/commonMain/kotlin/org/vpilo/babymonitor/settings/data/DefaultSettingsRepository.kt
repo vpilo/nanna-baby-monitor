@@ -21,14 +21,13 @@ import java.io.IOException
 class DefaultSettingsRepository(
     private val dataStore: DataStore<Preferences>,
 ) : SettingsRepository {
-
     override fun <T : Any> flowOf(setting: Setting<T>): Flow<T> =
-        dataStore.getSafeFlow()
+        dataStore
+            .getSafeFlow()
             .map { preferences -> setting.getValueOrDefault(preferences) }
             .distinctUntilChanged()
 
-    override suspend fun <T : Any> load(setting: Setting<T>): T =
-        setting.getValueOrDefault(dataStore.getSafeFlow().first())
+    override suspend fun <T : Any> load(setting: Setting<T>): T = setting.getValueOrDefault(dataStore.getSafeFlow().first())
 
     private fun <T : Any> Setting<T>.getValueOrDefault(preferences: Preferences): T {
         return when (type) {
@@ -38,10 +37,12 @@ class DefaultSettingsRepository(
             Float::class,
             Double::class,
             ByteArray::class,
-            String::class ->
-                preferences[toDataStoreKey()] ?: default
+            String::class,
+                -> {
+                    preferences[toDataStoreKey()] ?: default
+                }
 
-            else ->
+            else -> {
                 if (type.java.isEnum) {
                     val savedString = preferences[stringPreferencesKey(id)] ?: return default
                     type.java.enumConstants.firstOrNull { (it as Enum<*>).name == savedString }
@@ -54,10 +55,14 @@ class DefaultSettingsRepository(
                 } else {
                     error("Unsupported type $type for setting $id")
                 }
+            }
         }
     }
 
-    override suspend fun <T : Any> save(setting: Setting<T>, value: T) {
+    override suspend fun <T : Any> save(
+        setting: Setting<T>,
+        value: T,
+    ) {
         dataStore.edit { settings ->
             when (setting.type) {
                 Boolean::class,
@@ -66,26 +71,30 @@ class DefaultSettingsRepository(
                 Float::class,
                 Double::class,
                 ByteArray::class,
-                String::class ->
-                    settings[setting.toDataStoreKey()] = value
+                String::class,
+                    -> {
+                        settings[setting.toDataStoreKey()] = value
+                    }
 
-                else ->
+                else -> {
                     if (setting.type.java.isEnum) {
                         check(value is Enum<*>) { "Value $value is not an enum for setting ${setting.id}" }
                         settings[stringPreferencesKey(setting.id)] = value.name
                     } else {
                         error("Unsupported type ${setting.type} for setting ${setting.id}")
                     }
+                }
             }
         }
     }
 
     override suspend fun <T : Any> clear(setting: Setting<T>) {
-        val key = if (setting.type.java.isEnum) {
-            stringPreferencesKey(setting.id)
-        } else {
-            setting.toDataStoreKey()
-        }
+        val key =
+            if (setting.type.java.isEnum) {
+                stringPreferencesKey(setting.id)
+            } else {
+                setting.toDataStoreKey()
+            }
         dataStore.edit { settings ->
             settings.remove(key)
         }
@@ -103,10 +112,22 @@ class DefaultSettingsRepository(
     private fun <T : Any> Setting<T>.toDataStoreKey(): Preferences.Key<T> {
         @Suppress("UNCHECKED_CAST")
         return when (type) {
-            Boolean::class -> booleanPreferencesKey(id)
-            Int::class -> intPreferencesKey(id)
-            Float::class -> floatPreferencesKey(id)
-            String::class -> stringPreferencesKey(id)
+            Boolean::class -> {
+                booleanPreferencesKey(id)
+            }
+
+            Int::class -> {
+                intPreferencesKey(id)
+            }
+
+            Float::class -> {
+                floatPreferencesKey(id)
+            }
+
+            String::class -> {
+                stringPreferencesKey(id)
+            }
+
             else -> {
                 error("Unsupported type $type for setting $id")
             }

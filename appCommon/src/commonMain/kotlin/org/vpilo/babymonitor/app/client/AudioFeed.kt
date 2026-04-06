@@ -27,11 +27,12 @@ fun AudioFeed(
         enabled = canPlay,
         onClick = onToggle,
     ) {
-        val (icon, label) = when {
-            !canPlay -> Res.drawable.capture_video_only to Res.string.client_no_audio
-            isPlaying -> Res.drawable.pause to Res.string.client_pause_audio
-            else -> Res.drawable.play to Res.string.client_play_audio
-        }
+        val (icon, label) =
+            when {
+                !canPlay -> Res.drawable.capture_video_only to Res.string.client_no_audio
+                isPlaying -> Res.drawable.pause to Res.string.client_pause_audio
+                else -> Res.drawable.play to Res.string.client_play_audio
+            }
         Icon(
             painter = painterResource(icon),
             contentDescription = stringResource(label),

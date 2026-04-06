@@ -34,6 +34,7 @@ import org.vpilo.babymonitor.model.MutableAudioFrameFlow
 import org.vpilo.babymonitor.model.StreamingAudioFlow
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("LoopWithTooManyJumpStatements")
 actual class AudioDecoder actual constructor(
     private val input: StreamingAudioFlow,
     private val output: MutableAudioFrameFlow,

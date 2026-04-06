@@ -14,6 +14,7 @@ import org.vpilo.babymonitor.model.MutableStreamingAudioFlow
 import java.nio.ByteBuffer
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("LoopWithTooManyJumpStatements")
 actual class AudioEncoder actual constructor(
     private val input: AudioFrameFlow,
     private val output: MutableStreamingAudioFlow,
@@ -21,7 +22,7 @@ actual class AudioEncoder actual constructor(
 ) {
     private val coroutineScope = CoroutineScope(coroutineContext)
 
-    private var audioEncoder: MediaCodec? = null
+    private var encoder: MediaCodec? = null
     private var audioEncodeJob: Job? = null
     private var presentationTimeUs = 0L
 
@@ -32,7 +33,7 @@ actual class AudioEncoder actual constructor(
             coroutineScope.launch {
                 presentationTimeUs = 0L
                 val codec = createAudioEncoder()
-                audioEncoder = codec
+                encoder = codec
                 Logger.d(TAG) { "Audio encoder started" }
 
                 try {
@@ -42,7 +43,7 @@ actual class AudioEncoder actual constructor(
                     }
                 } finally {
                     releaseCodec(codec)
-                    audioEncoder = null
+                    encoder = null
                 }
             }
     }
@@ -126,8 +127,8 @@ actual class AudioEncoder actual constructor(
         try {
             codec.stop()
             codec.release()
-        } catch (e: Exception) {
-            Logger.w(TAG, e) { "Error releasing codec" }
+        } catch (ex: IllegalStateException) {
+            Logger.w(TAG, ex) { "Error releasing codec" }
         }
     }
 

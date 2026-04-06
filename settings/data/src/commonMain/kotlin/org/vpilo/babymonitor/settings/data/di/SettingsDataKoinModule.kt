@@ -10,9 +10,10 @@ import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 val settingsDataKoinModule: Module =
     module {
         single<SettingsRepository> {
-            val dataStore = PreferenceDataStoreFactory.create {
-                getDataStoreFile()
-            }
+            val dataStore =
+                PreferenceDataStoreFactory.create {
+                    getDataStoreFile()
+                }
             DefaultSettingsRepository(dataStore = dataStore)
         }
     }

@@ -159,7 +159,7 @@ actual class AudioDecoder actual constructor(
         try {
             codec.stop()
             codec.release()
-        } catch (ex: Exception) {
+        } catch (ex: IllegalStateException) {
             Logger.w(TAG, ex) { "Error releasing decoder" }
         }
     }
