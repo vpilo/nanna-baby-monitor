@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app.client
+package org.vpilo.babymonitor.app.client.home
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -94,7 +95,7 @@ private fun ClientHomeScreenContent(
             onToggle = onToggleAudio,
         )
         Row(
-            modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd),
+            modifier = Modifier.align(Alignment.TopEnd),
         ) {
             BatteryState(batteryLevel = batteryLevel)
             SignalState(signalQuality = signalQuality)

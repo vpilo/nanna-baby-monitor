@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app.server
+package org.vpilo.babymonitor.app.server.home
 
 import org.vpilo.babymonitor.model.CaptureMode
 

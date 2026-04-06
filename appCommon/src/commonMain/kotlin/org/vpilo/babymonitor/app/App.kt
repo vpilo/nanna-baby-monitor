@@ -5,7 +5,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
@@ -20,10 +19,10 @@ import androidx.navigation.compose.rememberNavController
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
-import org.vpilo.babymonitor.app.client.ClientHomeScreen
+import org.vpilo.babymonitor.app.client.home.ClientHomeScreen
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
-import org.vpilo.babymonitor.app.server.ServerHomeScreen
+import org.vpilo.babymonitor.app.server.home.ServerHomeScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole

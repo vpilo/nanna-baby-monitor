@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app.client
+package org.vpilo.babymonitor.app.client.home
 
 sealed interface ClientHomeScreenEffect {
     object DisconnectedFromServer : ClientHomeScreenEffect {

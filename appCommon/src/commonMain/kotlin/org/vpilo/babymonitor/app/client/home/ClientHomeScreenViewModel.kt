@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app.client
+package org.vpilo.babymonitor.app.client.home
 
 import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.flow.Flow

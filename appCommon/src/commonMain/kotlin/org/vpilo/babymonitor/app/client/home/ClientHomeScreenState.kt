@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app.client
+package org.vpilo.babymonitor.app.client.home
 
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE

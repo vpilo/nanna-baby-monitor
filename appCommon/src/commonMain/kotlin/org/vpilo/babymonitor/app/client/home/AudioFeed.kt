@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app.client
+package org.vpilo.babymonitor.app.client.home
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
