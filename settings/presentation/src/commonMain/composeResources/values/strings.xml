@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="example" translateable="false">Example string</string>
+
+    <string name="example_mode_audio_and_video" translateable="false">example: Audio and Video</string>
+    <string name="example_mode_audio_only" translateable="false">example: Audio only</string>
+    <string name="example_mode_video_only" translateable="false">example: Video only</string>
+</resources>

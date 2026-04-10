@@ -20,6 +20,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreen
+import org.vpilo.babymonitor.app.menu.AppMenuContents
+import org.vpilo.babymonitor.app.menu.MenuScreen
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreen
@@ -99,6 +101,22 @@ private fun NavigationRoutes(navController: NavHostController) {
                     },
                 )
             }
+
+            composable<Route.Menu> {
+                MenuScreen(
+                    viewModel = koinViewModel(),
+                    onBackClicked = {
+                        navController.popBackStack()
+                    },
+                    menuItems = { AppMenuContents(navController) },
+                )
+            }
+
+            composable<Route.Quit> {
+                val quitApplication = LocalQuitApplication.current
+                quitApplication()
+            }
+
             composable<Route.PermissionCheck>(
                 exitTransition = { slideOutHorizontally() },
                 popEnterTransition = { slideInHorizontally() },
@@ -114,19 +132,19 @@ private fun NavigationRoutes(navController: NavHostController) {
                     },
                 )
             }
+
             composable<Route.ServerHome>(
                 exitTransition = { slideOutHorizontally() },
                 popEnterTransition = { slideInHorizontally() },
             ) {
                 ServerHomeScreen(
                     viewModel = koinViewModel(),
-                    onBackClicked = {
-                        navController.navigate(Route.AppRoleChooser) {
-                            popUpTo(Route.RootNavGraph) { inclusive = true }
-                        }
+                    onMenuClicked = {
+                        navController.navigate(Route.Menu)
                     },
                 )
             }
+
             composable<Route.CameraSelection> {
                 CameraSelectionScreen(
                     viewModel = koinViewModel(),
@@ -140,6 +158,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                     },
                 )
             }
+
             composable<Route.ClientHome>(
                 exitTransition = { slideOutHorizontally() },
                 popEnterTransition = { slideInHorizontally() },
@@ -149,10 +168,8 @@ private fun NavigationRoutes(navController: NavHostController) {
                     onDisconnected = {
                         navController.popBackStack()
                     },
-                    onBackClicked = {
-                        navController.navigate(Route.RootNavGraph) {
-                            popUpTo(Route.RootNavGraph) { inclusive = true }
-                        }
+                    onMenuClicked = {
+                        navController.navigate(Route.Menu)
                     },
                 )
             }

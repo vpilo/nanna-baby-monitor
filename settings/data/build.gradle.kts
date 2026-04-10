@@ -31,6 +31,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":common"))
+            implementation(project(":model"))
             implementation(project(":settings:model"))
 
             implementation(libs.androidx.datastore)

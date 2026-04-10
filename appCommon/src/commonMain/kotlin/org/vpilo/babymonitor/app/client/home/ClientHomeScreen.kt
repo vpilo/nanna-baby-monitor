@@ -25,6 +25,7 @@ import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.presentation.client.BatteryState
 import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
+import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.preview.placeholderFrame
 
 private const val TAG = "ClientHomeScreen"
@@ -34,7 +35,7 @@ fun ClientHomeScreen(
     modifier: Modifier = Modifier,
     viewModel: ClientHomeScreenViewModel,
     onDisconnected: () -> Unit,
-    onBackClicked: () -> Unit,
+    onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -56,9 +57,10 @@ fun ClientHomeScreen(
 
     AppDestination(
         title = Res.string.app_title_client_home,
-        onBackClicked = {
+        mainAction = AppDestinationMainAction.Menu,
+        onMainActionClicked = {
             viewModel.disconnect()
-            onBackClicked()
+            onMenuClicked()
         },
     ) {
         ClientHomeScreenContent(

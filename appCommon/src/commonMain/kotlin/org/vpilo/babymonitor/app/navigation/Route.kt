@@ -13,6 +13,12 @@ sealed interface Route {
     data object AppRoleChooser : Route
 
     @Serializable
+    data object Menu : Route
+
+    @Serializable
+    data object Quit : Route
+
+    @Serializable
     data object PermissionCheck : Route
 
     @Serializable

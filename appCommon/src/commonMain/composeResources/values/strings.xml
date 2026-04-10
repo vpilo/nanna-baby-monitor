@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
+    <string name="app_name">Baby monitor</string>
+    <string name="app_copyright">© 2026 Valerio Pilo</string>
+
     <string name="app_title_server_home">Camera</string>
     <string name="app_title_client_connect">Connect to a camera</string>
     <string name="app_title_client_home">Monitor</string>
+    <string name="app_title_menu">Menu</string>
 
     <string name="app_role_choice_presentation">What will this device do?</string>
     <string name="app_role_record">Record something with this device's camera</string>
     <string name="app_role_choice_alternative">or</string>
     <string name="app_role_monitor">Watch what another device is recording</string>
+
+    <string name="menu_change_role_title">Change application role</string>
+    <string name="menu_change_role_description">Change between recording and watching on this device.</string>
+    <string name="menu_quit">Quit</string>
 
     <string name="client_connection_chooser_choose">Choose the recording camera app to connect to.</string>
     <string name="client_connection_chooser_connecting">Connecting to camera...</string>

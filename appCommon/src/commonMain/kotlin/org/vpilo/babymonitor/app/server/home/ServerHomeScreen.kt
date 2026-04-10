@@ -17,18 +17,20 @@ import babymonitor.appcommon.generated.resources.app_title_server_home
 import org.vpilo.babymonitor.camera.presentation.CameraViewFinder
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.presentation.composables.AppDestination
+import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 
 @Composable
 fun ServerHomeScreen(
     modifier: Modifier = Modifier,
     viewModel: ServerHomeScreenViewModel,
-    onBackClicked: () -> Unit,
+    onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
     AppDestination(
         title = Res.string.app_title_server_home,
-        onBackClicked = onBackClicked,
+        mainAction = AppDestinationMainAction.Menu,
+        onMainActionClicked = onMenuClicked,
     ) {
         ServerHomeContent(
             modifier = modifier,

@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.presentation
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -53,7 +52,7 @@ private fun AppThemePreview(useDarkTheme: Boolean) {
     AppTheme(useDarkTheme = useDarkTheme) {
         AppDestination(
             title = Res.string.example,
-            onBackClicked = {},
+            onMainActionClicked = {},
         ) {
             Column {
                 Text("Hello, World!")

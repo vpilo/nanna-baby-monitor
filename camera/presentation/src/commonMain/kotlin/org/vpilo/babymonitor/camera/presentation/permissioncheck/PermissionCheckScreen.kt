@@ -29,7 +29,7 @@ fun PermissionCheckScreen(
 ) {
     AppDestination(
         title = Res.string.navigation_title_permissions,
-        onBackClicked = onBackClicked,
+        onMainActionClicked = onBackClicked,
     ) {
         val deniedPermissions = remember { mutableIntStateOf(2) }
 

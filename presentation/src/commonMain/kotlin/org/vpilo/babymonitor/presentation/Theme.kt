@@ -11,6 +11,9 @@ object Theme {
 
         val Button: Dp = 40.dp
         val Blur: Dp = 2.dp
+
+        val IconSmall: Dp = 16.dp
+        val IconMedium: Dp = 24.dp
     }
 
     object Paddings {

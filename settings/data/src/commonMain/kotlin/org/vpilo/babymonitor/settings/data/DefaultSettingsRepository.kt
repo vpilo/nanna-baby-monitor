@@ -44,8 +44,8 @@ class DefaultSettingsRepository(
 
             else -> {
                 if (type.java.isEnum) {
-                    val savedString = preferences[stringPreferencesKey(id)] ?: return default
-                    type.java.enumConstants.firstOrNull { (it as Enum<*>).name == savedString }
+                    val savedString = preferences[stringPreferencesKey(id.value)] ?: return default
+                    type.java.enumConstants?.firstOrNull { (it as Enum<*>).name == savedString }
                         ?: run {
                             Logger.w(TAG) {
                                 "Saved value '$savedString' for setting '$id' does not match any enum constant!"
@@ -79,7 +79,7 @@ class DefaultSettingsRepository(
                 else -> {
                     if (setting.type.java.isEnum) {
                         check(value is Enum<*>) { "Value $value is not an enum for setting ${setting.id}" }
-                        settings[stringPreferencesKey(setting.id)] = value.name
+                        settings[stringPreferencesKey(setting.id.value)] = value.name
                     } else {
                         error("Unsupported type ${setting.type} for setting ${setting.id}")
                     }
@@ -91,7 +91,7 @@ class DefaultSettingsRepository(
     override suspend fun <T : Any> clear(setting: Setting<T>) {
         val key =
             if (setting.type.java.isEnum) {
-                stringPreferencesKey(setting.id)
+                stringPreferencesKey(setting.id.value)
             } else {
                 setting.toDataStoreKey()
             }
@@ -113,19 +113,19 @@ class DefaultSettingsRepository(
         @Suppress("UNCHECKED_CAST")
         return when (type) {
             Boolean::class -> {
-                booleanPreferencesKey(id)
+                booleanPreferencesKey(id.value)
             }
 
             Int::class -> {
-                intPreferencesKey(id)
+                intPreferencesKey(id.value)
             }
 
             Float::class -> {
-                floatPreferencesKey(id)
+                floatPreferencesKey(id.value)
             }
 
             String::class -> {
-                stringPreferencesKey(id)
+                stringPreferencesKey(id.value)
             }
 
             else -> {

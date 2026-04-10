@@ -59,7 +59,7 @@ fun CameraSelectionScreen(
 
     AppDestination(
         title = Res.string.app_title_client_connect,
-        onBackClicked = onBackClicked,
+        onMainActionClicked = onBackClicked,
     ) {
         CameraSelectionScreenContent(
             modifier = modifier.fillMaxSize(),

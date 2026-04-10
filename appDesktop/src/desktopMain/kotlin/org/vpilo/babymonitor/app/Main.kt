@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.app
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 
@@ -10,7 +11,9 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "Baby Monitor",
         ) {
-            App()
+            CompositionLocalProvider(LocalQuitApplication provides ::exitApplication) {
+                App()
+            }
         }
     }
 }

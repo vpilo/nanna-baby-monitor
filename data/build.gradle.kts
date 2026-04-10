@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.compose)
+    alias(libs.plugins.compose.compiler)
 }
 
 kotlin {
@@ -18,6 +20,10 @@ kotlin {
                 .get()
                 .toInt()
 
+        androidResources {
+            enable = true
+        }
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
@@ -31,6 +37,8 @@ kotlin {
             implementation(project(":model"))
             implementation(project(":settings:model"))
 
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.resources)
             implementation(libs.koin.core)
         }
         val desktopMain by getting

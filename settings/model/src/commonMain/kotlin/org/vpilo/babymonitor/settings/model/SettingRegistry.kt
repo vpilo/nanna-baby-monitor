@@ -1,9 +1,12 @@
 package org.vpilo.babymonitor.settings.model
 
+import org.vpilo.babymonitor.model.settings.SettingId
+
 object SettingRegistry {
     private val registry: MutableSet<Setting<*>> = mutableSetOf()
 
-    val settings: Set<Setting<*>> = registry.toSet()
+    val settings: Set<Setting<*>>
+        get() = registry.toSet()
 
     fun register(vararg settings: Setting<*>) {
         val ids = settings.map { it.id }
@@ -12,4 +15,6 @@ object SettingRegistry {
         }
         registry.addAll(settings)
     }
+
+    fun getById(id: SettingId): Setting<*> = registry.first { it.id == id }
 }

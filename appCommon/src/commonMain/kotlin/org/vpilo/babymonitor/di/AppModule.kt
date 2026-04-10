@@ -8,6 +8,7 @@ import org.koin.dsl.module
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreenViewModel
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreenViewModel
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreenViewModel
+import org.vpilo.babymonitor.app.menu.MenuScreenViewModel
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreenViewModel
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreenViewModel
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
@@ -27,6 +28,7 @@ val appSharedKoinModules =
             viewModelOf(::ServerHomeScreenViewModel)
             viewModelOf(::CameraSelectionScreenViewModel)
             viewModelOf(::ClientHomeScreenViewModel)
+            viewModelOf(::MenuScreenViewModel)
         },
         appPlatformModule,
     )

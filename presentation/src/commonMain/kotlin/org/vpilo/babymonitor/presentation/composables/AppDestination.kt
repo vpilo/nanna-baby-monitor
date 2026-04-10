@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.MenuOpen
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import babymonitor.presentation.generated.resources.Res
 import babymonitor.presentation.generated.resources.back
 import babymonitor.presentation.generated.resources.example
+import babymonitor.presentation.generated.resources.menu
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.Theme
@@ -32,7 +36,8 @@ import org.vpilo.babymonitor.presentation.Theme
 fun AppDestination(
     modifier: Modifier = Modifier,
     title: StringResource,
-    onBackClicked: () -> Unit,
+    mainAction: AppDestinationMainAction = AppDestinationMainAction.Back,
+    onMainActionClicked: () -> Unit,
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable () -> Unit,
 ) {
@@ -56,11 +61,26 @@ fun AppDestination(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onBackClicked) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(Res.string.back),
-                    )
+                IconButton(onClick = onMainActionClicked) {
+                    when (mainAction) {
+                        AppDestinationMainAction.None -> {
+                            return@IconButton
+                        }
+
+                        AppDestinationMainAction.Back -> {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(Res.string.back),
+                            )
+                        }
+
+                        AppDestinationMainAction.Menu -> {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = stringResource(Res.string.menu),
+                            )
+                        }
+                    }
                 }
             },
             actions = actions,
@@ -82,7 +102,22 @@ fun AppDestination(
 private fun AppDestinationPreview() {
     AppDestination(
         title = Res.string.example,
-        onBackClicked = {},
+        onMainActionClicked = {},
+    ) {
+        Text(
+            text = "Example content",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun AppDestinationMenuPreview() {
+    AppDestination(
+        title = Res.string.example,
+        mainAction = AppDestinationMainAction.Menu,
+        onMainActionClicked = {},
     ) {
         Text(
             text = "Example content",
