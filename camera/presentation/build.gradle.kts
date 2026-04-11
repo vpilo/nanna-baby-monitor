@@ -36,6 +36,7 @@ kotlin {
             implementation(project(":model"))
             implementation(project(":presentation"))
             implementation(project(":camera:model"))
+            implementation(project(":settings:model"))
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

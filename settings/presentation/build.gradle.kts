@@ -45,6 +45,7 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.tooling)
             implementation(libs.jetbrains.lifecycle.runtime.compose)
+            implementation(libs.jetbrains.lifecycle.viewmodel)
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.koin.core)

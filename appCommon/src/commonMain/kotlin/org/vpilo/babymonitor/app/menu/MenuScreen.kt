@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_copyright
 import babymonitor.appcommon.generated.resources.app_name
@@ -28,8 +29,8 @@ import org.vpilo.babymonitor.settings.presentation.composables.MenuItem
 fun MenuScreen(
     modifier: Modifier = Modifier,
     viewModel: MenuScreenViewModel,
+    navController: NavHostController,
     onBackClicked: () -> Unit,
-    menuItems: @Composable () -> Unit,
 ) {
     @Suppress("UnusedVariable", "UnusedPrivateProperty", "unused")
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
@@ -41,7 +42,7 @@ fun MenuScreen(
     ) {
         MenuScreenContent(
             modifier = modifier,
-            menuItems = menuItems,
+            menuItems = { AppMenuContents(onNavigateTo = { navController.navigate(it) }) },
         )
     }
 }

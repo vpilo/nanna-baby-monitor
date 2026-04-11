@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.camera.data.ktx.sizes
+import org.vpilo.babymonitor.camera.model.CameraResolution
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
@@ -28,6 +29,8 @@ internal actual class VideoCaptureDataSource(
 
     private var videoCaptureJob: Job? = null
 
+    private var resolution: CameraResolution = CameraResolution.Medium
+
     private val webcam: Webcam = webcamGetter()
 
     override fun start() {
@@ -36,9 +39,10 @@ internal actual class VideoCaptureDataSource(
             return
         }
 
+        val resolutions = resolutionsFor(resolution)
         @Suppress("SpreadOperator")
-        webcam.setCustomViewSizes(*customResolutions)
-        for (size in customResolutions) {
+        webcam.setCustomViewSizes(*resolutions)
+        for (size in resolutions) {
             webcam.setViewSize(size)
             if (webcam.open()) {
                 Logger.d(TAG) { "Camera opened with ${size.sizes}" }
@@ -92,17 +96,46 @@ internal actual class VideoCaptureDataSource(
         videoCaptureJob = null
     }
 
+    actual fun setResolution(resolution: CameraResolution) {
+        if (this.resolution == resolution) return
+        this.resolution = resolution
+        if (isActive) {
+            Logger.i(TAG) { "Resolution changed to $resolution, restarting capture" }
+            stop()
+            start()
+        }
+    }
+
     private companion object {
-        private val customResolutions =
+        private val highResolutions =
             arrayOf<Dimension>(
-                WebcamResolution.UHD4K.size,
-                WebcamResolution.WUXGA.size,
                 WebcamResolution.FHD.size,
-                WebcamResolution.UXGA.size,
+                WebcamResolution.WUXGA.size,
                 WebcamResolution.HDP.size,
-                WebcamResolution.SXGA.size,
+                WebcamResolution.UXGA.size,
+            )
+
+        private val mediumResolutions =
+            arrayOf<Dimension>(
                 WebcamResolution.HD.size,
+                WebcamResolution.WXGA2.size,
+                WebcamResolution.SXGA.size,
                 WebcamResolution.XGA.size,
             )
+
+        private val lowResolutions =
+            arrayOf<Dimension>(
+                WebcamResolution.VGA.size,
+                WebcamResolution.SVGA.size,
+                WebcamResolution.HVGA.size,
+                WebcamResolution.QVGA.size,
+            )
+
+        private fun resolutionsFor(resolution: CameraResolution): Array<Dimension> =
+            when (resolution) {
+                CameraResolution.Low -> lowResolutions
+                CameraResolution.Medium -> mediumResolutions + lowResolutions
+                CameraResolution.High -> highResolutions + mediumResolutions + lowResolutions
+            }
     }
 }

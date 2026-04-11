@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.android.service.AndroidService
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
+import org.vpilo.babymonitor.camera.model.CameraResolution
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
@@ -41,11 +42,19 @@ internal actual class VideoCaptureDataSource(
 
     private val executor = coroutineDispatcher.asExecutor()
 
+    private var resolution: CameraResolution = CameraResolution.Medium
+
     private val resolutionSelector: ResolutionSelector by lazy {
+        val size =
+            when (resolution) {
+                CameraResolution.Low -> Size(640, 480)
+                CameraResolution.Medium -> Size(1280, 720)
+                CameraResolution.High -> Size(1920, 1080)
+            }
         ResolutionSelector
             .Builder()
             .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
-            .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER))
+            .setResolutionStrategy(ResolutionStrategy(size, ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER))
             .build()
     }
 
@@ -154,6 +163,16 @@ internal actual class VideoCaptureDataSource(
                         ?: this.disable()
                 }
             }
+    }
+
+    actual fun setResolution(resolution: CameraResolution) {
+        if (this.resolution == resolution) return
+        this.resolution = resolution
+        if (isActive) {
+            Logger.i(TAG) { "Resolution changed to $resolution, restarting capture" }
+            stop()
+            start()
+        }
     }
 
     override fun onServiceStarted(

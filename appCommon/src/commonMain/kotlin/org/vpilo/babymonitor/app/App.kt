@@ -20,7 +20,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreen
-import org.vpilo.babymonitor.app.menu.AppMenuContents
 import org.vpilo.babymonitor.app.menu.MenuScreen
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
@@ -108,7 +107,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                     onBackClicked = {
                         navController.popBackStack()
                     },
-                    menuItems = { AppMenuContents(navController) },
+                    navController = navController,
                 )
             }
 

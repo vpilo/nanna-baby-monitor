@@ -6,12 +6,16 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.settings.presentation.generated.resources.Res
 import babymonitor.settings.presentation.generated.resources.example
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import org.vpilo.babymonitor.model.settings.SettingId
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.settings.model.Setting
@@ -21,27 +25,31 @@ import org.vpilo.babymonitor.settings.model.Setting
 fun <T : Any> MenuSettingItem(
     modifier: Modifier = Modifier,
     setting: Setting<T>,
-    getValue: (Setting<T>) -> T,
-    setValue: (Setting<T>, T) -> Unit,
     imageVector: ImageVector? = null,
-    onClick: (Setting<T>) -> Unit = { },
 ) {
-    val value = getValue(setting)
+    val viewModel: MenuSettingItemViewModel =
+        koinViewModel(
+            key = setting.id.value,
+            parameters = { parametersOf(setting) },
+        )
+    val state by viewModel.stateFlow.collectAsStateWithLifecycle()
+    val value = state.value as T
+
     MenuItem(
         modifier = modifier,
         imageVector = imageVector,
         title = stringResource(checkNotNull(setting.name) { "Name cannot be null when displaying setting ${setting.id}" }),
         description = setting.description?.let { stringResource(it) },
-        onClick = { onClick(setting) },
         endContent = {
             when (setting.type) {
                 Boolean::class -> {
-                    ThemedSwitch(checked = value as Boolean, onCheckedChange = { setValue(setting, it as T) })
+                    ThemedSwitch(
+                        checked = value as Boolean,
+                        onCheckedChange = { viewModel.send(MenuSettingItemAction.SetValue(it)) },
+                    )
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> { }
             }
         },
         bottomContent = {
@@ -49,13 +57,11 @@ fun <T : Any> MenuSettingItem(
                 String::class -> {
                     TextField(
                         value = value as String,
-                        onValueChange = { setValue(setting, it as T) },
+                        onValueChange = { viewModel.send(MenuSettingItemAction.SetValue(it)) },
                     )
                 }
 
-                else -> {
-                    Unit
-                }
+                else -> { }
             }
         },
     )
@@ -83,9 +89,7 @@ private fun MenuSettingItemPreview() =
             MenuSettingItem(
                 imageVector = Icons.Default.Notifications,
                 setting = testBool,
-                getValue = { it.default },
-                setValue = { _, _ -> },
             )
-            MenuSettingItem(imageVector = Icons.Default.SwapHoriz, setting = testString, getValue = { it.default }, setValue = { _, _ -> })
+            MenuSettingItem(imageVector = Icons.Default.SwapHoriz, setting = testString)
         }
     }
