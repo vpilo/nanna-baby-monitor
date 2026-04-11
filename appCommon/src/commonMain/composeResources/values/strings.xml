@@ -13,6 +13,8 @@
     <string name="app_role_choice_alternative">or</string>
     <string name="app_role_monitor">Watch what another device is recording</string>
 
+    <string name="menu_disconnect_title">Disconnect</string>
+    <string name="menu_disconnect_description">Disconnect from the recording device.</string>
     <string name="menu_change_role_title">Change application role</string>
     <string name="menu_change_role_description">Change between recording and watching on this device.</string>
     <string name="menu_quit">Quit</string>

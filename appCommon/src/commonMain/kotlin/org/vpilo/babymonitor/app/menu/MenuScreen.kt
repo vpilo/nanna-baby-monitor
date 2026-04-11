@@ -32,7 +32,6 @@ fun MenuScreen(
     navController: NavHostController,
     onBackClicked: () -> Unit,
 ) {
-    @Suppress("UnusedVariable", "UnusedPrivateProperty", "unused")
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
     AppDestination(
@@ -42,7 +41,7 @@ fun MenuScreen(
     ) {
         MenuScreenContent(
             modifier = modifier,
-            menuItems = { AppMenuContents(onNavigateTo = { navController.navigate(it) }) },
+            menuItems = { AppMenuContents(currentRole = state.currentRole, onNavigateTo = { navController.navigate(it) }) },
         )
     }
 }
