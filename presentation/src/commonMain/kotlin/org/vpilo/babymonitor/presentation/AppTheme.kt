@@ -38,17 +38,17 @@ fun AppTheme(
 @Preview
 @Composable
 fun AppThemeLightThemePreview() {
-    AppThemePreview(useDarkTheme = false)
+    AppThemePreviewContent(useDarkTheme = false)
 }
 
 @Preview
 @Composable
 fun AppThemeDarkThemePreview() {
-    AppThemePreview(useDarkTheme = true)
+    AppThemePreviewContent(useDarkTheme = true)
 }
 
 @Composable
-private fun AppThemePreview(useDarkTheme: Boolean) {
+private fun AppThemePreviewContent(useDarkTheme: Boolean) {
     AppTheme(useDarkTheme = useDarkTheme) {
         AppDestination(
             title = Res.string.example,

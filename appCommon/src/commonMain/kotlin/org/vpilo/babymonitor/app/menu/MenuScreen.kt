@@ -19,6 +19,7 @@ import babymonitor.appcommon.generated.resources.app_copyright
 import babymonitor.appcommon.generated.resources.app_name
 import babymonitor.appcommon.generated.resources.app_title_menu
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -89,7 +90,7 @@ private fun MenuScreenContent(
 @Preview
 @Composable
 private fun MenuScreenPreview() =
-    AppTheme {
+    AppPreviewTheme {
         MenuScreenContent {
             MenuItem(imageVector = Icons.AutoMirrored.Filled.ExitToApp, title = "Quit", onClick = {})
         }

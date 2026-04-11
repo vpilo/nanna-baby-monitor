@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.client.BatteryState
 import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -107,42 +108,45 @@ private fun ClientHomeScreenContent(
 
 @Preview
 @Composable
-private fun ClientHomeScreenPreview() {
-    ClientHomeScreenContent(
-        modifier = Modifier.fillMaxSize(),
-        frames = flowOf(placeholderFrame),
-        captureMode = CaptureMode.AUDIO_AND_VIDEO,
-        isAudioPlaying = false,
-        onToggleAudio = { },
-        batteryLevel = 5,
-        signalQuality = 3,
-    )
-}
+private fun ClientHomeScreenPreview() =
+    AppPreviewTheme {
+        ClientHomeScreenContent(
+            modifier = Modifier.fillMaxSize(),
+            frames = flowOf(placeholderFrame),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+            isAudioPlaying = false,
+            onToggleAudio = { },
+            batteryLevel = 5,
+            signalQuality = 3,
+        )
+    }
 
 @Preview
 @Composable
-private fun ClientHomeScreenVideoOnlyPreview() {
-    ClientHomeScreenContent(
-        modifier = Modifier.fillMaxSize(),
-        frames = flowOf(placeholderFrame),
-        captureMode = CaptureMode.VIDEO_ONLY,
-        isAudioPlaying = false,
-        onToggleAudio = { },
-        batteryLevel = 95,
-        signalQuality = 93,
-    )
-}
+private fun ClientHomeScreenVideoOnlyPreview() =
+    AppPreviewTheme {
+        ClientHomeScreenContent(
+            modifier = Modifier.fillMaxSize(),
+            frames = flowOf(placeholderFrame),
+            captureMode = CaptureMode.VIDEO_ONLY,
+            isAudioPlaying = false,
+            onToggleAudio = { },
+            batteryLevel = 95,
+            signalQuality = 93,
+        )
+    }
 
 @Preview
 @Composable
-private fun ClientHomeScreenNoSignalOrBatteryPreview() {
-    ClientHomeScreenContent(
-        modifier = Modifier.fillMaxSize(),
-        frames = flowOf(placeholderFrame),
-        captureMode = CaptureMode.AUDIO_AND_VIDEO,
-        isAudioPlaying = false,
-        onToggleAudio = { },
-        batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
-        signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
-    )
-}
+private fun ClientHomeScreenNoSignalOrBatteryPreview() =
+    AppPreviewTheme {
+        ClientHomeScreenContent(
+            modifier = Modifier.fillMaxSize(),
+            frames = flowOf(placeholderFrame),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+            isAudioPlaying = false,
+            onToggleAudio = { },
+            batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
+            signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
+        )
+    }

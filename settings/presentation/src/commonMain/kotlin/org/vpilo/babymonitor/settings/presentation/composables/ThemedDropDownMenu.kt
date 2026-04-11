@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 
 @Composable
@@ -86,7 +87,7 @@ fun ThemedDropDownMenu(
 @Preview
 @Composable
 private fun ThemedDropDownMenuStringPreview() =
-    AppTheme {
+    AppPreviewTheme {
         Column {
             Text(
                 text = "Enable Notifications",
@@ -109,7 +110,7 @@ private fun ThemedDropDownMenuStringPreview() =
 @Preview
 @Composable
 private fun ThemedDropDownMenuEnumPreview() =
-    AppTheme {
+    AppPreviewTheme {
         Column {
             Text(
                 text = "Capture Mode",

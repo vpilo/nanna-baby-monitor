@@ -19,6 +19,7 @@ import babymonitor.presentation.generated.resources.signal_4
 import babymonitor.presentation.generated.resources.signal_5
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 
@@ -59,7 +60,7 @@ fun SignalState(
 @Preview
 @Composable
 private fun SignalState1Preview() =
-    AppTheme {
+    AppPreviewTheme {
         Surface(color = MaterialTheme.colorScheme.onSurface) {
             SignalState(signalQuality = 1)
         }
@@ -68,7 +69,7 @@ private fun SignalState1Preview() =
 @Preview
 @Composable
 private fun SignalState2Preview() =
-    AppTheme {
+    AppPreviewTheme {
         Surface(color = MaterialTheme.colorScheme.onSurface) {
             SignalState(signalQuality = 30)
         }
@@ -77,7 +78,7 @@ private fun SignalState2Preview() =
 @Preview
 @Composable
 private fun SignalState3Preview() =
-    AppTheme {
+    AppPreviewTheme {
         Surface(color = MaterialTheme.colorScheme.onSurface) {
             SignalState(signalQuality = 50)
         }
@@ -86,7 +87,7 @@ private fun SignalState3Preview() =
 @Preview
 @Composable
 private fun SignalState4Preview() =
-    AppTheme {
+    AppPreviewTheme {
         Surface(color = MaterialTheme.colorScheme.onSurface) {
             SignalState(signalQuality = 75)
         }
@@ -95,7 +96,7 @@ private fun SignalState4Preview() =
 @Preview
 @Composable
 private fun SignalState5Preview() =
-    AppTheme {
+    AppPreviewTheme {
         Surface(color = MaterialTheme.colorScheme.onSurface) {
             SignalState(signalQuality = 100)
         }

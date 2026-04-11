@@ -11,8 +11,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.parameter.parametersOf
-import org.vpilo.babymonitor.presentation.AppTheme
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.settings.model.EnumSetting
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.presentation.preview.testSettingEnum
@@ -29,7 +30,7 @@ fun <T : Enum<*>> MenuSettingEnumItem(
 
     val viewModel: MenuSettingItemViewModel =
         koinViewModel(
-            key = setting.id.value,
+            //     key = setting.id.value,
             parameters = { parametersOf(setting) },
         )
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
@@ -52,7 +53,11 @@ fun <T : Enum<*>> MenuSettingEnumItem(
 @Preview
 @Composable
 private fun MenuSettingEnumItemPreview() =
-    AppTheme {
+    AppPreviewTheme(
+        withModule = {
+            viewModelOf(::MenuSettingItemViewModel)
+        },
+    ) {
         Column {
             MenuSettingEnumItem(
                 setting = testSettingEnum,

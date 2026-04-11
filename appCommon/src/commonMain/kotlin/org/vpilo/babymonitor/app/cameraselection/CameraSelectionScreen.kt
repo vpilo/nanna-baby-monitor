@@ -33,6 +33,7 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_unkno
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.repository.NetworkState
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -184,7 +185,7 @@ private fun InfoLabel(networkState: NetworkState) {
 @Preview
 @Composable
 private fun CameraSelectionScreenPreview() =
-    AppTheme {
+    AppPreviewTheme {
         CameraSelectionScreenContent(
             networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
             servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
@@ -195,7 +196,7 @@ private fun CameraSelectionScreenPreview() =
 @Preview
 @Composable
 private fun CameraSelectionScreenConnectingPreview() =
-    AppTheme {
+    AppPreviewTheme {
         CameraSelectionScreenContent(
             networkState = NetworkState.Connecting(InetAddress.getLoopbackAddress()),
             servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
@@ -206,7 +207,7 @@ private fun CameraSelectionScreenConnectingPreview() =
 @Preview
 @Composable
 private fun CameraSelectionScreenNoServersPreview() =
-    AppTheme {
+    AppPreviewTheme {
         CameraSelectionScreenContent(
             networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
             servers = emptySet(),

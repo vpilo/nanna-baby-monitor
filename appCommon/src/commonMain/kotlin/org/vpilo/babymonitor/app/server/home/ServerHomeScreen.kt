@@ -14,8 +14,14 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_server_home
+import kotlinx.coroutines.flow.flowOf
+import org.koin.core.module.dsl.viewModelOf
+import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
 import org.vpilo.babymonitor.camera.presentation.CameraViewFinder
+import org.vpilo.babymonitor.camera.presentation.CameraViewFinderViewModel
+import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 
@@ -72,11 +78,21 @@ private fun ServerHomeContent(
 
 @Preview
 @Composable
-private fun ServerHomeContentPreview() {
-    ServerHomeContent(
-        modifier = Modifier.fillMaxSize(),
-        isServerAvailable = true,
-        captureMode = CaptureMode.AUDIO_AND_VIDEO,
-        onModeSelected = {},
-    )
-}
+private fun ServerHomeContentPreview() =
+    AppPreviewTheme(
+        withModule = {
+            factory<VideoCaptureRepository> {
+                object : VideoCaptureRepository {
+                    override val frames: CameraFrameFlow = flowOf()
+                }
+            }
+            viewModelOf(::CameraViewFinderViewModel)
+        },
+    ) {
+        ServerHomeContent(
+            modifier = Modifier.fillMaxSize(),
+            isServerAvailable = true,
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+            onModeSelected = {},
+        )
+    }

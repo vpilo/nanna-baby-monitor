@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -73,9 +74,10 @@ fun FpsCounter(
 
 @Preview
 @Composable
-private fun FpsCounterPreview() {
-    FpsCounter(
-        modifier = Modifier,
-        frameKey = Any(),
-    )
-}
+private fun FpsCounterPreview() =
+    AppPreviewTheme(useDarkTheme = true) {
+        FpsCounter(
+            modifier = Modifier,
+            frameKey = Any(),
+        )
+    }

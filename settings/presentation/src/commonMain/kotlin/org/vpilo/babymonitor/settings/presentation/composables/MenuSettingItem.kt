@@ -15,8 +15,10 @@ import babymonitor.settings.presentation.generated.resources.Res
 import babymonitor.settings.presentation.generated.resources.example
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.parameter.parametersOf
 import org.vpilo.babymonitor.model.settings.SettingId
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.settings.model.Setting
 
@@ -70,7 +72,11 @@ fun <T : Any> MenuSettingItem(
 @Preview
 @Composable
 private fun MenuSettingItemPreview() =
-    AppTheme {
+    AppPreviewTheme(
+        withModule = {
+            viewModelOf(::MenuSettingItemViewModel)
+        },
+    ) {
         Column {
             val testBool =
                 Setting.makePrimitive(

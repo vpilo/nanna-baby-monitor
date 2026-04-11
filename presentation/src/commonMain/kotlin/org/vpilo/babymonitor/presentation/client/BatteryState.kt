@@ -28,6 +28,7 @@ import babymonitor.presentation.generated.resources.client_battery_level
 import babymonitor.presentation.generated.resources.client_battery_level_percent
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 
@@ -90,7 +91,7 @@ fun BatteryState(
 @Preview
 @Composable
 private fun BatteryState1Preview() =
-    AppTheme {
+    AppPreviewTheme {
         Surface(color = MaterialTheme.colorScheme.onSurface) {
             BatteryState(batteryLevel = 1)
         }
@@ -99,7 +100,7 @@ private fun BatteryState1Preview() =
 @Preview
 @Composable
 private fun BatteryState2Preview() =
-    AppTheme {
+    AppPreviewTheme {
         Surface(color = MaterialTheme.colorScheme.onSurface) {
             BatteryState(batteryLevel = 10)
         }
@@ -108,34 +109,34 @@ private fun BatteryState2Preview() =
 @Preview
 @Composable
 private fun BatteryState3Preview() =
-    AppTheme {
+    AppPreviewTheme {
         BatteryState(batteryLevel = 25)
     }
 
 @Preview
 @Composable
 private fun BatteryState4Preview() =
-    AppTheme {
+    AppPreviewTheme {
         BatteryState(batteryLevel = 42)
     }
 
 @Preview
 @Composable
 private fun BatteryState5Preview() =
-    AppTheme {
+    AppPreviewTheme {
         BatteryState(batteryLevel = 69)
     }
 
 @Preview
 @Composable
 private fun BatteryState6Preview() =
-    AppTheme {
+    AppPreviewTheme {
         BatteryState(batteryLevel = 80)
     }
 
 @Preview
 @Composable
 private fun BatteryState7Preview() =
-    AppTheme {
+    AppPreviewTheme {
         BatteryState(batteryLevel = 95)
     }

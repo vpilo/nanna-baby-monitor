@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
 import org.vpilo.babymonitor.presentation.preview.placeholderFrame
 
@@ -61,9 +62,10 @@ fun CameraFeed(
 
 @Preview
 @Composable
-private fun CameraFeedPreview() {
-    CameraFeed(
-        modifier = Modifier,
-        frames = flowOf(placeholderFrame),
-    )
-}
+private fun CameraFeedPreview() =
+    AppPreviewTheme {
+        CameraFeed(
+            modifier = Modifier,
+            frames = flowOf(placeholderFrame),
+        )
+    }

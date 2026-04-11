@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 
@@ -96,7 +97,7 @@ fun MenuItem(
 @Preview
 @Composable
 private fun MenuItemPreview() =
-    AppTheme {
+    AppPreviewTheme {
         Column {
             MenuItem(imageVector = Icons.Default.SwapHoriz, title = "Change Role", description = "Switch between camera and view role")
             MenuItem(

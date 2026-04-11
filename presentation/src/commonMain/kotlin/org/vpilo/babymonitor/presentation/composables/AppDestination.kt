@@ -30,6 +30,7 @@ import babymonitor.presentation.generated.resources.example
 import babymonitor.presentation.generated.resources.menu
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 
 @Composable
@@ -99,29 +100,31 @@ fun AppDestination(
 
 @Preview
 @Composable
-private fun AppDestinationPreview() {
-    AppDestination(
-        title = Res.string.example,
-        onMainActionClicked = {},
-    ) {
-        Text(
-            text = "Example content",
-            style = MaterialTheme.typography.bodyMedium,
-        )
+private fun AppDestinationPreview() =
+    AppPreviewTheme {
+        AppDestination(
+            title = Res.string.example,
+            onMainActionClicked = {},
+        ) {
+            Text(
+                text = "Example content",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
-}
 
 @Preview
 @Composable
-private fun AppDestinationMenuPreview() {
-    AppDestination(
-        title = Res.string.example,
-        mainAction = AppDestinationMainAction.Menu,
-        onMainActionClicked = {},
-    ) {
-        Text(
-            text = "Example content",
-            style = MaterialTheme.typography.bodyMedium,
-        )
+private fun AppDestinationMenuPreview() =
+    AppPreviewTheme {
+        AppDestination(
+            title = Res.string.example,
+            mainAction = AppDestinationMainAction.Menu,
+            onMainActionClicked = {},
+        ) {
+            Text(
+                text = "Example content",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
-}

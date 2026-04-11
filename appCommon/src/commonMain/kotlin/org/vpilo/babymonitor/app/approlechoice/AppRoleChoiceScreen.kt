@@ -34,6 +34,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.model.AppRole
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 
@@ -191,7 +192,7 @@ private fun AppRoleChoiceScreenContent(
 @Preview
 @Composable
 private fun AppRoleChoiceScreenPreview() =
-    AppTheme {
+    AppPreviewTheme {
         Column {
             AppRoleChoiceScreenContent(
                 onRoleChosen = {},
@@ -202,7 +203,7 @@ private fun AppRoleChoiceScreenPreview() =
 @Preview
 @Composable
 private fun AppRoleChoiceScreenDarkPreview() =
-    AppTheme(useDarkTheme = true) {
+    AppPreviewTheme(useDarkTheme = true) {
         Column {
             AppRoleChoiceScreenContent(
                 onRoleChosen = {},
