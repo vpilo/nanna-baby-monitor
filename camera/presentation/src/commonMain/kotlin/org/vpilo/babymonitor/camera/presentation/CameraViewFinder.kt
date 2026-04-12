@@ -13,13 +13,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.LifecycleStartEffect
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.module.dsl.viewModelOf
+import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
 import org.vpilo.babymonitor.camera.presentation.ktx.toImageBitmap
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
+import org.vpilo.babymonitor.presentation.resources.Res
+import org.vpilo.babymonitor.presentation.resources.capture_audio_only
 
 private const val TAG = "CameraViewFinder"
 
@@ -46,20 +55,59 @@ fun CameraViewFinder(
         }
     }
 
-    lastFrame?.let { frame ->
-        Box(contentAlignment = Alignment.TopStart) {
-            if (captureMode == CaptureMode.AUDIO_ONLY) {
-//                Image(
-//                    painter = painterResource(Res.drawable.) // must move resources in a new module or in presentation
-//                )
-            }
+    Box(modifier = modifier, contentAlignment = Alignment.TopStart) {
+        lastFrame?.let { frame ->
             Image(
                 bitmap = frame,
                 contentScale = ContentScale.FillWidth,
                 contentDescription = null,
-                modifier = modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
             )
             FpsCounter(frameKey = frame)
         }
+        if (captureMode == CaptureMode.AUDIO_ONLY) {
+            Image(
+                painter = painterResource(Res.drawable.capture_audio_only),
+                contentDescription = null,
+            )
+        }
     }
 }
+
+@Preview
+@Composable
+fun CameraViewFinderNormalPreview() =
+    AppPreviewTheme(
+        withModule = {
+            factory<VideoCaptureRepository> {
+                object : VideoCaptureRepository {
+                    override val frames: CameraFrameFlow = flowOf()
+                }
+            }
+            viewModelOf(::CameraViewFinderViewModel)
+        },
+    ) {
+        CameraViewFinder(
+            modifier = Modifier.fillMaxSize(),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        )
+    }
+
+@Preview
+@Composable
+fun CameraViewFinderAudioPreview() =
+    AppPreviewTheme(
+        withModule = {
+            factory<VideoCaptureRepository> {
+                object : VideoCaptureRepository {
+                    override val frames: CameraFrameFlow = flowOf()
+                }
+            }
+            viewModelOf(::CameraViewFinderViewModel)
+        },
+    ) {
+        CameraViewFinder(
+            modifier = Modifier.fillMaxSize(),
+            captureMode = CaptureMode.AUDIO_ONLY,
+        )
+    }

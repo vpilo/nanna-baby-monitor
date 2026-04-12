@@ -7,16 +7,19 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import babymonitor.appcommon.generated.resources.Res
-import babymonitor.appcommon.generated.resources.capture_audio_and_video
-import babymonitor.appcommon.generated.resources.capture_audio_only
-import babymonitor.appcommon.generated.resources.capture_video_only
 import babymonitor.appcommon.generated.resources.server_mode_audio_and_video
 import babymonitor.appcommon.generated.resources.server_mode_audio_only
 import babymonitor.appcommon.generated.resources.server_mode_video_only
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.resources.capture_audio_and_video
+import org.vpilo.babymonitor.presentation.resources.capture_audio_only
+import org.vpilo.babymonitor.presentation.resources.capture_video_only
+import org.vpilo.babymonitor.presentation.resources.Res as ResPresentation
 
 @Composable
 internal fun CaptureModeSelector(
@@ -33,15 +36,15 @@ internal fun CaptureModeSelector(
                     val (label, icon) =
                         when (mode) {
                             CaptureMode.AUDIO_AND_VIDEO -> {
-                                Res.string.server_mode_audio_and_video to Res.drawable.capture_audio_and_video
+                                Res.string.server_mode_audio_and_video to ResPresentation.drawable.capture_audio_and_video
                             }
 
                             CaptureMode.VIDEO_ONLY -> {
-                                Res.string.server_mode_video_only to Res.drawable.capture_video_only
+                                Res.string.server_mode_video_only to ResPresentation.drawable.capture_video_only
                             }
 
                             CaptureMode.AUDIO_ONLY -> {
-                                Res.string.server_mode_audio_only to Res.drawable.capture_audio_only
+                                Res.string.server_mode_audio_only to ResPresentation.drawable.capture_audio_only
                             }
                         }
                     Icon(
@@ -64,3 +67,25 @@ internal fun CaptureModeSelector(
         }
     }
 }
+
+@Preview
+@Composable
+private fun CaptureModeSelectorAudioAndVideoPreview() = CaptureModeSelectorPreviewContent(captureMode = CaptureMode.AUDIO_AND_VIDEO)
+
+@Preview
+@Composable
+private fun CaptureModeSelectorVideoOnlyPreview() = CaptureModeSelectorPreviewContent(captureMode = CaptureMode.VIDEO_ONLY)
+
+@Preview
+@Composable
+private fun CaptureModeSelectorAudioOnlyPreview() = CaptureModeSelectorPreviewContent(captureMode = CaptureMode.AUDIO_ONLY)
+
+@Composable
+private fun CaptureModeSelectorPreviewContent(captureMode: CaptureMode) =
+    AppPreviewTheme {
+        CaptureModeSelector(
+            modifier = Modifier,
+            captureMode = captureMode,
+            onModeSelected = {},
+        )
+    }

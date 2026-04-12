@@ -16,21 +16,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.tooling.preview.Preview
-import babymonitor.presentation.generated.resources.Res
-import babymonitor.presentation.generated.resources.battery_1
-import babymonitor.presentation.generated.resources.battery_2
-import babymonitor.presentation.generated.resources.battery_3
-import babymonitor.presentation.generated.resources.battery_4
-import babymonitor.presentation.generated.resources.battery_5
-import babymonitor.presentation.generated.resources.battery_6
-import babymonitor.presentation.generated.resources.battery_7
-import babymonitor.presentation.generated.resources.client_battery_level
-import babymonitor.presentation.generated.resources.client_battery_level_percent
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
-import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
+import org.vpilo.babymonitor.presentation.resources.Res
+import org.vpilo.babymonitor.presentation.resources.battery_1
+import org.vpilo.babymonitor.presentation.resources.battery_2
+import org.vpilo.babymonitor.presentation.resources.battery_3
+import org.vpilo.babymonitor.presentation.resources.battery_4
+import org.vpilo.babymonitor.presentation.resources.battery_5
+import org.vpilo.babymonitor.presentation.resources.battery_6
+import org.vpilo.babymonitor.presentation.resources.battery_7
+import org.vpilo.babymonitor.presentation.resources.client_battery_level
+import org.vpilo.babymonitor.presentation.resources.client_battery_level_percent
 
 private val batteryLowLevelColor = Color(0xFF880000)
 private val batteryMediumLevelColor = Color(0xFF888800)

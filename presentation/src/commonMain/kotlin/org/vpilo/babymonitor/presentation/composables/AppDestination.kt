@@ -24,14 +24,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import babymonitor.presentation.generated.resources.Res
-import babymonitor.presentation.generated.resources.back
-import babymonitor.presentation.generated.resources.example
-import babymonitor.presentation.generated.resources.menu
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
+import org.vpilo.babymonitor.presentation.resources.Res
+import org.vpilo.babymonitor.presentation.resources.back
+import org.vpilo.babymonitor.presentation.resources.example
+import org.vpilo.babymonitor.presentation.resources.menu
 
 @Composable
 fun AppDestination(

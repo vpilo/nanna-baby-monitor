@@ -10,18 +10,18 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
-import babymonitor.presentation.generated.resources.Res
-import babymonitor.presentation.generated.resources.client_signal_quality
-import babymonitor.presentation.generated.resources.signal_1
-import babymonitor.presentation.generated.resources.signal_2
-import babymonitor.presentation.generated.resources.signal_3
-import babymonitor.presentation.generated.resources.signal_4
-import babymonitor.presentation.generated.resources.signal_5
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
+import org.vpilo.babymonitor.presentation.resources.Res
+import org.vpilo.babymonitor.presentation.resources.client_signal_quality
+import org.vpilo.babymonitor.presentation.resources.signal_1
+import org.vpilo.babymonitor.presentation.resources.signal_2
+import org.vpilo.babymonitor.presentation.resources.signal_3
+import org.vpilo.babymonitor.presentation.resources.signal_4
+import org.vpilo.babymonitor.presentation.resources.signal_5
 
 private val signalLowQualityColor = Color(0xFF880000)
 

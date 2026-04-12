@@ -17,10 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import babymonitor.presentation.generated.resources.Res
-import babymonitor.presentation.generated.resources.back
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.Theme
+import org.vpilo.babymonitor.presentation.resources.Res
+import org.vpilo.babymonitor.presentation.resources.back
 
 @Composable
 fun BackButton(

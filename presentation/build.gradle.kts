@@ -63,3 +63,9 @@ kotlin {
         }
     }
 }
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "org.vpilo.babymonitor.presentation.resources"
+    generateResClass = auto
+}
