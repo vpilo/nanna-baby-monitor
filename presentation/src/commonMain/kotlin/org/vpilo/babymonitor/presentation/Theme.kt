@@ -6,7 +6,6 @@ import androidx.compose.ui.unit.dp
 
 object Theme {
     object Sizes {
-        val UserInterfaceMaxWidth: Dp = MaxUserInterfaceWidth
         val MainIcon: Dp = 128.dp
 
         val Button: Dp = 40.dp

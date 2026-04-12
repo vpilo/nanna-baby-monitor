@@ -184,7 +184,6 @@ private fun MainContainer(
     Column(
         modifier =
             modifier
-                .widthIn(max = Theme.Sizes.UserInterfaceMaxWidth)
                 .systemBarsPadding()
                 .fillMaxSize(),
         horizontalAlignment = Alignment.Start,
