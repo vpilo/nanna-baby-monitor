@@ -22,4 +22,10 @@ object Theme {
         val Large: Dp = 32.dp
         val Huge: Dp = 48.dp
     }
+
+    object Borders {
+        val Thin: Dp = 1.dp
+        val Medium: Dp = 2.dp
+        val Thick: Dp = 4.dp
+    }
 }

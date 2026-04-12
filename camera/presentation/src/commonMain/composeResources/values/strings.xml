@@ -3,4 +3,6 @@
     <string name="navigation_title_permissions">App permissions</string>
 
     <string name="permissions_needed">The app needs the Camera and Microphone permission to continue.</string>
+
+    <string name="server_in_audio_only_mode">Camera is only recording audio</string>
 </resources>

@@ -16,9 +16,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.LifecycleStartEffect
+import babymonitor.camera.presentation.generated.resources.Res
+import babymonitor.camera.presentation.generated.resources.server_in_audio_only_mode
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
@@ -27,10 +30,11 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.composables.Backdrop
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
 import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
-import org.vpilo.babymonitor.presentation.resources.Res
 import org.vpilo.babymonitor.presentation.resources.capture_audio_only
+import org.vpilo.babymonitor.presentation.resources.Res as ResCommon
 
 private const val TAG = "CameraViewFinder"
 
@@ -74,10 +78,14 @@ fun CameraViewFinder(
             )
         }
         if (captureMode == CaptureMode.AUDIO_ONLY) {
-            Image(
-                painter = painterResource(Res.drawable.capture_audio_only),
-                contentDescription = null,
-            )
+            Backdrop(
+                modifier = Modifier.align(Alignment.Center),
+            ) {
+                Image(
+                    painter = painterResource(ResCommon.drawable.capture_audio_only),
+                    contentDescription = stringResource(Res.string.server_in_audio_only_mode),
+                )
+            }
         }
     }
 }
@@ -102,7 +110,7 @@ fun CameraViewFinderNormalPreview() =
 
 @Preview
 @Composable
-fun CameraViewFinderAudioPreview() =
+fun CameraViewFinderAudioOnlyPreview() =
     AppPreviewTheme(
         withModule = {
             factory<VideoCaptureRepository> {

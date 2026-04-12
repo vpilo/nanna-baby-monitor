@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -23,10 +24,12 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.client.BatteryState
 import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
+import org.vpilo.babymonitor.presentation.composables.Backdrop
 import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
 
 private const val TAG = "ClientHomeScreen"
@@ -93,15 +96,23 @@ private fun ClientHomeScreenContent(
             frames = frames,
         )
         AudioFeed(
+            modifier =
+                Modifier
+                    .padding(Theme.Paddings.Tiny),
             canPlay = captureMode != CaptureMode.VIDEO_ONLY,
             isPlaying = isAudioPlaying,
             onToggle = onToggleAudio,
         )
-        Row(
-            modifier = Modifier.align(Alignment.TopEnd),
-        ) {
-            BatteryState(batteryLevel = batteryLevel)
-            SignalState(signalQuality = signalQuality)
+        if (batteryLevel != DEVICE_STATE_DATA_UNAVAILABLE && signalQuality != DEVICE_STATE_DATA_UNAVAILABLE) {
+            Backdrop(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(Theme.Paddings.Tiny),
+            ) {
+                BatteryState(batteryLevel = batteryLevel)
+                SignalState(signalQuality = signalQuality)
+            }
         }
     }
 }

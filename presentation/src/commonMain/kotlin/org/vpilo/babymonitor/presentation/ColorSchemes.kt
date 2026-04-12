@@ -17,6 +17,7 @@ val LightColorScheme =
         onBackground = Color.Black,
         surface = OffWhite,
         onSurface = Color.Black,
+        scrim = OffWhite.copy(alpha = 0.6f),
     )
 
 val DarkColorScheme =
@@ -32,4 +33,5 @@ val DarkColorScheme =
         onBackground = White,
         surface = OffBlack,
         onSurface = White,
+        scrim = OffBlack.copy(alpha = 0.6f),
     )
