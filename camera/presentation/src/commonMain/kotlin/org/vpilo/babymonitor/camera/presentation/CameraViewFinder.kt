@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.LifecycleStartEffect
 import kotlinx.coroutines.flow.flowOf
@@ -27,6 +28,7 @@ import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
+import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
 import org.vpilo.babymonitor.presentation.resources.Res
 import org.vpilo.babymonitor.presentation.resources.capture_audio_only
 
@@ -65,6 +67,12 @@ fun CameraViewFinder(
             )
             FpsCounter(frameKey = frame)
         }
+        if (LocalInspectionMode.current) {
+            Image(
+                bitmap = makePlaceholderCameraFrame(),
+                contentDescription = null,
+            )
+        }
         if (captureMode == CaptureMode.AUDIO_ONLY) {
             Image(
                 painter = painterResource(Res.drawable.capture_audio_only),
@@ -88,7 +96,6 @@ fun CameraViewFinderNormalPreview() =
         },
     ) {
         CameraViewFinder(
-            modifier = Modifier.fillMaxSize(),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
         )
     }
@@ -107,7 +114,6 @@ fun CameraViewFinderAudioPreview() =
         },
     ) {
         CameraViewFinder(
-            modifier = Modifier.fillMaxSize(),
             captureMode = CaptureMode.AUDIO_ONLY,
         )
     }

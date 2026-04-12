@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
-import org.vpilo.babymonitor.presentation.preview.placeholderFrame
+import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
 
 private const val TAG = "CameraFeed"
 
@@ -66,6 +66,6 @@ private fun CameraFeedPreview() =
     AppPreviewTheme {
         CameraFeed(
             modifier = Modifier,
-            frames = flowOf(placeholderFrame),
+            frames = flowOf(makePlaceholderCameraFrame()),
         )
     }

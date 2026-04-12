@@ -90,7 +90,7 @@ private fun ServerHomeContentPreview() =
         },
     ) {
         ServerHomeContent(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier,
             isServerAvailable = true,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             onModeSelected = {},

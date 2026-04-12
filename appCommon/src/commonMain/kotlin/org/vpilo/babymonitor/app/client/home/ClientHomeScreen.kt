@@ -27,7 +27,7 @@ import org.vpilo.babymonitor.presentation.client.BatteryState
 import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
-import org.vpilo.babymonitor.presentation.preview.placeholderFrame
+import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
 
 private const val TAG = "ClientHomeScreen"
 
@@ -112,7 +112,7 @@ private fun ClientHomeScreenPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            frames = flowOf(placeholderFrame),
+            frames = flowOf(makePlaceholderCameraFrame()),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
             onToggleAudio = { },
@@ -127,7 +127,7 @@ private fun ClientHomeScreenVideoOnlyPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            frames = flowOf(placeholderFrame),
+            frames = flowOf(makePlaceholderCameraFrame()),
             captureMode = CaptureMode.VIDEO_ONLY,
             isAudioPlaying = false,
             onToggleAudio = { },
@@ -142,7 +142,7 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            frames = flowOf(placeholderFrame),
+            frames = flowOf(makePlaceholderCameraFrame()),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
             onToggleAudio = { },
