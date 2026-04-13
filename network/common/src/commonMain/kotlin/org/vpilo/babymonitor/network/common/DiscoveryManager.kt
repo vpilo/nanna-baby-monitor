@@ -6,6 +6,9 @@ import java.net.InetAddress
 expect class DiscoveryManager {
     val discoveredServers: Flow<Set<InetAddress>>
 
+    var state: DiscoveryManagerState
+        private set
+
     fun registerService()
 
     fun unregisterService()
@@ -13,4 +16,6 @@ expect class DiscoveryManager {
     fun startDiscovery()
 
     fun stopDiscovery()
+
+    fun setDeviceName(name: String)
 }

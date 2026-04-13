@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
@@ -27,6 +29,9 @@ import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSo
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
+import org.vpilo.babymonitor.settings.model.Setting
+import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
+import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import java.net.ConnectException
 import java.net.InetAddress
 import kotlin.coroutines.CoroutineContext
@@ -35,6 +40,7 @@ import kotlin.time.Duration.Companion.seconds
 internal class DefaultNetworkClientRepository(
     discoveryManager: DiscoveryManager,
     private val dataSource: NetworkControlDataSource,
+    private val settingsRepository: SettingsRepository,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -57,6 +63,13 @@ internal class DefaultNetworkClientRepository(
     private var audioConnectionHandler: ConnectionHandler? = null
     private var videoConnectionHandler: ConnectionHandler? = null
     private var serverStateJob: Job? = null
+
+    init {
+        settingsRepository
+            .flowOf(Setting.DeviceName)
+            .onEach { discoveryManager.setDeviceName(it) }
+            .launchIn(scope)
+    }
 
     override suspend fun connect(address: InetAddress) {
         controlConnectionHandler?.disconnect()

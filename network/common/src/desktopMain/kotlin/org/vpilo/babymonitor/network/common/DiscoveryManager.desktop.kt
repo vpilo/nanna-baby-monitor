@@ -19,19 +19,26 @@ actual class DiscoveryManager {
 
     private val remoteServiceListener = RemoteServiceListener()
 
+    private var deviceName = ""
+
     actual val discoveredServers: Flow<Set<InetAddress>> =
         remoteServiceListener.discoveredServers
             .map { it.toSortedSet { a, b -> a.hostAddress.compareTo(b.hostAddress) } }
             .distinctUntilChanged()
+
+    actual var state = DiscoveryManagerState.Idle
+        private set
 
     init {
         startDiscovery()
     }
 
     actual fun registerService() {
+        check(deviceName.isNotEmpty()) { "Device name must be set before registering service!" }
         Logger.d(TAG) { "Service registered: $SERVICE_TYPE on ${Constants.SERVICES_LISTEN_ADDRESS}" }
         try {
-            discoveryService.registerService(createServiceInfo())
+            discoveryService.registerService(createServiceInfo(deviceName))
+            state = DiscoveryManagerState.ServiceRegistered
         } catch (ex: IOException) {
             Logger.e(TAG, ex) { "Failed to register service: $SERVICE_TYPE" }
         }
@@ -40,17 +47,28 @@ actual class DiscoveryManager {
     actual fun unregisterService() {
         Logger.d(TAG) { "Service unregistered: $SERVICE_TYPE" }
         discoveryService.unregisterAllServices()
+        state = DiscoveryManagerState.Idle
     }
 
     actual fun startDiscovery() {
         Logger.d(TAG) { "discovering services: $SERVICE_TYPE" }
         discoveryService.addServiceListener(SERVICE_TYPE, remoteServiceListener)
+        state = DiscoveryManagerState.DiscoveringServices
     }
 
     actual fun stopDiscovery() {
         Logger.d(TAG) { "stopped discovering services: $SERVICE_TYPE" }
         discoveryService.removeServiceListener(SERVICE_TYPE, remoteServiceListener)
         remoteServiceListener.reset()
+        state = DiscoveryManagerState.Idle
+    }
+
+    actual fun setDeviceName(name: String) {
+        deviceName = name
+        if (state == DiscoveryManagerState.ServiceRegistered) {
+            unregisterService()
+            registerService()
+        }
     }
 
     private class RemoteServiceListener : ServiceListener {
@@ -92,10 +110,10 @@ actual class DiscoveryManager {
         // JmDNS requires the ".local." suffix
         private const val SERVICE_TYPE = "${Constants.DISCOVERY_SERVICE_TYPE}local."
 
-        private fun createServiceInfo(): ServiceInfo =
+        private fun createServiceInfo(deviceName: String): ServiceInfo =
             ServiceInfo.create(
                 SERVICE_TYPE,
-                Constants.DISCOVERY_SERVICE_NAME,
+                deviceName,
                 Constants.DISCOVERY_PORT,
                 Constants.DISCOVERY_SERVICE_DESCRIPTION,
             )

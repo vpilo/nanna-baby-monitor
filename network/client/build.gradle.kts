@@ -37,6 +37,7 @@ kotlin {
             implementation(project(":common"))
             implementation(project(":model"))
             implementation(project(":codec"))
+            implementation(project(":settings:model"))
             implementation(project(":network:common"))
 
             implementation(libs.bundles.ktor.client)

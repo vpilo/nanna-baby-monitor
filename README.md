@@ -3,19 +3,24 @@
 feature plan
 
 - Client can play and pause independently audio or video 
-- Server can also choose to toggle audio and video capture independently
-- Client UI shows server battery level and signal strength
-- Device name selection on both server and client
 - Client UI hideable with a tap on the video feed.
 - Secure lan-only communication channel, with clients (monitors) pairing with server (camera).
 - Plugins for raw AV streams to:
     - reduce noise
     - detect silence
     - detect no movement
+- Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start streaming audio.
+
+completed
+
+- Server can also choose to toggle audio and video capture independently
+- Client UI shows server battery level and signal strength
+- Device name selection on both server and client
 - allow capture resolution choice
 - settings system to save audio and video quality preferences, and other settings
 - settings screen in menu
-- Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start streaming audio.
+
+references
 
 https://github.com/zeenolife/ai-baby-monitor
 https://github.com/danmacnaughtan/baby-monitor

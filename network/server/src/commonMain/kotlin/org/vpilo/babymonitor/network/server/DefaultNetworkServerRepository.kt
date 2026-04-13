@@ -19,11 +19,13 @@ import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,12 +40,16 @@ import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
+import org.vpilo.babymonitor.settings.model.Setting
+import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
+import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 internal class DefaultNetworkServerRepository(
     private val discoveryManager: DiscoveryManager,
     private val deviceStateRepository: DeviceStateRepository,
+    private val settingsRepository: SettingsRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
@@ -59,14 +65,25 @@ internal class DefaultNetworkServerRepository(
 
     private var deviceStateMonitor: Job? = null
 
+    val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
+
+    init {
+        settingsRepository
+            .flowOf(Setting.DeviceName)
+            .onEach {
+                Logger.d(TAG) {
+                    "Updated name: $it"
+                }
+                discoveryManager.setDeviceName(it)
+            }.launchIn(scope)
+    }
+
     override suspend fun start() {
         if (server != null) {
             return
         }
 
-        val supervisor = CoroutineScope(coroutineContext + SupervisorJob())
-
-        supervisor.launch {
+        scope.launch {
             deviceStateMonitor =
                 combine(
                     deviceStateRepository.batteryLevel,
@@ -78,7 +95,7 @@ internal class DefaultNetworkServerRepository(
 
         discoveryManager.registerService()
 
-        supervisor.launch {
+        scope.launch {
             embeddedServer(
                 factory = CIO,
                 module = { serverModule() },

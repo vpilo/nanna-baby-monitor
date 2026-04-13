@@ -21,6 +21,8 @@ actual class DiscoveryManager(
     private val applicationContext: Context = context.applicationContext
     private val scope = CoroutineScope(coroutineContext)
 
+    private var deviceName = ""
+
     private val nsdManager: NsdManager =
         applicationContext.getSystemService(Context.NSD_SERVICE) as NsdManager
 
@@ -40,15 +42,19 @@ actual class DiscoveryManager(
     private var discoveryListener: NsdManager.DiscoveryListener? = null
     private var registrationListener: NsdManager.RegistrationListener? = null
 
+    actual var state = DiscoveryManagerState.Idle
+        private set
+
     init {
         startDiscovery()
     }
 
     actual fun registerService() {
+        check(deviceName.isNotEmpty()) { "Device name must be set before registering service!" }
         scope.launch {
             val serviceInfo =
                 NsdServiceInfo().apply {
-                    serviceName = Constants.DISCOVERY_SERVICE_NAME
+                    serviceName = deviceName
                     serviceType = Constants.DISCOVERY_SERVICE_TYPE
                     port = Constants.DISCOVERY_PORT
                 }
@@ -80,6 +86,7 @@ actual class DiscoveryManager(
             registrationListener = listener
 
             nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, listener)
+            state = DiscoveryManagerState.ServiceRegistered
         }
     }
 
@@ -90,6 +97,7 @@ actual class DiscoveryManager(
             Logger.e(TAG, ex) { "Failed to unregister service" }
         } finally {
             registrationListener = null
+            state = DiscoveryManagerState.Idle
         }
     }
 
@@ -146,6 +154,7 @@ actual class DiscoveryManager(
                 listener,
             )
             releaseMulticastLock()
+            state = DiscoveryManagerState.DiscoveringServices
         }
     }
 
@@ -158,6 +167,15 @@ actual class DiscoveryManager(
             discoveryListener = null
             _discoveredServers.value = emptySet()
             releaseMulticastLock()
+            state = DiscoveryManagerState.Idle
+        }
+    }
+
+    actual fun setDeviceName(name: String) {
+        deviceName = name
+        if (state == DiscoveryManagerState.ServiceRegistered) {
+            unregisterService()
+            registerService()
         }
     }
 
@@ -191,7 +209,7 @@ actual class DiscoveryManager(
 
     private fun acquireMulticastLock() {
         if (multicastLock?.isHeld == true) return
-        val lock = wifiManager.createMulticastLock(Constants.DISCOVERY_SERVICE_NAME)
+        val lock = wifiManager.createMulticastLock(deviceName)
         lock.setReferenceCounted(true)
         lock.acquire()
         multicastLock = lock
