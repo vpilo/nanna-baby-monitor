@@ -53,6 +53,23 @@ fun App() {
 }
 
 @Composable
+private fun MainContainer(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier =
+            modifier
+                .systemBarsPadding()
+                .fillMaxSize(),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Top,
+    ) {
+        content()
+    }
+}
+
+@Composable
 @Suppress("LongMethod")
 private fun NavigationRoutes(navController: NavHostController) {
     NavHost(
@@ -116,10 +133,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                 quitApplication()
             }
 
-            composable<Route.PermissionCheck>(
-                exitTransition = { slideOutHorizontally() },
-                popEnterTransition = { slideInHorizontally() },
-            ) {
+            composable<Route.PermissionCheck> {
                 PermissionCheckScreen(
                     onAllPermissionsGranted = {
                         navController.navigate(Route.ServerHome)
@@ -132,10 +146,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                 )
             }
 
-            composable<Route.ServerHome>(
-                exitTransition = { slideOutHorizontally() },
-                popEnterTransition = { slideInHorizontally() },
-            ) {
+            composable<Route.ServerHome> {
                 ServerHomeScreen(
                     viewModel = koinViewModel(),
                     onMenuClicked = {
@@ -158,10 +169,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                 )
             }
 
-            composable<Route.ClientHome>(
-                exitTransition = { slideOutHorizontally() },
-                popEnterTransition = { slideInHorizontally() },
-            ) {
+            composable<Route.ClientHome> {
                 ClientHomeScreen(
                     viewModel = koinViewModel(),
                     onDisconnected = {
@@ -173,22 +181,5 @@ private fun NavigationRoutes(navController: NavHostController) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun MainContainer(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Column(
-        modifier =
-            modifier
-                .systemBarsPadding()
-                .fillMaxSize(),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.Top,
-    ) {
-        content()
     }
 }
