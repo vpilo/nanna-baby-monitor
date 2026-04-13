@@ -1,20 +1,16 @@
 package org.vpilo.babymonitor.presentation.client
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
-import org.vpilo.babymonitor.presentation.AppTheme
-import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.resources.Res
 import org.vpilo.babymonitor.presentation.resources.client_signal_quality
 import org.vpilo.babymonitor.presentation.resources.signal_1
@@ -30,7 +26,7 @@ fun SignalState(
     modifier: Modifier = Modifier,
     signalQuality: Int,
 ) {
-    val normalColor = MaterialTheme.colorScheme.onSecondary
+    val normalColor = MaterialTheme.colorScheme.onSurface
     val (drawable, color) =
         @Suppress("MagicNumber")
         when (signalQuality) {
@@ -42,26 +38,19 @@ fun SignalState(
             else -> return
         }
 
-    Box {
-        Image(
-            modifier = modifier.blur(Theme.Sizes.Blur),
-            painter = painterResource(drawable),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.secondaryContainer),
-        )
-        Image(
-            painter = painterResource(drawable),
-            contentDescription = stringResource(Res.string.client_signal_quality),
-            colorFilter = ColorFilter.tint(color = color),
-        )
-    }
+    Image(
+        modifier = modifier,
+        painter = painterResource(drawable),
+        contentDescription = stringResource(Res.string.client_signal_quality),
+        colorFilter = ColorFilter.tint(color = color),
+    )
 }
 
 @Preview
 @Composable
 private fun SignalState1Preview() =
-    AppPreviewTheme {
-        Surface(color = MaterialTheme.colorScheme.onSurface) {
+    AppPreviewTheme(useDarkTheme = true) {
+        Surface {
             SignalState(signalQuality = 1)
         }
     }
@@ -70,7 +59,7 @@ private fun SignalState1Preview() =
 @Composable
 private fun SignalState2Preview() =
     AppPreviewTheme {
-        Surface(color = MaterialTheme.colorScheme.onSurface) {
+        Surface {
             SignalState(signalQuality = 30)
         }
     }
@@ -78,8 +67,8 @@ private fun SignalState2Preview() =
 @Preview
 @Composable
 private fun SignalState3Preview() =
-    AppPreviewTheme {
-        Surface(color = MaterialTheme.colorScheme.onSurface) {
+    AppPreviewTheme(useDarkTheme = true) {
+        Surface {
             SignalState(signalQuality = 50)
         }
     }
@@ -88,7 +77,7 @@ private fun SignalState3Preview() =
 @Composable
 private fun SignalState4Preview() =
     AppPreviewTheme {
-        Surface(color = MaterialTheme.colorScheme.onSurface) {
+        Surface {
             SignalState(signalQuality = 75)
         }
     }
@@ -96,8 +85,8 @@ private fun SignalState4Preview() =
 @Preview
 @Composable
 private fun SignalState5Preview() =
-    AppPreviewTheme {
-        Surface(color = MaterialTheme.colorScheme.onSurface) {
+    AppPreviewTheme(useDarkTheme = true) {
+        Surface {
             SignalState(signalQuality = 100)
         }
     }
