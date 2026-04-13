@@ -15,6 +15,10 @@ kotlin {
                 .get()
                 .toInt()
 
+        androidResources {
+            enable = true
+        }
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
