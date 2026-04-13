@@ -4,8 +4,8 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.withOptions
+import org.koin.dsl.bind
 import org.koin.dsl.module
-import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
@@ -16,10 +16,13 @@ import org.vpilo.babymonitor.network.server.NetworkVideoSenderRepository
 
 val networkServerKoinModule: Module =
     module {
-        single<StreamingAudioSenderRepository> { NetworkAudioSenderRepository(get(), get()) }
-        single<StreamingVideoSenderRepository> { NetworkVideoSenderRepository(get(), get()) }
+        singleOf(::NetworkAudioSenderRepository)
+            .bind<StreamingAudioSenderRepository>()
+        singleOf(::NetworkVideoSenderRepository)
+            .bind<StreamingVideoSenderRepository>()
 
-        single<NetworkServerRepository> { DefaultNetworkServerRepository(get(), get(), get()) }
+        singleOf(::DefaultNetworkServerRepository)
+            .bind<NetworkServerRepository>()
 
         singleOf(::DiscoveryManager)
             .withOptions { createdAtStart() }

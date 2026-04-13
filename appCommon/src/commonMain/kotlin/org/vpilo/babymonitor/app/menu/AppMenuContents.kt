@@ -29,27 +29,27 @@ fun AppMenuContents(
 ) {
     if (currentRole == AppRole.CLIENT) {
         MenuItem(
-            imageVector = Icons.Default.SwapHoriz,
+            imageVector = vectorResource(Res.drawable.disconnect),
             title = stringResource(Res.string.menu_disconnect_title),
             description = stringResource(Res.string.menu_disconnect_description),
             onClick = {
-                onNavigateTo(Route.AppRoleChooser)
+                onNavigateTo(Route.CameraSelection)
             },
+        )
+    } else {
+        MenuSettingEnumItem(
+            setting = Setting.CameraResolution,
+            imageVector = vectorResource(Res.drawable.high_quality),
         )
     }
 
     MenuItem(
-        imageVector = vectorResource(Res.drawable.disconnect),
+        imageVector = Icons.Default.SwapHoriz,
         title = stringResource(Res.string.menu_change_role_title),
         description = stringResource(Res.string.menu_change_role_description),
         onClick = {
             onNavigateTo(Route.AppRoleChooser)
         },
-    )
-
-    MenuSettingEnumItem(
-        setting = Setting.CameraResolution,
-        imageVector = vectorResource(Res.drawable.high_quality),
     )
 
     if (PlatformAvailability.DesktopOnly.isSupportedOnCurrentPlatform) {
