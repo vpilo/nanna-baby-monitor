@@ -11,6 +11,7 @@ sealed interface Setting<T : Any> {
     val platform: PlatformAvailability
     val type: KClass<T>
     val default: T
+    val validateChange: suspend (T) -> T?
 
     companion object {
         inline fun <reified T : Any> makePrimitive(
@@ -19,6 +20,7 @@ sealed interface Setting<T : Any> {
             description: StringResource? = null,
             platform: PlatformAvailability = PlatformAvailability.AllPlatforms,
             default: T,
+            noinline validateChange: suspend (T) -> T? = { it },
         ) = PrimitiveSetting(
             id = id,
             name = name,
@@ -35,6 +37,7 @@ sealed interface Setting<T : Any> {
             platform: PlatformAvailability = PlatformAvailability.AllPlatforms,
             values: Map<E, StringResource>,
             default: E,
+            noinline validateChange: suspend (E) -> E? = { it },
         ) = EnumSetting(
             id = id,
             name = name,
@@ -58,6 +61,7 @@ class PrimitiveSetting<T : Any>(
     override val platform: PlatformAvailability = PlatformAvailability.AllPlatforms,
     override val type: KClass<T>,
     override val default: T,
+    override val validateChange: suspend (T) -> T? = { it },
 ) : Setting<T> {
     override fun toString() = "Setting('$id': $type)"
 
@@ -71,6 +75,7 @@ class EnumSetting<T : Enum<*>>(
     override val platform: PlatformAvailability = PlatformAvailability.AllPlatforms,
     override val type: KClass<T>,
     override val default: T,
+    override val validateChange: suspend (T) -> T? = { it },
     val values: Map<T, StringResource>,
 ) : Setting<T> {
     override fun toString() = "Setting('$id': $type)"

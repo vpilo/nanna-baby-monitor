@@ -1,5 +1,10 @@
 package org.vpilo.babymonitor.settings.model.settings
 
+import babymonitor.settings.model.generated.resources.Res
+import babymonitor.settings.model.generated.resources.default_device_name
+import babymonitor.settings.model.generated.resources.settings_device_name_description
+import babymonitor.settings.model.generated.resources.settings_device_name_title
+import org.jetbrains.compose.resources.getString
 import org.vpilo.babymonitor.model.settings.SettingId
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.makeSetting
@@ -7,6 +12,15 @@ import org.vpilo.babymonitor.settings.model.makeSetting
 val Setting.Companion.DeviceName by makeSetting {
     Setting.makePrimitive(
         id = SettingId("device_name"),
+        name = Res.string.settings_device_name_title,
+        description = Res.string.settings_device_name_description,
         default = "",
+        validateChange = { it.ifBlank { makeDefaultDeviceName() } },
     )
+}
+
+private suspend fun makeDefaultDeviceName(): String {
+    val appName = getString(Res.string.default_device_name)
+    val randomId = (1000..9999).random()
+    return "$appName $randomId"
 }

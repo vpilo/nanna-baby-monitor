@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="settings_device_name_title">Device name</string>
+    <string name="settings_device_name_description">Name of this device, visible to other Baby Monitor apps.</string>
+
+    <string name="default_device_name">Baby Monitor</string>
+</resources>

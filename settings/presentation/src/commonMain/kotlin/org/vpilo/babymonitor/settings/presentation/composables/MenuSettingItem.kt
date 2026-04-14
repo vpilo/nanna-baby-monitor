@@ -19,7 +19,6 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.parameter.parametersOf
 import org.vpilo.babymonitor.model.settings.SettingId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
-import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.settings.model.Setting
 
 @Suppress("UNCHECKED_CAST")
@@ -35,7 +34,6 @@ fun <T : Any> MenuSettingItem(
             parameters = { parametersOf(setting) },
         )
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
-    val value = state.value as T
 
     MenuItem(
         modifier = modifier,
@@ -46,24 +44,29 @@ fun <T : Any> MenuSettingItem(
             when (setting.type) {
                 Boolean::class -> {
                     ThemedSwitch(
-                        checked = value as Boolean,
-                        onCheckedChange = { viewModel.send(MenuSettingItemAction.SetValue(it)) },
+                        checked = state.value as Boolean,
+                        onCheckedChange = {
+                            viewModel.send(MenuSettingItemAction.SetValue(it))
+                        },
                     )
                 }
 
-                else -> { }
+                else -> {}
             }
         },
         bottomContent = {
             when (setting.type) {
                 String::class -> {
                     TextField(
-                        value = value as String,
-                        onValueChange = { viewModel.send(MenuSettingItemAction.SetValue(it)) },
+                        value = state.value as String,
+                        singleLine = true,
+                        onValueChange = {
+                            viewModel.send(MenuSettingItemAction.SetValue(it))
+                        },
                     )
                 }
 
-                else -> { }
+                else -> {}
             }
         },
     )

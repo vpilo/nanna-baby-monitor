@@ -8,19 +8,30 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.seconds
 
 class DefaultSettingsRepository(
     private val dataStore: DataStore<Preferences>,
+    coroutineContext: CoroutineContext,
 ) : SettingsRepository {
+    private var saveDelayedJob: Job? = null
+    private val saveDelayedScope = CoroutineScope(coroutineContext)
+    private val saveDelayedValues = mutableMapOf<Setting<*>, Any>()
+
     override fun <T : Any> flowOf(setting: Setting<T>): Flow<T> =
         dataStore
             .getSafeFlow()
@@ -63,6 +74,12 @@ class DefaultSettingsRepository(
         setting: Setting<T>,
         value: T,
     ) {
+        val validatedValue =
+            setting.validateChange(value)
+                ?: run {
+                    Logger.w(TAG) { "Validation failed for value '$value' of '${setting.id}': keeping previous value." }
+                    return
+                }
         dataStore.edit { settings ->
             when (setting.type) {
                 Boolean::class,
@@ -73,19 +90,41 @@ class DefaultSettingsRepository(
                 ByteArray::class,
                 String::class,
                     -> {
-                        settings[setting.toDataStoreKey()] = value
+                        settings[setting.toDataStoreKey()] = validatedValue
                     }
 
                 else -> {
                     if (setting.type.java.isEnum) {
-                        check(value is Enum<*>) { "Value $value is not an enum for setting ${setting.id}" }
-                        settings[stringPreferencesKey(setting.id.value)] = value.name
+                        check(validatedValue is Enum<*>) { "Value $validatedValue is not an enum for setting ${setting.id}" }
+                        settings[stringPreferencesKey(setting.id.value)] = validatedValue.name
                     } else {
                         error("Unsupported type ${setting.type} for setting ${setting.id}")
                     }
                 }
             }
         }
+    }
+
+    override fun <T : Any> saveDelayed(
+        setting: Setting<T>,
+        value: T,
+    ) {
+        saveDelayedValues[setting] = value
+        saveDelayedJob?.cancel()
+        saveDelayedJob =
+            saveDelayedScope.launch {
+                delay(SAVE_DELAY)
+                val entries =
+                    synchronized(saveDelayedValues) {
+                        val entries = saveDelayedValues.entries.toList()
+                        saveDelayedValues.clear()
+                        entries
+                    }
+                entries.forEach { (setting, value) ->
+                    @Suppress("UNCHECKED_CAST")
+                    save(setting as Setting<Any>, value)
+                }
+            }
     }
 
     override suspend fun <T : Any> clear(setting: Setting<T>) {
@@ -136,5 +175,7 @@ class DefaultSettingsRepository(
 
     private companion object {
         private val TAG = DefaultSettingsRepository::class
+
+        private val SAVE_DELAY = 2.seconds
     }
 }

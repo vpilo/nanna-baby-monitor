@@ -14,6 +14,6 @@ val settingsDataKoinModule: Module =
                 PreferenceDataStoreFactory.create {
                     getDataStoreFile()
                 }
-            DefaultSettingsRepository(dataStore = dataStore)
+            DefaultSettingsRepository(dataStore = dataStore, coroutineContext = get())
         }
     }

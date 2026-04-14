@@ -1,6 +1,5 @@
 package org.vpilo.babymonitor.settings.presentation.composables
 
-import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
@@ -18,12 +17,11 @@ class MenuSettingItemViewModel(
     }
 
     override fun onAction(action: MenuSettingItemAction) {
-        vmScope.launch {
-            when (action) {
-                is MenuSettingItemAction.SetValue -> {
-                    @Suppress("UNCHECKED_CAST")
-                    settingsRepository.save(setting as Setting<Any>, action.value)
-                }
+        when (action) {
+            is MenuSettingItemAction.SetValue -> {
+                state.copy(value = action.value).update()
+                @Suppress("UNCHECKED_CAST")
+                settingsRepository.saveDelayed(setting as Setting<Any>, action.value)
             }
         }
     }

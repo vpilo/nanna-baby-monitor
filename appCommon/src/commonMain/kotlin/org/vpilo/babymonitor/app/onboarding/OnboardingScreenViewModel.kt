@@ -1,14 +1,9 @@
 package org.vpilo.babymonitor.app.onboarding
 
-import babymonitor.appcommon.generated.resources.Res
-import babymonitor.appcommon.generated.resources.app_name
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.compose.resources.getString
 import org.vpilo.babymonitor.app.settings.IsFirstRun
-import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
@@ -21,20 +16,17 @@ class OnboardingScreenViewModel(
 ) : AppViewModel<OnboardingScreenAction, OnboardingScreenState, OnboardingScreenEffect>(initialState = OnboardingScreenState()) {
     override fun SubscriptionScope.onSubscribed() {
         vmScope.launch {
-            settingsRepository.flowOf(Setting.DeviceName).collect {
-                if (it.isBlank()) {
-                    val defaultDeviceName = makeDefaultDeviceName()
-                    settingsRepository.save(Setting.DeviceName, defaultDeviceName)
-                }
-            }
-        }
-
-        vmScope.launch {
             combine(
                 settingsRepository.flowOf(Setting.IsFirstRun),
+                settingsRepository.flowOf(Setting.DeviceName),
                 appRoleRepository.appRole,
-            ) { isFirstRun, role ->
+            ) { isFirstRun, deviceName, role ->
                 state.copy(isFirstRun = isFirstRun).update()
+                // Ensure that the device has a name, as it's required for the server to be discoverable by clients.
+                // The setting validates its value and will make a new name.
+                deviceName.ifBlank {
+                    settingsRepository.save(Setting.DeviceName, " ")
+                }
                 if (isFirstRun) {
                     settingsRepository.save(Setting.IsFirstRun, false)
                 } else {
@@ -43,14 +35,5 @@ class OnboardingScreenViewModel(
                 }
             }.collect()
         }
-    }
-
-    private fun makeDefaultDeviceName(): String {
-        val appName =
-            runBlocking {
-                getString(Res.string.app_name)
-            }
-        val randomId = (1000..9999).random()
-        return "$appName-$randomId"
     }
 }
