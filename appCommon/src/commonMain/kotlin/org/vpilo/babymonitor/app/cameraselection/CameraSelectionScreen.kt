@@ -33,19 +33,18 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_unkno
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.repository.NetworkState
+import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
-import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.LoadingIcon
-import java.net.InetAddress
 
 @Composable
 fun CameraSelectionScreen(
     modifier: Modifier = Modifier,
     viewModel: CameraSelectionScreenViewModel,
-    onConnected: (serverAddress: InetAddress) -> Unit,
+    onConnected: () -> Unit,
     onBackClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
@@ -53,7 +52,7 @@ fun CameraSelectionScreen(
     LaunchedEffect(Unit) {
         viewModel.effectsFlow.collect { effect ->
             when (effect) {
-                is CameraSelectionScreenEffect.Connected -> onConnected(effect.address)
+                is CameraSelectionScreenEffect.Connected -> onConnected()
             }
         }
     }
@@ -75,8 +74,8 @@ fun CameraSelectionScreen(
 private fun CameraSelectionScreenContent(
     modifier: Modifier = Modifier,
     networkState: NetworkState,
-    servers: Set<InetAddress>,
-    onConnectRequested: (serverName: InetAddress) -> Unit,
+    servers: Set<ServerId>,
+    onConnectRequested: (server: ServerId) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
 
@@ -119,10 +118,10 @@ private fun CameraSelectionScreenContent(
                 ) {
                     Text(
                         modifier = Modifier.padding(Theme.Paddings.Small),
-                        text = server.hostAddress ?: server.toString(),
+                        text = server.name,
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    if ((networkState as? NetworkState.Connecting)?.address == server) {
+                    if ((networkState as? NetworkState.Connecting)?.server == server) {
                         LoadingIcon()
                     }
                 }
@@ -145,7 +144,7 @@ private fun InfoLabel(networkState: NetworkState) {
 
         is NetworkState.Connected -> {
             label = Res.string.client_connection_chooser_connected
-            argument = networkState.address.hostAddress
+            argument = networkState.server.name
         }
 
         is NetworkState.Disconnected -> {
@@ -188,7 +187,7 @@ private fun CameraSelectionScreenPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
             networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
-            servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
+            servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
             onConnectRequested = {},
         )
     }
@@ -198,8 +197,8 @@ private fun CameraSelectionScreenPreview() =
 private fun CameraSelectionScreenConnectingPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
-            networkState = NetworkState.Connecting(InetAddress.getLoopbackAddress()),
-            servers = setOf(InetAddress.getLoopbackAddress(), InetAddress.getByName("1.2.3.4")),
+            networkState = NetworkState.Connecting(ServerId("Bedroom Camera")),
+            servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
             onConnectRequested = {},
         )
     }

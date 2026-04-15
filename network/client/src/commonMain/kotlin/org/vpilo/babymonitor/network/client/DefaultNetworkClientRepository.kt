@@ -15,18 +15,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
+import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
+import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.settings.model.Setting
@@ -57,7 +61,14 @@ internal class DefaultNetworkClientRepository(
 
     override val serverStateFlow: StateFlow<ServerState> = dataSource.serverState
 
-    override val discoveredServersFlow: Flow<Set<InetAddress>> = discoveryManager.discoveredServers
+    override val discoveredServerIdsFlow: Flow<Set<ServerId>> =
+        discoveryManager.discoveredServers
+            .onEach {
+                Logger.d(TAG) { "Discovered servers updated: ${it.joinToString()}" }
+            }.map { server -> server.map { it.id }.toSet() }
+
+    private val discoveredServersFlow: Flow<Set<DiscoveredServer>> =
+        discoveryManager.discoveredServers
 
     private var controlConnectionHandler: ConnectionHandler? = null
     private var audioConnectionHandler: ConnectionHandler? = null
@@ -71,7 +82,19 @@ internal class DefaultNetworkClientRepository(
             .launchIn(scope)
     }
 
-    override suspend fun connect(address: InetAddress) {
+    override suspend fun connect(server: ServerId) {
+        val addresses =
+            discoveredServersFlow
+                .first()
+                .firstOrNull { it.id == server }
+                ?.addresses
+                ?: run {
+                    Logger.w(TAG) { "Server with id ${server.name} not found among discovered servers." }
+                    connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
+                    return
+                }
+        val host = addresses.first()
+
         controlConnectionHandler?.disconnect()
         controlConnectionHandler =
             ConnectionHandler(
@@ -79,19 +102,19 @@ internal class DefaultNetworkClientRepository(
                 connectLambda = {
                     networkClient.webSocket(
                         method = HttpMethod.Get,
-                        host = address.hostAddress,
+                        host = host.hostAddress,
                         port = Constants.WEBSOCKET_PORT,
                         path = Endpoints.CONTROL,
                     ) {
-                        onControlConnectionOpened(address)
+                        onControlConnectionOpened(server, host)
                         controlClientWebSocket()
                     }
                 },
                 onDisconnected = { ex -> onControlConnectionClosed(ex) },
             ).apply { connect() }
 
-        connectionState.value = NetworkState.Connecting(address)
-        Logger.d(TAG) { "Connecting to server at ${address.hostAddress}..." }
+        connectionState.value = NetworkState.Connecting(server)
+        Logger.d(TAG) { "Connecting to server $server at $host..." }
     }
 
     private suspend fun startAudioStream(address: InetAddress) {
@@ -175,8 +198,11 @@ internal class DefaultNetworkClientRepository(
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
-    private fun onControlConnectionOpened(address: InetAddress) {
-        connectionState.value = NetworkState.Connected(address)
+    private fun onControlConnectionOpened(
+        server: ServerId,
+        address: InetAddress,
+    ) {
+        connectionState.value = NetworkState.Connected(server)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
 
         serverStateJob =

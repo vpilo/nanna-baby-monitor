@@ -6,8 +6,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.io.IOException
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.repository.ServerId
 import java.net.InetAddress
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceEvent
@@ -17,13 +19,13 @@ import javax.jmdns.ServiceListener
 actual class DiscoveryManager {
     private val discoveryService = JmDNS.create(Constants.SERVICES_LISTEN_ADDRESS)
 
-    private val remoteServiceListener = RemoteServiceListener()
+    private val remoteServiceListener = RemoteServiceListener(::isLocalDeviceHost)
 
     private var deviceName = ""
 
-    actual val discoveredServers: Flow<Set<InetAddress>> =
+    actual val discoveredServers: Flow<Set<DiscoveredServer>> =
         remoteServiceListener.discoveredServers
-            .map { it.toSortedSet { a, b -> a.hostAddress.compareTo(b.hostAddress) } }
+            .map { it.toSortedSet() }
             .distinctUntilChanged()
 
     actual var state = DiscoveryManagerState.Idle
@@ -35,7 +37,7 @@ actual class DiscoveryManager {
 
     actual fun registerService() {
         check(deviceName.isNotEmpty()) { "Device name must be set before registering service!" }
-        Logger.d(TAG) { "Service registered: $SERVICE_TYPE on ${Constants.SERVICES_LISTEN_ADDRESS}" }
+        Logger.d(TAG) { "Service registered: $SERVICE_TYPE ($deviceName) on ${Constants.SERVICES_LISTEN_ADDRESS}" }
         try {
             discoveryService.registerService(createServiceInfo(deviceName))
             state = DiscoveryManagerState.ServiceRegistered
@@ -71,40 +73,65 @@ actual class DiscoveryManager {
         }
     }
 
-    private class RemoteServiceListener : ServiceListener {
-        private val _discoveredServers: MutableStateFlow<Set<InetAddress>> = MutableStateFlow(emptySet())
+    private class RemoteServiceListener(
+        private val isLocalDeviceHost: (Set<InetAddress>) -> Boolean,
+    ) : ServiceListener {
+        private val _discoveredServers: MutableStateFlow<Set<DiscoveredServer>> = MutableStateFlow(emptySet())
 
-        val discoveredServers: StateFlow<Set<InetAddress>> = _discoveredServers.asStateFlow()
+        val discoveredServers: StateFlow<Set<DiscoveredServer>> = _discoveredServers.asStateFlow()
 
         fun reset() {
             _discoveredServers.value = emptySet()
         }
 
         override fun serviceAdded(event: ServiceEvent) {
+            if (isLocalDeviceHost(event.hosts)) return
+            Logger.d(TAG) { "Service added: ${event.info.name} at hosts ${event.hosts}" }
             event.dns.requestServiceInfo(event.type, event.name)
         }
 
         override fun serviceRemoved(event: ServiceEvent) {
-            val addresses = event.info.inetAddresses.filterNotNull()
-            Logger.d(TAG) { "Service removed: ${event.info} -> $addresses" }
-            _discoveredServers.value -= addresses.toSet()
+            val hosts = event.hosts
+            Logger.d(TAG) { "Service lost: ${event.info.name} at hosts $hosts" }
+            _discoveredServers.value
+                .firstOrNull { it.matchesAddresses(hosts) }
+                ?.let { device ->
+                    _discoveredServers.value -= device
+                }
+                ?: run {
+                    _discoveredServers.value
+                        .firstOrNull { it.id.name == event.info.name }
+                        ?.let { device -> _discoveredServers.value -= device }
+                }
         }
 
         override fun serviceResolved(event: ServiceEvent) {
-            val address = bestAddress(event.info)
-            if (address != null) {
-                Logger.d(TAG) { "Service resolved: ${event.info} -> $address" }
-                _discoveredServers.value += address
-            } else {
-                Logger.w(TAG) { "Service resolved but no usable address: ${event.info}" }
+            val name = event.info.name
+            val hosts = event.hosts
+
+            if (isLocalDeviceHost(hosts)) return
+
+            if (hosts.isEmpty()) {
+                Logger.w(TAG) { "Service resolved with no hosts: $name" }
+                return
+            }
+
+            Logger.i(TAG) { "Service resolved: $name -> $hosts" }
+            _discoveredServers.update { servers ->
+                val new = DiscoveredServer(ServerId(name), hosts)
+                servers
+                    .firstOrNull { it.matchesAddresses(hosts) }
+                    ?.let { old -> servers + new - old }
+                    ?: run { servers + new }
             }
         }
 
-        // In LANs, IPv4 is more likely to be in use.
-        private fun bestAddress(info: ServiceInfo): InetAddress? =
-            info.inet4Addresses.firstOrNull()
-                ?: info.inet6Addresses.firstOrNull()
+        private val ServiceEvent.hosts: Set<InetAddress>
+            get() = (info.inet6Addresses?.toSet() ?: emptySet()) + (info.inet4Addresses?.toSet() ?: emptySet())
     }
+
+    private fun isLocalDeviceHost(addresses: Set<InetAddress>): Boolean =
+        addresses.intersect(discoveryService.inetAddress?.let { setOf(it) } ?: emptySet()).isNotEmpty()
 
     private companion object {
         // JmDNS requires the ".local." suffix

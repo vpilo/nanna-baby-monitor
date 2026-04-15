@@ -4,14 +4,20 @@ import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import android.os.Build
+import android.os.ext.SdkExtensions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.repository.ServerId
 import java.net.InetAddress
+import java.net.SocketException
+import kotlin.collections.plus
 import kotlin.coroutines.CoroutineContext
 
 actual class DiscoveryManager(
@@ -31,12 +37,12 @@ actual class DiscoveryManager(
 
     private var multicastLock: WifiManager.MulticastLock? = null
 
-    private val _discoveredServers: MutableStateFlow<Set<InetAddress>> =
+    private val _discoveredServers: MutableStateFlow<Set<DiscoveredServer>> =
         MutableStateFlow(emptySet())
 
-    actual val discoveredServers: Flow<Set<InetAddress>> =
+    actual val discoveredServers: Flow<Set<DiscoveredServer>> =
         _discoveredServers
-            .map { it.toSortedSet(compareBy { address -> address.hostAddress }) }
+            .map { it.toSortedSet() }
             .distinctUntilChanged()
 
     private var discoveryListener: NsdManager.DiscoveryListener? = null
@@ -63,6 +69,7 @@ actual class DiscoveryManager(
                 object : NsdManager.RegistrationListener {
                     override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {
                         Logger.d(TAG) { "Service registered: ${serviceInfo.serviceName}" }
+                        state = DiscoveryManagerState.ServiceRegistered
                     }
 
                     override fun onRegistrationFailed(
@@ -70,6 +77,7 @@ actual class DiscoveryManager(
                         errorCode: Int,
                     ) {
                         Logger.e(TAG) { "Service registration failed: errorCode=$errorCode" }
+                        state = DiscoveryManagerState.Idle
                     }
 
                     override fun onServiceUnregistered(serviceInfo: NsdServiceInfo) {
@@ -86,7 +94,6 @@ actual class DiscoveryManager(
             registrationListener = listener
 
             nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, listener)
-            state = DiscoveryManagerState.ServiceRegistered
         }
     }
 
@@ -114,17 +121,27 @@ actual class DiscoveryManager(
                     }
 
                     override fun onServiceFound(serviceInfo: NsdServiceInfo) {
+                        if (serviceInfo.hosts.intersect(localAddresses()).isNotEmpty()) return
                         Logger.d(TAG) { "Service found: ${serviceInfo.serviceName}" }
                         resolveService(serviceInfo)
                     }
 
                     override fun onServiceLost(serviceInfo: NsdServiceInfo) {
-                        Logger.d(TAG) { "Service lost: ${serviceInfo.serviceName}" }
-                        @Suppress("DEPRECATION")
-                        val host = serviceInfo.host
-                        if (host != null) {
-                            _discoveredServers.value -= host
-                        }
+                        val hosts = serviceInfo.hosts
+                        if (hosts.intersect(localAddresses()).isNotEmpty()) return
+                        Logger.d(TAG) { "Service lost: ${serviceInfo.serviceName} -> $hosts" }
+                        _discoveredServers.value
+                            .firstOrNull { it.matchesAddresses(hosts) }
+                            ?.let { device ->
+                                _discoveredServers.value -= device
+                            }
+                            ?: run {
+                                _discoveredServers.value
+                                    .firstOrNull { it.id.name == serviceInfo.serviceName }
+                                    ?.let { device ->
+                                        _discoveredServers.value -= device
+                                    }
+                            }
                     }
 
                     override fun onDiscoveryStopped(serviceType: String) {
@@ -193,19 +210,44 @@ actual class DiscoveryManager(
                     }
 
                     override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
-                        @Suppress("DEPRECATION")
-                        val host = serviceInfo.host
-                        if (host != null) {
-                            Logger.d(TAG) { "Service resolved: ${serviceInfo.serviceName} -> $host" }
-                            _discoveredServers.value += host
-                        } else {
-                            Logger.w(TAG) { "Service resolved but no host: ${serviceInfo.serviceName}" }
+                        val name = serviceInfo.serviceName
+                        val hosts = serviceInfo.hosts
+
+                        if (hosts.intersect(localAddresses()).isNotEmpty()) return
+
+                        if (hosts.isEmpty()) {
+                            Logger.w(TAG) { "Service resolved with no hosts: $name" }
+                            return
+                        }
+
+                        Logger.d(TAG) { "Service resolved: $name -> $hosts" }
+                        _discoveredServers.update { servers ->
+                            val new = DiscoveredServer(ServerId(name), hosts)
+                            servers
+                                .firstOrNull { it.matchesAddresses(hosts) }
+                                ?.let { old -> servers + new - old }
+                                ?: run { servers + new }
                         }
                     }
                 },
             )
         }
     }
+
+    private fun localAddresses(): Set<InetAddress> =
+        try {
+            java.net.NetworkInterface
+                .getNetworkInterfaces()
+                ?.asSequence()
+                ?.flatMap { it.inetAddresses.asSequence() }
+                ?.filterNot { it.isLoopbackAddress }
+                ?.toSet()
+                ?: emptySet()
+        } catch (_: SocketException) {
+            emptySet()
+        } catch (_: NullPointerException) {
+            emptySet()
+        }
 
     private fun acquireMulticastLock() {
         if (multicastLock?.isHeld == true) return
@@ -225,6 +267,17 @@ actual class DiscoveryManager(
         }
         multicastLock = null
     }
+
+    private val NsdServiceInfo.hosts: Set<InetAddress>
+        get() =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                SdkExtensions.getExtensionVersion(Build.VERSION_CODES.TIRAMISU) >= 7
+            ) {
+                hostAddresses.toSet()
+            } else {
+                @Suppress("DEPRECATION")
+                setOf(host)
+            }
 
     private companion object {
         private val TAG = DiscoveryManager::class

@@ -11,7 +11,7 @@ class CameraSelectionScreenViewModel(
         initialState = CameraSelectionScreenState(),
     ) {
     override fun SubscriptionScope.onSubscribed() {
-        networkClientRepository.discoveredServersFlow
+        networkClientRepository.discoveredServerIdsFlow
             .subscribe { list ->
                 state.copy(availableServers = list).update()
             }
@@ -20,7 +20,7 @@ class CameraSelectionScreenViewModel(
             .subscribe { netState ->
                 state.copy(networkState = netState).update()
                 if (netState is NetworkState.Connected) {
-                    CameraSelectionScreenEffect.Connected(netState.address).sendEffect()
+                    CameraSelectionScreenEffect.Connected.sendEffect()
                 }
             }
     }
@@ -29,7 +29,7 @@ class CameraSelectionScreenViewModel(
         when (action) {
             is CameraSelectionScreenAction.ConnectToServer -> {
                 vmScope.launch {
-                    networkClientRepository.connect(action.address)
+                    networkClientRepository.connect(action.server)
                 }
             }
         }

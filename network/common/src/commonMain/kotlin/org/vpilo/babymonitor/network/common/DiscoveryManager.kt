@@ -1,10 +1,9 @@
 package org.vpilo.babymonitor.network.common
 
 import kotlinx.coroutines.flow.Flow
-import java.net.InetAddress
 
 expect class DiscoveryManager {
-    val discoveredServers: Flow<Set<InetAddress>>
+    val discoveredServers: Flow<Set<DiscoveredServer>>
 
     var state: DiscoveryManagerState
         private set

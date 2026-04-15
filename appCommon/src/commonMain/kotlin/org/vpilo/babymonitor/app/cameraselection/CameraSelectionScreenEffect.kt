@@ -1,9 +1,7 @@
 package org.vpilo.babymonitor.app.cameraselection
 
-import java.net.InetAddress
+import org.vpilo.babymonitor.model.repository.ServerId
 
 sealed interface CameraSelectionScreenEffect {
-    data class Connected(
-        val address: InetAddress,
-    ) : CameraSelectionScreenEffect
+    object Connected : CameraSelectionScreenEffect
 }

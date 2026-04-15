@@ -1,7 +1,5 @@
 package org.vpilo.babymonitor.model.repository
 
-import java.net.InetAddress
-
 sealed interface NetworkState {
     data class Disconnected(
         val reason: ErrorReason,
@@ -9,11 +7,11 @@ sealed interface NetworkState {
     ) : NetworkState
 
     data class Connecting(
-        val address: InetAddress,
+        val server: ServerId,
     ) : NetworkState
 
     data class Connected(
-        val address: InetAddress,
+        val server: ServerId,
     ) : NetworkState
 
     enum class ErrorReason {

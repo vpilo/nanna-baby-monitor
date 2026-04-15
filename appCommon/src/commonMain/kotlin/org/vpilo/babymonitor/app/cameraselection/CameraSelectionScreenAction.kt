@@ -1,9 +1,9 @@
 package org.vpilo.babymonitor.app.cameraselection
 
-import java.net.InetAddress
+import org.vpilo.babymonitor.model.repository.ServerId
 
 sealed interface CameraSelectionScreenAction {
     data class ConnectToServer(
-        val address: InetAddress,
+        val server: ServerId,
     ) : CameraSelectionScreenAction
 }
