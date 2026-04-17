@@ -2,14 +2,15 @@
 
 feature plan
 
-- Client can play and pause independently audio or video 
+- Client can play and pause independently audio or video
 - Client UI hideable with a tap on the video feed.
 - Secure lan-only communication channel, with clients (monitors) pairing with server (camera).
 - Plugins for raw AV streams to:
     - reduce noise
     - detect silence
     - detect no movement
-- Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start streaming audio.
+- Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start
+  streaming audio.
 
 completed
 
