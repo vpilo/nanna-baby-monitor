@@ -15,7 +15,7 @@ import org.vpilo.babymonitor.model.makeMutableStreamingAudioFlow
 import org.vpilo.babymonitor.model.makeMutableStreamingVideoFlow
 
 internal class NetworkVideoDataSource {
-    val collector: MutableStreamingVideoFlow = makeMutableStreamingVideoFlow()
+    private val collector: MutableStreamingVideoFlow = makeMutableStreamingVideoFlow()
 
     val frames: StreamingVideoFlow = collector.asSharedFlow()
 

@@ -21,7 +21,7 @@ internal class NetworkVideoReceiverRepository(
 
     private val decoder: VideoDecoder =
         VideoDecoder(
-            input = dataSource.collector,
+            input = dataSource.frames,
             output = collector,
             coroutineContext = coroutineContext,
         )
