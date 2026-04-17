@@ -72,7 +72,9 @@ fun ClientHomeScreen(
             frames = viewModel.frames,
             captureMode = state.captureMode,
             isAudioPlaying = state.isAudioPlaying,
+            isVideoPlaying = state.isVideoPlaying,
             onToggleAudio = { viewModel.send(ClientHomeScreenAction.ToggleAudio) },
+            onToggleVideo = { viewModel.send(ClientHomeScreenAction.ToggleVideo) },
             batteryLevel = state.batteryLevel,
             signalQuality = state.signalQuality,
         )
@@ -85,7 +87,9 @@ private fun ClientHomeScreenContent(
     frames: Flow<ImageBitmap>,
     captureMode: CaptureMode,
     isAudioPlaying: Boolean,
+    isVideoPlaying: Boolean,
     onToggleAudio: () -> Unit,
+    onToggleVideo: () -> Unit,
     batteryLevel: Int,
     signalQuality: Int,
 ) {
@@ -95,14 +99,20 @@ private fun ClientHomeScreenContent(
             contentScale = ContentScale.FillWidth,
             frames = frames,
         )
-        AudioFeed(
-            modifier =
-                Modifier
-                    .padding(Theme.Paddings.Tiny),
-            canPlay = captureMode != CaptureMode.VIDEO_ONLY,
-            isPlaying = isAudioPlaying,
-            onToggle = onToggleAudio,
-        )
+        Row {
+            VideoFeedControlButton(
+                modifier = Modifier.padding(Theme.Paddings.Tiny),
+                canPlay = captureMode != CaptureMode.AUDIO_ONLY,
+                isPlaying = isVideoPlaying,
+                onToggle = onToggleVideo,
+            )
+            AudioFeedControlButton(
+                modifier = Modifier.padding(Theme.Paddings.Tiny),
+                canPlay = captureMode != CaptureMode.VIDEO_ONLY,
+                isPlaying = isAudioPlaying,
+                onToggle = onToggleAudio,
+            )
+        }
         if (batteryLevel != DEVICE_STATE_DATA_UNAVAILABLE && signalQuality != DEVICE_STATE_DATA_UNAVAILABLE) {
             Backdrop(
                 modifier =
@@ -126,7 +136,9 @@ private fun ClientHomeScreenPreview() =
             frames = flowOf(makePlaceholderCameraFrame()),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
+            isVideoPlaying = true,
             onToggleAudio = { },
+            onToggleVideo = { },
             batteryLevel = 5,
             signalQuality = 3,
         )
@@ -141,7 +153,9 @@ private fun ClientHomeScreenVideoOnlyPreview() =
             frames = flowOf(makePlaceholderCameraFrame()),
             captureMode = CaptureMode.VIDEO_ONLY,
             isAudioPlaying = false,
+            isVideoPlaying = true,
             onToggleAudio = { },
+            onToggleVideo = { },
             batteryLevel = 95,
             signalQuality = 93,
         )
@@ -156,7 +170,9 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
             frames = flowOf(makePlaceholderCameraFrame()),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
+            isVideoPlaying = true,
             onToggleAudio = { },
+            onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
         )

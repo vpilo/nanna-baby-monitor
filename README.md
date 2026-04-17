@@ -2,7 +2,6 @@
 
 feature plan
 
-- Client can play and pause independently audio or video
 - Client UI hideable with a tap on the video feed.
 - Secure lan-only communication channel, with clients (monitors) pairing with server (camera).
 - Plugins for raw AV streams to:
@@ -20,6 +19,7 @@ completed
 - allow capture resolution choice
 - settings system to save audio and video quality preferences, and other settings
 - settings screen in menu
+- Client can play and pause independently audio or video
 
 references
 

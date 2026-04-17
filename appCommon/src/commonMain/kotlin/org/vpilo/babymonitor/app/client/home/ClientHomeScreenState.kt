@@ -10,4 +10,5 @@ data class ClientHomeScreenState(
     val batteryLevel: Int = DEVICE_STATE_DATA_UNAVAILABLE,
     val signalQuality: Int = DEVICE_STATE_DATA_UNAVAILABLE,
     val isAudioPlaying: Boolean = false,
+    val isVideoPlaying: Boolean = false,
 )

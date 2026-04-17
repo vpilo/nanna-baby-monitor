@@ -28,3 +28,17 @@ val Setting.Companion.LastCaptureMode by makeSetting {
             ),
     )
 }
+
+val Setting.Companion.ClientEnabledAudio by makeSetting {
+    Setting.makePrimitive(
+        id = SettingId("client_enabled_audio"),
+        default = false,
+    )
+}
+
+val Setting.Companion.ClientEnabledVideo by makeSetting {
+    Setting.makePrimitive(
+        id = SettingId("client_enabled_video"),
+        default = true,
+    )
+}

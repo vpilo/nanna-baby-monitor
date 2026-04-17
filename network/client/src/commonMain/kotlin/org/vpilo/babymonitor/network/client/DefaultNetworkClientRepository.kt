@@ -70,6 +70,7 @@ internal class DefaultNetworkClientRepository(
     private val discoveredServersFlow: Flow<Set<DiscoveredServer>> =
         discoveryManager.discoveredServers
 
+    private var currentAddress: InetAddress? = null
     private var controlConnectionHandler: ConnectionHandler? = null
     private var audioConnectionHandler: ConnectionHandler? = null
     private var videoConnectionHandler: ConnectionHandler? = null
@@ -117,7 +118,10 @@ internal class DefaultNetworkClientRepository(
         Logger.d(TAG) { "Connecting to server $server at $host..." }
     }
 
-    private suspend fun startAudioStream(address: InetAddress) {
+    private fun startAudioStream() {
+        if (serverStateFlow.value.captureMode == CaptureMode.VIDEO_ONLY) {
+            return
+        }
         if (audioConnectionHandler != null) {
             Logger.w(TAG) { "Audio stream is already running" }
             return
@@ -128,15 +132,16 @@ internal class DefaultNetworkClientRepository(
                 connectLambda = {
                     networkClient.webSocket(
                         method = HttpMethod.Get,
-                        host = address.hostAddress,
+                        host = checkNotNull(currentAddress).hostAddress,
                         port = Constants.WEBSOCKET_PORT,
                         path = Endpoints.STREAM_AUDIO,
                     ) {
-                        // TODO if needed, report whether audio or video are connected or not to the UI
+                        dataSource.setIsStreamingAudio(true)
                         audioStreamingClientWebSocket()
                     }
                 },
                 onDisconnected = {
+                    dataSource.setIsStreamingAudio(false)
                     Logger.i(TAG) { "Audio disconnected, reconnecting" }
                     delay(1.seconds)
                     audioConnectionHandler?.connect()
@@ -145,7 +150,10 @@ internal class DefaultNetworkClientRepository(
         Logger.d(TAG) { "Audio stream started" }
     }
 
-    private suspend fun startVideoStream(address: InetAddress) {
+    private fun startVideoStream() {
+        if (serverStateFlow.value.captureMode == CaptureMode.AUDIO_ONLY) {
+            return
+        }
         if (videoConnectionHandler != null) {
             Logger.w(TAG) { "Video stream is already running" }
             return
@@ -156,14 +164,16 @@ internal class DefaultNetworkClientRepository(
                 connectLambda = {
                     networkClient.webSocket(
                         method = HttpMethod.Get,
-                        host = address.hostAddress,
+                        host = checkNotNull(currentAddress).hostAddress,
                         port = Constants.WEBSOCKET_PORT,
                         path = Endpoints.STREAM_VIDEO,
                     ) {
+                        dataSource.setIsStreamingVideo(true)
                         videoStreamingClientWebSocket()
                     }
                 },
                 onDisconnected = {
+                    dataSource.setIsStreamingVideo(false)
                     Logger.i(TAG) { "Video disconnected, reconnecting" }
                     delay(1.seconds)
                     videoConnectionHandler?.connect()
@@ -172,23 +182,48 @@ internal class DefaultNetworkClientRepository(
         Logger.d(TAG) { "Video stream started" }
     }
 
-    private suspend fun stopAudioStream() {
+    private fun stopAudioStream() {
         audioConnectionHandler?.disconnect()
         audioConnectionHandler = null
     }
 
-    private suspend fun stopVideoStream() {
+    private fun stopVideoStream() {
         videoConnectionHandler?.disconnect()
         videoConnectionHandler = null
     }
 
-    private suspend fun closeAllConnections() {
+    private fun closeAllConnections() {
         stopAudioStream()
         stopVideoStream()
         controlConnectionHandler?.disconnect()
         controlConnectionHandler = null
         serverStateJob?.cancel()
         serverStateJob = null
+        currentAddress = null
+    }
+
+    override fun enableAudio(enable: Boolean) {
+        Logger.i(TAG) { "enableAudio: $enable" }
+        if (serverStateFlow.value.isStreamingAudio == enable) {
+            return
+        }
+        if (audioConnectionHandler != null) {
+            stopAudioStream()
+        } else {
+            startAudioStream()
+        }
+    }
+
+    override fun enableVideo(enable: Boolean) {
+        Logger.i(TAG) { "enableVideo: $enable" }
+        if (serverStateFlow.value.isStreamingVideo == enable) {
+            return
+        }
+        if (videoConnectionHandler != null) {
+            stopVideoStream()
+        } else {
+            startVideoStream()
+        }
     }
 
     override suspend fun disconnect() {
@@ -202,6 +237,7 @@ internal class DefaultNetworkClientRepository(
         server: ServerId,
         address: InetAddress,
     ) {
+        currentAddress = address
         connectionState.value = NetworkState.Connected(server)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
 
@@ -215,24 +251,21 @@ internal class DefaultNetworkClientRepository(
                     when (serverState.captureMode) {
                         CaptureMode.AUDIO_ONLY -> {
                             stopVideoStream()
-                            startAudioStream(address)
                         }
 
                         CaptureMode.VIDEO_ONLY -> {
                             stopAudioStream()
-                            startVideoStream(address)
                         }
 
                         CaptureMode.AUDIO_AND_VIDEO -> {
-                            startAudioStream(address)
-                            startVideoStream(address)
+                            // Do nothing
                         }
                     }
                 }
             }
     }
 
-    private suspend fun onControlConnectionClosed(exception: Throwable) {
+    private fun onControlConnectionClosed(exception: Throwable) {
         closeAllConnections()
 
         connectionState.value =

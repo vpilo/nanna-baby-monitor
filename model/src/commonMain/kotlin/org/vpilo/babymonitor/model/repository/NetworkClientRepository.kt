@@ -12,4 +12,8 @@ interface NetworkClientRepository {
     suspend fun connect(server: ServerId)
 
     suspend fun disconnect()
+
+    fun enableAudio(enable: Boolean)
+
+    fun enableVideo(enable: Boolean)
 }
