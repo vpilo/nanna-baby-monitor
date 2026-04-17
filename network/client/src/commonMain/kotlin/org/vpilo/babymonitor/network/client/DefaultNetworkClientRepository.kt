@@ -71,6 +71,8 @@ internal class DefaultNetworkClientRepository(
         discoveryManager.discoveredServers
 
     private var currentAddress: InetAddress? = null
+    private var isAudioEnabled: Boolean = false
+    private var isVideoEnabled: Boolean = true
     private var controlConnectionHandler: ConnectionHandler? = null
     private var audioConnectionHandler: ConnectionHandler? = null
     private var videoConnectionHandler: ConnectionHandler? = null
@@ -119,13 +121,14 @@ internal class DefaultNetworkClientRepository(
     }
 
     private fun startAudioStream() {
-        if (serverStateFlow.value.captureMode == CaptureMode.VIDEO_ONLY) {
+        if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.VIDEO_ONLY) {
             return
         }
         if (audioConnectionHandler != null) {
             Logger.w(TAG) { "Audio stream is already running" }
             return
         }
+
         audioConnectionHandler =
             ConnectionHandler(
                 coroutineScope = scope,
@@ -151,13 +154,14 @@ internal class DefaultNetworkClientRepository(
     }
 
     private fun startVideoStream() {
-        if (serverStateFlow.value.captureMode == CaptureMode.AUDIO_ONLY) {
+        if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.AUDIO_ONLY) {
             return
         }
         if (videoConnectionHandler != null) {
             Logger.w(TAG) { "Video stream is already running" }
             return
         }
+
         videoConnectionHandler =
             ConnectionHandler(
                 coroutineScope = scope,
@@ -204,26 +208,16 @@ internal class DefaultNetworkClientRepository(
 
     override fun enableAudio(enable: Boolean) {
         Logger.i(TAG) { "enableAudio: $enable" }
-        if (serverStateFlow.value.isStreamingAudio == enable) {
-            return
-        }
-        if (audioConnectionHandler != null) {
-            stopAudioStream()
-        } else {
-            startAudioStream()
-        }
+        isAudioEnabled = enable
+        if (currentAddress == null || serverStateFlow.value.isStreamingAudio == enable) return
+        if (enable) startAudioStream() else stopAudioStream()
     }
 
     override fun enableVideo(enable: Boolean) {
         Logger.i(TAG) { "enableVideo: $enable" }
-        if (serverStateFlow.value.isStreamingVideo == enable) {
-            return
-        }
-        if (videoConnectionHandler != null) {
-            stopVideoStream()
-        } else {
-            startVideoStream()
-        }
+        isVideoEnabled = enable
+        if (currentAddress == null || serverStateFlow.value.isStreamingVideo == enable) return
+        if (enable) startVideoStream() else stopVideoStream()
     }
 
     override suspend fun disconnect() {
@@ -240,6 +234,9 @@ internal class DefaultNetworkClientRepository(
         currentAddress = address
         connectionState.value = NetworkState.Connected(server)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
+
+        if (isAudioEnabled) startAudioStream()
+        if (isVideoEnabled) startVideoStream()
 
         serverStateJob =
             scope.launch {
