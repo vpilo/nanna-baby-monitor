@@ -38,6 +38,7 @@ import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import java.net.ConnectException
 import java.net.InetAddress
+import java.net.SocketException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -96,13 +97,15 @@ internal class DefaultNetworkClientRepository(
                     connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
                     return
                 }
-        val host = addresses.first()
 
         controlConnectionHandler?.disconnect()
         controlConnectionHandler =
             ConnectionHandler(
                 coroutineScope = scope,
-                connectLambda = {
+                hosts = addresses,
+                connectLambda = { host ->
+                    Logger.i(TAG) { "Connecting to server $server" }
+                    var result = false
                     networkClient.webSocket(
                         method = HttpMethod.Get,
                         host = host.hostAddress,
@@ -110,14 +113,16 @@ internal class DefaultNetworkClientRepository(
                         path = Endpoints.CONTROL,
                     ) {
                         onControlConnectionOpened(server, host)
-                        controlClientWebSocket()
+                        result = controlClientWebSocket()
                     }
+                    result
                 },
-                onDisconnected = { ex -> onControlConnectionClosed(ex) },
+                onDisconnected = { ex ->
+                    onControlConnectionClosed(ex)
+                },
             ).apply { connect() }
 
         connectionState.value = NetworkState.Connecting(server)
-        Logger.d(TAG) { "Connecting to server $server at $host..." }
     }
 
     private fun startAudioStream() {
@@ -132,16 +137,19 @@ internal class DefaultNetworkClientRepository(
         audioConnectionHandler =
             ConnectionHandler(
                 coroutineScope = scope,
-                connectLambda = {
+                hosts = setOf(checkNotNull(currentAddress)),
+                connectLambda = { host ->
+                    var result = false
                     networkClient.webSocket(
                         method = HttpMethod.Get,
-                        host = checkNotNull(currentAddress).hostAddress,
+                        host = host.hostAddress,
                         port = Constants.WEBSOCKET_PORT,
                         path = Endpoints.STREAM_AUDIO,
                     ) {
                         dataSource.setIsStreamingAudio(true)
-                        audioStreamingClientWebSocket()
+                        result = audioStreamingClientWebSocket()
                     }
+                    result
                 },
                 onDisconnected = {
                     dataSource.setIsStreamingAudio(false)
@@ -165,16 +173,19 @@ internal class DefaultNetworkClientRepository(
         videoConnectionHandler =
             ConnectionHandler(
                 coroutineScope = scope,
-                connectLambda = {
+                hosts = setOf(checkNotNull(currentAddress)),
+                connectLambda = { host ->
+                    var result = false
                     networkClient.webSocket(
                         method = HttpMethod.Get,
-                        host = checkNotNull(currentAddress).hostAddress,
+                        host = host.hostAddress,
                         port = Constants.WEBSOCKET_PORT,
                         path = Endpoints.STREAM_VIDEO,
                     ) {
                         dataSource.setIsStreamingVideo(true)
-                        videoStreamingClientWebSocket()
+                        result = videoStreamingClientWebSocket()
                     }
+                    result
                 },
                 onDisconnected = {
                     dataSource.setIsStreamingVideo(false)
@@ -279,6 +290,11 @@ internal class DefaultNetworkClientRepository(
                 is CancellationException -> {
                     Logger.i(TAG) { "Connection closed by client." }
                     NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
+                }
+
+                is SocketException -> {
+                    Logger.i(TAG) { "Connection closed: ${exception.message}" }
+                    NetworkState.Disconnected(NetworkState.ErrorReason.ConnectionFailed, exception)
                 }
 
                 else -> {

@@ -1,27 +1,20 @@
 package org.vpilo.babymonitor.network.client.websockets
 
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.channels.ClosedSendChannelException
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.network.client.NetworkVideoDataSource
 import org.vpilo.babymonitor.network.common.protocol.protocolReceiveVideo
-import kotlin.coroutines.cancellation.CancellationException
 
-internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket() {
-    Logger.d(TAG) { "Connection established" }
-
+internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket(): Boolean {
     val dataSource = KoinPlatform.getKoin().get<NetworkVideoDataSource>()
 
-    runCatching {
+    Logger.d(TAG) { "Connection established" }
+
+    return catchSessionResult(TAG) {
         while (true) {
             val frame = protocolReceiveVideo()
             dataSource.onChunkReceived(frame)
-        }
-    }.onFailure { ex ->
-        if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-            Logger.w(TAG) { "WebSocket closed (${ex::class.simpleName}): ${ex.localizedMessage}" }
         }
     }
 }
