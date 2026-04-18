@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.app.menu
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.settings.model.PlatformAvailability
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.isSupportedOnCurrentPlatform
+import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import org.vpilo.babymonitor.settings.presentation.composables.MenuItem
 import org.vpilo.babymonitor.settings.presentation.composables.MenuSettingEnumItem
@@ -38,6 +40,10 @@ fun AppMenuContents(
             onClick = {
                 onNavigateTo(Route.CameraSelection)
             },
+        )
+        MenuSettingItem(
+            setting = Setting.RelayHost,
+            imageVector = Icons.Default.Cloud,
         )
     } else {
         MenuSettingEnumItem(

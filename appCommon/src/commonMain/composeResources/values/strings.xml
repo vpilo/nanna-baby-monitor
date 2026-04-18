@@ -38,4 +38,7 @@
     <string name="client_play_video">Start showing the camera</string>
     <string name="client_pause_audio">Stop listening</string>
     <string name="client_pause_video">Stop showing the camera</string>
+
+    <string name="relay_host_title">Remote relay hostname</string>
+    <string name="relay_host_description">DDNS hostname for remote access (e.g. myhome.dyndns.com)</string>
 </resources>
