@@ -8,7 +8,6 @@ import org.vpilo.babymonitor.data.di.dataKoinModule
 import org.vpilo.babymonitor.di.appSharedKoinModules
 import org.vpilo.babymonitor.network.di.networkClientKoinModule
 import org.vpilo.babymonitor.network.di.networkServerKoinModule
-import org.vpilo.babymonitor.presentation.di.presentationKoinModule
 import org.vpilo.babymonitor.settings.data.di.settingsDataKoinModule
 import org.vpilo.babymonitor.settings.presentation.di.settingsPresentationKoinModule
 
@@ -18,7 +17,6 @@ fun initializeKoin(config: KoinAppDeclaration? = null) {
         modules(
             listOf(
                 dataKoinModule,
-                presentationKoinModule,
                 cameraDataKoinModule,
                 cameraPresentationKoinModule,
                 networkClientKoinModule,

@@ -1,6 +1,5 @@
 package org.vpilo.babymonitor.app.menu
 
-import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 

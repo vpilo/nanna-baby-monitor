@@ -19,7 +19,6 @@ import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,6 +42,7 @@ import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSo
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -129,7 +129,7 @@ internal class DefaultNetworkServerRepository(
             deviceStateMonitor?.cancel()
             deviceStateMonitor = null
             discoveryManager.unregisterService()
-            server?.stop(gracePeriodMillis = 1000, timeoutMillis = 5000)
+            server?.stop(shutdownGracePeriod = STOP_GRACE_PERIOD_SECONDS, STOP_TIMEOUT_SECONDS, timeUnit = TimeUnit.SECONDS)
             server = null
             state.update { it.copy(isAvailable = false) }
         }
@@ -202,5 +202,8 @@ internal class DefaultNetworkServerRepository(
 
     private companion object {
         private val TAG = DefaultNetworkServerRepository::class
+
+        private const val STOP_GRACE_PERIOD_SECONDS = 1L
+        private const val STOP_TIMEOUT_SECONDS = 5L
     }
 }

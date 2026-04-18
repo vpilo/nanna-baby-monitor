@@ -44,6 +44,11 @@ fun AppPreviewTheme(
                                         value: T,
                                     ) = Unit
 
+                                    override fun <T : Any> saveDelayed(
+                                        setting: Setting<T>,
+                                        value: T,
+                                    ) = Unit
+
                                     override suspend fun <T : Any> clear(setting: Setting<T>) = Unit
                                 }
                             }

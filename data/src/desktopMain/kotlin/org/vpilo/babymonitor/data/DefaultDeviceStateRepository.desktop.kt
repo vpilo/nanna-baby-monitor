@@ -10,7 +10,6 @@ import org.vpilo.babymonitor.model.repository.DEVICE_STATE_UPDATE_INTERVAL
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import oshi.SystemInfo
 import java.io.File
-import kotlin.time.Duration.Companion.minutes
 
 internal actual class DefaultDeviceStateRepository : DeviceStateRepository {
     // Get a new Oshi instance every time, as it will cache data.

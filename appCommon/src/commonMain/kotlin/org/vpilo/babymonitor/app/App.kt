@@ -1,12 +1,9 @@
 package org.vpilo.babymonitor.app
 
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -28,7 +25,6 @@ import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheck
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.AppTheme
-import org.vpilo.babymonitor.presentation.Theme
 
 private const val TAG = "App"
 

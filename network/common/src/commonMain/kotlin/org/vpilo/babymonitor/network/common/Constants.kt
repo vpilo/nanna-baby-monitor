@@ -1,7 +1,5 @@
 package org.vpilo.babymonitor.network.common
 
-import java.net.InetAddress
-
 object Constants {
     const val WEBSOCKET_PORT = 47812
 

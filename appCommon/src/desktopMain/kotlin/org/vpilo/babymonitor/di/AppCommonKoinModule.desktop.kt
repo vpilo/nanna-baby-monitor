@@ -5,5 +5,5 @@ import org.koin.dsl.module
 
 actual val appPlatformModule: Module =
     module {
-        // Nothing yet
+        // Nothing for this platform.
     }

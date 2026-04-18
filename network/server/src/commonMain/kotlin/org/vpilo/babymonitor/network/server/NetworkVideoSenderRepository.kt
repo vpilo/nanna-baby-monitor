@@ -3,12 +3,9 @@ package org.vpilo.babymonitor.network.server
 import kotlinx.coroutines.flow.asSharedFlow
 import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
 import org.vpilo.babymonitor.codec.VideoEncoder
-import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.MediaFormats
-import org.vpilo.babymonitor.model.MutableStreamingVideoFlow
 import org.vpilo.babymonitor.model.StreamingVideoFlow
-import org.vpilo.babymonitor.model.makeMutableStreamingVideoFlow
 import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import kotlin.coroutines.CoroutineContext

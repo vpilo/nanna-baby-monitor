@@ -22,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
-import org.vpilo.babymonitor.presentation.AppTheme
 
 @Composable
 inline fun <reified E : Enum<*>> ThemedDropDownMenu(

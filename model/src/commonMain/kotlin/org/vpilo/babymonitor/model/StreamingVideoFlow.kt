@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.model
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 
 typealias StreamingVideoFlow = Flow<EncodedVideoStreamChunk>
 typealias MutableStreamingVideoFlow = MutableSharedFlow<EncodedVideoStreamChunk>

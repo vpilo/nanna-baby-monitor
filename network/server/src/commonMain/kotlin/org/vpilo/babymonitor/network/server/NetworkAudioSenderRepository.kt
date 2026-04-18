@@ -5,13 +5,10 @@ import org.vpilo.babymonitor.camera.model.AudioCaptureRepository
 import org.vpilo.babymonitor.codec.AudioEncoder
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.MediaFormats
-import org.vpilo.babymonitor.model.MutableStreamingAudioFlow
 import org.vpilo.babymonitor.model.StreamingAudioFlow
-import org.vpilo.babymonitor.model.makeMutableStreamingAudioFlow
 import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import kotlin.coroutines.CoroutineContext
-import kotlin.reflect.KClass
 
 internal class NetworkAudioSenderRepository(
     audioRepository: AudioCaptureRepository,
