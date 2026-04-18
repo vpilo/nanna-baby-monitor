@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.network.relay.di
 
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
@@ -17,6 +18,6 @@ val networkRelayKoinModule: Module =
                 secret = deriveSecret(RELAY_PASSWORD),
             )
         }
-        single { DiscoveryManager() }
+        singleOf(::DiscoveryManager)
         single { DefaultNetworkRelayRepository(get(), get(), get()) }
     }

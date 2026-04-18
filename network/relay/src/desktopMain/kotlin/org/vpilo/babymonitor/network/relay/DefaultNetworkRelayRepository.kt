@@ -48,6 +48,7 @@ class DefaultNetworkRelayRepository(
         }
 
     fun start() {
+        if (server != null) return
         discoveryManager.discoveredServers
             .onEach { currentServers.value = it }
             .launchIn(scope)
