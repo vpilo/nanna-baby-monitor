@@ -64,7 +64,8 @@ fun CameraSelectionScreen(
         CameraSelectionScreenContent(
             modifier = modifier.fillMaxSize(),
             networkState = state.networkState,
-            servers = state.availableServers,
+            localServers = state.localServers,
+            relayServers = state.relayServers,
             onConnectRequested = { viewModel.send(CameraSelectionScreenAction.ConnectToServer(it)) },
         )
     }
@@ -74,7 +75,8 @@ fun CameraSelectionScreen(
 private fun CameraSelectionScreenContent(
     modifier: Modifier = Modifier,
     networkState: NetworkState,
-    servers: Set<ServerId>,
+    localServers: Set<ServerId>,
+    relayServers: Set<ServerId>,
     onConnectRequested: (server: ServerId) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
@@ -101,7 +103,7 @@ private fun CameraSelectionScreenContent(
                     .fillMaxWidth(fraction = .75f)
                     .align(Alignment.CenterHorizontally),
         ) {
-            if (servers.isEmpty()) {
+            if (localServers.isEmpty() && relayServers.isEmpty()) {
                 item {
                     Text(
                         text = stringResource(Res.string.client_connection_chooser_no_servers_found),
@@ -110,23 +112,57 @@ private fun CameraSelectionScreenContent(
                     LoadingBox()
                 }
             }
-            items(items = servers.toList()) { server ->
-                Button(
-                    enabled = networkState !is NetworkState.Connecting,
-                    onClick = { onConnectRequested(server) },
-                    modifier = Modifier,
-                ) {
+
+            if (localServers.isNotEmpty()) {
+                item {
                     Text(
-                        modifier = Modifier.padding(Theme.Paddings.Small),
-                        text = server.name,
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "Local",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = Theme.Paddings.Small),
                     )
-                    if ((networkState as? NetworkState.Connecting)?.server == server) {
-                        LoadingIcon()
-                    }
                 }
-                Spacer(modifier = Modifier.size(Theme.Paddings.Tiny))
+                items(items = localServers.toList()) { server ->
+                    ServerButton(server, networkState, onConnectRequested)
+                    Spacer(modifier = Modifier.size(Theme.Paddings.Tiny))
+                }
             }
+
+            if (relayServers.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Remote",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = Theme.Paddings.Small),
+                    )
+                }
+                items(items = relayServers.toList()) { server ->
+                    ServerButton(server, networkState, onConnectRequested)
+                    Spacer(modifier = Modifier.size(Theme.Paddings.Tiny))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ServerButton(
+    server: ServerId,
+    networkState: NetworkState,
+    onConnectRequested: (ServerId) -> Unit,
+) {
+    Button(
+        enabled = networkState !is NetworkState.Connecting,
+        onClick = { onConnectRequested(server) },
+    ) {
+        Text(
+            modifier = Modifier.padding(Theme.Paddings.Small),
+            text = server.name,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        if ((networkState as? NetworkState.Connecting)?.server == server) {
+            LoadingIcon()
         }
     }
 }
@@ -187,7 +223,8 @@ private fun CameraSelectionScreenPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
             networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
-            servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
+            localServers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
+            relayServers = emptySet(),
             onConnectRequested = {},
         )
     }
@@ -198,7 +235,8 @@ private fun CameraSelectionScreenConnectingPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
             networkState = NetworkState.Connecting(ServerId("Bedroom Camera")),
-            servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
+            localServers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
+            relayServers = emptySet(),
             onConnectRequested = {},
         )
     }
@@ -209,7 +247,8 @@ private fun CameraSelectionScreenNoServersPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
             networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
-            servers = emptySet(),
+            localServers = emptySet(),
+            relayServers = emptySet(),
             onConnectRequested = {},
         )
     }
