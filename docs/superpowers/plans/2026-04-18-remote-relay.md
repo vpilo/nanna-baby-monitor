@@ -23,9 +23,10 @@
 - `appRelay/build.gradle.kts`
 - `appRelay/src/desktopMain/kotlin/org/vpilo/babymonitor/relay/Main.kt`
 - `appRelay/src/desktopMain/resources/relay.p12` (generated binary)
-- `network/client/src/commonMain/resources/relay.crt` (generated)
+- `network/common/src/commonMain/resources/relay.crt` (generated)
 - `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayHandshake.kt`
-- `network/client/src/commonMain/kotlin/org/vpilo/babymonitor/network/client/RelayTrustManager.kt`
+- `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayTrustManager.kt`
+- `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayHttpClient.kt`
 - `network/client/src/commonMain/kotlin/org/vpilo/babymonitor/network/client/RelayDiscoverySource.kt`
 - `network/client/src/commonMain/kotlin/org/vpilo/babymonitor/network/client/RelayConnectionHandler.kt`
 
@@ -47,13 +48,13 @@
 
 **Files:**
 - Create: `appRelay/src/desktopMain/resources/relay.p12`
-- Create: `network/client/src/commonMain/resources/relay.crt`
+- Create: `network/common/src/commonMain/resources/relay.crt`
 
 - [ ] **Step 1: Create resource directories**
 
 ```bash
 mkdir -p appRelay/src/desktopMain/resources
-mkdir -p network/client/src/commonMain/resources
+mkdir -p network/common/src/commonMain/resources
 ```
 
 - [ ] **Step 2: Generate self-signed cert + private key**
@@ -85,16 +86,16 @@ Expected: `appRelay/src/desktopMain/resources/relay.p12` created.
 - [ ] **Step 4: Copy public cert for client pinning**
 
 ```bash
-cp /tmp/relay-cert.pem network/client/src/commonMain/resources/relay.crt
+cp /tmp/relay-cert.pem network/common/src/commonMain/resources/relay.crt
 ```
 
-Expected: `network/client/src/commonMain/resources/relay.crt` exists.
+Expected: `network/common/src/commonMain/resources/relay.crt` exists.
 
 - [ ] **Step 5: Verify files**
 
 ```bash
 openssl pkcs12 -info -in appRelay/src/desktopMain/resources/relay.p12 -passin pass:babymonitor -noout
-openssl x509 -in network/client/src/commonMain/resources/relay.crt -noout -subject -enddate
+openssl x509 -in network/common/src/commonMain/resources/relay.crt -noout -subject -enddate
 ```
 
 Expected: no errors; subject shows `CN=babymonitor-relay`; enddate is ~10 years out.
@@ -103,7 +104,7 @@ Expected: no errors; subject shows `CN=babymonitor-relay`; enddate is ~10 years 
 
 ```bash
 git add appRelay/src/desktopMain/resources/relay.p12
-git add network/client/src/commonMain/resources/relay.crt
+git add network/common/src/commonMain/resources/relay.crt
 git commit -m "feat: add pre-generated TLS certificate for relay"
 ```
 
@@ -236,10 +237,23 @@ Expected: task list includes `run`.
 ## Task 5: network:common additions
 
 **Files:**
+- Modify: `network/common/build.gradle.kts`
 - Modify: `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/Constants.kt`
 - Create: `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayHandshake.kt`
+- Create: `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayTrustManager.kt`
+- Create: `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayHttpClient.kt`
 
-- [ ] **Step 1: Add RELAY_PORT to Constants.kt**
+- [ ] **Step 1: Add ktor-client dependencies to network:common/build.gradle.kts**
+
+In `network/common/build.gradle.kts`, add to `commonMain.dependencies`:
+
+```kotlin
+implementation(libs.bundles.ktor.client)
+```
+
+This gives `network:common` (and its dependents) `ktor-client-core`, `ktor-client-cio`, and `ktor-client-websockets` — needed for `relayHttpClient`.
+
+- [ ] **Step 2: Add RELAY_PORT to Constants.kt**
 
 In `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/Constants.kt`, add after `WEBSOCKET_PORT`:
 
@@ -247,7 +261,9 @@ In `network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/Co
 const val RELAY_PORT = 47814
 ```
 
-- [ ] **Step 2: Create RelayHandshake.kt**
+- [ ] **Step 3: Create RelayHandshake.kt**
+
+Constants live in a `private companion object` inside `RelayHandshake`. `HANDSHAKE_TIMEOUT` is a `Duration` — `withTimeoutOrNull` has a `Duration` overload. `RELAY_PASSWORD` is the shared secret string used by both relay server and client.
 
 ```kotlin
 package org.vpilo.babymonitor.network.common
@@ -257,18 +273,21 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readBytes
 import kotlinx.coroutines.withTimeoutOrNull
 import java.security.MessageDigest
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
-private const val HANDSHAKE_SIZE = 256
-private const val HANDSHAKE_TIMEOUT_MS = 2_000L
+private const val RELAY_PASSWORD = "babymonitor-relay-secret"
 
 fun deriveSecret(password: String): ByteArray {
     val hash = MessageDigest.getInstance("SHA-256").digest(password.toByteArray(Charsets.UTF_8))
-    return ByteArray(HANDSHAKE_SIZE) { hash[it % hash.size] }
+    return ByteArray(RelayHandshake.HANDSHAKE_SIZE) { hash[it % hash.size] }
 }
 
 object RelayHandshake {
+    const val HANDSHAKE_SIZE = 256
+
     suspend fun await(session: WebSocketSession, secret: ByteArray): Boolean {
-        val frame = withTimeoutOrNull(HANDSHAKE_TIMEOUT_MS) {
+        val frame = withTimeoutOrNull(HANDSHAKE_TIMEOUT) {
             session.incoming.receive()
         } ?: return false
         val data = frame.readBytes()
@@ -279,10 +298,73 @@ object RelayHandshake {
     suspend fun send(session: WebSocketSession, secret: ByteArray) {
         session.send(Frame.Binary(fin = true, data = secret))
     }
+
+    private val HANDSHAKE_TIMEOUT: Duration = 2.seconds
 }
 ```
 
-- [ ] **Step 3: Compile network:common**
+- [ ] **Step 4: Create RelayTrustManager.kt**
+
+`RelayTrustManager` moves to `network:common` so both `network:client` (consumer) and any other module can share it. `relay.crt` is in `network:common/src/commonMain/resources/`.
+
+```kotlin
+package org.vpilo.babymonitor.network.common
+
+import java.security.cert.CertificateException
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+import javax.net.ssl.X509TrustManager
+
+class RelayTrustManager : X509TrustManager {
+    private val pinnedCert: X509Certificate = loadPinnedCert()
+
+    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
+
+    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+        if (chain.isNullOrEmpty()) throw CertificateException("No certificate chain")
+        if (!chain[0].encoded.contentEquals(pinnedCert.encoded)) {
+            throw CertificateException("Relay certificate does not match pinned certificate")
+        }
+    }
+
+    override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+
+    private companion object {
+        fun loadPinnedCert(): X509Certificate {
+            val stream = checkNotNull(
+                RelayTrustManager::class.java.classLoader.getResourceAsStream("relay.crt")
+            ) { "relay.crt not found in resources" }
+            return CertificateFactory.getInstance("X.509")
+                .generateCertificate(stream) as X509Certificate
+        }
+    }
+}
+```
+
+- [ ] **Step 5: Create RelayHttpClient.kt**
+
+A single shared `HttpClient` with `RelayTrustManager` pinning, used by `RelayDiscoverySource` and `DefaultNetworkClientRepository` in `network:client`. Lazily initialized at package level.
+
+```kotlin
+package org.vpilo.babymonitor.network.common
+
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.websocket.WebSockets
+
+val relayHttpClient: HttpClient by lazy {
+    HttpClient(CIO) {
+        install(WebSockets)
+        engine {
+            https {
+                trustManager = RelayTrustManager()
+            }
+        }
+    }
+}
+```
+
+- [ ] **Step 6: Compile network:common**
 
 ```bash
 ./gradlew :network:common:compileKotlinDesktop --quiet
@@ -290,12 +372,23 @@ object RelayHandshake {
 
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 7: Compile network:common for Android**
 
 ```bash
+./gradlew :network:common:compileAndroidMain --quiet
+```
+
+Expected: BUILD SUCCESSFUL.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add network/common/build.gradle.kts
 git add network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/Constants.kt
 git add network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayHandshake.kt
-git commit -m "feat: add RELAY_PORT constant and RelayHandshake to network:common"
+git add network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayTrustManager.kt
+git add network/common/src/commonMain/kotlin/org/vpilo/babymonitor/network/common/RelayHttpClient.kt
+git commit -m "feat: add relay crypto, TLS trust manager, and shared relay HTTP client to network:common"
 ```
 
 ---
@@ -375,17 +468,18 @@ internal object ProxySession {
 package org.vpilo.babymonitor.network.relay
 
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.engine.cio.CIO as ClientCIO
+import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.install
-import io.ktor.server.cio.CIO as ServerCIO
+import io.ktor.server.cio.CIO
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
 import io.ktor.server.routing.routing
-import io.ktor.server.websocket.WebSockets as ServerWebSockets
+import io.ktor.server.websocket.WebSocketServerSession
+import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
@@ -400,14 +494,12 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
+import org.vpilo.babymonitor.network.common.RELAY_PASSWORD
 import org.vpilo.babymonitor.network.common.RelayHandshake
+import org.vpilo.babymonitor.network.common.deriveSecret
 import java.security.KeyStore
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
-
-private const val KEYSTORE_RESOURCE = "relay.p12"
-private const val KEYSTORE_PASSWORD = "babymonitor"
-private const val KEYSTORE_ALIAS = "relay"
 
 class DefaultNetworkRelayRepository(
     private val discoveryManager: DiscoveryManager,
@@ -419,8 +511,8 @@ class DefaultNetworkRelayRepository(
 
     private val currentServers = MutableStateFlow<Set<DiscoveredServer>>(emptySet())
 
-    private val localClient = HttpClient(CIO) {
-        install(WebSockets)
+    private val localClient = HttpClient(ClientCIO) {
+        install(ClientWebSockets)
     }
 
     fun start() {
@@ -431,7 +523,7 @@ class DefaultNetworkRelayRepository(
         val keyStore = loadKeyStore()
 
         server = embeddedServer(
-            factory = ServerCIO,
+            factory = CIO,
             configure = {
                 sslConnector(
                     keyStore = keyStore,
@@ -443,7 +535,7 @@ class DefaultNetworkRelayRepository(
                 }
             },
             module = {
-                install(ServerWebSockets) {
+                install(WebSockets) {
                     pingPeriod = 30.seconds
                     timeout = 10.seconds
                 }
@@ -474,7 +566,7 @@ class DefaultNetworkRelayRepository(
         Logger.i(TAG) { "Relay started on port ${config.port}" }
     }
 
-    private suspend fun io.ktor.server.websocket.WebSocketServerSession.proxyEndpoint(endpoint: String) {
+    private suspend fun WebSocketServerSession.proxyEndpoint(endpoint: String) {
         if (!RelayHandshake.await(this, config.secret)) { close(); return }
         val serverId = call.parameters["serverId"] ?: run { close(); return }
         val serverAddress = currentServers.value
@@ -505,6 +597,9 @@ class DefaultNetworkRelayRepository(
 
     private companion object {
         private val TAG = DefaultNetworkRelayRepository::class
+        private const val KEYSTORE_RESOURCE = "relay.p12"
+        private const val KEYSTORE_PASSWORD = "babymonitor"
+        private const val KEYSTORE_ALIAS = "relay"
 
         fun loadKeyStore(): KeyStore {
             val stream = checkNotNull(
@@ -525,13 +620,12 @@ package org.vpilo.babymonitor.network.relay.di
 
 import org.koin.core.module.Module
 import org.koin.dsl.module
-import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Constants
+import org.vpilo.babymonitor.network.common.DiscoveryManager
+import org.vpilo.babymonitor.network.common.RELAY_PASSWORD
 import org.vpilo.babymonitor.network.common.deriveSecret
 import org.vpilo.babymonitor.network.relay.DefaultNetworkRelayRepository
 import org.vpilo.babymonitor.network.relay.RelayConfig
-
-private const val RELAY_PASSWORD = "babymonitor-relay-secret"
 
 val networkRelayKoinModule: Module = module {
     single {
@@ -609,71 +703,9 @@ git commit -m "feat: add appRelay entry point"
 
 ---
 
-## Task 8: Client TLS trust manager
+## Task 8: ~~Client TLS trust manager~~ (merged into Task 5)
 
-**Files:**
-- Create: `network/client/src/commonMain/kotlin/org/vpilo/babymonitor/network/client/RelayTrustManager.kt`
-
-- [ ] **Step 1: Create RelayTrustManager.kt**
-
-`javax.net.ssl.*` and `java.security.cert.*` are available in `commonMain` on both JVM and Android — no expect/actual needed.
-
-```kotlin
-package org.vpilo.babymonitor.network.client
-
-import java.security.cert.CertificateException
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
-import javax.net.ssl.X509TrustManager
-
-internal class RelayTrustManager : X509TrustManager {
-    private val pinnedCert: X509Certificate = loadPinnedCert()
-
-    override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) = Unit
-
-    override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-        if (chain.isNullOrEmpty()) throw CertificateException("No certificate chain")
-        if (!chain[0].encoded.contentEquals(pinnedCert.encoded)) {
-            throw CertificateException("Relay certificate does not match pinned certificate")
-        }
-    }
-
-    override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
-
-    private companion object {
-        fun loadPinnedCert(): X509Certificate {
-            val stream = checkNotNull(
-                RelayTrustManager::class.java.classLoader.getResourceAsStream("relay.crt")
-            ) { "relay.crt not found in resources" }
-            return CertificateFactory.getInstance("X.509")
-                .generateCertificate(stream) as X509Certificate
-        }
-    }
-}
-```
-
-- [ ] **Step 2: Compile network:client**
-
-```bash
-./gradlew :network:client:compileKotlinDesktop --quiet
-```
-
-Expected: BUILD SUCCESSFUL.
-
-- [ ] **Step 3: Compile for Android**
-
-```bash
-./gradlew :network:client:compileAndroidMain --quiet
-```
-
-Expected: BUILD SUCCESSFUL.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add network/client/src/commonMain/kotlin/org/vpilo/babymonitor/network/client/RelayTrustManager.kt
-git commit -m "feat: add RelayTrustManager with cert pinning"
-```
+`RelayTrustManager` and `relayHttpClient` live in `network:common` (Task 5). Both `network:client` and `network:relay` import them from there. No additional work required in this task.
 
 ---
 
@@ -767,9 +799,6 @@ git commit -m "feat: add RelayHost setting and menu item"
 ```kotlin
 package org.vpilo.babymonitor.network.client
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.websocket.Frame
@@ -784,6 +813,7 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
+import org.vpilo.babymonitor.network.common.relayHttpClient
 import kotlin.time.Duration.Companion.seconds
 
 internal class RelayDiscoverySource(
@@ -794,17 +824,6 @@ internal class RelayDiscoverySource(
 
     private var relayHost: String = ""
     private var discoveryJob: Job? = null
-
-    private val client: HttpClient by lazy {
-        HttpClient(CIO) {
-            install(WebSockets)
-            engine {
-                https {
-                    trustManager = RelayTrustManager()
-                }
-            }
-        }
-    }
 
     fun updateRelayHost(host: String, scope: CoroutineScope) {
         relayHost = host
@@ -817,7 +836,7 @@ internal class RelayDiscoverySource(
     private suspend fun runDiscoveryLoop() {
         while (true) {
             try {
-                client.wss(
+                relayHttpClient.wss(
                     method = HttpMethod.Get,
                     host = relayHost,
                     port = Constants.RELAY_PORT,
@@ -975,6 +994,8 @@ interface NetworkClientRepository {
     fun enableAudio(enable: Boolean)
 
     fun enableVideo(enable: Boolean)
+
+    fun setRelayHost(host: String)
 }
 ```
 
@@ -1028,7 +1049,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
@@ -1042,8 +1062,10 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
+import org.vpilo.babymonitor.network.common.RELAY_PASSWORD
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSecret
+import org.vpilo.babymonitor.network.common.relayHttpClient
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
@@ -1053,8 +1075,6 @@ import java.net.SocketException
 import javax.net.ssl.SSLException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
-
-private const val RELAY_PASSWORD = "babymonitor-relay-secret"
 
 internal class DefaultNetworkClientRepository(
     discoveryManager: DiscoveryManager,
@@ -1066,15 +1086,6 @@ internal class DefaultNetworkClientRepository(
 
     private val networkClient: HttpClient by lazy {
         HttpClient(CIO) { install(WebSockets) }
-    }
-
-    private val relayNetworkClient: HttpClient by lazy {
-        HttpClient(CIO) {
-            install(WebSockets)
-            engine {
-                https { trustManager = RelayTrustManager() }
-            }
-        }
     }
 
     private val secret = deriveSecret(RELAY_PASSWORD)
@@ -1115,14 +1126,11 @@ internal class DefaultNetworkClientRepository(
         discoveryManager.discoveredServers
             .onEach { _localServers.value = it }
             .launchIn(scope)
+    }
 
-        settingsRepository
-            .flowOf(Setting.RelayHost)
-            .onEach { host ->
-                relayHost = host
-                relayDiscoverySource.updateRelayHost(host, scope)
-            }
-            .launchIn(scope)
+    override fun setRelayHost(host: String) {
+        relayHost = host
+        relayDiscoverySource.updateRelayHost(host, scope)
     }
 
     override suspend fun connect(server: ServerId) {
@@ -1144,7 +1152,7 @@ internal class DefaultNetworkClientRepository(
                 coroutineScope = scope,
                 connectLambda = {
                     var result = false
-                    relayNetworkClient.wss(
+                    relayHttpClient.wss(
                         method = HttpMethod.Get,
                         host = relayHost,
                         port = Constants.RELAY_PORT,
@@ -1197,7 +1205,7 @@ internal class DefaultNetworkClientRepository(
                 coroutineScope = scope,
                 connectLambda = {
                     var result = false
-                    relayNetworkClient.wss(
+                    relayHttpClient.wss(
                         method = HttpMethod.Get,
                         host = relayHost,
                         port = Constants.RELAY_PORT,
@@ -1257,7 +1265,7 @@ internal class DefaultNetworkClientRepository(
                 coroutineScope = scope,
                 connectLambda = {
                     var result = false
-                    relayNetworkClient.wss(
+                    relayHttpClient.wss(
                         method = HttpMethod.Get,
                         host = relayHost,
                         port = Constants.RELAY_PORT,
@@ -1401,33 +1409,6 @@ internal class DefaultNetworkClientRepository(
 }
 ```
 
-Note: `Setting.RelayHost` is in `appCommon` but `network:client` doesn't depend on `appCommon`. The relay host must instead be read via `SettingsRepository` with the same `SettingId("relay_host")`. Replace the `settingsRepository.flowOf(Setting.RelayHost)` line with:
-
-```kotlin
-import org.vpilo.babymonitor.model.settings.SettingId
-import org.vpilo.babymonitor.settings.model.makePrimitiveSetting
-
-// In init block, replace Setting.RelayHost with:
-settingsRepository
-    .flowOf(Setting.makePrimitive(id = SettingId("relay_host"), default = ""))
-    .onEach { host ->
-        relayHost = host
-        relayDiscoverySource.updateRelayHost(host, scope)
-    }
-    .launchIn(scope)
-```
-
-Check what API `SettingsRepository` exposes for ad-hoc settings access — if `flowOf` requires a registered `Setting` instance, use the same approach as `AppSettings.kt` to get the exact `Setting` object. Alternatively, move `Setting.RelayHost` to `settings:model` so `network:client` can depend on it. If neither approach compiles cleanly, declare a `companion val relayHostSetting` at the top of `DefaultNetworkClientRepository.kt`:
-
-```kotlin
-private val relayHostSetting = Setting.makePrimitive(
-    id = SettingId("relay_host"),
-    default = "",
-)
-```
-
-And use `settingsRepository.flowOf(relayHostSetting)`.
-
 - [ ] **Step 2: Compile network:client**
 
 ```bash
@@ -1453,14 +1434,47 @@ git commit -m "feat: wire relay discovery and routing into DefaultNetworkClientR
 
 ---
 
-## Task 14: CameraSelectionScreen update
+## Task 14: CameraSelectionScreen update + relay host wiring
 
 **Files:**
+- Modify: `appCommon/src/commonMain/kotlin/org/vpilo/babymonitor/app/clienthome/ClientHomeScreenViewModel.kt`
 - Modify: `appCommon/src/commonMain/kotlin/org/vpilo/babymonitor/app/cameraselection/CameraSelectionScreenState.kt`
 - Modify: `appCommon/src/commonMain/kotlin/org/vpilo/babymonitor/app/cameraselection/CameraSelectionScreenViewModel.kt`
 - Modify: `appCommon/src/commonMain/kotlin/org/vpilo/babymonitor/app/cameraselection/CameraSelectionScreen.kt`
 
-- [ ] **Step 1: Update CameraSelectionScreenState.kt**
+- [ ] **Step 1: Wire relay host from ClientHomeScreenViewModel**
+
+Open `appCommon/src/commonMain/kotlin/org/vpilo/babymonitor/app/clienthome/ClientHomeScreenViewModel.kt`. In `SubscriptionScope.onSubscribed()` (or equivalent init block), observe `Setting.RelayHost` from `settingsRepository` and forward changes to `networkClientRepository.setRelayHost`:
+
+```kotlin
+settingsRepository
+    .flowOf(Setting.RelayHost)
+    .onEach { host -> networkClientRepository.setRelayHost(host) }
+    .launchIn(vmScope)
+```
+
+Add required imports if missing:
+```kotlin
+import org.vpilo.babymonitor.app.settings.RelayHost
+import org.vpilo.babymonitor.settings.model.Setting
+```
+
+- [ ] **Step 2: Compile appCommon**
+
+```bash
+./gradlew :appCommon:compileKotlinDesktop --quiet
+```
+
+Expected: BUILD SUCCESSFUL.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add appCommon/src/commonMain/kotlin/org/vpilo/babymonitor/app/clienthome/ClientHomeScreenViewModel.kt
+git commit -m "feat: forward RelayHost setting changes to NetworkClientRepository"
+```
+
+- [ ] **Step 4: Update CameraSelectionScreenState.kt** (renumbered from original Step 1)
 
 ```kotlin
 package org.vpilo.babymonitor.app.cameraselection
@@ -1475,7 +1489,7 @@ data class CameraSelectionScreenState(
 )
 ```
 
-- [ ] **Step 2: Update CameraSelectionScreenViewModel.kt**
+- [ ] **Step 5: Update CameraSelectionScreenViewModel.kt**
 
 ```kotlin
 package org.vpilo.babymonitor.app.cameraselection
@@ -1522,7 +1536,7 @@ class CameraSelectionScreenViewModel(
 }
 ```
 
-- [ ] **Step 3: Update CameraSelectionScreen.kt**
+- [ ] **Step 6: Update CameraSelectionScreen.kt**
 
 Replace the `CameraSelectionScreenContent` composable and its call site. The existing `CameraSelectionScreen` composable keeps the same signature. Only `CameraSelectionScreenContent` changes — it now takes `localServers` and `relayServers` instead of a single `servers` set.
 
@@ -1639,7 +1653,7 @@ private fun ServerButton(
 
 Also update the `@Preview` functions to pass `localServers` / `relayServers` instead of `servers`.
 
-- [ ] **Step 4: Compile appCommon**
+- [ ] **Step 7: Compile appCommon**
 
 ```bash
 ./gradlew :appCommon:compileKotlinDesktop --quiet
@@ -1647,7 +1661,7 @@ Also update the `@Preview` functions to pass `localServers` / `relayServers` ins
 
 Fix any compilation errors before continuing.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add appCommon/src/commonMain/kotlin/org/vpilo/babymonitor/app/cameraselection/
