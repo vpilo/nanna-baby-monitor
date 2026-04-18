@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +16,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -33,12 +33,17 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
+import org.vpilo.babymonitor.network.common.RELAY_PASSWORD
+import org.vpilo.babymonitor.network.common.RelayHandshake
+import org.vpilo.babymonitor.network.common.deriveSecret
+import org.vpilo.babymonitor.network.common.relayHttpClient
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.SocketException
+import javax.net.ssl.SSLException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -62,14 +67,16 @@ internal class DefaultNetworkClientRepository(
 
     override val serverStateFlow: StateFlow<ServerState> = dataSource.serverState
 
-    override val discoveredServerIdsFlow: Flow<Set<ServerId>> =
-        discoveryManager.discoveredServers
-            .onEach {
-                Logger.d(TAG) { "Discovered servers updated: ${it.joinToString()}" }
-            }.map { server -> server.map { it.id }.toSet() }
+    private val localServers = MutableStateFlow<Set<DiscoveredServer>>(emptySet())
+    override val localServerIdsFlow: Flow<Set<ServerId>> = localServers.map { set -> set.map { it.id }.toSet() }
 
-    private val discoveredServersFlow: Flow<Set<DiscoveredServer>> =
-        discoveryManager.discoveredServers
+    private val secret = deriveSecret(RELAY_PASSWORD)
+    private val relayDiscoverySource = RelayDiscoverySource(secret)
+    override val relayServerIdsFlow: Flow<Set<ServerId>> = relayDiscoverySource.serverIds
+
+    private var relayHost: String = ""
+    private var isRelayConnection: Boolean = false
+    private var connectedServerId: ServerId? = null
 
     private var currentAddress: InetAddress? = null
     private var isAudioEnabled: Boolean = false
@@ -77,6 +84,9 @@ internal class DefaultNetworkClientRepository(
     private var controlConnectionHandler: ConnectionHandler? = null
     private var audioConnectionHandler: ConnectionHandler? = null
     private var videoConnectionHandler: ConnectionHandler? = null
+    private var relayControlHandler: RelayConnectionHandler? = null
+    private var relayAudioHandler: RelayConnectionHandler? = null
+    private var relayVideoHandler: RelayConnectionHandler? = null
     private var serverStateJob: Job? = null
 
     init {
@@ -84,56 +94,112 @@ internal class DefaultNetworkClientRepository(
             .flowOf(Setting.DeviceName)
             .onEach { discoveryManager.setDeviceName(it) }
             .launchIn(scope)
+
+        discoveryManager.discoveredServers
+            .onEach { localServers.value = it }
+            .launchIn(scope)
     }
 
     override suspend fun connect(server: ServerId) {
-        val addresses =
-            discoveredServersFlow
-                .first()
-                .firstOrNull { it.id == server }
-                ?.addresses
-                ?: run {
-                    Logger.w(TAG) { "Server with id ${server.name} not found among discovered servers." }
-                    connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
-                    return
-                }
+        val localServer = localServers.value.firstOrNull { it.id == server }
+        val isRelay = localServer == null && relayDiscoverySource.serverIds.value.contains(server)
 
-        controlConnectionHandler?.disconnect()
-        controlConnectionHandler =
-            ConnectionHandler(
-                coroutineScope = scope,
-                hosts = addresses,
-                connectLambda = { host ->
-                    Logger.i(TAG) { "Connecting to server $server" }
-                    var result = false
-                    networkClient.webSocket(
-                        method = HttpMethod.Get,
-                        host = host.hostAddress,
-                        port = Constants.WEBSOCKET_PORT,
-                        path = Endpoints.CONTROL,
-                    ) {
-                        onControlConnectionOpened(server, host)
-                        result = controlClientWebSocket()
-                    }
-                    result
-                },
-                onDisconnected = { ex ->
-                    onControlConnectionClosed(ex)
-                },
-            ).apply { connect() }
+        if (!isRelay && localServer == null) {
+            Logger.w(TAG) { "Server ${server.name} not found in local or relay servers." }
+            connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
+            return
+        }
+
+        isRelayConnection = isRelay
+        connectedServerId = server
+        closeAllConnections()
+
+        if (isRelay) {
+            relayControlHandler =
+                RelayConnectionHandler(
+                    coroutineScope = scope,
+                    connectLambda = {
+                        var result = false
+                        relayHttpClient.wss(
+                            method = HttpMethod.Get,
+                            host = relayHost,
+                            port = Constants.RELAY_PORT,
+                            path = "/relay${Endpoints.CONTROL}/${server.name}",
+                        ) {
+                            RelayHandshake.send(this, secret)
+                            onControlConnectionOpened(server, InetAddress.getByName(relayHost))
+                            result = controlClientWebSocket()
+                        }
+                        result
+                    },
+                    onDisconnected = { onControlConnectionClosed(it) },
+                ).apply { connect() }
+        } else {
+            val addresses = checkNotNull(localServer).addresses
+            controlConnectionHandler =
+                ConnectionHandler(
+                    coroutineScope = scope,
+                    hosts = addresses,
+                    connectLambda = { host ->
+                        Logger.i(TAG) { "Connecting to server $server" }
+                        var result = false
+                        networkClient.webSocket(
+                            method = HttpMethod.Get,
+                            host = host.hostAddress,
+                            port = Constants.WEBSOCKET_PORT,
+                            path = Endpoints.CONTROL,
+                        ) {
+                            onControlConnectionOpened(server, host)
+                            result = controlClientWebSocket()
+                        }
+                        result
+                    },
+                    onDisconnected = { onControlConnectionClosed(it) },
+                ).apply { connect() }
+        }
 
         connectionState.value = NetworkState.Connecting(server)
     }
 
     private fun startAudioStream() {
-        if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.VIDEO_ONLY) {
-            return
-        }
-        if (audioConnectionHandler != null) {
+        if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.VIDEO_ONLY) return
+        if (audioConnectionHandler != null || relayAudioHandler != null) {
             Logger.w(TAG) { "Audio stream is already running" }
             return
         }
+        if (isRelayConnection) startRelayAudioStream() else startLanAudioStream()
+        Logger.d(TAG) { "Audio stream started" }
+    }
 
+    private fun startRelayAudioStream() {
+        val serverId = checkNotNull(connectedServerId)
+        relayAudioHandler =
+            RelayConnectionHandler(
+                coroutineScope = scope,
+                connectLambda = {
+                    var result = false
+                    relayHttpClient.wss(
+                        method = HttpMethod.Get,
+                        host = relayHost,
+                        port = Constants.RELAY_PORT,
+                        path = "/relay${Endpoints.STREAM_AUDIO}/${serverId.name}",
+                    ) {
+                        RelayHandshake.send(this, secret)
+                        dataSource.setIsStreamingAudio(true)
+                        result = audioStreamingClientWebSocket()
+                    }
+                    result
+                },
+                onDisconnected = {
+                    dataSource.setIsStreamingAudio(false)
+                    Logger.i(TAG) { "Relay audio disconnected, reconnecting" }
+                    delay(1.seconds)
+                    relayAudioHandler?.connect()
+                },
+            ).apply { connect() }
+    }
+
+    private fun startLanAudioStream() {
         audioConnectionHandler =
             ConnectionHandler(
                 coroutineScope = scope,
@@ -158,18 +224,47 @@ internal class DefaultNetworkClientRepository(
                     audioConnectionHandler?.connect()
                 },
             ).apply { connect() }
-        Logger.d(TAG) { "Audio stream started" }
     }
 
     private fun startVideoStream() {
-        if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.AUDIO_ONLY) {
-            return
-        }
-        if (videoConnectionHandler != null) {
+        if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.AUDIO_ONLY) return
+        if (videoConnectionHandler != null || relayVideoHandler != null) {
             Logger.w(TAG) { "Video stream is already running" }
             return
         }
+        if (isRelayConnection) startRelayVideoStream() else startLanVideoStream()
+        Logger.d(TAG) { "Video stream started" }
+    }
 
+    private fun startRelayVideoStream() {
+        val serverId = checkNotNull(connectedServerId)
+        relayVideoHandler =
+            RelayConnectionHandler(
+                coroutineScope = scope,
+                connectLambda = {
+                    var result = false
+                    relayHttpClient.wss(
+                        method = HttpMethod.Get,
+                        host = relayHost,
+                        port = Constants.RELAY_PORT,
+                        path = "/relay${Endpoints.STREAM_VIDEO}/${serverId.name}",
+                    ) {
+                        RelayHandshake.send(this, secret)
+                        dataSource.setIsStreamingVideo(true)
+                        result = videoStreamingClientWebSocket()
+                    }
+                    result
+                },
+                onDisconnected = {
+                    dataSource.setIsStreamingVideo(false)
+                    Logger.i(TAG) { "Relay video disconnected, reconnecting" }
+                    delay(1.seconds)
+                    relayVideoHandler?.connect()
+                },
+            ).apply { connect() }
+    }
+
+    private fun startLanVideoStream() {
         videoConnectionHandler =
             ConnectionHandler(
                 coroutineScope = scope,
@@ -194,17 +289,20 @@ internal class DefaultNetworkClientRepository(
                     videoConnectionHandler?.connect()
                 },
             ).apply { connect() }
-        Logger.d(TAG) { "Video stream started" }
     }
 
     private fun stopAudioStream() {
         audioConnectionHandler?.disconnect()
         audioConnectionHandler = null
+        relayAudioHandler?.disconnect()
+        relayAudioHandler = null
     }
 
     private fun stopVideoStream() {
         videoConnectionHandler?.disconnect()
         videoConnectionHandler = null
+        relayVideoHandler?.disconnect()
+        relayVideoHandler = null
     }
 
     private fun closeAllConnections() {
@@ -212,6 +310,8 @@ internal class DefaultNetworkClientRepository(
         stopVideoStream()
         controlConnectionHandler?.disconnect()
         controlConnectionHandler = null
+        relayControlHandler?.disconnect()
+        relayControlHandler = null
         serverStateJob?.cancel()
         serverStateJob = null
         currentAddress = null
@@ -233,9 +333,13 @@ internal class DefaultNetworkClientRepository(
 
     override suspend fun disconnect() {
         closeAllConnections()
-
         connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
+    }
+
+    override fun setRelayHost(host: String) {
+        relayHost = host
+        relayDiscoverySource.updateRelayHost(host, scope)
     }
 
     private fun onControlConnectionOpened(
@@ -292,7 +396,7 @@ internal class DefaultNetworkClientRepository(
                     NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
                 }
 
-                is SocketException -> {
+                is SocketException, is SSLException -> {
                     Logger.i(TAG) { "Connection closed: ${exception.message}" }
                     NetworkState.Disconnected(NetworkState.ErrorReason.ConnectionFailed, exception)
                 }
