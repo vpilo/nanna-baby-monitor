@@ -1,0 +1,22 @@
+package org.vpilo.babymonitor.network.relay.di
+
+import org.koin.core.module.Module
+import org.koin.dsl.module
+import org.vpilo.babymonitor.network.common.Constants
+import org.vpilo.babymonitor.network.common.DiscoveryManager
+import org.vpilo.babymonitor.network.common.RELAY_PASSWORD
+import org.vpilo.babymonitor.network.common.deriveSecret
+import org.vpilo.babymonitor.network.relay.DefaultNetworkRelayRepository
+import org.vpilo.babymonitor.network.relay.RelayConfig
+
+val networkRelayKoinModule: Module =
+    module {
+        single {
+            RelayConfig(
+                port = Constants.RELAY_PORT,
+                secret = deriveSecret(RELAY_PASSWORD),
+            )
+        }
+        single { DiscoveryManager() }
+        single { DefaultNetworkRelayRepository(get(), get(), get()) }
+    }

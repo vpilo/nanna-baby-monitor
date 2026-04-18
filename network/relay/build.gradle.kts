@@ -10,6 +10,7 @@ kotlin {
 
         desktopMain.dependencies {
             implementation(project(":common"))
+            implementation(project(":model"))
             implementation(project(":network:common"))
 
             implementation(libs.bundles.ktor.server)
