@@ -36,6 +36,7 @@ kotlin {
             implementation(project(":model"))
 
             implementation(libs.ktor.websockets)
+            implementation(libs.bundles.ktor.client)
 
             implementation(libs.koin.core)
         }

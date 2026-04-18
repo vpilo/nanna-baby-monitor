@@ -5,6 +5,8 @@ object Constants {
 
     const val DISCOVERY_PORT = 47813
 
+    const val RELAY_PORT = 47814
+
     const val DISCOVERY_SERVICE_TYPE = "_babymonitor._tcp."
     const val DISCOVERY_SERVICE_DESCRIPTION = "Baby Monitor service"
 
