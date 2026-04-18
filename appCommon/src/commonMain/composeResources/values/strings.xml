@@ -41,4 +41,7 @@
 
     <string name="relay_host_title">Remote relay hostname</string>
     <string name="relay_host_description">DDNS hostname for remote access (e.g. myhome.dyndns.com)</string>
+
+    <string name="camera_selection_local_section">Local</string>
+    <string name="camera_selection_remote_section">Remote</string>
 </resources>
