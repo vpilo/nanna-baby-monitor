@@ -7,7 +7,9 @@ interface NetworkClientRepository {
 
     val serverStateFlow: Flow<ServerState>
 
-    val discoveredServerIdsFlow: Flow<Set<ServerId>>
+    val localServerIdsFlow: Flow<Set<ServerId>>
+
+    val relayServerIdsFlow: Flow<Set<ServerId>>
 
     suspend fun connect(server: ServerId)
 
@@ -16,4 +18,6 @@ interface NetworkClientRepository {
     fun enableAudio(enable: Boolean)
 
     fun enableVideo(enable: Boolean)
+
+    fun setRelayHost(host: String)
 }
