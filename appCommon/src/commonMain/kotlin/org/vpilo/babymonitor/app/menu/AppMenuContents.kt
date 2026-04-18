@@ -16,12 +16,12 @@ import babymonitor.appcommon.generated.resources.menu_disconnect_title
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.vpilo.babymonitor.app.navigation.Route
+import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.camera.model.settings.CameraResolution
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.settings.model.PlatformAvailability
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.isSupportedOnCurrentPlatform
-import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import org.vpilo.babymonitor.settings.presentation.composables.MenuItem
 import org.vpilo.babymonitor.settings.presentation.composables.MenuSettingEnumItem

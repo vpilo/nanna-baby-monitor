@@ -16,27 +16,30 @@ internal class RelayConnectionHandler(
 
     fun connect() {
         if (connectionJob?.isActive == true) return
-        connectionJob = coroutineScope.launch {
-            @Suppress("TooGenericExceptionCaught")
-            val succeeded = try {
-                connectLambda()
-            } catch (ex: Exception) {
-                when (ex) {
-                    is CancellationException -> {
-                        onDisconnected(ex)
-                        throw ex
+        connectionJob =
+            coroutineScope.launch {
+                @Suppress("TooGenericExceptionCaught")
+                val succeeded =
+                    try {
+                        connectLambda()
+                    } catch (ex: Exception) {
+                        when (ex) {
+                            is CancellationException -> {
+                                onDisconnected(ex)
+                                throw ex
+                            }
+
+                            else -> {
+                                Logger.w(TAG) { "Relay connection failed: ${ex::class.simpleName} (${ex.message})" }
+                                false
+                            }
+                        }
                     }
-                    else -> {
-                        Logger.w(TAG) { "Relay connection failed: ${ex::class.simpleName} (${ex.message})" }
-                        false
-                    }
+                if (!succeeded) {
+                    onDisconnected(SSLException("Relay connection failed"))
                 }
+                connectionJob = null
             }
-            if (!succeeded) {
-                onDisconnected(SSLException("Relay connection failed"))
-            }
-            connectionJob = null
-        }
     }
 
     fun disconnect() {

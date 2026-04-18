@@ -14,6 +14,7 @@ kotlin {
 
         desktopMain.dependencies {
             implementation(project(":network:relay"))
+            implementation(libs.koin.core)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.jvm)
         }

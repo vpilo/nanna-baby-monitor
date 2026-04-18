@@ -28,7 +28,10 @@ internal class RelayDiscoverySource(
     private var relayHost: String = ""
     private var discoveryJob: Job? = null
 
-    fun updateRelayHost(host: String, scope: CoroutineScope) {
+    fun updateRelayHost(
+        host: String,
+        scope: CoroutineScope,
+    ) {
         relayHost = host
         discoveryJob?.cancel()
         _serverIds.value = emptySet()
@@ -49,18 +52,23 @@ internal class RelayDiscoverySource(
                     RelayHandshake.send(this, secret)
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
-                            val ids = frame.readText()
-                                .lines()
-                                .filter { it.isNotEmpty() }
-                                .map { ServerId(it) }
-                                .toSet()
+                            val ids =
+                                frame
+                                    .readText()
+                                    .lines()
+                                    .filter { it.isNotEmpty() }
+                                    .map { ServerId(it) }
+                                    .toSet()
                             _serverIds.value = ids
                         }
                     }
                 }
             } catch (e: Exception) {
                 when (e) {
-                    is CancellationException -> throw e
+                    is CancellationException -> {
+                        throw e
+                    }
+
                     else -> {
                         Logger.w(TAG) { "Relay discovery disconnected: ${e.message}. Retrying in 5s." }
                         _serverIds.value = emptySet()

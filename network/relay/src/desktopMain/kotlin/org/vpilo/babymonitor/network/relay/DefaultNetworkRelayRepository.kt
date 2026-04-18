@@ -4,10 +4,10 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.install
-import io.ktor.server.cio.CIO
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
+import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.server.websocket.WebSockets
@@ -57,7 +57,7 @@ class DefaultNetworkRelayRepository(
 
         server =
             embeddedServer(
-                factory = CIO,
+                factory = Netty,
                 configure = {
                     sslConnector(
                         keyStore = keyStore,

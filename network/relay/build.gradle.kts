@@ -14,6 +14,7 @@ kotlin {
             implementation(project(":network:common"))
 
             implementation(libs.bundles.ktor.server)
+            implementation(libs.ktor.server.netty)
             implementation(libs.bundles.ktor.client)
             implementation(libs.koin.core)
         }

@@ -27,9 +27,10 @@ class RelayTrustManager : X509TrustManager {
 
     private companion object {
         fun loadPinnedCert(): X509Certificate {
-            val stream = checkNotNull(
-                RelayTrustManager::class.java.classLoader.getResourceAsStream("relay.crt")
-            ) { "relay.crt not found in resources" }
+            val stream =
+                checkNotNull(
+                    RelayTrustManager::class.java.classLoader.getResourceAsStream("relay.crt"),
+                ) { "relay.crt not found in resources" }
             return stream.use { s ->
                 CertificateFactory.getInstance("X.509").generateCertificate(s) as X509Certificate
             }
