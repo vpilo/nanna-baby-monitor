@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientEnabledAudio
 import org.vpilo.babymonitor.app.settings.ClientEnabledVideo
+import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
@@ -69,6 +70,10 @@ class ClientHomeScreenViewModel(
 
         settingsRepository.flowOf(Setting.ClientEnabledVideo).subscribe {
             networkClientRepository.enableVideo(it)
+        }
+
+        settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
+            networkClientRepository.setRelayHost(host)
         }
     }
 
