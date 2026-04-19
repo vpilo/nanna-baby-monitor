@@ -1,16 +1,27 @@
 package org.vpilo.babymonitor.network.client
 
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.plugins.websocket.wss
+import io.ktor.http.HttpMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.repository.ServerId
+import org.vpilo.babymonitor.network.common.Constants
+import org.vpilo.babymonitor.network.common.RelayHandshake
+import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
+import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.InetAddress
 import java.net.SocketException
 import kotlin.coroutines.cancellation.CancellationException
 
-internal class ConnectionHandler(
+internal class WebSocketConnectionHandler(
     private val hosts: Set<InetAddress>,
-    private val connectLambda: suspend (InetAddress) -> Boolean,
+    private val endpointPath: String,
+    private val serverId: ServerId,
+    private val sessionBlock: suspend DefaultClientWebSocketSession.(InetAddress) -> Boolean,
     private val onDisconnected: suspend (exception: Throwable) -> Unit,
     private val coroutineScope: CoroutineScope,
 ) {
@@ -18,10 +29,8 @@ internal class ConnectionHandler(
 
     fun connect() {
         if (connectionJob?.isActive == true) {
-            // Already connected, or connecting
             return
         }
-        require(hosts.isNotEmpty()) { "No hosts left to connect to" }
         connect(hosts)
     }
 
@@ -35,7 +44,28 @@ internal class ConnectionHandler(
                 @Suppress("TooGenericExceptionCaught")
                 val connectionSucceeded =
                     try {
-                        connectLambda(host)
+                        var result = false
+                        if (!serverId.isLocalServer) {
+                            relayHttpClient.wss(
+                                method = HttpMethod.Get,
+                                host = host.hostName,
+                                port = Constants.RELAY_PORT,
+                                path = "/relay$endpointPath/${serverId.name}",
+                            ) {
+                                RelayHandshake.send(this, secret)
+                                result = sessionBlock(host)
+                            }
+                        } else {
+                            networkClient.webSocket(
+                                method = HttpMethod.Get,
+                                host = host.hostAddress,
+                                port = Constants.WEBSOCKET_PORT,
+                                path = endpointPath,
+                            ) {
+                                result = sessionBlock(host)
+                            }
+                        }
+                        result
                     } catch (ex: Exception) {
                         when (ex) {
                             is CancellationException -> {
@@ -69,6 +99,7 @@ internal class ConnectionHandler(
     }
 
     private companion object {
-        private val TAG = ConnectionHandler::class
+        private val TAG = WebSocketConnectionHandler::class
+        private val secret by lazy { deriveSharedRelaySecret() }
     }
 }

@@ -1,13 +1,8 @@
 package org.vpilo.babymonitor.network.client
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.client.plugins.websocket.wss
-import io.ktor.http.HttpMethod
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -21,6 +16,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
@@ -30,13 +26,9 @@ import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
-import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.network.common.RelayHandshake
-import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
-import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.SocketException
@@ -51,12 +43,6 @@ internal class DefaultNetworkClientRepository(
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
 
-    private val networkClient: HttpClient by lazy {
-        HttpClient(CIO) {
-            install(WebSockets)
-        }
-    }
-
     private val connectionState: MutableStateFlow<NetworkState> =
         MutableStateFlow(NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet))
     override val connectionStateFlow: Flow<NetworkState> = connectionState.asStateFlow()
@@ -64,9 +50,7 @@ internal class DefaultNetworkClientRepository(
     override val serverStateFlow: StateFlow<ServerState> = dataSource.serverState
 
     private val localServers = MutableStateFlow<Set<DiscoveredServer>>(emptySet())
-
-    private val secret = deriveSharedRelaySecret()
-    private val relayDiscoverySource = RelayDiscoverySource(secret)
+    private val relayDiscoverySource = RelayDiscoverySource()
 
     override val discoveredServerIdsFlow: Flow<Set<ServerId>> =
         combine(
@@ -78,18 +62,14 @@ internal class DefaultNetworkClientRepository(
         }
 
     private var relayHost: String = ""
-    private var isRelayConnection: Boolean = false
     private var connectedServerId: ServerId? = null
 
     private var currentAddress: InetAddress? = null
     private var isAudioEnabled: Boolean = false
     private var isVideoEnabled: Boolean = true
-    private var controlConnectionHandler: ConnectionHandler? = null
-    private var audioConnectionHandler: ConnectionHandler? = null
-    private var videoConnectionHandler: ConnectionHandler? = null
-    private var relayControlHandler: RelayConnectionHandler? = null
-    private var relayAudioHandler: RelayConnectionHandler? = null
-    private var relayVideoHandler: RelayConnectionHandler? = null
+    private var controlHandler: WebSocketConnectionHandler? = null
+    private var audioHandler: WebSocketConnectionHandler? = null
+    private var videoHandler: WebSocketConnectionHandler? = null
     private var serverStateJob: Job? = null
 
     init {
@@ -108,208 +88,106 @@ internal class DefaultNetworkClientRepository(
             return
         }
 
-        isRelayConnection = isRelay
         connectedServerId = server
         closeAllConnections()
 
-        if (isRelay) {
-            relayControlHandler =
-                RelayConnectionHandler(
-                    coroutineScope = scope,
-                    connectLambda = {
-                        var result = false
-                        relayHttpClient.wss(
-                            method = HttpMethod.Get,
-                            host = relayHost,
-                            port = Constants.RELAY_PORT,
-                            path = "/relay${Endpoints.CONTROL}/${server.name}",
-                        ) {
-                            RelayHandshake.send(this, secret)
-                            onControlConnectionOpened(server, InetAddress.getByName(relayHost))
-                            result = controlClientWebSocket()
-                        }
-                        result
-                    },
-                    onDisconnected = { onControlConnectionClosed(it) },
-                ).apply { connect() }
-        } else {
-            val addresses = checkNotNull(localServer).addresses
-            controlConnectionHandler =
-                ConnectionHandler(
-                    coroutineScope = scope,
-                    hosts = addresses,
-                    connectLambda = { host ->
-                        Logger.i(TAG) { "Connecting to server $server" }
-                        var result = false
-                        networkClient.webSocket(
-                            method = HttpMethod.Get,
-                            host = host.hostAddress,
-                            port = Constants.WEBSOCKET_PORT,
-                            path = Endpoints.CONTROL,
-                        ) {
-                            onControlConnectionOpened(server, host)
-                            result = controlClientWebSocket()
-                        }
-                        result
-                    },
-                    onDisconnected = { onControlConnectionClosed(it) },
-                ).apply { connect() }
-        }
+        val hosts =
+            if (isRelay) setOf(
+                withContext(Dispatchers.IO) {
+                    InetAddress.getByName(relayHost)
+                }
+            )
+            else checkNotNull(localServer).addresses
+
+        controlHandler =
+            WebSocketConnectionHandler(
+                hosts = hosts,
+                endpointPath = Endpoints.CONTROL,
+                serverId = server,
+                onDisconnected = { onControlConnectionClosed(it) },
+                sessionBlock = { address ->
+                    onControlConnectionOpened(server, address)
+                    controlClientWebSocket()
+                },
+                coroutineScope = scope,
+            ).apply { connect() }
 
         connectionState.value = NetworkState.Connecting(server)
     }
 
     private fun startAudioStream() {
         if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.VIDEO_ONLY) return
-        if (audioConnectionHandler != null || relayAudioHandler != null) {
+        if (audioHandler != null) {
             Logger.w(TAG) { "Audio stream is already running" }
             return
         }
-        if (isRelayConnection) startRelayAudioStream() else startLanAudioStream()
-        Logger.d(TAG) { "Audio stream started" }
-    }
-
-    private fun startRelayAudioStream() {
         val serverId = checkNotNull(connectedServerId)
-        relayAudioHandler =
-            RelayConnectionHandler(
-                coroutineScope = scope,
-                connectLambda = {
-                    var result = false
-                    relayHttpClient.wss(
-                        method = HttpMethod.Get,
-                        host = relayHost,
-                        port = Constants.RELAY_PORT,
-                        path = "/relay${Endpoints.STREAM_AUDIO}/${serverId.name}",
-                    ) {
-                        RelayHandshake.send(this, secret)
-                        dataSource.setIsStreamingAudio(true)
-                        result = audioStreamingClientWebSocket()
-                    }
-                    result
-                },
-                onDisconnected = {
-                    dataSource.setIsStreamingAudio(false)
-                    Logger.i(TAG) { "Relay audio disconnected, reconnecting" }
-                    delay(1.seconds)
-                    relayAudioHandler?.connect()
-                },
-            ).apply { connect() }
-    }
 
-    private fun startLanAudioStream() {
-        audioConnectionHandler =
-            ConnectionHandler(
-                coroutineScope = scope,
+        audioHandler =
+            WebSocketConnectionHandler(
                 hosts = setOf(checkNotNull(currentAddress)),
-                connectLambda = { host ->
-                    var result = false
-                    networkClient.webSocket(
-                        method = HttpMethod.Get,
-                        host = host.hostAddress,
-                        port = Constants.WEBSOCKET_PORT,
-                        path = Endpoints.STREAM_AUDIO,
-                    ) {
-                        dataSource.setIsStreamingAudio(true)
-                        result = audioStreamingClientWebSocket()
-                    }
-                    result
-                },
+                endpointPath = Endpoints.STREAM_AUDIO,
+                serverId = serverId,
                 onDisconnected = {
                     dataSource.setIsStreamingAudio(false)
                     Logger.i(TAG) { "Audio disconnected, reconnecting" }
                     delay(1.seconds)
-                    audioConnectionHandler?.connect()
+                    audioHandler?.connect()
                 },
+                sessionBlock = { _ ->
+                    dataSource.setIsStreamingAudio(true)
+                    audioStreamingClientWebSocket()
+                },
+                coroutineScope = scope,
             ).apply { connect() }
+
+        Logger.d(TAG) { "Audio stream started" }
     }
 
     private fun startVideoStream() {
         if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.AUDIO_ONLY) return
-        if (videoConnectionHandler != null || relayVideoHandler != null) {
+        if (videoHandler != null) {
             Logger.w(TAG) { "Video stream is already running" }
             return
         }
-        if (isRelayConnection) startRelayVideoStream() else startLanVideoStream()
-        Logger.d(TAG) { "Video stream started" }
-    }
-
-    private fun startRelayVideoStream() {
         val serverId = checkNotNull(connectedServerId)
-        relayVideoHandler =
-            RelayConnectionHandler(
-                coroutineScope = scope,
-                connectLambda = {
-                    var result = false
-                    relayHttpClient.wss(
-                        method = HttpMethod.Get,
-                        host = relayHost,
-                        port = Constants.RELAY_PORT,
-                        path = "/relay${Endpoints.STREAM_VIDEO}/${serverId.name}",
-                    ) {
-                        RelayHandshake.send(this, secret)
-                        dataSource.setIsStreamingVideo(true)
-                        result = videoStreamingClientWebSocket()
-                    }
-                    result
-                },
-                onDisconnected = {
-                    dataSource.setIsStreamingVideo(false)
-                    Logger.i(TAG) { "Relay video disconnected, reconnecting" }
-                    delay(1.seconds)
-                    relayVideoHandler?.connect()
-                },
-            ).apply { connect() }
-    }
 
-    private fun startLanVideoStream() {
-        videoConnectionHandler =
-            ConnectionHandler(
-                coroutineScope = scope,
+        videoHandler =
+            WebSocketConnectionHandler(
                 hosts = setOf(checkNotNull(currentAddress)),
-                connectLambda = { host ->
-                    var result = false
-                    networkClient.webSocket(
-                        method = HttpMethod.Get,
-                        host = host.hostAddress,
-                        port = Constants.WEBSOCKET_PORT,
-                        path = Endpoints.STREAM_VIDEO,
-                    ) {
-                        dataSource.setIsStreamingVideo(true)
-                        result = videoStreamingClientWebSocket()
-                    }
-                    result
-                },
+                endpointPath = Endpoints.STREAM_VIDEO,
+                serverId = serverId,
                 onDisconnected = {
                     dataSource.setIsStreamingVideo(false)
                     Logger.i(TAG) { "Video disconnected, reconnecting" }
                     delay(1.seconds)
-                    videoConnectionHandler?.connect()
+                    videoHandler?.connect()
                 },
+                sessionBlock = { _ ->
+                    dataSource.setIsStreamingVideo(true)
+                    videoStreamingClientWebSocket()
+                },
+                coroutineScope = scope,
             ).apply { connect() }
+
+        Logger.d(TAG) { "Video stream started" }
     }
 
     private fun stopAudioStream() {
-        audioConnectionHandler?.disconnect()
-        audioConnectionHandler = null
-        relayAudioHandler?.disconnect()
-        relayAudioHandler = null
+        audioHandler?.disconnect()
+        audioHandler = null
     }
 
     private fun stopVideoStream() {
-        videoConnectionHandler?.disconnect()
-        videoConnectionHandler = null
-        relayVideoHandler?.disconnect()
-        relayVideoHandler = null
+        videoHandler?.disconnect()
+        videoHandler = null
     }
 
     private fun closeAllConnections() {
         stopAudioStream()
         stopVideoStream()
-        controlConnectionHandler?.disconnect()
-        controlConnectionHandler = null
-        relayControlHandler?.disconnect()
-        relayControlHandler = null
+        controlHandler?.disconnect()
+        controlHandler = null
         serverStateJob?.cancel()
         serverStateJob = null
         currentAddress = null

@@ -16,12 +16,11 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
+import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import kotlin.time.Duration.Companion.seconds
 
-internal class RelayDiscoverySource(
-    private val secret: ByteArray,
-) {
+internal class RelayDiscoverySource {
     private val _serverIds = MutableStateFlow<Set<ServerId>>(emptySet())
     val serverIds: StateFlow<Set<ServerId>> = _serverIds.asStateFlow()
 
@@ -81,5 +80,6 @@ internal class RelayDiscoverySource(
 
     private companion object {
         private val TAG = RelayDiscoverySource::class
+        private val secret by lazy { deriveSharedRelaySecret() }
     }
 }
