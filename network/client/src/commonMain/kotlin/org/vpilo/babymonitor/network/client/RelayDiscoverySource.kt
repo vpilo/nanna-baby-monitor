@@ -57,7 +57,7 @@ internal class RelayDiscoverySource(
                                     .readText()
                                     .lines()
                                     .filter { it.isNotEmpty() }
-                                    .map { ServerId(it) }
+                                    .map { ServerId(it, isLocalServer = false) }
                                     .toSet()
                             _serverIds.value = ids
                         }

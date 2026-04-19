@@ -7,9 +7,7 @@ interface NetworkClientRepository {
 
     val serverStateFlow: Flow<ServerState>
 
-    val localServerIdsFlow: Flow<Set<ServerId>>
-
-    val relayServerIdsFlow: Flow<Set<ServerId>>
+    val discoveredServerIdsFlow: Flow<Set<ServerId>>
 
     suspend fun connect(server: ServerId)
 

@@ -8,10 +8,10 @@ import java.security.MessageDigest
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-const val RELAY_PASSWORD = "babymonitor-relay-secret"
+private const val RELAY_PASSWORD = "babymonitor-relay-secret"
 
-fun deriveSecret(password: String): ByteArray {
-    val hash = MessageDigest.getInstance("SHA-256").digest(password.toByteArray(Charsets.UTF_8))
+fun deriveSharedRelaySecret(): ByteArray {
+    val hash = MessageDigest.getInstance("SHA-256").digest(RELAY_PASSWORD.toByteArray(Charsets.UTF_8))
     return ByteArray(RelayHandshake.HANDSHAKE_SIZE) { hash[it % hash.size] }
 }
 

@@ -1,6 +1,6 @@
 package org.vpilo.babymonitor.model.repository
 
-@JvmInline
-value class ServerId(
+data class ServerId(
     val name: String,
+    val isLocalServer: Boolean = true,
 )

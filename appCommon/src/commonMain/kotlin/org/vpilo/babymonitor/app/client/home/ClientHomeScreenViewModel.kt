@@ -73,8 +73,8 @@ class ClientHomeScreenViewModel(
             networkClientRepository.enableVideo(it)
         }
 
-        settingsRepository.flowOf(Setting.DeviceName).subscribe {
-            networkClientRepository.setDeviceName(it)
+        settingsRepository.flowOf(Setting.DeviceName).subscribe { name ->
+            networkClientRepository.setDeviceName(name)
         }
 
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->

@@ -26,6 +26,7 @@ import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.RelayHandshake
+import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.InetAddress
 import java.security.KeyStore
 import kotlin.coroutines.CoroutineContext
@@ -41,11 +42,6 @@ class DefaultNetworkRelayRepository(
     private var server: EmbeddedServer<*, *>? = null
 
     private val currentServers = MutableStateFlow<Set<DiscoveredServer>>(emptySet())
-
-    private val localClient =
-        HttpClient(ClientCIO) {
-            install(ClientWebSockets)
-        }
 
     fun start() {
         if (server != null) return
@@ -114,7 +110,7 @@ class DefaultNetworkRelayRepository(
                 return
             }
 
-        localClient.webSocket(
+        relayHttpClient.webSocket(
             method = HttpMethod.Get,
             host = serverAddress.hostAddress,
             port = Constants.WEBSOCKET_PORT,
@@ -140,7 +136,7 @@ class DefaultNetworkRelayRepository(
     fun stop() {
         server?.stop(gracePeriodMillis = 1_000, timeoutMillis = 5_000)
         server = null
-        localClient.close()
+        relayHttpClient.close()
         Logger.i(TAG) { "Relay stopped" }
     }
 

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -33,9 +34,8 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.network.common.RELAY_PASSWORD
 import org.vpilo.babymonitor.network.common.RelayHandshake
-import org.vpilo.babymonitor.network.common.deriveSecret
+import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.ConnectException
 import java.net.InetAddress
@@ -64,11 +64,18 @@ internal class DefaultNetworkClientRepository(
     override val serverStateFlow: StateFlow<ServerState> = dataSource.serverState
 
     private val localServers = MutableStateFlow<Set<DiscoveredServer>>(emptySet())
-    override val localServerIdsFlow: Flow<Set<ServerId>> = localServers.map { set -> set.map { it.id }.toSet() }
 
-    private val secret = deriveSecret(RELAY_PASSWORD)
+    private val secret = deriveSharedRelaySecret()
     private val relayDiscoverySource = RelayDiscoverySource(secret)
-    override val relayServerIdsFlow: Flow<Set<ServerId>> = relayDiscoverySource.serverIds
+
+    override val discoveredServerIdsFlow: Flow<Set<ServerId>> =
+        combine(
+            localServers.map { set -> set.map { it.id }.toSet() },
+            relayDiscoverySource.serverIds,
+        ) { localIds, relayIds ->
+            val localNames = localIds.map { it.name }.toSet()
+            localIds + relayIds.filter { it.name !in localNames }
+        }
 
     private var relayHost: String = ""
     private var isRelayConnection: Boolean = false
@@ -92,11 +99,11 @@ internal class DefaultNetworkClientRepository(
     }
 
     override suspend fun connect(server: ServerId) {
-        val localServer = localServers.value.firstOrNull { it.id == server }
-        val isRelay = localServer == null && relayDiscoverySource.serverIds.value.contains(server)
+        val isRelay = !server.isLocalServer
+        val localServer = if (!isRelay) localServers.value.firstOrNull { it.id.name == server.name } else null
 
         if (!isRelay && localServer == null) {
-            Logger.w(TAG) { "Server ${server.name} not found in local or relay servers." }
+            Logger.w(TAG) { "Server ${server.name} not found in local servers." }
             connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
             return
         }
