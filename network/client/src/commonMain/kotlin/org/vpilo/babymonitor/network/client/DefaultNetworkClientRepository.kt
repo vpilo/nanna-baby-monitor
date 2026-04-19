@@ -37,9 +37,6 @@ import org.vpilo.babymonitor.network.common.RELAY_PASSWORD
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
-import org.vpilo.babymonitor.settings.model.Setting
-import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
-import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.SocketException
@@ -48,9 +45,8 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 internal class DefaultNetworkClientRepository(
-    discoveryManager: DiscoveryManager,
+    private val discoveryManager: DiscoveryManager,
     private val dataSource: NetworkControlDataSource,
-    private val settingsRepository: SettingsRepository,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -90,11 +86,6 @@ internal class DefaultNetworkClientRepository(
     private var serverStateJob: Job? = null
 
     init {
-        settingsRepository
-            .flowOf(Setting.DeviceName)
-            .onEach { discoveryManager.setDeviceName(it) }
-            .launchIn(scope)
-
         discoveryManager.discoveredServers
             .onEach { localServers.value = it }
             .launchIn(scope)
@@ -340,6 +331,10 @@ internal class DefaultNetworkClientRepository(
     override fun setRelayHost(host: String) {
         relayHost = host
         relayDiscoverySource.updateRelayHost(host, scope)
+    }
+
+    override fun setDeviceName(name: String) {
+        discoveryManager.setDeviceName(name)
     }
 
     private fun onControlConnectionOpened(

@@ -20,4 +20,6 @@ interface NetworkClientRepository {
     fun enableVideo(enable: Boolean)
 
     fun setRelayHost(host: String)
+
+    fun setDeviceName(name: String)
 }

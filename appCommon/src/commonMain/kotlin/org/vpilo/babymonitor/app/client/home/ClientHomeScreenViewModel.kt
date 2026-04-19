@@ -15,6 +15,7 @@ import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
+import org.vpilo.babymonitor.settings.model.settings.DeviceName
 
 class ClientHomeScreenViewModel(
     videoReceiverRepository: StreamingVideoReceiverRepository,
@@ -70,6 +71,10 @@ class ClientHomeScreenViewModel(
 
         settingsRepository.flowOf(Setting.ClientEnabledVideo).subscribe {
             networkClientRepository.enableVideo(it)
+        }
+
+        settingsRepository.flowOf(Setting.DeviceName).subscribe {
+            networkClientRepository.setDeviceName(it)
         }
 
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
