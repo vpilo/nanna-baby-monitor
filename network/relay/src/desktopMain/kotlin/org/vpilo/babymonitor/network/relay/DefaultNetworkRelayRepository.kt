@@ -68,25 +68,31 @@ class DefaultNetworkRelayRepository(
                     }
                     routing {
                         webSocket("/relay/discovery") {
+                            Logger.i(TAG) { "Client connected to discovery endpoint" }
                             if (!RelayHandshake.await(this, config.secret)) {
                                 close()
                                 return@webSocket
                             }
+                            Logger.i(TAG) { "Sending discovered servers" }
                             currentServers.collect { servers ->
+                                Logger.i(TAG) { "Server list: $servers" }
                                 val names = servers.joinToString("\n") { it.id.name }
                                 send(names)
                             }
                         }
 
                         webSocket("/relay${Endpoints.CONTROL}/{serverId}") {
+                            Logger.i(TAG) { "Client connected to control endpoint" }
                             proxyEndpoint(Endpoints.CONTROL)
                         }
 
                         webSocket("/relay${Endpoints.STREAM_AUDIO}/{serverId}") {
+                            Logger.i(TAG) { "Client connected to audio stream endpoint" }
                             proxyEndpoint(Endpoints.STREAM_AUDIO)
                         }
 
                         webSocket("/relay${Endpoints.STREAM_VIDEO}/{serverId}") {
+                            Logger.i(TAG) { "Client connected to video stream endpoint" }
                             proxyEndpoint(Endpoints.STREAM_VIDEO)
                         }
                     }

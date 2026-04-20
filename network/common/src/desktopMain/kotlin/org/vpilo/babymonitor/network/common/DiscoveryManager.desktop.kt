@@ -53,13 +53,13 @@ actual class DiscoveryManager {
     }
 
     actual fun startDiscovery() {
-        Logger.d(TAG) { "discovering services: $SERVICE_TYPE" }
+        Logger.d(TAG) { "Discovering services: $SERVICE_TYPE" }
         discoveryService.addServiceListener(SERVICE_TYPE, remoteServiceListener)
         _state.value = DiscoveryManagerState.DiscoveringServices
     }
 
     actual fun stopDiscovery() {
-        Logger.d(TAG) { "stopped discovering services: $SERVICE_TYPE" }
+        Logger.d(TAG) { "Stopped discovering services: $SERVICE_TYPE" }
         discoveryService.removeServiceListener(SERVICE_TYPE, remoteServiceListener)
         remoteServiceListener.reset()
         _state.value = DiscoveryManagerState.Idle

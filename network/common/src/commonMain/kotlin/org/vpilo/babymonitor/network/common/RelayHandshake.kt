@@ -4,6 +4,7 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readBytes
 import kotlinx.coroutines.withTimeoutOrNull
+import org.vpilo.babymonitor.common.Logger
 import java.security.MessageDigest
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -26,7 +27,10 @@ object RelayHandshake {
             withTimeoutOrNull(HANDSHAKE_TIMEOUT) {
                 session.incoming.receive().readBytes()
             }
-        return data != null && data.size == HANDSHAKE_SIZE && data.contentEquals(secret)
+        return (data != null && data.size == HANDSHAKE_SIZE && data.contentEquals(secret))
+            .also {
+                Logger.i(TAG) { "Handshake ${if (it) "succeeded" else "failed"}" }
+            }
     }
 
     suspend fun send(
@@ -37,4 +41,6 @@ object RelayHandshake {
     }
 
     private val HANDSHAKE_TIMEOUT: Duration = 2.seconds
+
+    private val TAG = RelayHandshake::class
 }

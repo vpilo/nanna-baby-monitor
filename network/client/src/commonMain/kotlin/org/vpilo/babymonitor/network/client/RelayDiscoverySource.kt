@@ -42,6 +42,7 @@ internal class RelayDiscoverySource {
         while (true) {
             @Suppress("TooGenericExceptionCaught")
             try {
+                Logger.d(TAG) { "Relay discovery connection started for $relayHost" }
                 relayHttpClient.wss(
                     method = HttpMethod.Get,
                     host = relayHost,
@@ -58,6 +59,7 @@ internal class RelayDiscoverySource {
                                     .filter { it.isNotEmpty() }
                                     .map { ServerId(it, isLocalServer = false) }
                                     .toSet()
+                            Logger.i(TAG) { "Relay found servers: $ids" }
                             _serverIds.value = ids
                         }
                     }
@@ -65,6 +67,7 @@ internal class RelayDiscoverySource {
             } catch (e: Exception) {
                 when (e) {
                     is CancellationException -> {
+                        Logger.d(TAG) { "Relay discovery connection closed." }
                         throw e
                     }
 
