@@ -2,8 +2,9 @@
 
 # Feature plan
 
+- present the server name on client UI
 - Client UI hideable with a tap on the video feed.
-- Secure lan-only communication channel, with clients (monitors) pairing with server (camera).
+- More secure communication channels with clients (monitors) pairing with server (camera).
 - Plugins for raw AV streams to:
     - reduce noise
     - detect silence
@@ -20,11 +21,13 @@
 - settings system to save audio and video quality preferences, and other settings
 - settings screen in menu
 - Client can play and pause independently audio or video
+- Relay server to allow clients to connect to a server from outside the local network.
 
 # Issues
 
 * First start-up has no device name anymore.
-
+* have to url-encode device names on transfer.
+* remove settingsRepository from DefaultNetworkServerRepository.
 
 # Resources
 
