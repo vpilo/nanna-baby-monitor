@@ -21,6 +21,11 @@
 - settings screen in menu
 - Client can play and pause independently audio or video
 
+# Issues
+
+* First start-up has no device name anymore.
+
+
 # Resources
 
 use https://github.com/pavi2410/kmp-app-updater for app updates
