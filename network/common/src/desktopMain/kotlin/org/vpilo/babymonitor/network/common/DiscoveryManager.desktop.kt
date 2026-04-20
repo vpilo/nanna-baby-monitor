@@ -36,6 +36,9 @@ actual class DiscoveryManager {
     }
 
     actual fun registerService() {
+        if (_state.value == DiscoveryManagerState.DiscoveringServices) {
+            stopDiscovery()
+        }
         check(deviceName.isNotEmpty()) { "Device name must be set before registering service!" }
         Logger.d(TAG) { "Service registered: $SERVICE_TYPE ($deviceName) on ${Constants.SERVICES_LISTEN_ADDRESS}" }
         try {
@@ -53,6 +56,9 @@ actual class DiscoveryManager {
     }
 
     actual fun startDiscovery() {
+        if (_state.value == DiscoveryManagerState.ServiceRegistered) {
+            unregisterService()
+        }
         Logger.d(TAG) { "Discovering services: $SERVICE_TYPE" }
         discoveryService.addServiceListener(SERVICE_TYPE, remoteServiceListener)
         _state.value = DiscoveryManagerState.DiscoveringServices
