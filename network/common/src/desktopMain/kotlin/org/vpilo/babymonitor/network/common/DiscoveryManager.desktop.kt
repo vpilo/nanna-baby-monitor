@@ -28,8 +28,8 @@ actual class DiscoveryManager {
             .map { it.toSortedSet() }
             .distinctUntilChanged()
 
-    actual var state = DiscoveryManagerState.Idle
-        private set
+    private val _state = MutableStateFlow(DiscoveryManagerState.Idle)
+    actual val state: Flow<DiscoveryManagerState> = _state.asStateFlow()
 
     init {
         startDiscovery()
@@ -40,7 +40,7 @@ actual class DiscoveryManager {
         Logger.d(TAG) { "Service registered: $SERVICE_TYPE ($deviceName) on ${Constants.SERVICES_LISTEN_ADDRESS}" }
         try {
             discoveryService.registerService(createServiceInfo(deviceName))
-            state = DiscoveryManagerState.ServiceRegistered
+            _state.value = DiscoveryManagerState.ServiceRegistered
         } catch (ex: IOException) {
             Logger.e(TAG, ex) { "Failed to register service: $SERVICE_TYPE" }
         }
@@ -49,25 +49,25 @@ actual class DiscoveryManager {
     actual fun unregisterService() {
         Logger.d(TAG) { "Service unregistered: $SERVICE_TYPE" }
         discoveryService.unregisterAllServices()
-        state = DiscoveryManagerState.Idle
+        _state.value = DiscoveryManagerState.Idle
     }
 
     actual fun startDiscovery() {
         Logger.d(TAG) { "discovering services: $SERVICE_TYPE" }
         discoveryService.addServiceListener(SERVICE_TYPE, remoteServiceListener)
-        state = DiscoveryManagerState.DiscoveringServices
+        _state.value = DiscoveryManagerState.DiscoveringServices
     }
 
     actual fun stopDiscovery() {
         Logger.d(TAG) { "stopped discovering services: $SERVICE_TYPE" }
         discoveryService.removeServiceListener(SERVICE_TYPE, remoteServiceListener)
         remoteServiceListener.reset()
-        state = DiscoveryManagerState.Idle
+        _state.value = DiscoveryManagerState.Idle
     }
 
     actual fun setDeviceName(name: String) {
         deviceName = name
-        if (state == DiscoveryManagerState.ServiceRegistered) {
+        if (_state.value == DiscoveryManagerState.ServiceRegistered) {
             unregisterService()
             registerService()
         }

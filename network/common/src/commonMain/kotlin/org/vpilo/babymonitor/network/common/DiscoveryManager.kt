@@ -5,8 +5,7 @@ import kotlinx.coroutines.flow.Flow
 expect class DiscoveryManager {
     val discoveredServers: Flow<Set<DiscoveredServer>>
 
-    var state: DiscoveryManagerState
-        private set
+    val state: Flow<DiscoveryManagerState>
 
     fun registerService()
 

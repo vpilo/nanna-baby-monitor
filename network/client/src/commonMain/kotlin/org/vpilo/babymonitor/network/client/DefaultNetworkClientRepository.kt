@@ -9,7 +9,6 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
@@ -28,6 +27,7 @@ import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
+import org.vpilo.babymonitor.network.common.DiscoveryManagerState
 import org.vpilo.babymonitor.network.common.Endpoints
 import java.net.ConnectException
 import java.net.InetAddress
@@ -47,7 +47,13 @@ internal class DefaultNetworkClientRepository(
         MutableStateFlow(NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet))
     override val connectionStateFlow: Flow<NetworkState> = connectionState.asStateFlow()
 
-    override val serverStateFlow: StateFlow<ServerState> = dataSource.serverState
+    override val serverStateFlow: Flow<ServerState> =
+        combine(
+            dataSource.serverState,
+            discoveryManager.state,
+        ) { serverState, discoveryState ->
+            serverState.copy(isAvailable = serverState.isAvailable && discoveryState == DiscoveryManagerState.ServiceRegistered)
+        }
 
     private val localServers = MutableStateFlow<Set<DiscoveredServer>>(emptySet())
     private val relayDiscoverySource = RelayDiscoverySource()
@@ -65,6 +71,7 @@ internal class DefaultNetworkClientRepository(
     private var connectedServerId: ServerId? = null
 
     private var currentAddress: InetAddress? = null
+    private var lastServerState: ServerState = ServerState()
     private var isAudioEnabled: Boolean = false
     private var isVideoEnabled: Boolean = true
     private var controlHandler: WebSocketConnectionHandler? = null
@@ -92,12 +99,15 @@ internal class DefaultNetworkClientRepository(
         closeAllConnections()
 
         val hosts =
-            if (isRelay) setOf(
-                withContext(Dispatchers.IO) {
-                    InetAddress.getByName(relayHost)
-                }
-            )
-            else checkNotNull(localServer).addresses
+            if (isRelay) {
+                setOf(
+                    withContext(Dispatchers.IO) {
+                        InetAddress.getByName(relayHost)
+                    },
+                )
+            } else {
+                checkNotNull(localServer).addresses
+            }
 
         controlHandler =
             WebSocketConnectionHandler(
@@ -116,7 +126,7 @@ internal class DefaultNetworkClientRepository(
     }
 
     private fun startAudioStream() {
-        if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.VIDEO_ONLY) return
+        if (currentAddress == null || lastServerState.captureMode == CaptureMode.VIDEO_ONLY) return
         if (audioHandler != null) {
             Logger.w(TAG) { "Audio stream is already running" }
             return
@@ -145,7 +155,7 @@ internal class DefaultNetworkClientRepository(
     }
 
     private fun startVideoStream() {
-        if (currentAddress == null || serverStateFlow.value.captureMode == CaptureMode.AUDIO_ONLY) return
+        if (currentAddress == null || lastServerState.captureMode == CaptureMode.AUDIO_ONLY) return
         if (videoHandler != null) {
             Logger.w(TAG) { "Video stream is already running" }
             return
@@ -196,14 +206,14 @@ internal class DefaultNetworkClientRepository(
     override fun enableAudio(enable: Boolean) {
         Logger.i(TAG) { "enableAudio: $enable" }
         isAudioEnabled = enable
-        if (currentAddress == null || serverStateFlow.value.isStreamingAudio == enable) return
+        if (currentAddress == null || lastServerState.isStreamingAudio == enable) return
         if (enable) startAudioStream() else stopAudioStream()
     }
 
     override fun enableVideo(enable: Boolean) {
         Logger.i(TAG) { "enableVideo: $enable" }
         isVideoEnabled = enable
-        if (currentAddress == null || serverStateFlow.value.isStreamingVideo == enable) return
+        if (currentAddress == null || lastServerState.isStreamingVideo == enable) return
         if (enable) startVideoStream() else stopVideoStream()
     }
 
@@ -236,6 +246,7 @@ internal class DefaultNetworkClientRepository(
         serverStateJob =
             scope.launch {
                 dataSource.serverState.collect { serverState ->
+                    lastServerState = serverState
                     if (!serverState.isAvailable) {
                         return@collect
                     }

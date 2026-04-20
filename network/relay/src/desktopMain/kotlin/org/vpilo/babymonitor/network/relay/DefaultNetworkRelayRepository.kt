@@ -1,6 +1,5 @@
 package org.vpilo.babymonitor.network.relay
 
-import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.install
@@ -30,8 +29,6 @@ import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.InetAddress
 import java.security.KeyStore
 import kotlin.coroutines.CoroutineContext
-import io.ktor.client.engine.cio.CIO as ClientCIO
-import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 
 class DefaultNetworkRelayRepository(
     private val discoveryManager: DiscoveryManager,

@@ -9,6 +9,7 @@ import android.os.ext.SdkExtensions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -47,8 +48,8 @@ actual class DiscoveryManager(
     private var discoveryListener: NsdManager.DiscoveryListener? = null
     private var registrationListener: NsdManager.RegistrationListener? = null
 
-    actual var state = DiscoveryManagerState.Idle
-        private set
+    private val _state = MutableStateFlow(DiscoveryManagerState.Idle)
+    actual val state: Flow<DiscoveryManagerState> = _state.asStateFlow()
 
     init {
         startDiscovery()
@@ -68,7 +69,7 @@ actual class DiscoveryManager(
                 object : NsdManager.RegistrationListener {
                     override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {
                         Logger.d(TAG) { "Service registered: ${serviceInfo.serviceName}" }
-                        state = DiscoveryManagerState.ServiceRegistered
+                        _state.value = DiscoveryManagerState.ServiceRegistered
                     }
 
                     override fun onRegistrationFailed(
@@ -76,7 +77,7 @@ actual class DiscoveryManager(
                         errorCode: Int,
                     ) {
                         Logger.e(TAG) { "Service registration failed: errorCode=$errorCode" }
-                        state = DiscoveryManagerState.Idle
+                        _state.value = DiscoveryManagerState.Idle
                     }
 
                     override fun onServiceUnregistered(serviceInfo: NsdServiceInfo) {
@@ -103,7 +104,7 @@ actual class DiscoveryManager(
             Logger.e(TAG, ex) { "Failed to unregister service" }
         } finally {
             registrationListener = null
-            state = DiscoveryManagerState.Idle
+            _state.value = DiscoveryManagerState.Idle
         }
     }
 
@@ -170,7 +171,7 @@ actual class DiscoveryManager(
                 listener,
             )
             releaseMulticastLock()
-            state = DiscoveryManagerState.DiscoveringServices
+            _state.value = DiscoveryManagerState.DiscoveringServices
         }
     }
 
@@ -183,13 +184,13 @@ actual class DiscoveryManager(
             discoveryListener = null
             _discoveredServers.value = emptySet()
             releaseMulticastLock()
-            state = DiscoveryManagerState.Idle
+            _state.value = DiscoveryManagerState.Idle
         }
     }
 
     actual fun setDeviceName(name: String) {
         deviceName = name
-        if (state == DiscoveryManagerState.ServiceRegistered) {
+        if (_state.value == DiscoveryManagerState.ServiceRegistered) {
             unregisterService()
             registerService()
         }
