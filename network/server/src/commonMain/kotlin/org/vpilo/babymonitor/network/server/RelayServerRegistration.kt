@@ -68,7 +68,9 @@ internal class RelayServerRegistration(
             } catch (e: CancellationException) {
                 Logger.d(TAG) { "Relay registration cancelled" }
                 throw e
-            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
                 Logger.w(TAG) { "Relay registration disconnected: ${e.message}. Retrying in 5s." }
                 activeStreamJobs.forEach { it.cancel() }
                 activeStreamJobs.clear()
