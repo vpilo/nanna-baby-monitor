@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,17 +38,12 @@ import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
-import org.vpilo.babymonitor.settings.model.Setting
-import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
-import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.seconds
 
 internal class DefaultNetworkServerRepository(
     private val discoveryManager: DiscoveryManager,
     private val deviceStateRepository: DeviceStateRepository,
-    private val settingsRepository: SettingsRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
@@ -65,23 +59,20 @@ internal class DefaultNetworkServerRepository(
 
     private var deviceStateMonitor: Job? = null
 
-    val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
+    private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
+    private val relayRegistration = RelayServerRegistration(scope)
 
-    init {
-        settingsRepository
-            .flowOf(Setting.DeviceName)
-            .onEach {
-                Logger.d(TAG) {
-                    "Updated name: $it"
-                }
-                discoveryManager.setDeviceName(it)
-            }.launchIn(scope)
+    override fun setRelayHost(host: String) {
+        relayRegistration.setRelayHost(host)
+    }
+
+    override fun setDeviceName(name: String) {
+        discoveryManager.setDeviceName(name)
+        relayRegistration.setDeviceName(name)
     }
 
     override suspend fun start() {
-        if (server != null) {
-            return
-        }
+        if (server != null) return
 
         scope.launch {
             deviceStateMonitor =
@@ -129,7 +120,11 @@ internal class DefaultNetworkServerRepository(
             deviceStateMonitor?.cancel()
             deviceStateMonitor = null
             discoveryManager.unregisterService()
-            server?.stop(shutdownGracePeriod = STOP_GRACE_PERIOD_SECONDS, STOP_TIMEOUT_SECONDS, timeUnit = TimeUnit.SECONDS)
+            server?.stop(
+                shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
+                shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
+                timeUnit = TimeUnit.SECONDS,
+            )
             server = null
             state.update { it.copy(isAvailable = false) }
         }
@@ -149,7 +144,6 @@ internal class DefaultNetworkServerRepository(
                 // Nothing to do
             }
         }
-
         Logger.i(TAG) { "Requested update to $mode" }
         state.update { it.copy(captureMode = mode) }
     }
@@ -161,8 +155,8 @@ internal class DefaultNetworkServerRepository(
 
     private fun Application.serverModule() {
         install(WebSockets) {
-            pingPeriod = 5.seconds
-            timeout = 3.seconds
+            pingPeriod = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
             maxFrameSize = Long.MAX_VALUE
             masking = false
         }
@@ -202,8 +196,5 @@ internal class DefaultNetworkServerRepository(
 
     private companion object {
         private val TAG = DefaultNetworkServerRepository::class
-
-        private const val STOP_GRACE_PERIOD_SECONDS = 1L
-        private const val STOP_TIMEOUT_SECONDS = 5L
     }
 }

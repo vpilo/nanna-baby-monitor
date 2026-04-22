@@ -11,4 +11,8 @@ interface NetworkServerRepository {
     suspend fun stop()
 
     suspend fun setCaptureMode(mode: CaptureMode)
+
+    fun setRelayHost(host: String)
+
+    fun setDeviceName(name: String)
 }
