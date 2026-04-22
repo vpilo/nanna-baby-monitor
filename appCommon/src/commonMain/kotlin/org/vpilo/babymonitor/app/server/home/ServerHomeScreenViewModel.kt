@@ -2,10 +2,12 @@ package org.vpilo.babymonitor.app.server.home
 
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.LastCaptureMode
+import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
+import org.vpilo.babymonitor.settings.model.settings.DeviceName
 
 class ServerHomeScreenViewModel(
     private val server: NetworkServerRepository,
@@ -20,6 +22,12 @@ class ServerHomeScreenViewModel(
         settings.flowOf(Setting.LastCaptureMode).subscribe {
             state.copy(captureMode = it).update()
             server.setCaptureMode(it)
+        }
+        settings.flowOf(Setting.DeviceName).subscribe { name ->
+            server.setDeviceName(name)
+        }
+        settings.flowOf(Setting.RelayHost).subscribe { host ->
+            server.setRelayHost(host)
         }
 
         vmScope.launch {
