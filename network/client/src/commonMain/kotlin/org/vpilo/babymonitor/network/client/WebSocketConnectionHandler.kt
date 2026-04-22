@@ -50,7 +50,7 @@ internal class WebSocketConnectionHandler(
                                 method = HttpMethod.Get,
                                 host = host.hostName,
                                 port = Constants.RELAY_PORT,
-                                path = "/relay$endpointPath/${serverId.name}",
+                                path = "/relay/client$endpointPath/${serverId.name}",
                             ) {
                                 RelayHandshake.send(this, secret)
                                 result = sessionBlock(host)
