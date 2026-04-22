@@ -28,6 +28,7 @@
 * First start-up has no device name anymore.
 * have to url-encode device names on transfer.
 * remove settingsRepository from DefaultNetworkServerRepository.
+* on exit, close all http clients, servers, etc first.
 
 # Resources
 

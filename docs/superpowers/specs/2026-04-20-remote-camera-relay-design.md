@@ -61,12 +61,10 @@ After handshake, relay reads camera name from first text frame, registers in `re
 ### Rendezvous mechanism
 
 ```kotlin
-data class PendingRelay(
-    val cameraArrived: CompletableDeferred<WebSocketServerSession> = CompletableDeferred(),
-    val done: CompletableDeferred<Unit> = CompletableDeferred()
-)
-
-private val pendingRelays = ConcurrentHashMap<String, ArrayDeque<PendingRelay>>()
+// A deque per key because multiple monitors may connect concurrently to the same stream.
+// Each REQUEST_* causes the camera to open one new connection, so each waiting deferred
+// is paired with its own camera session in arrival order.
+private val pendingRelays = ConcurrentHashMap<String, ConcurrentLinkedDeque<CompletableDeferred<WebSocketServerSession>>>()
 // key format: "$serverId:$stream"  e.g. "nursery:video"
 ```
 
@@ -75,27 +73,37 @@ private val pendingRelays = ConcurrentHashMap<String, ArrayDeque<PendingRelay>>(
 - **Local camera** (serverId in `currentServers`): existing behaviour — relay connects outbound to `ws://ip:47812/{stream}`, runs `ProxySession`.
 - **Remote camera** (serverId in `remoteServers`):
   1. Create `PendingRelay`, enqueue under `"$serverId:$stream"`
-  2. Send `START_{STREAM}` text frame to camera's registration session
+  2. Send `REQUEST_{STREAM}` text frame to camera's registration session
   3. Await `cameraArrived` with 10s timeout; close with error on timeout
   4. Call `ProxySession.run(client = this, server = cameraSession)`
-  5. `finally`: complete `done`, send `STOP_{STREAM}` to camera, dequeue `PendingRelay`
+  5. `finally`: remove this `PendingRelay` from the queue if still present (handles timeout/error where camera never connected)
 
 ### `/relay/server/{stream}/{serverId}` handler
 
 After handshake:
 1. Dequeue oldest `PendingRelay` for `"$serverId:$stream"`; close if none found
 2. Complete `cameraArrived` with `this`
-3. `await done` — keeps the Ktor handler and WS session alive until the proxy finishes
+3. `closeReason.await()` — keeps the handler alive until `ProxySession` closes this session
+
+### `ProxySession` changes
+
+`ProxySession.run()` is updated to explicitly close both sessions when either side disconnects, replacing the current behaviour of just returning:
+
+```kotlin
+// after the coroutineScope block:
+server.close()
+client.close()
+```
 
 ### Signaling messages (relay → camera, on `/relay/server`)
 
 ```
-START_CONTROL  STOP_CONTROL
-START_AUDIO    STOP_AUDIO
-START_VIDEO    STOP_VIDEO
+REQUEST_CONTROL
+REQUEST_AUDIO
+REQUEST_VIDEO
 ```
 
-Multiple concurrent monitor clients each enqueue their own `PendingRelay` and each trigger one `START_*`, so the camera opens one connection per active client — consistent with how the local server handles multiple sessions.
+Multiple concurrent monitor clients each enqueue their own `PendingRelay` and each trigger one `REQUEST_*`, so the camera opens one connection per active client — consistent with how the local server handles multiple sessions.
 
 ---
 
@@ -109,25 +117,26 @@ Mirrors `RelayDiscoverySource` on the client side. Lives in `network:server`.
 - Connect to `wss://{relayHost}:47814/relay/server` via `relayHttpClient`
 - Send handshake, then send device name as a text frame
 - Loop reading signal frames; dispatch to stream job manager
-- On `START_*`: launch a coroutine that opens `wss://{relayHost}:47814/relay/server/{stream}/{name}` and runs the corresponding streaming function inside that session
-- On `STOP_*`: cancel the corresponding stream job
+- On `REQUEST_*`: launch a coroutine that opens `wss://{relayHost}:47814/relay/server/{stream}/{name}` and runs the corresponding streaming function inside that session. The session ends when the relay closes it after the monitor disconnects.
 - On disconnection: cancel all stream jobs, retry after 5s
 
 **Public API:**
 ```kotlin
-fun updateRelayHost(host: String, deviceName: String, scope: CoroutineScope)
+fun setRelayHost(host: String)
+fun setDeviceName(deviceName: String)
 ```
-Passing an empty host stops registration and cancels all jobs.
+Passing an empty host to `setRelayHost` stops registration.
+Passing an empty device name to `setDeviceName` stops registration and cancels all jobs (as you cannot connect to anyone anymore).
 
 ### `DefaultNetworkServerRepository` changes
 
 - Constructs a `RelayServerRegistration`
-- Subscribes to `Setting.RelayHost` (same setting the monitor side already uses) and calls `updateRelayHost` on changes, passing the current device name
-- Also re-calls `updateRelayHost` when the device name changes while relay is active
+- Exposes `setRelayHost(host: String)` and `setDeviceName(deviceName: String)` delegating to `RelayServerRegistration`
+- Does not hold a `SettingsRepository` reference; relay host and device name are pushed in by the ViewModel
 
 ### Streaming function signatures
 
-`videoStreamingServerWebSocket`, `audioStreamingServerWebSocket`, and `controlServerWebSocket` currently use `WebSocketServerSession` as receiver. Change receiver type to `WebSocketSession` (the common Ktor base interface). Both `WebSocketServerSession` (server-side) and `DefaultClientWebSocketSession` (client-side, used by relay stream connections) implement it. No logic changes required.
+`videoStreamingServerWebSocket`, `audioStreamingServerWebSocket`, and `controlServerWebSocket` currently use `DefaultWebSocketServerSession` as receiver. Change receiver type to `DefaultWebSocketSession` — the common abstract class extended by both `DefaultWebSocketServerSession` (server-side) and `DefaultClientWebSocketSession` (client-side, used by relay stream connections). No logic changes required.
 
 ---
 
@@ -150,7 +159,7 @@ path = "/relay/client$endpointPath/${serverId.name}"
 
 `Setting.RelayHost` already exists in `AppSettings.kt` and is already shown in the settings screen. No new setting or UI element needed.
 
-`CameraSelectionScreenViewModel` (or equivalent server-mode ViewModel) already propagates `RelayHost` changes to `networkClientRepository`. A parallel call to `networkServerRepository.setRelayHost()` is added in the same place.
+The server-mode ViewModel calls `networkServerRepository.setRelayHost(host)` when `Setting.RelayHost` changes and `networkServerRepository.setDeviceName(deviceName)` when `Setting.DeviceName` changes. This is parallel to how the monitor-mode ViewModel calls `networkClientRepository.setRelayHost(host)`.
 
 ---
 
@@ -161,7 +170,7 @@ Camera "nursery" (traveling, 5G)
   │  wss:// /relay/server
   └─→ Relay (home) ←─── /relay/discovery ─── Monitor "parent phone" (5G)
        │                                           │
-       │  START_VIDEO signal                       │  wss:// /relay/client/video/nursery
+       │  REQUEST_VIDEO signal                     │  wss:// /relay/client/video/nursery
        ↓                                           │
   Camera opens wss:// /relay/server/video/nursery ─┘
        └──── ProxySession pairs both sides ────────┘
