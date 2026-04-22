@@ -57,6 +57,9 @@ actual class DiscoveryManager(
 
     actual fun registerService() {
         check(deviceName.isNotEmpty()) { "Device name must be set before registering service!" }
+        if (_state.value == DiscoveryManagerState.DiscoveringServices) {
+            stopDiscovery()
+        }
         scope.launch {
             val serviceInfo =
                 NsdServiceInfo().apply {
@@ -110,6 +113,9 @@ actual class DiscoveryManager(
 
     actual fun startDiscovery() {
         if (discoveryListener != null) return
+        if (_state.value == DiscoveryManagerState.ServiceRegistered) {
+            unregisterService()
+        }
 
         scope.launch {
             acquireMulticastLock()
