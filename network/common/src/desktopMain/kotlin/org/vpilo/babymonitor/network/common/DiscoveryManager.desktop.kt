@@ -72,6 +72,7 @@ actual class DiscoveryManager {
     }
 
     actual fun setDeviceName(name: String) {
+        if (deviceName == name) return
         deviceName = name
         if (_state.value == DiscoveryManagerState.ServiceRegistered) {
             unregisterService()

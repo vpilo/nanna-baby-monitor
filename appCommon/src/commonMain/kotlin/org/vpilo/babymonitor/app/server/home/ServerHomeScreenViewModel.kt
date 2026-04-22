@@ -31,6 +31,7 @@ class ServerHomeScreenViewModel(
         }
 
         vmScope.launch {
+            server.setDeviceName(settings.load(Setting.DeviceName))
             server.start()
         }
     }

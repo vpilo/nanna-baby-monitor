@@ -36,6 +36,7 @@ internal class RelayServerRegistration(
     }
 
     fun setDeviceName(name: String) {
+        if (deviceName == name) return
         deviceName = name
         restart()
     }
