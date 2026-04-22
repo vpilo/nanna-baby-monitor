@@ -36,6 +36,7 @@ kotlin {
             implementation(project(":network:common"))
 
             implementation(libs.bundles.ktor.server)
+            implementation(libs.bundles.ktor.client)
 
             implementation(libs.koin.core)
         }
