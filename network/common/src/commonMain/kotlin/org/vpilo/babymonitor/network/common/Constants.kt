@@ -1,5 +1,8 @@
 package org.vpilo.babymonitor.network.common
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
 object Constants {
     const val WEBSOCKET_PORT = 47812
 
@@ -11,4 +14,8 @@ object Constants {
     const val DISCOVERY_SERVICE_DESCRIPTION = "Baby Monitor service"
 
     const val SERVICES_LISTEN_ADDRESS: String = "0.0.0.0"
+
+    val WEBSOCKET_PING_PERIOD: Duration = 30.seconds
+    val WEBSOCKET_TIMEOUT: Duration = 10.seconds
+    val SERVER_STOP_GRACE_PERIOD: Duration = 5.seconds
 }
