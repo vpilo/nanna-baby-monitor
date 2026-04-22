@@ -28,6 +28,7 @@ sealed interface Setting<T : Any> {
             platform = platform,
             default = default,
             type = T::class,
+            validateChange = validateChange,
         )
 
         inline fun <reified E : Enum<E>> makeEnum(
@@ -46,6 +47,7 @@ sealed interface Setting<T : Any> {
             default = default,
             type = E::class,
             values = values,
+            validateChange = validateChange,
         ).also {
             require(values.isEmpty() || values.size == E::class.java.enumConstants.size) {
                 "Enum setting $id must have strings for all enum values."

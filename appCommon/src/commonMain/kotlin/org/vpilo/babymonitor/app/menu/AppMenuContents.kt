@@ -41,10 +41,6 @@ fun AppMenuContents(
                 onNavigateTo(Route.CameraSelection)
             },
         )
-        MenuSettingItem(
-            setting = Setting.RelayHost,
-            imageVector = Icons.Default.Cloud,
-        )
     } else {
         MenuSettingEnumItem(
             setting = Setting.CameraResolution,
@@ -64,6 +60,11 @@ fun AppMenuContents(
     MenuSettingItem(
         setting = Setting.DeviceName,
         imageVector = Icons.Default.Person,
+    )
+
+    MenuSettingItem(
+        setting = Setting.RelayHost,
+        imageVector = Icons.Default.Cloud,
     )
 
     if (PlatformAvailability.DesktopOnly.isSupportedOnCurrentPlatform) {
