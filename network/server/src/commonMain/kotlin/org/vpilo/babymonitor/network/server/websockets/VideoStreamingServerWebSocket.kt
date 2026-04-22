@@ -1,6 +1,6 @@
 package org.vpilo.babymonitor.network.server.websockets
 
-import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.websocket.DefaultWebSocketSession
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.flow.dropWhile
@@ -10,7 +10,7 @@ import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.network.common.protocol.protocolSendVideo
 import kotlin.coroutines.cancellation.CancellationException
 
-internal suspend fun DefaultWebSocketServerSession.videoStreamingServerWebSocket() {
+internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<StreamingVideoSenderRepository>()
 
     Logger.d(TAG) { "New video streaming client connected" }

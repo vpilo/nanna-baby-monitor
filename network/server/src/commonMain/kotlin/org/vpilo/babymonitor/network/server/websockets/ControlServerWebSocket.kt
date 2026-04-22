@@ -1,6 +1,6 @@
 package org.vpilo.babymonitor.network.server.websockets
 
-import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.websocket.DefaultWebSocketSession
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.consumeEach
@@ -11,7 +11,7 @@ import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.common.protocol.makeServerMessageFrame
 import kotlin.coroutines.cancellation.CancellationException
 
-internal suspend fun DefaultWebSocketServerSession.controlServerWebSocket() {
+internal suspend fun DefaultWebSocketSession.controlServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<NetworkServerRepository>()
 
     Logger.d(TAG) { "New client connected" }

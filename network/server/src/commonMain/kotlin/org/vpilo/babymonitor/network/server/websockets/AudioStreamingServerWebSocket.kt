@@ -1,6 +1,6 @@
 package org.vpilo.babymonitor.network.server.websockets
 
-import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.websocket.DefaultWebSocketSession
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import org.koin.mp.KoinPlatform
@@ -9,7 +9,7 @@ import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.network.common.protocol.protocolSendAudio
 import kotlin.coroutines.cancellation.CancellationException
 
-internal suspend fun DefaultWebSocketServerSession.audioStreamingServerWebSocket() {
+internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
 
     Logger.d(TAG) { "Client connected" }
