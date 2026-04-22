@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.network.relay
 
 import io.ktor.websocket.WebSocketSession
+import io.ktor.websocket.close
 import io.ktor.websocket.send
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
@@ -36,5 +37,7 @@ internal object ProxySession {
         } catch (_: CancellationException) {
             // Normal close — one side dropped
         }
+        server.close()
+        client.close()
     }
 }
