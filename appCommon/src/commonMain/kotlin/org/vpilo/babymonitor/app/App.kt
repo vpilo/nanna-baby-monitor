@@ -157,10 +157,8 @@ private fun NavigationRoutes(navController: NavHostController) {
                     onConnected = {
                         navController.navigate(Route.ClientHome)
                     },
-                    onBackClicked = {
-                        navController.navigate(Route.AppRoleChooser) {
-                            popUpTo(Route.AppRoleChooser) { inclusive = true }
-                        }
+                    onMenuClicked = {
+                        navController.navigate(Route.Menu)
                     },
                 )
             }

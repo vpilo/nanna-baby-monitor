@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_connect
+import babymonitor.appcommon.generated.resources.app_title_client_home
 import babymonitor.appcommon.generated.resources.client_connection_chooser_choose
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connected
@@ -40,6 +41,7 @@ import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
+import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.LoadingIcon
 
@@ -48,7 +50,7 @@ fun CameraSelectionScreen(
     modifier: Modifier = Modifier,
     viewModel: CameraSelectionScreenViewModel,
     onConnected: () -> Unit,
-    onBackClicked: () -> Unit,
+    onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
@@ -62,7 +64,8 @@ fun CameraSelectionScreen(
 
     AppDestination(
         title = Res.string.app_title_client_connect,
-        onMainActionClicked = onBackClicked,
+        mainAction = AppDestinationMainAction.Menu,
+        onMainActionClicked = onMenuClicked,
     ) {
         CameraSelectionScreenContent(
             modifier = modifier.fillMaxSize(),
