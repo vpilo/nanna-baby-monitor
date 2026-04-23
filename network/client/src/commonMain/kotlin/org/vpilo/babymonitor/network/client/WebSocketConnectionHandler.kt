@@ -4,6 +4,7 @@ import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
+import io.ktor.http.encodeURLPathPart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -45,23 +46,23 @@ internal class WebSocketConnectionHandler(
                 val connectionSucceeded =
                     try {
                         var result = false
-                        if (!serverId.isLocalServer) {
-                            relayHttpClient.wss(
-                                method = HttpMethod.Get,
-                                host = host.hostName,
-                                port = Constants.RELAY_PORT,
-                                path = "/relay/client$endpointPath/${serverId.name}",
-                            ) {
-                                RelayHandshake.send(this, secret)
-                                result = sessionBlock(host)
-                            }
-                        } else {
+                        if (serverId.isLocalServer) {
                             networkClient.webSocket(
                                 method = HttpMethod.Get,
                                 host = host.hostAddress,
                                 port = Constants.WEBSOCKET_PORT,
                                 path = endpointPath,
                             ) {
+                                result = sessionBlock(host)
+                            }
+                        } else {
+                            relayHttpClient.wss(
+                                method = HttpMethod.Get,
+                                host = host.hostName,
+                                port = Constants.RELAY_PORT,
+                                path = "/relay/client$endpointPath/${serverId.name.encodeURLPathPart()}",
+                            ) {
+                                RelayHandshake.send(this, secret)
                                 result = sessionBlock(host)
                             }
                         }

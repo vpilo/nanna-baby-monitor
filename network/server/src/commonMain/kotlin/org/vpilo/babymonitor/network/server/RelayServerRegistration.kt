@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.network.server
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
+import io.ktor.http.encodeURLPathPart
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CancellationException
@@ -100,7 +101,7 @@ internal class RelayServerRegistration(
                         method = HttpMethod.Get,
                         host = relayHost,
                         port = Constants.RELAY_PORT,
-                        path = "/relay/server$endpoint/$deviceName",
+                        path = "/relay/server$endpoint/${deviceName.encodeURLPathPart()}",
                     ) {
                         RelayHandshake.send(this, secret)
                         when (endpoint) {
