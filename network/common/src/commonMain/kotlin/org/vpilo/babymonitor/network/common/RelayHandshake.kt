@@ -29,7 +29,7 @@ object RelayHandshake {
             }
         return (data != null && data.size == HANDSHAKE_SIZE && data.contentEquals(secret))
             .also {
-                Logger.i(TAG) { "Handshake ${if (it) "succeeded" else "failed"}" }
+                if (!it) Logger.w(TAG) { "Handshake failed!" }
             }
     }
 

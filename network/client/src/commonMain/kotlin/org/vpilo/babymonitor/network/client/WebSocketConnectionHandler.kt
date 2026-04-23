@@ -36,7 +36,7 @@ internal class WebSocketConnectionHandler(
 
     private fun connect(remainingHosts: Set<InetAddress>) {
         val host = remainingHosts.first()
-        Logger.i(TAG) { "Connecting with $host" }
+        Logger.i(TAG) { "Connecting with $host (local: ${serverId.isLocalServer})" }
         connectionJob =
             coroutineScope.launch {
                 var lastException: Exception? = null

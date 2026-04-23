@@ -116,30 +116,34 @@ class DefaultNetworkRelayRepository(
 
     private fun Route.clientRoutes() {
         webSocket("/relay/client${Endpoints.CONTROL}/{serverId}") {
-            Logger.i(TAG) { "Monitor connected to control endpoint" }
+            Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to control endpoint" }
             handleClientEndpoint(Endpoints.CONTROL)
         }
         webSocket("/relay/client${Endpoints.STREAM_AUDIO}/{serverId}") {
-            Logger.i(TAG) { "Monitor connected to audio stream endpoint" }
+            Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to audio stream endpoint" }
             handleClientEndpoint(Endpoints.STREAM_AUDIO)
         }
         webSocket("/relay/client${Endpoints.STREAM_VIDEO}/{serverId}") {
-            Logger.i(TAG) { "Monitor connected to video stream endpoint" }
+            Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to video stream endpoint" }
             handleClientEndpoint(Endpoints.STREAM_VIDEO)
         }
     }
 
     private fun Route.serverRoutes() {
         webSocket("/relay/server") {
+            Logger.i(TAG) { "Server connected to server endpoint" }
             handleCameraRegistration()
         }
         webSocket("/relay/server${Endpoints.CONTROL}/{serverId}") {
+            Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to control endpoint" }
             handleCameraStreamEndpoint(Endpoints.CONTROL)
         }
         webSocket("/relay/server${Endpoints.STREAM_AUDIO}/{serverId}") {
+            Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to audio stream endpoint" }
             handleCameraStreamEndpoint(Endpoints.STREAM_AUDIO)
         }
         webSocket("/relay/server${Endpoints.STREAM_VIDEO}/{serverId}") {
+            Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to video stream endpoint" }
             handleCameraStreamEndpoint(Endpoints.STREAM_VIDEO)
         }
     }

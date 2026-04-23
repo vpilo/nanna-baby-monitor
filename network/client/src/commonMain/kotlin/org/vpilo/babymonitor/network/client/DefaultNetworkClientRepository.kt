@@ -109,6 +109,7 @@ internal class DefaultNetworkClientRepository(
                 checkNotNull(localServer).addresses
             }
 
+        Logger.i(TAG) { "Connecting to server ${server.name} (local: ${server.isLocalServer})" }
         controlHandler =
             WebSocketConnectionHandler(
                 hosts = hosts,

@@ -72,7 +72,7 @@ internal class RelayDiscoverySource {
                     }
 
                     else -> {
-                        Logger.w(TAG) { "Relay discovery disconnected: ${e.message}. Retrying in 5s." }
+                        Logger.w(TAG) { "Relay discovery disconnected: ${e::class}: '${e.message}'. Retrying in 5s." }
                         _serverIds.value = emptySet()
                         delay(5.seconds)
                     }
