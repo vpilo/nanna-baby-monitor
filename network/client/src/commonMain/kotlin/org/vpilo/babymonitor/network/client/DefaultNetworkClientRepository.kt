@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.network.client
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -27,7 +26,6 @@ import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
-import org.vpilo.babymonitor.network.common.DiscoveryManagerState
 import org.vpilo.babymonitor.network.common.Endpoints
 import java.net.ConnectException
 import java.net.InetAddress
@@ -39,7 +37,7 @@ import kotlin.time.Duration.Companion.seconds
 internal class DefaultNetworkClientRepository(
     private val discoveryManager: DiscoveryManager,
     private val dataSource: NetworkControlDataSource,
-    coroutineContext: CoroutineContext,
+    private val coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
 
@@ -47,13 +45,7 @@ internal class DefaultNetworkClientRepository(
         MutableStateFlow(NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet))
     override val connectionStateFlow: Flow<NetworkState> = connectionState.asStateFlow()
 
-    override val serverStateFlow: Flow<ServerState> =
-        combine(
-            dataSource.serverState,
-            discoveryManager.state,
-        ) { serverState, discoveryState ->
-            serverState.copy(isAvailable = serverState.isAvailable && discoveryState == DiscoveryManagerState.ServiceRegistered)
-        }
+    override val serverStateFlow: Flow<ServerState> = dataSource.serverState
 
     private val localServers = MutableStateFlow<Set<DiscoveredServer>>(emptySet())
     private val relayDiscoverySource = RelayDiscoverySource()
@@ -100,11 +92,9 @@ internal class DefaultNetworkClientRepository(
 
         val hosts =
             if (isRelay) {
-                setOf(
-                    withContext(Dispatchers.IO) {
-                        InetAddress.getByName(relayHost)
-                    },
-                )
+                withContext(coroutineContext) {
+                    setOf(InetAddress.getByName(relayHost))
+                }
             } else {
                 checkNotNull(localServer).addresses
             }

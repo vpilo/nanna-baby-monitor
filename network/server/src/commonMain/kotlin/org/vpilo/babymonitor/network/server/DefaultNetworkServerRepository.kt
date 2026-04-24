@@ -17,7 +17,6 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +33,7 @@ import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
+import org.vpilo.babymonitor.network.common.DiscoveryManagerState
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
@@ -43,10 +43,11 @@ import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkServerRepository(
     private val discoveryManager: DiscoveryManager,
-    private val deviceStateRepository: DeviceStateRepository,
+    deviceStateRepository: DeviceStateRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
+    private var isServerReady = MutableStateFlow(false)
 
     private val activeAudioSessions = mutableListOf<WebSocketSession>()
     private val activeVideoSessions = mutableListOf<WebSocketSession>()
@@ -56,8 +57,6 @@ internal class DefaultNetworkServerRepository(
 
     private val currentCaptureMode: CaptureMode
         get() = state.value.captureMode
-
-    private var deviceStateMonitor: Job? = null
 
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
     private val relayRegistration = RelayServerRegistration(scope)
@@ -71,18 +70,25 @@ internal class DefaultNetworkServerRepository(
         relayRegistration.setDeviceName(name)
     }
 
+    init {
+        combine(
+            isServerReady,
+            discoveryManager.state,
+        ) { isServerReady, discoveryState ->
+            val reportServerAvailable = isServerReady && discoveryState == DiscoveryManagerState.ServiceRegistered
+            state.update { it.copy(isAvailable = reportServerAvailable) }
+        }.launchIn(scope)
+
+        combine(
+            deviceStateRepository.batteryLevel,
+            deviceStateRepository.signalQuality,
+        ) { batteryLevel, signalQuality ->
+            state.update { it.copy(signalQuality = signalQuality, batteryLevel = batteryLevel) }
+        }.launchIn(scope)
+    }
+
     override suspend fun start() {
         if (server != null) return
-
-        scope.launch {
-            deviceStateMonitor =
-                combine(
-                    deviceStateRepository.batteryLevel,
-                    deviceStateRepository.signalQuality,
-                ) { batteryLevel, signalQuality ->
-                    state.update { it.copy(signalQuality = signalQuality, batteryLevel = batteryLevel) }
-                }.launchIn(this)
-        }
 
         discoveryManager.registerService()
 
@@ -97,11 +103,11 @@ internal class DefaultNetworkServerRepository(
 
                 monitor.subscribe(ServerReady) {
                     Logger.i(TAG) { "Server is ready at ${Constants.SERVICES_LISTEN_ADDRESS}" }
-                    state.update { it.copy(isAvailable = true) }
+                    isServerReady.value = true
                 }
                 monitor.subscribe(ApplicationStopped) {
                     Logger.i(TAG) { "Server is stopping" }
-                    state.update { it.copy(isAvailable = false) }
+                    isServerReady.value = false
                     monitor.unsubscribe(ApplicationStarted) {}
                     monitor.unsubscribe(ApplicationStopped) {}
                 }
@@ -117,14 +123,13 @@ internal class DefaultNetworkServerRepository(
             Logger.i(TAG) { "Requested server stop" }
             activeAudioSessions.closeAll()
             activeVideoSessions.closeAll()
-            deviceStateMonitor?.cancel()
-            deviceStateMonitor = null
             discoveryManager.unregisterService()
             server?.stop(
                 shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
                 shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
                 timeUnit = TimeUnit.SECONDS,
             )
+            isServerReady.value = false
             server = null
             state.update { it.copy(isAvailable = false) }
         }
