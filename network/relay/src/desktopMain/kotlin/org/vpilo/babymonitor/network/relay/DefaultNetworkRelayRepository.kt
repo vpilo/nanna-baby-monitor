@@ -249,7 +249,7 @@ class DefaultNetworkRelayRepository(
     ) {
         val relayKey = "$serverId:$endpoint"
         val cameraArrived = CompletableDeferred<WebSocketServerSession?>()
-        pendingRelays.getOrPut(relayKey) { ConcurrentLinkedDeque() }.addLast(cameraArrived)
+        pendingRelays.computeIfAbsent(relayKey) { ConcurrentLinkedDeque() }.addLast(cameraArrived)
 
         try {
             registrationSession.send(signalFor(endpoint))
