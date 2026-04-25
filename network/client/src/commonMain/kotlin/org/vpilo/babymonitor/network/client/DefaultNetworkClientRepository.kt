@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
@@ -113,9 +112,7 @@ internal class DefaultNetworkClientRepository(
 
         val hosts =
             if (isRelay) {
-                withContext(coroutineContext) {
-                    setOf(InetAddress.getByName(relayHost))
-                }
+                setOf(InetAddress.getByAddress(relayHost, ByteArray(4)))
             } else {
                 checkNotNull(localServer).addresses
             }
