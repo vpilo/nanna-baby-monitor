@@ -255,7 +255,7 @@ class DefaultNetworkRelayRepository(
             registrationSession.send(signalFor(endpoint))
 
             val cameraSession =
-                withTimeoutOrNull(Constants.WEBSOCKET_TIMEOUT) {
+                withTimeoutOrNull(Constants.RELAY_RENDEZVOUS_TIMEOUT) {
                     cameraArrived.await()
                 }
             if (cameraSession == null) {

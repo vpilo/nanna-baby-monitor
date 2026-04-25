@@ -20,5 +20,6 @@ object Constants {
     val WEBSOCKET_TIMEOUT: Duration = 10.seconds
 
     val RELAY_HANDSHAKE_TIMEOUT: Duration = 2.seconds
+    val RELAY_RENDEZVOUS_TIMEOUT: Duration = 15.seconds
     val SERVER_STOP_GRACE_PERIOD: Duration = 5.seconds
 }
