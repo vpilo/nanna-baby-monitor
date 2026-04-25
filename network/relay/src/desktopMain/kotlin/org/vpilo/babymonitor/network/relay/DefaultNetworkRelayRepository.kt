@@ -175,7 +175,7 @@ class DefaultNetworkRelayRepository(
         val cameraName =
             (incoming.receive() as? Frame.Text)
                 ?.readText()
-                ?.takeIf { it.isNotBlank() }
+                ?.takeIf { it.isNotBlank() && !it.contains('\n') }
                 ?: run {
                     close()
                     return
