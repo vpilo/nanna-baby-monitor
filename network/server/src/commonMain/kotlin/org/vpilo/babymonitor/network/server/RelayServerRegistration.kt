@@ -40,7 +40,7 @@ internal class RelayServerRegistration(
     private var relayHost: String = ""
     private var deviceName: String = ""
     private var registrationJob: Job? = null
-    private val activeStreamJobs = mutableListOf<Job>()
+    private val activeStreamJobs = java.util.concurrent.CopyOnWriteArrayList<Job>()
 
     fun setRelayHost(host: String) {
         if (relayHost == host) return
