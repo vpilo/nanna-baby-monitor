@@ -4,22 +4,14 @@ import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
-import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
-import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.relay.DefaultNetworkRelayRepository
-import org.vpilo.babymonitor.network.relay.RelayConfig
 import kotlin.coroutines.CoroutineContext
 
 val networkRelayKoinModule: Module =
     module {
         single<CoroutineContext> { Dispatchers.Default }
-        single {
-            RelayConfig(
-                port = Constants.RELAY_PORT,
-                secret = deriveSharedRelaySecret(),
-            )
-        }
+
         singleOf(::DiscoveryManager)
-        single { DefaultNetworkRelayRepository(get(), get(), get()) }
+        single { DefaultNetworkRelayRepository(get(), get()) }
     }

@@ -45,6 +45,7 @@ import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkServerRepository(
     private val discoveryManager: DiscoveryManager,
+    private val relayRegistration: RelayServerRegistration,
     deviceStateRepository: DeviceStateRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
@@ -61,7 +62,6 @@ internal class DefaultNetworkServerRepository(
         get() = state.value.captureMode
 
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
-    private val relayRegistration = RelayServerRegistration(scope)
 
     override fun setRelayHost(host: String) {
         relayRegistration.setRelayHost(host)
@@ -133,7 +133,6 @@ internal class DefaultNetworkServerRepository(
             )
             isServerReady.value = false
             server = null
-            state.update { it.copy(isAvailable = false) }
         }
     }
 

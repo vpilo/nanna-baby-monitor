@@ -15,6 +15,7 @@ import org.vpilo.babymonitor.network.client.NetworkAudioReceiverRepository
 import org.vpilo.babymonitor.network.client.NetworkControlDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoReceiverRepository
+import org.vpilo.babymonitor.network.client.RelayDiscoveryDataSource
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 
 val networkClientKoinModule: Module =
@@ -22,6 +23,7 @@ val networkClientKoinModule: Module =
         singleOf(::NetworkControlDataSource)
         singleOf(::NetworkAudioDataSource)
         singleOf(::NetworkVideoDataSource)
+        singleOf(::RelayDiscoveryDataSource)
 
         singleOf(::NetworkAudioReceiverRepository)
             .bind<StreamingAudioReceiverRepository>()

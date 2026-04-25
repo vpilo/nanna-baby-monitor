@@ -25,8 +25,8 @@
 
 # Issues
 
+* switch to netty
 * on exit, close all http clients, servers, etc first.
-* unify timeouts, ping durations, grace periods to Constants.
 
 # Resources
 

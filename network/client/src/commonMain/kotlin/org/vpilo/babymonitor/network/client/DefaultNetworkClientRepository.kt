@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.network.client
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.delay
@@ -36,7 +35,8 @@ import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
     private val discoveryManager: DiscoveryManager,
-    private val dataSource: NetworkControlDataSource,
+    private val networkControlDataSource: NetworkControlDataSource,
+    private val relayDiscoveryDataSource: RelayDiscoveryDataSource,
     private val coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -45,15 +45,14 @@ internal class DefaultNetworkClientRepository(
         MutableStateFlow(NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet))
     override val connectionStateFlow: Flow<NetworkState> = connectionState.asStateFlow()
 
-    override val serverStateFlow: Flow<ServerState> = dataSource.serverState
+    override val serverStateFlow: Flow<ServerState> = networkControlDataSource.serverState
 
     private val localServers = MutableStateFlow<Set<DiscoveredServer>>(emptySet())
-    private val relayDiscoverySource = RelayDiscoverySource()
 
     override val discoveredServerIdsFlow: Flow<Set<ServerId>> =
         combine(
             localServers.map { set -> set.map { it.id }.toSet() },
-            relayDiscoverySource.serverIds,
+            relayDiscoveryDataSource.serverIds,
         ) { localIds, relayIds ->
             val localNames = localIds.map { it.name }.toSet()
             localIds + relayIds.filter { it.name !in localNames }
@@ -61,20 +60,42 @@ internal class DefaultNetworkClientRepository(
 
     private var relayHost: String = ""
     private var connectedServerId: ServerId? = null
-
     private var currentAddress: InetAddress? = null
     private var lastServerState: ServerState = ServerState()
     private var isAudioEnabled: Boolean = false
     private var isVideoEnabled: Boolean = true
+
     private var controlHandler: WebSocketConnectionHandler? = null
     private var audioHandler: WebSocketConnectionHandler? = null
     private var videoHandler: WebSocketConnectionHandler? = null
-    private var serverStateJob: Job? = null
 
     init {
         discoveryManager.discoveredServers
             .onEach { localServers.value = it }
             .launchIn(scope)
+
+        scope.launch {
+            networkControlDataSource.serverState.collect { serverState ->
+                lastServerState = serverState
+                if (!serverState.isAvailable) {
+                    return@collect
+                }
+                Logger.i(TAG) { "Server changed capture mode: ${serverState.captureMode}" }
+                when (serverState.captureMode) {
+                    CaptureMode.AUDIO_ONLY -> {
+                        stopVideoStream()
+                    }
+
+                    CaptureMode.VIDEO_ONLY -> {
+                        stopAudioStream()
+                    }
+
+                    CaptureMode.AUDIO_AND_VIDEO -> {
+                        // Do nothing
+                    }
+                }
+            }
+        }
     }
 
     override suspend fun connect(server: ServerId) {
@@ -130,13 +151,13 @@ internal class DefaultNetworkClientRepository(
                 endpointPath = Endpoints.STREAM_AUDIO,
                 serverId = serverId,
                 onDisconnected = {
-                    dataSource.setIsStreamingAudio(false)
+                    networkControlDataSource.setIsStreamingAudio(false)
                     Logger.i(TAG) { "Audio disconnected, reconnecting" }
                     delay(Constants.RECONNECTION_TIMEOUT)
                     audioHandler?.connect()
                 },
                 sessionBlock = { _ ->
-                    dataSource.setIsStreamingAudio(true)
+                    networkControlDataSource.setIsStreamingAudio(true)
                     audioStreamingClientWebSocket()
                 },
                 coroutineScope = scope,
@@ -159,13 +180,13 @@ internal class DefaultNetworkClientRepository(
                 endpointPath = Endpoints.STREAM_VIDEO,
                 serverId = serverId,
                 onDisconnected = {
-                    dataSource.setIsStreamingVideo(false)
+                    networkControlDataSource.setIsStreamingVideo(false)
                     Logger.i(TAG) { "Video disconnected, reconnecting" }
                     delay(Constants.RECONNECTION_TIMEOUT)
                     videoHandler?.connect()
                 },
                 sessionBlock = { _ ->
-                    dataSource.setIsStreamingVideo(true)
+                    networkControlDataSource.setIsStreamingVideo(true)
                     videoStreamingClientWebSocket()
                 },
                 coroutineScope = scope,
@@ -189,8 +210,6 @@ internal class DefaultNetworkClientRepository(
         stopVideoStream()
         controlHandler?.disconnect()
         controlHandler = null
-        serverStateJob?.cancel()
-        serverStateJob = null
         currentAddress = null
     }
 
@@ -216,7 +235,7 @@ internal class DefaultNetworkClientRepository(
 
     override fun setRelayHost(host: String) {
         relayHost = host
-        relayDiscoverySource.updateRelayHost(host, scope)
+        relayDiscoveryDataSource.updateRelayHost(host, scope)
     }
 
     override fun setDeviceName(name: String) {
@@ -233,30 +252,6 @@ internal class DefaultNetworkClientRepository(
 
         if (isAudioEnabled) startAudioStream()
         if (isVideoEnabled) startVideoStream()
-
-        serverStateJob =
-            scope.launch {
-                dataSource.serverState.collect { serverState ->
-                    lastServerState = serverState
-                    if (!serverState.isAvailable) {
-                        return@collect
-                    }
-                    Logger.i(TAG) { "Server changed capture mode: ${serverState.captureMode}" }
-                    when (serverState.captureMode) {
-                        CaptureMode.AUDIO_ONLY -> {
-                            stopVideoStream()
-                        }
-
-                        CaptureMode.VIDEO_ONLY -> {
-                            stopAudioStream()
-                        }
-
-                        CaptureMode.AUDIO_AND_VIDEO -> {
-                            // Do nothing
-                        }
-                    }
-                }
-            }
     }
 
     private fun onControlConnectionClosed(exception: Throwable) {

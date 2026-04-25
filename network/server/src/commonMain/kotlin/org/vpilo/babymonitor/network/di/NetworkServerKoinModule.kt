@@ -13,9 +13,12 @@ import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.server.DefaultNetworkServerRepository
 import org.vpilo.babymonitor.network.server.NetworkAudioSenderRepository
 import org.vpilo.babymonitor.network.server.NetworkVideoSenderRepository
+import org.vpilo.babymonitor.network.server.RelayServerRegistration
 
 val networkServerKoinModule: Module =
     module {
+        singleOf(::RelayServerRegistration)
+
         singleOf(::NetworkAudioSenderRepository)
             .bind<StreamingAudioSenderRepository>()
         singleOf(::NetworkVideoSenderRepository)

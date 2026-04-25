@@ -21,7 +21,7 @@ import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 
-internal class RelayDiscoverySource {
+internal class RelayDiscoveryDataSource {
     private val _serverIds = MutableStateFlow<Set<ServerId>>(emptySet())
     val serverIds: StateFlow<Set<ServerId>> = _serverIds.asStateFlow()
 
@@ -32,6 +32,7 @@ internal class RelayDiscoverySource {
         host: String,
         scope: CoroutineScope,
     ) {
+        if (relayHost == host) return
         relayHost = host
         discoveryJob?.cancel()
         _serverIds.value = emptySet()
@@ -86,7 +87,7 @@ internal class RelayDiscoverySource {
     }
 
     private companion object {
-        private val TAG = RelayDiscoverySource::class
+        private val TAG = RelayDiscoveryDataSource::class
         private val secret by lazy { deriveSharedRelaySecret() }
     }
 }

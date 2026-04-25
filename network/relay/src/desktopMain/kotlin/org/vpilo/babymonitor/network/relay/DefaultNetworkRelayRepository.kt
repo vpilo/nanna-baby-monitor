@@ -18,19 +18,25 @@ import io.ktor.server.websocket.timeout
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
+import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import io.ktor.websocket.timeout
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.network.common.Constants
@@ -39,6 +45,7 @@ import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
+import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
@@ -48,7 +55,6 @@ import kotlin.coroutines.CoroutineContext
 
 class DefaultNetworkRelayRepository(
     private val discoveryManager: DiscoveryManager,
-    private val config: RelayConfig,
     coroutineContext: CoroutineContext,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -73,19 +79,32 @@ class DefaultNetworkRelayRepository(
             embeddedServer(
                 factory = Netty,
                 configure = {
+                    val getPassword = { KEYSTORE_PASSWORD.toCharArray() }
                     sslConnector(
                         keyStore = keyStore,
                         keyAlias = KEYSTORE_ALIAS,
-                        keyStorePassword = { KEYSTORE_PASSWORD.toCharArray() },
-                        privateKeyPassword = { KEYSTORE_PASSWORD.toCharArray() },
+                        keyStorePassword = getPassword,
+                        privateKeyPassword = getPassword,
                     ) {
-                        port = config.port
+                        host = Constants.SERVICES_LISTEN_ADDRESS
+                        port = Constants.RELAY_PORT
                     }
                 },
                 module = { relayModule() },
             ).start(wait = false)
 
-        Logger.i(TAG) { "Relay started on port ${config.port}" }
+        Logger.i(TAG) { "Relay started on ${Constants.SERVICES_LISTEN_ADDRESS}:${Constants.RELAY_PORT}" }
+    }
+
+    fun stop() {
+        server?.stop(
+            shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
+            shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
+            timeUnit = TimeUnit.MILLISECONDS,
+        )
+        server = null
+        relayHttpClient.close()
+        Logger.i(TAG) { "Relay stopped" }
     }
 
     private fun Application.relayModule() {
@@ -94,99 +113,76 @@ class DefaultNetworkRelayRepository(
             timeout = Constants.WEBSOCKET_TIMEOUT
         }
         routing {
-            discoveryRoute()
             clientRoutes()
             serverRoutes()
         }
     }
 
-    private fun Route.discoveryRoute() {
-        webSocket("/relay/discovery") {
-            pingInterval = Constants.WEBSOCKET_PING_PERIOD
-            timeout = Constants.WEBSOCKET_TIMEOUT
-
-            Logger.i(TAG) { "Client connected to discovery endpoint" }
-            if (!RelayHandshake.await(this, config.secret)) {
-                close()
-                return@webSocket
-            }
-            combine(currentServers, remoteServers) { local, remote ->
-                val localNames = local.map { it.id.name }.toSet()
-                localNames + remote.keys.filter { it !in localNames }
-            }.collect { names ->
-                Logger.i(TAG) { "Server list: $names" }
-                send(names.joinToString("\n"))
-            }
-        }
-    }
-
     private fun Route.clientRoutes() {
-        webSocket("/relay/client${Endpoints.CONTROL}/{serverId}") {
-            pingInterval = Constants.WEBSOCKET_PING_PERIOD
-            timeout = Constants.WEBSOCKET_TIMEOUT
-
-            Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to control endpoint" }
+        webSocket(Endpoints.Relay.CLIENT_DISCOVERY) {
+            Logger.i(TAG) { "Client connected to discovery endpoint" }
+            handleDiscovery()
+        }
+        webSocket("${Endpoints.Relay.CLIENT_CONTROL}/{serverId}") {
+            Logger.i(TAG) { "Monitor '$serverId' connected to control endpoint" }
             handleClientEndpoint(Endpoints.CONTROL)
         }
-        webSocket("/relay/client${Endpoints.STREAM_AUDIO}/{serverId}") {
-            pingInterval = Constants.WEBSOCKET_PING_PERIOD
-            timeout = Constants.WEBSOCKET_TIMEOUT
-
-            Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to audio stream endpoint" }
+        webSocket("${Endpoints.Relay.CLIENT_AUDIO}/{serverId}") {
+            Logger.i(TAG) { "Monitor '$serverId' connected to audio stream endpoint" }
             handleClientEndpoint(Endpoints.STREAM_AUDIO)
         }
-        webSocket("/relay/client${Endpoints.STREAM_VIDEO}/{serverId}") {
-            pingInterval = Constants.WEBSOCKET_PING_PERIOD
-            timeout = Constants.WEBSOCKET_TIMEOUT
-
-            Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to video stream endpoint" }
+        webSocket("${Endpoints.Relay.CLIENT_VIDEO}/{serverId}") {
+            Logger.i(TAG) { "Monitor '$serverId' connected to video stream endpoint" }
             handleClientEndpoint(Endpoints.STREAM_VIDEO)
         }
     }
 
     private fun Route.serverRoutes() {
-        webSocket("/relay/server") {
-            pingInterval = Constants.WEBSOCKET_PING_PERIOD
-            timeout = Constants.WEBSOCKET_TIMEOUT
-
+        webSocket(Endpoints.Relay.SERVER_REGISTRATION) {
             Logger.i(TAG) { "Server connected to server endpoint" }
             handleCameraRegistration()
         }
-        webSocket("/relay/server${Endpoints.CONTROL}/{serverId}") {
-            pingInterval = Constants.WEBSOCKET_PING_PERIOD
-            timeout = Constants.WEBSOCKET_TIMEOUT
-
-            Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to control endpoint" }
+        webSocket("${Endpoints.Relay.SERVER_CONTROL}/{serverId}") {
+            Logger.i(TAG) { "Server '$serverId' connected to control endpoint" }
             handleCameraStreamEndpoint(Endpoints.CONTROL)
         }
-        webSocket("/relay/server${Endpoints.STREAM_AUDIO}/{serverId}") {
-            pingInterval = Constants.WEBSOCKET_PING_PERIOD
-            timeout = Constants.WEBSOCKET_TIMEOUT
-
-            Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to audio stream endpoint" }
+        webSocket("${Endpoints.Relay.SERVER_AUDIO}/{serverId}") {
+            Logger.i(TAG) { "Server '$serverId' connected to audio stream endpoint" }
             handleCameraStreamEndpoint(Endpoints.STREAM_AUDIO)
         }
-        webSocket("/relay/server${Endpoints.STREAM_VIDEO}/{serverId}") {
-            pingInterval = Constants.WEBSOCKET_PING_PERIOD
-            timeout = Constants.WEBSOCKET_TIMEOUT
-
-            Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to video stream endpoint" }
+        webSocket("${Endpoints.Relay.SERVER_VIDEO}/{serverId}") {
+            Logger.i(TAG) { "Server '$serverId' connected to video stream endpoint" }
             handleCameraStreamEndpoint(Endpoints.STREAM_VIDEO)
         }
     }
 
+    private suspend fun DefaultWebSocketServerSession.handleDiscovery() {
+        setupSession() ?: return
+
+        combine(currentServers, remoteServers) { local, remote ->
+            val localNames = local.map { it.id.name }.toSet()
+            localNames + remote.keys.filter { it !in localNames }
+        }.distinctUntilChanged()
+            .collect { names ->
+                Logger.i(TAG) { "Server list: $names" }
+                send(names.joinToString("\n"))
+            }
+    }
+
     private suspend fun DefaultWebSocketServerSession.handleCameraRegistration() {
-        if (!RelayHandshake.await(this, config.secret)) {
-            close()
-            return
-        }
-        val cameraName = (incoming.receive() as? Frame.Text)?.readText()
-        if (cameraName == null) {
-            close()
-            return
-        }
-        remoteServers.update { it + (cameraName to this) }
+        setupSession() ?: return
+
+        val cameraName =
+            (incoming.receive() as? Frame.Text)
+                ?.readText()
+                ?.takeIf { it.isNotBlank() }
+                ?: run {
+                    close()
+                    return
+                }
+
         Logger.i(TAG) { "Camera '$cameraName' registered" }
+        remoteServers.update { it + (cameraName to this) }
         try {
             @Suppress("UnusedPrivateProperty")
             for (ignored in incoming) {
@@ -207,19 +203,18 @@ class DefaultNetworkRelayRepository(
 
     @Suppress("ReturnCount")
     private suspend fun DefaultWebSocketServerSession.handleClientEndpoint(endpoint: String) {
-        if (!RelayHandshake.await(this, config.secret)) {
-            close()
-            return
-        }
-        val serverId = call.parameters["serverId"]
-        if (serverId == null) {
-            close()
-            return
-        }
+        setupSession() ?: return
+
+        val id =
+            serverId
+                ?: run {
+                    close()
+                    return
+                }
 
         val localAddress =
             currentServers.value
-                .firstOrNull { it.id.name == serverId }
+                .firstOrNull { it.id.name == id }
                 ?.addresses
                 ?.firstOrNull()
 
@@ -233,19 +228,18 @@ class DefaultNetworkRelayRepository(
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
-                ProxySession.run(client = this@handleClientEndpoint, server = this)
+                runProxySession(client = this@handleClientEndpoint, server = this)
             }
-            return
+        } else {
+            val registrationSession =
+                remoteServers.value[id]
+                    ?: run {
+                        send(Frame.Text("Server not found: $id"))
+                        close()
+                        return
+                    }
+            rendezvousWithRemoteCamera(id, endpoint, registrationSession)
         }
-
-        val registrationSession = remoteServers.value[serverId]
-        if (registrationSession == null) {
-            send(Frame.Text("Server not found: $serverId"))
-            close()
-            return
-        }
-
-        rendezvousWithRemoteCamera(serverId, endpoint, registrationSession)
     }
 
     private suspend fun DefaultWebSocketServerSession.rendezvousWithRemoteCamera(
@@ -268,23 +262,53 @@ class DefaultNetworkRelayRepository(
                 close(CloseReason(CloseReason.Codes.TRY_AGAIN_LATER, "Camera unavailable"))
                 return
             }
-            ProxySession.run(client = this, server = cameraSession)
+            runProxySession(client = this, server = cameraSession)
         } finally {
             pendingRelays[relayKey]?.remove(cameraArrived)
         }
     }
 
+    suspend fun runProxySession(
+        client: WebSocketSession,
+        server: WebSocketSession,
+    ) {
+        try {
+            coroutineScope {
+                launch {
+                    try {
+                        for (frame in client.incoming) {
+                            server.send(frame)
+                        }
+                    } finally {
+                        coroutineContext.cancel()
+                    }
+                }
+                launch {
+                    try {
+                        for (frame in server.incoming) {
+                            client.send(frame)
+                        }
+                    } finally {
+                        coroutineContext.cancel()
+                    }
+                }
+            }
+        } catch (_: CancellationException) {
+            // Normal close means one side dropped
+        }
+        server.close()
+        client.close()
+    }
+
     @Suppress("ReturnCount")
     private suspend fun DefaultWebSocketServerSession.handleCameraStreamEndpoint(endpoint: String) {
-        if (!RelayHandshake.await(this, config.secret)) {
+        setupSession() ?: return
+
+        serverId ?: run {
             close()
             return
         }
-        val serverId = call.parameters["serverId"]
-        if (serverId == null) {
-            close()
-            return
-        }
+
         val relayKey = "$serverId:$endpoint"
         val deferred = pendingRelays[relayKey]?.pollFirst()
         if (deferred == null) {
@@ -293,17 +317,6 @@ class DefaultNetworkRelayRepository(
         }
         deferred.complete(this)
         closeReason.await()
-    }
-
-    fun stop() {
-        server?.stop(
-            shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
-            shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
-            timeUnit = TimeUnit.MILLISECONDS,
-        )
-        server = null
-        relayHttpClient.close()
-        Logger.i(TAG) { "Relay stopped" }
     }
 
     private fun loadKeyStore(): KeyStore {
@@ -326,10 +339,26 @@ class DefaultNetworkRelayRepository(
             else -> error("Unknown endpoint: $endpoint")
         }
 
+    // The nullable Unit is only to allow single-line early returns on failure.
+    private suspend fun DefaultWebSocketServerSession.setupSession(): Unit? {
+        if (!RelayHandshake.await(this, SHARED_SECRET)) {
+            close()
+            return null
+        }
+        pingInterval = Constants.WEBSOCKET_PING_PERIOD
+        timeout = Constants.WEBSOCKET_TIMEOUT
+        return Unit
+    }
+
+    private val WebSocketServerSession.serverId: String?
+        get() = call.parameters["serverId"]
+
     private companion object {
         private val TAG = DefaultNetworkRelayRepository::class
         private const val KEYSTORE_RESOURCE = "relay.p12"
         private const val KEYSTORE_PASSWORD = "babymonitor"
         private const val KEYSTORE_ALIAS = "relay"
+
+        private val SHARED_SECRET: ByteArray by lazy { deriveSharedRelaySecret() }
     }
 }

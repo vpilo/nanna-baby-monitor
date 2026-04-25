@@ -23,16 +23,20 @@ import org.vpilo.babymonitor.network.common.relayHttpClient
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
+import kotlin.coroutines.CoroutineContext
 
 internal class RelayServerRegistration(
-    private val scope: CoroutineScope,
+    coroutineContext: CoroutineContext,
 ) {
+    private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+
     private var relayHost: String = ""
     private var deviceName: String = ""
     private var registrationJob: Job? = null
     private val activeStreamJobs = mutableListOf<Job>()
 
     fun setRelayHost(host: String) {
+        if (relayHost == host) return
         relayHost = host
         restart()
     }
