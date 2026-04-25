@@ -96,6 +96,7 @@ actual class DiscoveryManager(
                 }
             registrationListener = listener
 
+            Logger.d(TAG) { "Registering service..." }
             nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, listener)
         }
     }

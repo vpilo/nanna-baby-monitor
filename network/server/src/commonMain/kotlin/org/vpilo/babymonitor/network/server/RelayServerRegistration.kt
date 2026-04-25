@@ -12,9 +12,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.network.common.Constants
+import org.vpilo.babymonitor.network.common.DiscoveryManagerState
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
@@ -29,6 +33,9 @@ internal class RelayServerRegistration(
     coroutineContext: CoroutineContext,
 ) {
     private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+
+    private val _isRegistered = MutableStateFlow(false)
+    val isRegistered: Flow<Boolean> = _isRegistered.asStateFlow()
 
     private var relayHost: String = ""
     private var deviceName: String = ""
@@ -48,6 +55,7 @@ internal class RelayServerRegistration(
     }
 
     private fun restart() {
+        _isRegistered.value = false
         registrationJob?.cancel()
         activeStreamJobs.forEach { it.cancel() }
         activeStreamJobs.clear()
@@ -73,6 +81,7 @@ internal class RelayServerRegistration(
                     RelayHandshake.send(this, secret)
                     send(Frame.Text(deviceName))
                     Logger.i(TAG) { "Registered with relay as '$deviceName'" }
+                    _isRegistered.value = true
                     readRelaySignals()
                 }
             } catch (e: CancellationException) {
@@ -84,6 +93,7 @@ internal class RelayServerRegistration(
                 Logger.w(TAG) { "Relay registration disconnected: ${e.message}. Retrying." }
                 activeStreamJobs.forEach { it.cancel() }
                 activeStreamJobs.clear()
+                _isRegistered.value = false
                 delay(Constants.RECONNECTION_TIMEOUT)
             }
         }
