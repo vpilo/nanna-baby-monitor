@@ -8,6 +8,7 @@ import javax.net.ssl.X509TrustManager
 class RelayTrustManager : X509TrustManager {
     private val pinnedCert: X509Certificate = loadPinnedCert()
 
+    // Client-side trust manager; checkClientTrusted is not invoked by the TLS stack here.
     override fun checkClientTrusted(
         chain: Array<out X509Certificate>?,
         authType: String?,
