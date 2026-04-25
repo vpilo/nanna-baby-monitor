@@ -6,8 +6,6 @@ import io.ktor.websocket.readBytes
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
 import java.security.MessageDigest
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 private const val RELAY_PASSWORD = "babymonitor-relay-secret"
 
@@ -24,7 +22,7 @@ object RelayHandshake {
         secret: ByteArray,
     ): Boolean {
         val data =
-            withTimeoutOrNull(HANDSHAKE_TIMEOUT) {
+            withTimeoutOrNull(Constants.RELAY_HANDSHAKE_TIMEOUT) {
                 session.incoming.receive().readBytes()
             }
         return (data != null && data.size == HANDSHAKE_SIZE && data.contentEquals(secret))
@@ -39,8 +37,6 @@ object RelayHandshake {
     ) {
         session.send(Frame.Binary(fin = true, data = secret))
     }
-
-    private val HANDSHAKE_TIMEOUT: Duration = 2.seconds
 
     private val TAG = RelayHandshake::class
 }

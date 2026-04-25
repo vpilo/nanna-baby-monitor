@@ -5,7 +5,9 @@ import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.http.encodeURLPathPart
 import io.ktor.websocket.Frame
+import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
+import io.ktor.websocket.timeout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -21,7 +23,6 @@ import org.vpilo.babymonitor.network.common.relayHttpClient
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
-import kotlin.time.Duration.Companion.seconds
 
 internal class RelayServerRegistration(
     private val scope: CoroutineScope,
@@ -62,6 +63,9 @@ internal class RelayServerRegistration(
                     port = Constants.RELAY_PORT,
                     path = "/relay/server",
                 ) {
+                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                    timeout = Constants.WEBSOCKET_TIMEOUT
+
                     RelayHandshake.send(this, secret)
                     send(Frame.Text(deviceName))
                     Logger.i(TAG) { "Registered with relay as '$deviceName'" }
@@ -73,10 +77,10 @@ internal class RelayServerRegistration(
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
-                Logger.w(TAG) { "Relay registration disconnected: ${e.message}. Retrying in 5s." }
+                Logger.w(TAG) { "Relay registration disconnected: ${e.message}. Retrying." }
                 activeStreamJobs.forEach { it.cancel() }
                 activeStreamJobs.clear()
-                delay(5.seconds)
+                delay(Constants.RECONNECTION_TIMEOUT)
             }
         }
     }
@@ -103,6 +107,9 @@ internal class RelayServerRegistration(
                         port = Constants.RELAY_PORT,
                         path = "/relay/server$endpoint/${deviceName.encodeURLPathPart()}",
                     ) {
+                        pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                        timeout = Constants.WEBSOCKET_TIMEOUT
+
                         RelayHandshake.send(this, secret)
                         when (endpoint) {
                             Endpoints.CONTROL -> controlServerWebSocket()

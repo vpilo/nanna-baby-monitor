@@ -24,6 +24,7 @@ import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
+import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -32,7 +33,6 @@ import java.net.InetAddress
 import java.net.SocketException
 import javax.net.ssl.SSLException
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.seconds
 
 internal class DefaultNetworkClientRepository(
     private val discoveryManager: DiscoveryManager,
@@ -132,7 +132,7 @@ internal class DefaultNetworkClientRepository(
                 onDisconnected = {
                     dataSource.setIsStreamingAudio(false)
                     Logger.i(TAG) { "Audio disconnected, reconnecting" }
-                    delay(1.seconds)
+                    delay(Constants.RECONNECTION_TIMEOUT)
                     audioHandler?.connect()
                 },
                 sessionBlock = { _ ->
@@ -161,7 +161,7 @@ internal class DefaultNetworkClientRepository(
                 onDisconnected = {
                     dataSource.setIsStreamingVideo(false)
                     Logger.i(TAG) { "Video disconnected, reconnecting" }
-                    delay(1.seconds)
+                    delay(Constants.RECONNECTION_TIMEOUT)
                     videoHandler?.connect()
                 },
                 sessionBlock = { _ ->

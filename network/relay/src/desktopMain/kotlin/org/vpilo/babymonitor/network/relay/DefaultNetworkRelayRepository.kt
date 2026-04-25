@@ -19,8 +19,10 @@ import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
+import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
+import io.ktor.websocket.timeout
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -41,6 +43,7 @@ import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 class DefaultNetworkRelayRepository(
@@ -99,6 +102,9 @@ class DefaultNetworkRelayRepository(
 
     private fun Route.discoveryRoute() {
         webSocket("/relay/discovery") {
+            pingInterval = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
+
             Logger.i(TAG) { "Client connected to discovery endpoint" }
             if (!RelayHandshake.await(this, config.secret)) {
                 close()
@@ -116,14 +122,23 @@ class DefaultNetworkRelayRepository(
 
     private fun Route.clientRoutes() {
         webSocket("/relay/client${Endpoints.CONTROL}/{serverId}") {
+            pingInterval = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
+
             Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to control endpoint" }
             handleClientEndpoint(Endpoints.CONTROL)
         }
         webSocket("/relay/client${Endpoints.STREAM_AUDIO}/{serverId}") {
+            pingInterval = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
+
             Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to audio stream endpoint" }
             handleClientEndpoint(Endpoints.STREAM_AUDIO)
         }
         webSocket("/relay/client${Endpoints.STREAM_VIDEO}/{serverId}") {
+            pingInterval = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
+
             Logger.i(TAG) { "Monitor '${call.parameters["serverId"]}' connected to video stream endpoint" }
             handleClientEndpoint(Endpoints.STREAM_VIDEO)
         }
@@ -131,18 +146,30 @@ class DefaultNetworkRelayRepository(
 
     private fun Route.serverRoutes() {
         webSocket("/relay/server") {
+            pingInterval = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
+
             Logger.i(TAG) { "Server connected to server endpoint" }
             handleCameraRegistration()
         }
         webSocket("/relay/server${Endpoints.CONTROL}/{serverId}") {
+            pingInterval = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
+
             Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to control endpoint" }
             handleCameraStreamEndpoint(Endpoints.CONTROL)
         }
         webSocket("/relay/server${Endpoints.STREAM_AUDIO}/{serverId}") {
+            pingInterval = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
+
             Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to audio stream endpoint" }
             handleCameraStreamEndpoint(Endpoints.STREAM_AUDIO)
         }
         webSocket("/relay/server${Endpoints.STREAM_VIDEO}/{serverId}") {
+            pingInterval = Constants.WEBSOCKET_PING_PERIOD
+            timeout = Constants.WEBSOCKET_TIMEOUT
+
             Logger.i(TAG) { "Server '${call.parameters["serverId"]}' connected to video stream endpoint" }
             handleCameraStreamEndpoint(Endpoints.STREAM_VIDEO)
         }
@@ -203,6 +230,9 @@ class DefaultNetworkRelayRepository(
                 port = Constants.WEBSOCKET_PORT,
                 path = endpoint,
             ) {
+                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                timeout = Constants.WEBSOCKET_TIMEOUT
+
                 ProxySession.run(client = this@handleClientEndpoint, server = this)
             }
             return
@@ -231,7 +261,7 @@ class DefaultNetworkRelayRepository(
             registrationSession.send(signalFor(endpoint))
 
             val cameraSession =
-                withTimeoutOrNull(Constants.WEBSOCKET_TIMEOUT.inWholeMilliseconds) {
+                withTimeoutOrNull(Constants.WEBSOCKET_TIMEOUT) {
                     cameraArrived.await()
                 }
             if (cameraSession == null) {
@@ -267,8 +297,9 @@ class DefaultNetworkRelayRepository(
 
     fun stop() {
         server?.stop(
-            gracePeriodMillis = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
-            timeoutMillis = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
+            shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
+            shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
+            timeUnit = TimeUnit.MILLISECONDS,
         )
         server = null
         relayHttpClient.close()

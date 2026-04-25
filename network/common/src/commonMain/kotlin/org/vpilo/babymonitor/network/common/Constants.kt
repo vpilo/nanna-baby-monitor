@@ -15,7 +15,10 @@ object Constants {
 
     const val SERVICES_LISTEN_ADDRESS: String = "0.0.0.0"
 
+    val RECONNECTION_TIMEOUT: Duration = 3.seconds
     val WEBSOCKET_PING_PERIOD: Duration = 30.seconds
     val WEBSOCKET_TIMEOUT: Duration = 10.seconds
+
+    val RELAY_HANDSHAKE_TIMEOUT: Duration = 2.seconds
     val SERVER_STOP_GRACE_PERIOD: Duration = 5.seconds
 }

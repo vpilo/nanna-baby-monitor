@@ -3,7 +3,9 @@ package org.vpilo.babymonitor.network.client
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.websocket.Frame
+import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
+import io.ktor.websocket.timeout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -18,7 +20,6 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
-import kotlin.time.Duration.Companion.seconds
 
 internal class RelayDiscoverySource {
     private val _serverIds = MutableStateFlow<Set<ServerId>>(emptySet())
@@ -49,6 +50,9 @@ internal class RelayDiscoverySource {
                     port = Constants.RELAY_PORT,
                     path = "/relay/discovery",
                 ) {
+                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                    timeout = Constants.WEBSOCKET_TIMEOUT
+
                     RelayHandshake.send(this, secret)
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
@@ -72,9 +76,9 @@ internal class RelayDiscoverySource {
                     }
 
                     else -> {
-                        Logger.w(TAG) { "Relay discovery disconnected: ${e::class}: '${e.message}'. Retrying in 5s." }
+                        Logger.w(TAG) { "Relay discovery disconnected: ${e::class}: '${e.message}'. Retrying." }
                         _serverIds.value = emptySet()
-                        delay(5.seconds)
+                        delay(Constants.RECONNECTION_TIMEOUT)
                     }
                 }
             }

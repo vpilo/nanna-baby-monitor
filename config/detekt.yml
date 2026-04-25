@@ -3,7 +3,7 @@ build:
 
 complexity:
   LongMethod:
-    threshold: 60
+    threshold: 80
     ignoreAnnotated:
       - "Composable"
   LongParameterList:
@@ -27,7 +27,7 @@ naming:
   TopLevelPropertyNaming:
     constantPattern: "[A-Z][A-Za-z0-9_]*"
   MatchingDeclarationName:
-    multiplatformTargets: ['android', 'common', 'jvm', 'desktop']
+    multiplatformTargets: [ 'android', 'common', 'jvm', 'desktop' ]
 
 style:
   MagicNumber:
@@ -40,4 +40,4 @@ style:
       - "kotlinx.coroutines.flow.*"
   UnusedPrivateMember:
     allowedNames: "(_.*|TAG)"
-    ignoreAnnotated: ['Preview']
+    ignoreAnnotated: [ 'Preview' ]

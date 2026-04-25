@@ -16,6 +16,8 @@ import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
+import io.ktor.websocket.pingInterval
+import io.ktor.websocket.timeout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
@@ -168,9 +170,15 @@ internal class DefaultNetworkServerRepository(
 
         routing {
             webSocket(Endpoints.CONTROL) {
+                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                timeout = Constants.WEBSOCKET_TIMEOUT
+
                 controlServerWebSocket()
             }
             webSocket(Endpoints.STREAM_AUDIO) {
+                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                timeout = Constants.WEBSOCKET_TIMEOUT
+
                 if (currentCaptureMode == CaptureMode.VIDEO_ONLY) {
                     close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Audio streaming is disabled"))
                     return@webSocket
@@ -184,6 +192,9 @@ internal class DefaultNetworkServerRepository(
                 }
             }
             webSocket(Endpoints.STREAM_VIDEO) {
+                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                timeout = Constants.WEBSOCKET_TIMEOUT
+
                 if (currentCaptureMode == CaptureMode.AUDIO_ONLY) {
                     close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Video streaming is disabled"))
                     return@webSocket

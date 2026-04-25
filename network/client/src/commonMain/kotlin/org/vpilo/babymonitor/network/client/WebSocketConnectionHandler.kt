@@ -5,6 +5,8 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.http.encodeURLPathPart
+import io.ktor.websocket.pingInterval
+import io.ktor.websocket.timeout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -53,6 +55,9 @@ internal class WebSocketConnectionHandler(
                                 port = Constants.WEBSOCKET_PORT,
                                 path = endpointPath,
                             ) {
+                                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                                timeout = Constants.WEBSOCKET_TIMEOUT
+
                                 result = sessionBlock(host)
                             }
                         } else {
@@ -62,6 +67,9 @@ internal class WebSocketConnectionHandler(
                                 port = Constants.RELAY_PORT,
                                 path = "/relay/client$endpointPath/${serverId.name.encodeURLPathPart()}",
                             ) {
+                                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                                timeout = Constants.WEBSOCKET_TIMEOUT
+
                                 RelayHandshake.send(this, secret)
                                 result = sessionBlock(host)
                             }
