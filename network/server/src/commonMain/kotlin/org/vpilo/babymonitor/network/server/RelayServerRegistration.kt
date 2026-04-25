@@ -54,12 +54,16 @@ internal class RelayServerRegistration(
         restart()
     }
 
-    private fun restart() {
+    fun stop() {
         _isRegistered.value = false
         registrationJob?.cancel()
         activeStreamJobs.forEach { it.cancel() }
         activeStreamJobs.clear()
         registrationJob = null
+    }
+
+    private fun restart() {
+        stop()
         if (relayHost.isEmpty() || deviceName.isEmpty()) return
         registrationJob = scope.launch { runRegistrationLoop() }
     }

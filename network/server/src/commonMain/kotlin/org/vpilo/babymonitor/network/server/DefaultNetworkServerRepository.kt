@@ -124,6 +124,7 @@ internal class DefaultNetworkServerRepository(
     override suspend fun stop() {
         withContext(coroutineContext) {
             Logger.i(TAG) { "Requested server stop" }
+            relayRegistration.stop()
             activeAudioSessions.closeAll()
             activeVideoSessions.closeAll()
             discoveryManager.unregisterService()
