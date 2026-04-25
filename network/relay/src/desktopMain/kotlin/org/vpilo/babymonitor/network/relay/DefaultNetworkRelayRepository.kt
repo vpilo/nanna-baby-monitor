@@ -24,7 +24,6 @@ import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import io.ktor.websocket.timeout
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -293,11 +292,10 @@ class DefaultNetworkRelayRepository(
                     }
                 }
             }
-        } catch (_: CancellationException) {
-            // Normal close means one side dropped
+        } finally {
+            server.close()
+            client.close()
         }
-        server.close()
-        client.close()
     }
 
     @Suppress("ReturnCount")
