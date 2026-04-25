@@ -316,7 +316,11 @@ class DefaultNetworkRelayRepository(
             return
         }
         deferred.complete(this)
-        closeReason.await()
+        try {
+            closeReason.await()
+        } finally {
+            close()
+        }
     }
 
     private fun loadKeyStore(): KeyStore {
