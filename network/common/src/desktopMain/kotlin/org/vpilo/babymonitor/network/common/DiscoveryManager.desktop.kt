@@ -17,7 +17,7 @@ import javax.jmdns.ServiceInfo
 import javax.jmdns.ServiceListener
 
 actual class DiscoveryManager {
-    private val discoveryService = JmDNS.create(InetAddress.getByName(Constants.SERVICES_LISTEN_ADDRESS))
+    private val discoveryService = JmDNS.create()
 
     private val remoteServiceListener = RemoteServiceListener(::isLocalDeviceHost)
 
@@ -40,7 +40,7 @@ actual class DiscoveryManager {
             stopDiscovery()
         }
         check(deviceName.isNotEmpty()) { "Device name must be set before registering service!" }
-        Logger.d(TAG) { "Service registered: $SERVICE_TYPE ($deviceName) on ${Constants.SERVICES_LISTEN_ADDRESS}" }
+        Logger.d(TAG) { "Service registered: $SERVICE_TYPE ($deviceName) on ${discoveryService.inetAddress}" }
         try {
             discoveryService.registerService(createServiceInfo(deviceName))
             _state.value = DiscoveryManagerState.ServiceRegistered
