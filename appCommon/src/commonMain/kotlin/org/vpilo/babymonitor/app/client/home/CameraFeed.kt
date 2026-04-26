@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.app.client.home
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,11 +46,11 @@ fun CameraFeed(
         }
     }
 
-    Box(contentAlignment = Alignment.BottomEnd) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
         frame?.let { frame ->
             PannableImage(
                 bitmap = frame,
-                modifier = modifier,
+                modifier = modifier.fillMaxSize(),
             )
             FpsCounter(frameKey = frame)
         }

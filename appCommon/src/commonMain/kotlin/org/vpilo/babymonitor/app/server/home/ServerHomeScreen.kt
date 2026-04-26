@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.app.server.home
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import org.vpilo.babymonitor.camera.presentation.CameraViewFinderViewModel
 import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 
@@ -55,17 +57,23 @@ private fun ServerHomeContent(
     onModeSelected: (CaptureMode) -> Unit,
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = if (isServerAvailable) "Available for connections." else "Server not available!",
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (isServerAvailable) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.error,
-        )
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+            Text(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .padding(start = Theme.Paddings.Tiny)
+                        .zIndex(1f),
+                text = if (isServerAvailable) "Available for connections." else "Server not available!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (isServerAvailable) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.error,
+            )
             CaptureModeSelector(
                 modifier =
                     Modifier
                         .align(Alignment.TopEnd)
-                        .zIndex(1f),
+                        .padding(end = Theme.Paddings.Tiny)
+                        .zIndex(2f),
                 captureMode = captureMode,
                 onModeSelected = onModeSelected,
             )

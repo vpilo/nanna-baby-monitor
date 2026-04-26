@@ -84,11 +84,9 @@ fun AppDestination(
             },
             actions = actions,
         )
-        Spacer(modifier = Modifier.size(Theme.Paddings.Small))
         Box(
             modifier =
                 modifier
-                    .padding(Theme.Paddings.Medium)
                     .fillMaxWidth(),
         ) {
             content()

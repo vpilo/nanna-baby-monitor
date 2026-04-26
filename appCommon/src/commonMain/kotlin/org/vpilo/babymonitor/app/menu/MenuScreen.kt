@@ -1,8 +1,12 @@
 package org.vpilo.babymonitor.app.menu
 
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +55,7 @@ private fun MenuScreenContent(
     modifier: Modifier = Modifier,
     menuItems: @Composable () -> Unit,
 ) {
+    val scrollState = rememberScrollState()
     Column(
         modifier =
             modifier
@@ -59,7 +64,8 @@ private fun MenuScreenContent(
         Column(
             modifier =
                 modifier
-                    .padding(top = Theme.Paddings.Small)
+                    .padding(Theme.Paddings.Small)
+                    .scrollable(scrollState, orientation = Orientation.Vertical)
                     .weight(.9f),
             horizontalAlignment = Alignment.Start,
         ) {
@@ -68,19 +74,18 @@ private fun MenuScreenContent(
         Column(
             modifier =
                 modifier
-                    .padding(bottom = Theme.Paddings.Small)
+                    .fillMaxWidth()
+                    .padding(Theme.Paddings.Small)
                     .weight(.1f),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = stringResource(Res.string.app_name),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.surfaceDim,
+                style = MaterialTheme.typography.labelSmall,
             )
             Text(
                 text = stringResource(Res.string.app_copyright),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.surfaceDim,
+                style = MaterialTheme.typography.labelSmall,
             )
         }
     }

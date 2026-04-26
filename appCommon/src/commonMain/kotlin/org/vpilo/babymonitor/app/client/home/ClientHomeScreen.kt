@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.app.client.home
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,7 +18,6 @@ import babymonitor.appcommon.generated.resources.app_title_client_home
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
@@ -30,8 +28,6 @@ import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.Backdrop
 import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
-
-private const val TAG = "ClientHomeScreen"
 
 @Composable
 fun ClientHomeScreen(
@@ -48,10 +44,7 @@ fun ClientHomeScreen(
             scope.launch {
                 viewModel.effectsFlow.collect {
                     when (it) {
-                        ClientHomeScreenEffect.DisconnectedFromServer -> {
-                            Logger.d(TAG) { "Was disconnected!" }
-                            onDisconnected()
-                        }
+                        ClientHomeScreenEffect.DisconnectedFromServer -> onDisconnected()
                     }
                 }
             }
@@ -93,10 +86,7 @@ private fun ClientHomeScreenContent(
     signalQuality: Int,
 ) {
     Box(modifier = modifier) {
-        CameraFeed(
-            modifier = Modifier.fillMaxWidth(),
-            frames = frames,
-        )
+        CameraFeed(frames = frames)
         Row {
             VideoFeedControlButton(
                 modifier = Modifier.padding(Theme.Paddings.Tiny),
@@ -111,7 +101,7 @@ private fun ClientHomeScreenContent(
                 onToggle = onToggleAudio,
             )
         }
-        if (batteryLevel != DEVICE_STATE_DATA_UNAVAILABLE && signalQuality != DEVICE_STATE_DATA_UNAVAILABLE) {
+        if (batteryLevel != DEVICE_STATE_DATA_UNAVAILABLE || signalQuality != DEVICE_STATE_DATA_UNAVAILABLE) {
             Backdrop(
                 modifier =
                     Modifier
@@ -154,7 +144,7 @@ private fun ClientHomeScreenVideoOnlyPreview() =
             isVideoPlaying = true,
             onToggleAudio = { },
             onToggleVideo = { },
-            batteryLevel = 95,
+            batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = 93,
         )
     }

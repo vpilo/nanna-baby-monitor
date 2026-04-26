@@ -26,8 +26,9 @@
 # Issues
 
 * switch to netty
-* resize the camera streams to fill the screen, drag to move them around.
 * on exit, close all http clients, servers, etc first.
+* Client should keep reconnecting automatically on disconnection, and offer a button to disconnect manually.
+* Server must keep streaming when the screen goes off.
 
 # Resources
 

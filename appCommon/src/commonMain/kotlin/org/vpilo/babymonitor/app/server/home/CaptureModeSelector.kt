@@ -80,12 +80,29 @@ private fun CaptureModeSelectorVideoOnlyPreview() = CaptureModeSelectorPreviewCo
 @Composable
 private fun CaptureModeSelectorAudioOnlyPreview() = CaptureModeSelectorPreviewContent(captureMode = CaptureMode.AUDIO_ONLY)
 
+@Preview
 @Composable
-private fun CaptureModeSelectorPreviewContent(captureMode: CaptureMode) =
-    AppPreviewTheme {
-        CaptureModeSelector(
-            modifier = Modifier,
-            captureMode = captureMode,
-            onModeSelected = {},
-        )
-    }
+private fun CaptureModeSelectorAudioAndVideoDarkPreview() =
+    CaptureModeSelectorPreviewContent(captureMode = CaptureMode.AUDIO_AND_VIDEO, useDarkTheme = true)
+
+@Preview
+@Composable
+private fun CaptureModeSelectorVideoOnlyDarkPreview() =
+    CaptureModeSelectorPreviewContent(captureMode = CaptureMode.VIDEO_ONLY, useDarkTheme = true)
+
+@Preview
+@Composable
+private fun CaptureModeSelectorAudioOnlyDarkPreview() =
+    CaptureModeSelectorPreviewContent(captureMode = CaptureMode.AUDIO_ONLY, useDarkTheme = true)
+
+@Composable
+private fun CaptureModeSelectorPreviewContent(
+    captureMode: CaptureMode,
+    useDarkTheme: Boolean = false,
+) = AppPreviewTheme(useDarkTheme = useDarkTheme) {
+    CaptureModeSelector(
+        modifier = Modifier,
+        captureMode = captureMode,
+        onModeSelected = {},
+    )
+}

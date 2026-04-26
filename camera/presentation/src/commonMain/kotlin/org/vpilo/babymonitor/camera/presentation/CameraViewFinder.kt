@@ -61,7 +61,7 @@ fun CameraViewFinder(
         }
     }
 
-    Box(modifier = modifier, contentAlignment = Alignment.BottomEnd) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
         lastFrame?.let { frame ->
             PannableImage(
                 bitmap = frame,

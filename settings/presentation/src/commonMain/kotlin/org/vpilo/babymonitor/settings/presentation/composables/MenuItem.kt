@@ -39,7 +39,7 @@ fun MenuItem(
         Row(
             modifier =
                 modifier
-                    .padding(top = Theme.Paddings.Small, start = Theme.Paddings.Small, end = Theme.Paddings.Small)
+                    .padding(top = Theme.Paddings.Small)
                     .clickable(onClick = onClick),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -84,7 +84,7 @@ fun MenuItem(
                 Modifier
                     .padding(
                         top = Theme.Paddings.Tiny,
-                        start = Theme.Sizes.IconSmall + Theme.Paddings.Medium,
+                        start = Theme.Sizes.IconSmall + Theme.Paddings.Small,
                         bottom = Theme.Paddings.Small,
                     ),
         ) {

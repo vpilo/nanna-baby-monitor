@@ -67,7 +67,10 @@ fun CameraSelectionScreen(
         onMainActionClicked = onMenuClicked,
     ) {
         CameraSelectionScreenContent(
-            modifier = modifier.fillMaxSize(),
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .padding(Theme.Paddings.Medium),
             networkState = state.networkState,
             servers = state.availableServers,
             onConnectRequested = { viewModel.send(CameraSelectionScreenAction.ConnectToServer(it)) },
