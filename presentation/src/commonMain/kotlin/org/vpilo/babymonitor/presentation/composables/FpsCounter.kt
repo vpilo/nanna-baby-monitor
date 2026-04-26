@@ -15,7 +15,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
@@ -50,17 +49,17 @@ fun FpsCounter(
 
     val color =
         when (fps) {
-            in 0.0..15.0 -> Color.Red
-            in 15.0..25.0 -> Color.Yellow
+            in 0.0..9.0 -> Color.Red
+            in 9.1..15.0 -> Color.Yellow
             else -> Color.Green
         }
     Text(
         text = "%.02f FPS".format(fps),
         modifier =
             modifier
-                .padding(Theme.Paddings.Small),
+                .padding(Theme.Paddings.Tiny),
         style =
-            TextStyle(
+            MaterialTheme.typography.labelSmall.copy(
                 color = color,
                 shadow =
                     Shadow(

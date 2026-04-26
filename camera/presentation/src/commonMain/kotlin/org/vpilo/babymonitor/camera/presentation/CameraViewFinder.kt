@@ -11,8 +11,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -32,6 +30,7 @@ import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.composables.Backdrop
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
+import org.vpilo.babymonitor.presentation.composables.PannableImage
 import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
 import org.vpilo.babymonitor.presentation.resources.capture_audio_only
 import org.vpilo.babymonitor.presentation.resources.Res as ResCommon
@@ -45,7 +44,8 @@ fun CameraViewFinder(
     viewModel: CameraViewFinderViewModel = koinViewModel(),
 ) {
     val scope = rememberCoroutineScope()
-    var lastFrame by remember { mutableStateOf<ImageBitmap?>(null) }
+    val defaultFrame = if (LocalInspectionMode.current) makePlaceholderCameraFrame() else null
+    var lastFrame by remember { mutableStateOf(defaultFrame) }
 
     LifecycleStartEffect(Unit) {
         Logger.d(TAG) { "Started showing preview" }
@@ -61,21 +61,13 @@ fun CameraViewFinder(
         }
     }
 
-    Box(modifier = modifier, contentAlignment = Alignment.TopStart) {
+    Box(modifier = modifier, contentAlignment = Alignment.BottomEnd) {
         lastFrame?.let { frame ->
-            Image(
+            PannableImage(
                 bitmap = frame,
-                contentScale = ContentScale.FillWidth,
-                contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
             )
             FpsCounter(frameKey = frame)
-        }
-        if (LocalInspectionMode.current) {
-            Image(
-                bitmap = makePlaceholderCameraFrame(),
-                contentDescription = null,
-            )
         }
         if (captureMode == CaptureMode.AUDIO_ONLY) {
             Backdrop(

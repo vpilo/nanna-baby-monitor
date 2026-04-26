@@ -11,7 +11,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -96,7 +95,6 @@ private fun ClientHomeScreenContent(
     Box(modifier = modifier) {
         CameraFeed(
             modifier = Modifier.fillMaxWidth(),
-            contentScale = ContentScale.FillWidth,
             frames = frames,
         )
         Row {
