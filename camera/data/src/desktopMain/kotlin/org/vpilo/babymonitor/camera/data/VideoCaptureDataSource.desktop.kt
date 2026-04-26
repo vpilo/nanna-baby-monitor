@@ -3,10 +3,11 @@ package org.vpilo.babymonitor.camera.data
 import com.github.sarxos.webcam.Webcam
 import com.github.sarxos.webcam.WebcamResolution
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.vpilo.babymonitor.camera.data.ktx.sizes
 import org.vpilo.babymonitor.camera.model.CameraResolution
 import org.vpilo.babymonitor.common.Logger
@@ -17,6 +18,7 @@ import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 import java.awt.Dimension
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
 
 internal actual class VideoCaptureDataSource(
     webcamGetter: () -> Webcam,
@@ -58,25 +60,10 @@ internal actual class VideoCaptureDataSource(
         Logger.d(TAG) {
             "Camera supports resolutions: ${webcam.viewSizes.map { it.sizes }}, current ${webcam.viewSize.sizes}"
         }
-
         videoCaptureJob =
             coroutineScope
                 .launch {
-                    while (isActive && webcam.isOpen) {
-                        if (!webcam.isImageNew) {
-                            delay(10.milliseconds)
-                            continue
-                        }
-                        webcam
-                            .getImage()
-                            ?.let { image -> collector.tryEmit(CameraFrame(image)) }
-                            ?: run {
-                                Logger.w(TAG) { "Failed to capture image" }
-                                delay(100.milliseconds)
-                            }
-                    }
-
-                    delay(1.milliseconds)
+                    frameLoop()
                 }.apply {
                     invokeOnCompletion { ex ->
                         if (ex == null || ex is CancellationException) {
@@ -92,7 +79,9 @@ internal actual class VideoCaptureDataSource(
     }
 
     override fun stop() {
-        videoCaptureJob?.cancel()
+        runBlocking {
+            videoCaptureJob?.cancelAndJoin()
+        }
         videoCaptureJob = null
     }
 
@@ -103,6 +92,40 @@ internal actual class VideoCaptureDataSource(
             Logger.i(TAG) { "Resolution changed to $resolution, restarting capture" }
             stop()
             start()
+        }
+    }
+
+    private suspend fun frameLoop() {
+        val maxFrameTime =
+            (
+                1000L /
+                    when (resolution) {
+                        CameraResolution.Low -> CameraConstants.MAX_FPS_LOW_QUALITY
+                        CameraResolution.Medium -> CameraConstants.MAX_FPS_MEDIUM_QUALITY
+                        CameraResolution.High -> CameraConstants.MAX_FPS_HIGH_QUALITY
+                    }
+            ).milliseconds
+
+        while (isActive && webcam.isOpen) {
+            val frameTime =
+                measureTime {
+                    if (!webcam.isImageNew) {
+                        delay(5.milliseconds)
+                        continue
+                    }
+                    webcam
+                        .getImage()
+                        ?.let { image -> collector.tryEmit(CameraFrame(image)) }
+                        ?: run {
+                            Logger.w(TAG) { "Failed to capture image" }
+                            delay(100.milliseconds)
+                        }
+                }
+
+            val diff = frameTime - maxFrameTime
+            if (diff.isNegative()) {
+                delay(maxFrameTime - frameTime)
+            }
         }
     }
 

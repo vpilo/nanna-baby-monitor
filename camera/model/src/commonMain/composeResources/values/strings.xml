@@ -2,7 +2,7 @@
 <resources>
     <string name="setting_camera_resolution_title">Camera resolution</string>
     <string name="setting_camera_resolution_description">Choose how high the resolution streaming should be.</string>
-    <string name="setting_camera_resolution_low">Low (480p)</string>
-    <string name="setting_camera_resolution_medium">Medium (720p)</string>
-    <string name="setting_camera_resolution_high">High (1080p)</string>
+    <string name="setting_camera_resolution_low">Low (480p, 10fps)</string>
+    <string name="setting_camera_resolution_medium">Medium (720p, 20fps)</string>
+    <string name="setting_camera_resolution_high">High (1080p, 30fps)</string>
 </resources>

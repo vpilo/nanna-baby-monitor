@@ -1,9 +1,14 @@
 package org.vpilo.babymonitor.camera.data
 
 import android.content.Context
+import android.hardware.camera2.CaptureRequest
+import android.util.Range
 import android.util.Size
 import android.view.OrientationEventListener
 import androidx.annotation.MainThread
+import androidx.annotation.OptIn
+import androidx.camera.camera2.interop.Camera2Interop
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -53,8 +58,7 @@ internal actual class VideoCaptureDataSource(
             }
         ResolutionSelector
             .Builder()
-            .setAllowedResolutionMode(ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION)
-            .setResolutionStrategy(ResolutionStrategy(size, ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER))
+            .setResolutionStrategy(ResolutionStrategy(size, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
             .build()
     }
 
@@ -113,6 +117,7 @@ internal actual class VideoCaptureDataSource(
         context: Context,
         lifecycleOwner: LifecycleOwner,
     ) {
+        @OptIn(ExperimentalCamera2Interop::class)
         val imageAnalyzer =
             ImageAnalysis
                 .Builder()
@@ -121,11 +126,20 @@ internal actual class VideoCaptureDataSource(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                 .setBackgroundExecutor(executor)
-                .build()
+                .apply {
+                    val fpsRange =
+                        when (resolution) {
+                            CameraResolution.Low -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_LOW_QUALITY)
+                            CameraResolution.Medium -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_MEDIUM_QUALITY)
+                            CameraResolution.High -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_HIGH_QUALITY)
+                        }
+                    Camera2Interop
+                        .Extender(this)
+                        .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
+                }.build()
                 .also {
                     it.setAnalyzer(executor, ::onFrameReceived)
                 }
-
         val cameraSelector =
             CameraSelector
                 .Builder()

@@ -26,7 +26,6 @@
 # Issues
 
 * switch to netty
-* FPS limiting
 * resize the camera streams to fill the screen, drag to move them around.
 * on exit, close all http clients, servers, etc first.
 
