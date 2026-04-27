@@ -1,17 +1,15 @@
 package org.vpilo.babymonitor.camera.data
 
 import android.content.Context
-import android.hardware.camera2.CaptureRequest
 import android.util.Range
 import android.util.Size
 import android.view.OrientationEventListener
 import androidx.annotation.MainThread
-import androidx.annotation.OptIn
-import androidx.camera.camera2.interop.Camera2Interop
-import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalSessionConfig
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.camera.core.SessionConfig
 import androidx.camera.core.UseCase
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -32,6 +30,7 @@ import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 import java.lang.ref.WeakReference
+import kotlin.math.abs
 
 internal actual class VideoCaptureDataSource(
     private val mainDispatcher: CoroutineDispatcher,
@@ -112,12 +111,12 @@ internal actual class VideoCaptureDataSource(
     }
 
     @MainThread
+    @OptIn(ExperimentalSessionConfig::class)
     fun onCameraReady(
         cameraProvider: ProcessCameraProvider,
         context: Context,
         lifecycleOwner: LifecycleOwner,
     ) {
-        @OptIn(ExperimentalCamera2Interop::class)
         val imageAnalyzer =
             ImageAnalysis
                 .Builder()
@@ -126,17 +125,7 @@ internal actual class VideoCaptureDataSource(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                 .setBackgroundExecutor(executor)
-                .apply {
-                    val fpsRange =
-                        when (resolution) {
-                            CameraResolution.Low -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_LOW_QUALITY)
-                            CameraResolution.Medium -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_MEDIUM_QUALITY)
-                            CameraResolution.High -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_HIGH_QUALITY)
-                        }
-                    Camera2Interop
-                        .Extender(this)
-                        .setCaptureRequestOption(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
-                }.build()
+                .build()
                 .also {
                     it.setAnalyzer(executor, ::onFrameReceived)
                 }
@@ -145,17 +134,43 @@ internal actual class VideoCaptureDataSource(
                 .Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build()
+        val supportedFpsRanges = cameraProvider.getCameraInfo(cameraSelector).supportedFrameRateRanges.sortedBy { it.upper }
+        val desiredFpsRange =
+            when (resolution) {
+                CameraResolution.Low -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_LOW_QUALITY)
+                CameraResolution.Medium -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_MEDIUM_QUALITY)
+                CameraResolution.High -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_HIGH_QUALITY)
+            }
+        val fpsRange =
+            desiredFpsRange
+                .takeIf { supportedFpsRanges.contains(it) }
+                ?: run {
+                    supportedFpsRanges
+                        .map { it to abs(it.lower - desiredFpsRange.lower + it.upper - desiredFpsRange.upper) }
+                        .also {
+                            Logger.w(TAG) {
+                                "FPS range $desiredFpsRange not supported, selecting one from: ${it.joinToString(", ")}"
+                            }
+                        }.minBy { it.second }
+                        .first
+                }
+        Logger.i(TAG) { "Selected FPS range: $fpsRange" }
 
+        val sessionConfig =
+            SessionConfig(
+                useCases = listOf(imageAnalyzer),
+                frameRateRange = fpsRange,
+            )
         @Suppress("TooGenericExceptionCaught")
         try {
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,
-                imageAnalyzer,
+                sessionConfig,
             )
         } catch (ex: Exception) {
-            Logger.e(this::class) { "Failed to bind camera: ${ex.message}" }
+            Logger.e(TAG) { "Failed to bind camera: ${ex.message}" }
             return
         }
 
@@ -222,5 +237,9 @@ internal actual class VideoCaptureDataSource(
 
     override fun stop() {
         AndroidServiceRegistry.unregister(this)
+    }
+
+    private companion object {
+        private val TAG = VideoCaptureDataSource::class
     }
 }
