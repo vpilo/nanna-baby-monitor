@@ -38,27 +38,34 @@ internal actual class AudioCaptureDataSource :
         val audioFormat = AudioFormat.ENCODING_PCM_16BIT
         val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
 
-        audioRecord = AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize)
+        val record = AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize)
+        record.startRecording()
+        audioRecord = record
+
         recordingJob =
-            coroutineScope.launch {
-                val buffer = ByteArray(bufferSize)
-                audioRecord?.startRecording()
-                while (isActive) {
-                    audioRecord?.read(buffer, 0, buffer.size)?.let { read ->
-                        if (isActive && read > 0) {
+            coroutineScope
+                .launch {
+                    val buffer = ByteArray(bufferSize)
+                    while (isActive) {
+                        val read = record.read(buffer, 0, buffer.size)
+                        if (read > 0) {
                             collector.tryEmit(buffer.copyOf(read))
                         }
                     }
+                }.apply {
+                    invokeOnCompletion {
+                        record.stop()
+                        record.release()
+                        Logger.d(TAG) { "Mic capture stopped" }
+                    }
                 }
-            }
     }
 
     override fun onServiceStopped() {
         Logger.d(TAG) { "Stopping mic capture" }
         recordingJob?.cancel()
-        recordingJob = null
         audioRecord?.stop()
-        audioRecord?.release()
+        recordingJob = null
         audioRecord = null
     }
 
