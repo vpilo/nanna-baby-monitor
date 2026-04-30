@@ -12,7 +12,13 @@ internal class NetworkControlDataSource {
     val serverState: StateFlow<ServerState> = collector.asStateFlow()
 
     internal suspend fun onServerStateReceived(state: ServerState) {
-        collector.emit(state)
+        collector.value =
+            collector.value.copy(
+                isAvailable = state.isAvailable,
+                captureMode = state.captureMode,
+                batteryLevel = state.batteryLevel,
+                signalQuality = state.signalQuality,
+            )
     }
 
     internal fun setIsStreamingAudio(isStreaming: Boolean) {

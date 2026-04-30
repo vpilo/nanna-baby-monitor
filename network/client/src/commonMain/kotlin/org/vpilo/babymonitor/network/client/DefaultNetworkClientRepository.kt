@@ -193,11 +193,13 @@ internal class DefaultNetworkClientRepository(
     }
 
     private fun stopAudioStream() {
+        audioHandler?.let { Logger.d(TAG) { "Audio stream stopped" } }
         audioHandler?.disconnect()
         audioHandler = null
     }
 
     private fun stopVideoStream() {
+        videoHandler?.let { Logger.d(TAG) { "Video stream stopped" } }
         videoHandler?.disconnect()
         videoHandler = null
     }
@@ -256,19 +258,17 @@ internal class DefaultNetworkClientRepository(
 
         connectionState.value =
             when (exception) {
-                is ClosedReceiveChannelException -> {
-                    return
-                }
-
                 is ConnectException -> {
                     Logger.i(TAG) { "Connection refused." }
                     NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
                 }
 
-                is CancellationException -> {
-                    Logger.i(TAG) { "Connection closed by client." }
-                    NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
-                }
+                is ClosedReceiveChannelException,
+                is CancellationException,
+                    -> {
+                        Logger.i(TAG) { "Connection closed by client." }
+                        NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
+                    }
 
                 is SocketException, is SSLException -> {
                     Logger.i(TAG) { "Connection closed: ${exception.message}" }

@@ -29,6 +29,7 @@ internal class WebSocketConnectionHandler(
     private val coroutineScope: CoroutineScope,
 ) {
     private var connectionJob: Job? = null
+    private var isDisconnectionHandled = false
 
     fun connect() {
         if (connectionJob?.isActive == true) {
@@ -40,69 +41,83 @@ internal class WebSocketConnectionHandler(
     private fun connect(remainingHosts: Set<InetAddress>) {
         val host = remainingHosts.first()
         Logger.i(TAG) { "Connecting with $host (local: ${serverId.isLocalServer})" }
+        isDisconnectionHandled = false
         connectionJob =
-            coroutineScope.launch {
-                var lastException: Exception? = null
+            coroutineScope
+                .launch {
+                    var lastException: Exception? = null
 
-                @Suppress("TooGenericExceptionCaught")
-                val connectionSucceeded =
-                    try {
-                        var result = false
-                        if (serverId.isLocalServer) {
-                            networkClient.webSocket(
-                                method = HttpMethod.Get,
-                                host = host.hostAddress,
-                                port = Constants.WEBSOCKET_PORT,
-                                path = endpointPath,
-                            ) {
-                                pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                                timeout = Constants.WEBSOCKET_TIMEOUT
+                    @Suppress("TooGenericExceptionCaught")
+                    val connectionSucceeded =
+                        try {
+                            var result = false
+                            if (serverId.isLocalServer) {
+                                networkClient.webSocket(
+                                    method = HttpMethod.Get,
+                                    host = host.hostAddress,
+                                    port = Constants.WEBSOCKET_PORT,
+                                    path = endpointPath,
+                                ) {
+                                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                                    timeout = Constants.WEBSOCKET_TIMEOUT
 
-                                result = sessionBlock(host)
+                                    result = sessionBlock(host)
+                                }
+                            } else {
+                                relayHttpClient.wss(
+                                    method = HttpMethod.Get,
+                                    host = host.hostName,
+                                    port = Constants.RELAY_PORT,
+                                    path = "/relay/client$endpointPath/${serverId.name.encodeURLPathPart()}",
+                                ) {
+                                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                                    timeout = Constants.WEBSOCKET_TIMEOUT
+
+                                    RelayHandshake.send(this, secret)
+                                    result = sessionBlock(host)
+                                }
                             }
-                        } else {
-                            relayHttpClient.wss(
-                                method = HttpMethod.Get,
-                                host = host.hostName,
-                                port = Constants.RELAY_PORT,
-                                path = "/relay/client$endpointPath/${serverId.name.encodeURLPathPart()}",
-                            ) {
-                                pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                                timeout = Constants.WEBSOCKET_TIMEOUT
+                            result
+                        } catch (ex: Exception) {
+                            when (ex) {
+                                is CancellationException -> {
+                                    Logger.i(TAG) { "Connection closed" }
+                                    isDisconnectionHandled = true
+                                    onDisconnected(ex)
+                                    throw ex
+                                }
 
-                                RelayHandshake.send(this, secret)
-                                result = sessionBlock(host)
+                                else -> {
+                                    Logger.w(TAG) { "Failed to connect to $host: ${ex::class.simpleName} (${ex.message})" }
+                                    isDisconnectionHandled = true
+                                    lastException = ex
+                                    false
+                                }
                             }
                         }
-                        result
-                    } catch (ex: Exception) {
-                        when (ex) {
-                            is CancellationException -> {
-                                onDisconnected(ex)
-                                throw ex
-                            }
-
-                            else -> {
-                                Logger.w(TAG) { "Failed to connect to $host: ${ex::class.simpleName} (${ex.message})" }
-                                lastException = ex
-                                false
-                            }
+                    if (!connectionSucceeded) {
+                        val nextHosts = remainingHosts - host
+                        if (nextHosts.isNotEmpty()) {
+                            connect(nextHosts)
+                        } else {
+                            Logger.w(TAG) { "Failed to connect to any of the hosts" }
+                            isDisconnectionHandled = true
+                            onDisconnected(lastException ?: SocketException("Failed to connect to any host"))
                         }
                     }
-                if (!connectionSucceeded) {
-                    val nextHosts = remainingHosts - host
-                    if (nextHosts.isNotEmpty()) {
-                        connect(nextHosts)
-                    } else {
-                        Logger.w(TAG) { "Failed to connect to any of the hosts" }
-                        onDisconnected(lastException ?: SocketException("Failed to connect to any host"))
+                    connectionJob = null
+                }.apply {
+                    invokeOnCompletion {
+                        if (isDisconnectionHandled) return@invokeOnCompletion
+                        Logger.w(TAG) { "Disconnection" }
+                        isDisconnectionHandled = true
+                        coroutineScope.launch { onDisconnected(it ?: CancellationException("Unhandled closure")) }
                     }
                 }
-                connectionJob = null
-            }
     }
 
     fun disconnect() {
+        isDisconnectionHandled = true
         connectionJob?.cancel()
         connectionJob = null
     }

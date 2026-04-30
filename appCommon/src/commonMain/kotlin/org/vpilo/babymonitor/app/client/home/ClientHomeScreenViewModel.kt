@@ -36,11 +36,6 @@ class ClientHomeScreenViewModel(
                 }
             }
 
-        playReceivedAudio.isPlaying
-            .subscribe { playing ->
-                state.copy(isAudioPlaying = playing).update()
-            }
-
         combine(
             playReceivedAudio.isPlaying,
             networkClientRepository.serverStateFlow,

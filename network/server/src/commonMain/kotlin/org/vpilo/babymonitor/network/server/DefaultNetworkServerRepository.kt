@@ -174,7 +174,11 @@ internal class DefaultNetworkServerRepository(
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
-                controlServerWebSocket()
+                try {
+                    controlServerWebSocket()
+                } finally {
+                    Logger.i(TAG) { "Closed control session" }
+                }
             }
             webSocket(Endpoints.STREAM_AUDIO) {
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD

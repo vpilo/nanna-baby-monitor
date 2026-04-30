@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -32,14 +32,14 @@ fun CameraFeed(
     var frame by remember { mutableStateOf<ImageBitmap?>(null) }
     val scope = rememberCoroutineScope()
 
-    LifecycleStartEffect(Unit) {
+    LifecycleResumeEffect(Unit) {
         Logger.d(TAG) { "Started showing feed" }
         val frameJob =
             scope.launch {
                 frames.collect { frame = it }
             }
 
-        onStopOrDispose {
+        onPauseOrDispose {
             Logger.d(TAG) { "Stopped showing feed" }
             frameJob.cancel()
             frame = null
