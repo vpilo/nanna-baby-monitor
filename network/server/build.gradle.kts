@@ -39,5 +39,12 @@ kotlin {
 
             implementation(libs.koin.core)
         }
+        androidMain.dependencies {
+            implementation(project(":androidService"))
+        }
+    }
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 }

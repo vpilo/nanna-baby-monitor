@@ -52,6 +52,8 @@ internal class DefaultNetworkServerRepository(
     private var server: EmbeddedServer<*, *>? = null
     private var isServerReady = MutableStateFlow(false)
 
+    private val foregroundLink = ServerForegroundServiceLink()
+
     private val activeAudioSessions = mutableListOf<WebSocketSession>()
     private val activeVideoSessions = mutableListOf<WebSocketSession>()
 
@@ -92,6 +94,8 @@ internal class DefaultNetworkServerRepository(
 
     override suspend fun start() {
         if (server != null) return
+
+        foregroundLink.start()
 
         discoveryManager.registerService()
 
@@ -135,6 +139,7 @@ internal class DefaultNetworkServerRepository(
             )
             isServerReady.value = false
             server = null
+            foregroundLink.stop()
         }
     }
 

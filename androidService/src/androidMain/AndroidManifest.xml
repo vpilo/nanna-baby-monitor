@@ -10,6 +10,6 @@
     <application>
         <service
             android:name=".AndroidServiceHost"
-            android:foregroundServiceType="camera" />
+            android:foregroundServiceType="camera|microphone" />
     </application>
 </manifest>

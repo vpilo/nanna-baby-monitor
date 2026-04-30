@@ -20,7 +20,6 @@
 
 # Issues
 
-- Check server lifecycle. there should always be a notification active, also allowing the user to stop the server. It should not restart when killed manually. Server must keep streaming when the screen goes off.
 - Client should keep reconnecting automatically on disconnection, and offer a button to disconnect manually.
 - The role selection screen show be redone.
 - Fix ktor engines setup.
