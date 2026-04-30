@@ -16,6 +16,7 @@ compose = "1.10.1"
 compose-material = "1.9.0"
 compose-materialIconsExtended = "1.7.3"
 compose-navigation = "2.9.2"
+compose-navigation-event = "1.0.1"
 
 androidx-activityCompose = "1.12.4"
 androidx-core = "1.17.0"
@@ -45,6 +46,7 @@ compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", v
 compose-material = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material" }
 compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "compose-materialIconsExtended" }
 compose-navigation = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "compose-navigation" }
+compose-navigation-event = { group = "org.jetbrains.androidx.navigationevent", name = "navigationevent-compose", version.ref = "compose-navigation-event" }
 compose-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }

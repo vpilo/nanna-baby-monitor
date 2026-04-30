@@ -66,6 +66,7 @@ kotlin {
             implementation(libs.compose.ui.tooling)
 
             implementation(libs.compose.navigation)
+            implementation(libs.compose.navigation.event)
 
             implementation(libs.jetbrains.lifecycle.runtime.compose)
 
