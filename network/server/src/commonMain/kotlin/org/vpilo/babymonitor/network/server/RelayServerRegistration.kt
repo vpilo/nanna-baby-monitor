@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManagerState
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -88,13 +89,13 @@ internal class RelayServerRegistration(
                     _isRegistered.value = true
                     readRelaySignals()
                 }
-            } catch (e: CancellationException) {
+            } catch (ex: CancellationException) {
                 Logger.d(TAG) { "Relay registration cancelled" }
-                throw e
+                throw ex
             } catch (
-                @Suppress("TooGenericExceptionCaught") e: Exception,
+                @Suppress("TooGenericExceptionCaught") ex: Exception,
             ) {
-                Logger.w(TAG) { "Relay registration disconnected: ${e.message}. Retrying." }
+                Logger.w(TAG) { "Relay registration disconnected: ${ex.prettify()}. Retrying." }
                 activeStreamJobs.forEach { it.cancel() }
                 activeStreamJobs.clear()
                 _isRegistered.value = false
@@ -135,10 +136,10 @@ internal class RelayServerRegistration(
                             Endpoints.STREAM_VIDEO -> videoStreamingServerWebSocket()
                         }
                     }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Logger.w(TAG) { "Relay stream $endpoint failed: ${e.message}" }
+                } catch (ex: CancellationException) {
+                    throw ex
+                } catch (ex: Exception) {
+                    Logger.w(TAG) { "Relay stream $endpoint failed: ${ex.prettify()}" }
                 }
             }
         activeStreamJobs.add(job)

@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 
 abstract class AppViewModel<A, S, E>(
     private val initialState: S,
@@ -103,7 +104,7 @@ abstract class AppViewModel<A, S, E>(
         internalActionsChannel
             .trySend(action)
             .onFailure { ex ->
-                Logger.e(TAG, ex) { "Unable to send action: $action (${ex?.message ?: ex?.let { it::class.simpleName }})" }
+                Logger.e(TAG, ex) { "Unable to send action: $action (${ex?.prettify() ?: "None"})" }
             }
     }
 

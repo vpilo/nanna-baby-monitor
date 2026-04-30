@@ -105,7 +105,7 @@ actual class AudioEncoder actual constructor(
 
                 var ret = avcodec_send_frame(codecCtx, frame)
                 if (ret < 0 && ret != AVERROR_EAGAIN()) {
-                    Logger.w(AudioEncoderContext::class) { "audio avcodec_send_frame error: $ret" }
+                    Logger.w(TAG) { "audio avcodec_send_frame error: $ret" }
                     continue
                 }
 
@@ -113,7 +113,7 @@ actual class AudioEncoder actual constructor(
                     ret = avcodec_receive_packet(codecCtx, packet)
                     if (ret == AVERROR_EAGAIN() || ret == AVERROR_EOF) break
                     if (ret < 0) {
-                        Logger.w(AudioEncoderContext::class) { "audio avcodec_receive_packet error: $ret" }
+                        Logger.w(TAG) { "audio avcodec_receive_packet error: $ret" }
                         break
                     }
 

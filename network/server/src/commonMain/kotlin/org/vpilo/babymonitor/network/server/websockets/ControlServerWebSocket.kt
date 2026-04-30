@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.common.protocol.makeServerMessageFrame
 import kotlin.coroutines.cancellation.CancellationException
@@ -29,7 +30,7 @@ internal suspend fun DefaultWebSocketSession.controlServerWebSocket() {
         }
     }.onFailure { ex ->
         if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-            Logger.i(TAG) { "WebSocket closed (${ex::class.simpleName}): ${ex.localizedMessage}" }
+            Logger.i(TAG) { "WebSocket closed: ${ex.prettify()}" }
         }
     }.also {
         stateSendingJob.cancel()

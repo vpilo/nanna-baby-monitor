@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.network.client
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.ServerState
 
 internal class NetworkControlDataSource {
@@ -22,6 +23,7 @@ internal class NetworkControlDataSource {
     }
 
     internal fun setIsStreamingAudio(isStreaming: Boolean) {
+        Logger.d(TAG) { "Setting isStreamingAudio to $isStreaming (was ${collector.value.isStreamingAudio})" }
         collector.value =
             collector.value.copy(
                 isStreamingAudio = isStreaming,
@@ -29,9 +31,14 @@ internal class NetworkControlDataSource {
     }
 
     internal fun setIsStreamingVideo(isStreaming: Boolean) {
+        Logger.d(TAG) { "Setting isStreamingVideo to $isStreaming (was ${collector.value.isStreamingVideo})" }
         collector.value =
             collector.value.copy(
                 isStreamingVideo = isStreaming,
             )
+    }
+
+    private companion object {
+        private val TAG = NetworkControlDataSource::class
     }
 }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
@@ -271,12 +272,12 @@ internal class DefaultNetworkClientRepository(
                     }
 
                 is SocketException, is SSLException -> {
-                    Logger.i(TAG) { "Connection closed: ${exception.message}" }
+                    Logger.i(TAG) { "Connection closed: ${exception.prettify()}" }
                     NetworkState.Disconnected(NetworkState.ErrorReason.ConnectionFailed, exception)
                 }
 
                 else -> {
-                    Logger.w(TAG) { "WebSocket failed: ${exception::class.simpleName} - ${exception.localizedMessage}" }
+                    Logger.w(TAG) { "WebSocket failed: ${exception.prettify()}" }
                     NetworkState.Disconnected(NetworkState.ErrorReason.ServerQuit, exception)
                 }
             }

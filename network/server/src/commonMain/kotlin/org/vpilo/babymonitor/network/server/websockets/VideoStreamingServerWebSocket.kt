@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.flow.dropWhile
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.network.common.protocol.protocolSendVideo
 import kotlin.coroutines.cancellation.CancellationException
@@ -23,7 +24,7 @@ internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket() {
             }
     }.onFailure { ex ->
         if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-            Logger.w(TAG) { "WebSocket closed (${ex::class.simpleName}): ${ex.localizedMessage}" }
+            Logger.i(TAG) { "WebSocket closed: ${ex.prettify()}" }
         }
     }
 }

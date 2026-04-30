@@ -35,6 +35,7 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_serve
 import babymonitor.appcommon.generated.resources.client_connection_chooser_unknown_error
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
@@ -95,7 +96,7 @@ private fun CameraSelectionScreenContent(
             ?.additionalInfo
             ?.let { exception ->
                 Text(
-                    text = "Error details: ${exception.localizedMessage}",
+                    text = "Error details: ${exception.prettify()}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )

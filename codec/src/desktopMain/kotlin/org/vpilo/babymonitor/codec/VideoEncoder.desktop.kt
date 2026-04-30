@@ -122,7 +122,7 @@ actual class VideoEncoder actual constructor(
             // Send frame to encoder
             var ret = avcodec_send_frame(codecCtx, yuvFrame)
             if (ret < 0 && ret != AVERROR_EAGAIN()) {
-                Logger.w(VideoEncoderContext::class) { "avcodec_send_frame error: $ret" }
+                Logger.w(TAG) { "avcodec_send_frame error: $ret" }
                 return
             }
 
@@ -131,7 +131,7 @@ actual class VideoEncoder actual constructor(
                 ret = avcodec_receive_packet(codecCtx, packet)
                 if (ret == AVERROR_EAGAIN() || ret == AVERROR_EOF) break
                 if (ret < 0) {
-                    Logger.w(VideoEncoderContext::class) { "avcodec_receive_packet error: $ret" }
+                    Logger.w(TAG) { "avcodec_receive_packet error: $ret" }
                     break
                 }
 

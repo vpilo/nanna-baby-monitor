@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
@@ -69,15 +70,15 @@ internal class RelayDiscoveryDataSource {
                         }
                     }
                 }
-            } catch (e: Exception) {
-                when (e) {
+            } catch (ex: Exception) {
+                when (ex) {
                     is CancellationException -> {
                         Logger.d(TAG) { "Relay discovery connection closed." }
-                        throw e
+                        throw ex
                     }
 
                     else -> {
-                        Logger.w(TAG) { "Relay discovery disconnected: ${e::class}: '${e.message}'. Retrying." }
+                        Logger.w(TAG) { "Relay discovery disconnected: ${ex.prettify()}. Retrying." }
                         _serverIds.value = emptySet()
                         delay(Constants.RECONNECTION_TIMEOUT)
                     }

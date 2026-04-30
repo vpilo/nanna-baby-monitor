@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.onCompletion
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_UPDATE_INTERVAL
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
@@ -37,7 +38,7 @@ internal actual class DefaultDeviceStateRepository :
             }
         }.onCompletion { ex ->
             if (ex != null) {
-                Logger.e(TAG) { "Battery level retrieval error: ${ex.message}" }
+                Logger.e(TAG) { "Battery level retrieval error: ${ex.prettify()}" }
             }
         }
 
@@ -58,7 +59,7 @@ internal actual class DefaultDeviceStateRepository :
             }
         }.onCompletion { ex ->
             if (ex != null) {
-                Logger.e(TAG) { "Signal quality retrieval error: ${ex.message}" }
+                Logger.e(TAG) { "Signal quality retrieval error: ${ex.prettify()}" }
             }
         }
 

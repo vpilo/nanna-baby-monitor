@@ -20,6 +20,5 @@ sealed interface NetworkState {
         ClientQuit,
         NotConnectedYet,
         ConnectionFailed,
-        Unknown,
     }
 }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientEnabledAudio
 import org.vpilo.babymonitor.app.settings.ClientEnabledVideo
 import org.vpilo.babymonitor.app.settings.RelayHost
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
@@ -30,6 +31,7 @@ class ClientHomeScreenViewModel(
     override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.connectionStateFlow
             .subscribe { netState ->
+                Logger.d(TAG) { "Network state changed: $netState" }
                 state.copy(networkState = netState).update()
                 if (netState is NetworkState.Disconnected) {
                     ClientHomeScreenEffect.DisconnectedFromServer.sendEffect()
@@ -40,6 +42,7 @@ class ClientHomeScreenViewModel(
             playReceivedAudio.isPlaying,
             networkClientRepository.serverStateFlow,
         ) { isPlaying, serverState ->
+            Logger.d(TAG) { "Server state changed: $serverState (isPlaying=$isPlaying)" }
             state
                 .copy(
                     captureMode = serverState.captureMode,
@@ -51,20 +54,24 @@ class ClientHomeScreenViewModel(
 
             // If the server starts streaming audio, but we're not playing, start playing.
             if (!isPlaying && serverState.isStreamingAudio) {
+                Logger.d(TAG) { "Starting audio playback from server cue" }
                 playReceivedAudio.toggle(vmScope)
             }
 
             // If the server changes to video only, stop playing audio.
             if (serverState.captureMode == CaptureMode.VIDEO_ONLY && isPlaying) {
+                Logger.d(TAG) { "Stopping audio playback from server cue" }
                 onAction(ClientHomeScreenAction.ToggleAudio)
             }
         }.collectLatest()
 
         settingsRepository.flowOf(Setting.ClientEnabledAudio).subscribe {
+            Logger.d(TAG) { "Client enabled audio: $it" }
             networkClientRepository.enableAudio(it)
         }
 
         settingsRepository.flowOf(Setting.ClientEnabledVideo).subscribe {
+            Logger.d(TAG) { "Client enabled video: $it" }
             networkClientRepository.enableVideo(it)
         }
 

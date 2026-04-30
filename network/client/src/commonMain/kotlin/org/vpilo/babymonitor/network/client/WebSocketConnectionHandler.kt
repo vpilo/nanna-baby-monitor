@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
@@ -88,7 +89,7 @@ internal class WebSocketConnectionHandler(
                                 }
 
                                 else -> {
-                                    Logger.w(TAG) { "Failed to connect to $host: ${ex::class.simpleName} (${ex.message})" }
+                                    Logger.w(TAG) { "Failed to connect to $host: ${ex.prettify()}" }
                                     isDisconnectionHandled = true
                                     lastException = ex
                                     false

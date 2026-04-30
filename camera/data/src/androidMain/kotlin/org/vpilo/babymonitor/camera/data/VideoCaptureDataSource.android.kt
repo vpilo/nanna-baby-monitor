@@ -25,6 +25,7 @@ import org.vpilo.babymonitor.android.service.AndroidService
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
 import org.vpilo.babymonitor.camera.model.CameraResolution
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
@@ -170,7 +171,7 @@ internal actual class VideoCaptureDataSource(
                 sessionConfig,
             )
         } catch (ex: Exception) {
-            Logger.e(TAG) { "Failed to bind camera: ${ex.message}" }
+            Logger.e(TAG) { "Failed to bind camera: ${ex.prettify()}" }
             return
         }
 
@@ -237,9 +238,5 @@ internal actual class VideoCaptureDataSource(
 
     override fun stop() {
         AndroidServiceRegistry.unregister(this)
-    }
-
-    private companion object {
-        private val TAG = VideoCaptureDataSource::class
     }
 }
