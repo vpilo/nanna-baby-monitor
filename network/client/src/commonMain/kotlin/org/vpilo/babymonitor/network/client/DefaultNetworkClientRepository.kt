@@ -59,7 +59,7 @@ internal class DefaultNetworkClientRepository(
         }
 
     private var relayHost: String = ""
-    private var connectedServerId: ServerId? = null
+    private var lastConnectedServerId: ServerId? = null
     private var currentAddress: InetAddress? = null
     private var lastServerState: ServerState = ServerState()
     private var isAudioEnabled: Boolean = false
@@ -108,7 +108,7 @@ internal class DefaultNetworkClientRepository(
             return
         }
 
-        connectedServerId = server
+        lastConnectedServerId = server
         closeAllConnections()
 
         val hosts =
@@ -135,13 +135,25 @@ internal class DefaultNetworkClientRepository(
         connectionState.value = NetworkState.Connecting(server)
     }
 
+    override suspend fun reconnect() {
+        val last = lastConnectedServerId
+        if (last == null) {
+            Logger.w(TAG) { "No server to reconnect to." }
+            return
+        }
+        Logger.i(TAG) {
+            "Reconnecting to ${last.name}"
+        }
+        connect(last)
+    }
+
     private fun startAudioStream() {
         if (currentAddress == null || lastServerState.captureMode == CaptureMode.VIDEO_ONLY) return
         if (audioHandler != null) {
             Logger.w(TAG) { "Audio stream is already running" }
             return
         }
-        val serverId = checkNotNull(connectedServerId)
+        val serverId = checkNotNull(lastConnectedServerId)
 
         audioHandler =
             WebSocketConnectionHandler(
@@ -170,7 +182,7 @@ internal class DefaultNetworkClientRepository(
             Logger.w(TAG) { "Video stream is already running" }
             return
         }
-        val serverId = checkNotNull(connectedServerId)
+        val serverId = checkNotNull(lastConnectedServerId)
 
         videoHandler =
             WebSocketConnectionHandler(

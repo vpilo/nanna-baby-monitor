@@ -4,10 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
@@ -25,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
-import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.resources.Res
 import org.vpilo.babymonitor.presentation.resources.back
 import org.vpilo.babymonitor.presentation.resources.example
@@ -35,6 +31,23 @@ import org.vpilo.babymonitor.presentation.resources.menu
 fun AppDestination(
     modifier: Modifier = Modifier,
     title: StringResource,
+    mainAction: AppDestinationMainAction = AppDestinationMainAction.Back,
+    onMainActionClicked: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
+    content: @Composable () -> Unit,
+) = AppDestination(
+    modifier = modifier,
+    title = stringResource(title),
+    mainAction = mainAction,
+    onMainActionClicked = onMainActionClicked,
+    actions = actions,
+    content = content,
+)
+
+@Composable
+fun AppDestination(
+    modifier: Modifier = Modifier,
+    title: String,
     mainAction: AppDestinationMainAction = AppDestinationMainAction.Back,
     onMainActionClicked: () -> Unit,
     actions: @Composable RowScope.() -> Unit = {},
@@ -55,7 +68,7 @@ fun AppDestination(
                 ),
             title = {
                 Text(
-                    text = stringResource(title),
+                    text = title,
                     style = MaterialTheme.typography.titleLarge,
                 )
             },

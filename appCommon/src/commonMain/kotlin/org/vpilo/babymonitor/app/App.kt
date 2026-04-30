@@ -167,7 +167,9 @@ private fun NavigationRoutes(navController: NavHostController) {
                 ClientHomeScreen(
                     viewModel = koinViewModel(),
                     onDisconnected = {
-                        navController.popBackStack()
+                        navController.navigate(Route.CameraSelection) {
+                            popUpTo(Route.CameraSelection) { inclusive = true }
+                        }
                     },
                     onMenuClicked = {
                         navController.navigate(Route.Menu)

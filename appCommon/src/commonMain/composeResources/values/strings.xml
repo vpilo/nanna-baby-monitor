@@ -6,6 +6,7 @@
     <string name="app_title_server_home">Camera</string>
     <string name="app_title_client_connect">Connect to a camera</string>
     <string name="app_title_client_home">Monitor</string>
+    <string name="app_title_client_home_name">%1$s</string>
     <string name="app_title_menu">Menu</string>
 
     <string name="app_role_choice_presentation">What will this device do?</string>
@@ -38,6 +39,8 @@
     <string name="client_play_video">Start showing the camera</string>
     <string name="client_pause_audio">Stop listening</string>
     <string name="client_pause_video">Stop showing the camera</string>
+    <string name="client_disconnect">Disconnect</string>
+    <string name="client_disconnected_reconnecting">Disconnected. Reconnecting...</string>
 
     <string name="relay_host_title">Remote relay hostname</string>
     <string name="relay_host_description">DDNS hostname for remote access (e.g. myhome.dyndns.com)</string>

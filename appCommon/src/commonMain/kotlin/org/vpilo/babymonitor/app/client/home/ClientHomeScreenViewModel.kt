@@ -10,7 +10,6 @@ import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
@@ -23,7 +22,7 @@ class ClientHomeScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
     private val settingsRepository: SettingsRepository,
-) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
+) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, Unit>(
         initialState = ClientHomeScreenState(),
     ) {
     val frames: Flow<ImageBitmap> = videoReceiverRepository.decodedFrames
@@ -33,9 +32,6 @@ class ClientHomeScreenViewModel(
             .subscribe { netState ->
                 Logger.d(TAG) { "Network state changed: $netState" }
                 state.copy(networkState = netState).update()
-                if (netState is NetworkState.Disconnected) {
-                    ClientHomeScreenEffect.DisconnectedFromServer.sendEffect()
-                }
             }
 
         combine(
@@ -102,6 +98,12 @@ class ClientHomeScreenViewModel(
                 val newState = !state.isVideoPlaying
                 networkClientRepository.enableVideo(newState)
                 settingsRepository.saveDelayed(Setting.ClientEnabledVideo, newState)
+            }
+
+            ClientHomeScreenAction.Reconnect -> {
+                vmScope.launch {
+                    networkClientRepository.reconnect()
+                }
             }
         }
     }

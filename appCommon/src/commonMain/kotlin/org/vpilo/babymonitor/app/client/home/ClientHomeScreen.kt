@@ -1,29 +1,39 @@
 package org.vpilo.babymonitor.app.client.home
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_home
+import babymonitor.appcommon.generated.resources.app_title_client_home_name
+import babymonitor.appcommon.generated.resources.client_disconnect
+import babymonitor.appcommon.generated.resources.client_disconnected_reconnecting
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
+import org.vpilo.babymonitor.model.repository.NetworkState
+import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.SURFACE_ALPHA
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.client.BatteryState
 import org.vpilo.babymonitor.presentation.client.SignalState
@@ -40,7 +50,6 @@ fun ClientHomeScreen(
     onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
 
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
@@ -49,20 +58,23 @@ fun ClientHomeScreen(
         onBackCompleted = { onMenuClicked() },
     )
 
-    LifecycleResumeEffect(Unit) {
-        val job =
-            scope.launch {
-                viewModel.effectsFlow.collect {
-                    when (it) {
-                        ClientHomeScreenEffect.DisconnectedFromServer -> onDisconnected()
-                    }
-                }
-            }
-        onPauseOrDispose { job.cancel() }
+    SideEffect {
+        if (state.networkState is NetworkState.Disconnected) {
+            viewModel.send(ClientHomeScreenAction.Reconnect)
+        }
     }
 
+    val title =
+        with(state.networkState) {
+            if (this is NetworkState.Connected) {
+                stringResource(Res.string.app_title_client_home_name, server.name)
+            } else {
+                stringResource(Res.string.app_title_client_home)
+            }
+        }
+
     AppDestination(
-        title = Res.string.app_title_client_home,
+        title = title,
         mainAction = AppDestinationMainAction.Menu,
         onMainActionClicked = {
             viewModel.disconnect()
@@ -79,6 +91,8 @@ fun ClientHomeScreen(
             onToggleVideo = { viewModel.send(ClientHomeScreenAction.ToggleVideo) },
             batteryLevel = state.batteryLevel,
             signalQuality = state.signalQuality,
+            networkState = state.networkState,
+            onDisconnected = onDisconnected,
         )
     }
 }
@@ -94,6 +108,8 @@ private fun ClientHomeScreenContent(
     onToggleVideo: () -> Unit,
     batteryLevel: Int,
     signalQuality: Int,
+    networkState: NetworkState,
+    onDisconnected: () -> Unit,
 ) {
     Box(modifier = modifier) {
         CameraFeed(frames = frames)
@@ -122,6 +138,27 @@ private fun ClientHomeScreenContent(
                 SignalState(signalQuality = signalQuality)
             }
         }
+
+        if (networkState is NetworkState.Disconnected) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = SURFACE_ALPHA),
+            ) {
+                Backdrop {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(stringResource(Res.string.client_disconnected_reconnecting))
+                        Button(
+                            modifier = Modifier.padding(top = Theme.Paddings.Medium),
+                            onClick = onDisconnected,
+                        ) {
+                            Text(stringResource(Res.string.client_disconnect))
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -139,6 +176,8 @@ private fun ClientHomeScreenPreview() =
             onToggleVideo = { },
             batteryLevel = 5,
             signalQuality = 3,
+            networkState = NetworkState.Connected(ServerId("Test Server")),
+            onDisconnected = { },
         )
     }
 
@@ -156,6 +195,8 @@ private fun ClientHomeScreenVideoOnlyPreview() =
             onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = 93,
+            networkState = NetworkState.Connected(ServerId("Test Server")),
+            onDisconnected = { },
         )
     }
 
@@ -173,5 +214,26 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
             onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
+            networkState = NetworkState.Connected(ServerId("Test Server")),
+            onDisconnected = { },
+        )
+    }
+
+@Preview
+@Composable
+private fun ClientHomeScreenDisconnectedPreview() =
+    AppPreviewTheme {
+        ClientHomeScreenContent(
+            modifier = Modifier.fillMaxSize(),
+            frames = flowOf(makePlaceholderCameraFrame()),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+            isAudioPlaying = false,
+            isVideoPlaying = true,
+            onToggleAudio = { },
+            onToggleVideo = { },
+            batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
+            signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
+            networkState = NetworkState.Disconnected(reason = NetworkState.ErrorReason.ClientQuit),
+            onDisconnected = { },
         )
     }

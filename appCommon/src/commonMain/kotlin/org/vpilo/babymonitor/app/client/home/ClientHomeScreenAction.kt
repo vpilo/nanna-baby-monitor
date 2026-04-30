@@ -4,4 +4,6 @@ sealed interface ClientHomeScreenAction {
     data object ToggleAudio : ClientHomeScreenAction
 
     data object ToggleVideo : ClientHomeScreenAction
+
+    data object Reconnect : ClientHomeScreenAction
 }

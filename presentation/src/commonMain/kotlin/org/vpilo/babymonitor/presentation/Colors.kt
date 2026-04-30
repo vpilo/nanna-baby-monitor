@@ -14,3 +14,5 @@ val White = Color(0xFFC6C6C6)
 val OffWhite = Color(0xFFE0E0E0)
 val LightRed = Color(0xFFC36D6D)
 val OffBlack = Color(0xFF1F1F1F)
+
+const val SURFACE_ALPHA = 0.7f
