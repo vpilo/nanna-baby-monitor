@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
@@ -37,6 +38,7 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.DiscoveryManagerState
 import org.vpilo.babymonitor.network.common.Endpoints
+import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
@@ -52,7 +54,7 @@ internal class DefaultNetworkServerRepository(
     private var server: EmbeddedServer<*, *>? = null
     private var isServerReady = MutableStateFlow(false)
 
-    private val foregroundLink = ServerForegroundServiceLink()
+    private val foregroundLink = ForegroundServiceLink(AppRole.SERVER)
 
     private val activeAudioSessions = mutableListOf<WebSocketSession>()
     private val activeVideoSessions = mutableListOf<WebSocketSession>()

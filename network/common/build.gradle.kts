@@ -44,5 +44,9 @@ kotlin {
         desktopMain.dependencies {
             implementation(libs.jmdns)
         }
+
+        androidMain.dependencies {
+            implementation(project(":androidService"))
+        }
     }
 }

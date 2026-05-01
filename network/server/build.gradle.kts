@@ -39,9 +39,6 @@ kotlin {
 
             implementation(libs.koin.core)
         }
-        androidMain.dependencies {
-            implementation(project(":androidService"))
-        }
     }
 
     compilerOptions {
