@@ -2,7 +2,6 @@
 
 # Feature plan
 
-- present the server name on client UI
 - Hide client UI with a tap on the video feed, to see only the video feed.
 - More secure communication channels with clients (monitors) pairing with server (camera).
 - Plugins for raw AV streams to:
@@ -14,16 +13,14 @@
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
-- Improve automatic reconnection to server.
-- Show name of the server on the client UI instead of "Monitor".
 - Systemctl service to re-run relay when closed/crashed.
 
 # Issues
 
-- Client should keep reconnecting automatically on disconnection, and offer a button to disconnect manually.
 - The role selection screen show be redone.
 - Fix ktor engines setup.
 - on exit, close all http clients, servers, etc first.
+- where is the notification?
 
 # Completed features
 

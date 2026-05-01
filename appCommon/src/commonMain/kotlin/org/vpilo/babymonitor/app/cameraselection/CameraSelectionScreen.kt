@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.app.cameraselection
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -207,7 +208,7 @@ private fun CameraSelectionScreenPreview() =
 @Preview
 @Composable
 private fun CameraSelectionScreenConnectingPreview() =
-    AppPreviewTheme {
+    AppPreviewTheme(modifier = Modifier.fillMaxSize()) {
         CameraSelectionScreenContent(
             networkState = NetworkState.Connecting(ServerId("Bedroom Camera")),
             servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
@@ -220,7 +221,7 @@ private fun CameraSelectionScreenConnectingPreview() =
 private fun CameraSelectionScreenNoServersPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
-            networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
+            networkState = NetworkState.Disconnected(NetworkState.ErrorReason.ConnectionFailed),
             servers = emptySet(),
             onConnectRequested = {},
         )

@@ -2,15 +2,20 @@ package org.vpilo.babymonitor.android.service
 
 import android.content.Context
 import android.content.Intent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.vpilo.babymonitor.common.Logger
 import java.lang.ref.WeakReference
+import kotlin.coroutines.CoroutineContext
 
 object AndroidServiceRegistry : KoinComponent {
     private val services: MutableSet<WeakReference<AndroidService>> = mutableSetOf()
 
     private var serviceInstance: LifecycleService? = null
+
+    private val scope = CoroutineScope(get<CoroutineContext>())
 
     val isServiceRunning: Boolean
         get() = serviceInstance != null
@@ -31,7 +36,11 @@ object AndroidServiceRegistry : KoinComponent {
             val intent = Intent(context, AndroidServiceHost::class.java)
             context.startForegroundService(intent)
         } else {
-            serviceInstance?.let { service.onServiceStarted(it, it) }
+            serviceInstance?.let {
+                scope.launch {
+                    service.onServiceStarted(it, it)
+                }
+            }
         }
     }
 
@@ -51,7 +60,11 @@ object AndroidServiceRegistry : KoinComponent {
             val intent = Intent(context, AndroidServiceHost::class.java)
             context.stopService(intent)
         } else {
-            serviceInstance?.let { service.onServiceStopped() }
+            serviceInstance?.let {
+                scope.launch {
+                    service.onServiceStopped()
+                }
+            }
         }
     }
 

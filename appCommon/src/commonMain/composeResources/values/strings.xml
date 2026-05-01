@@ -24,7 +24,7 @@
     <string name="client_connection_chooser_connecting">Connecting to camera...</string>
     <string name="client_connection_chooser_connected">Connected to %1$s</string>
     <string name="client_connection_chooser_no_servers_found">Looking for a camera app...</string>
-    <string name="client_connection_chooser_server_not_found">Connection failed!Please try another camera app.</string>
+    <string name="client_connection_chooser_server_not_found">Connection failed! Please try another camera app.</string>
     <string name="client_connection_chooser_server_quit">Connection closed by camera app. Please try another camera app.</string>
     <string name="client_connection_chooser_client_quit">Connection closed. Choose the camera app to connect to.</string>
     <string name="client_connection_chooser_unknown_error">Connection failed with an unknown error! Please try another camera app.</string>
