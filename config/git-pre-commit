@@ -1,19 +1,50 @@
 #!/bin/bash
 
-echo "Running pre-commit check ktlint..."
-./gradlew ktlintFormat --daemon --quiet
+# Snapshot stash ref so we can detect whether we actually stashed anything.
+OLD_STASH=$(git rev-parse -q --verify refs/stash)
+
+# Capture the files staged for this commit (excluding deletions) before stashing.
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=d)
+
+# Stash unstaged changes and untracked files, keeping the index intact so
+# the checks (and any reformatting) only see what's about to be committed.
+git stash push --keep-index --include-untracked --message "pre-commit-stash" --quiet 2>/dev/null
+
+NEW_STASH=$(git rev-parse -q --verify refs/stash)
+STASHED=0
+if [ "$OLD_STASH" != "$NEW_STASH" ]; then
+    STASHED=1
+fi
+
+cleanup() {
+    EXIT_CODE=$?
+    if [ "$STASHED" = "1" ]; then
+        if ! git stash pop --quiet 2>/dev/null; then
+            echo
+            echo "⚠️ Could not auto-restore stashed changes (conflicts)."
+            echo "⚠️ Resolve manually with: git stash pop"
+        fi
+    fi
+    exit $EXIT_CODE
+}
+trap cleanup EXIT INT TERM
+
+echo "Running pre-commit checks (ktlintFormat, detekt)..."
+./gradlew ktlintFormat detekt --daemon --quiet
 if [ $? -ne 0 ]; then
     echo
-    echo "❌ ktlint formatting failed."
+    echo "❌ pre-commit checks failed."
     exit 1
 fi
 
-echo "Running pre-commit check detekt..."
-./gradlew detekt --daemon --quiet
-if [ $? -ne 0 ]; then
-    echo
-    echo "❌ detekt check failed."
-    exit 1
+# Re-stage any reformatting performed on originally-staged files so it
+# becomes part of the commit.
+if [ -n "$STAGED_FILES" ]; then
+    while IFS= read -r f; do
+        if [ -n "$f" ] && [ -f "$f" ]; then
+            git add -- "$f"
+        fi
+    done <<< "$STAGED_FILES"
 fi
 
 echo "✅ All pre-commit checks passed."
