@@ -45,6 +45,8 @@ subprojects {
 }
 
 tasks.register<Copy>("installGitHook") {
+    // Install only in the root checkout, not in a worktree.
+    onlyIf { File(rootProject.rootDir, ".git").isDirectory }
     description = "Installs the pre-commit git hook for ktlint and detekt checks."
     group = "git hooks"
     from("${rootProject.rootDir}/config/git-pre-commit")
