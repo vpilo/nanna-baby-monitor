@@ -16,7 +16,6 @@ internal class NetworkVideoReceiverRepository(
         bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
     ),
     StreamingVideoReceiverRepository {
-    // TODO probably want to change the raw frame format for the camera, for fewer conversions on either end.
     override val decodedFrames: SharedFlow<ImageBitmap> = collector.asSharedFlow()
 
     private val decoder: VideoDecoder =

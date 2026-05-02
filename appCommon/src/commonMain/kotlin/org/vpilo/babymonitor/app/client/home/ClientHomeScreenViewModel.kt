@@ -80,6 +80,10 @@ class ClientHomeScreenViewModel(
         }
     }
 
+    override suspend fun onUnsubscribed() {
+        networkClientRepository.disconnect()
+    }
+
     fun disconnect() {
         vmScope.launch {
             networkClientRepository.disconnect()

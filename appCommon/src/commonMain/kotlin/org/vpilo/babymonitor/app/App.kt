@@ -19,6 +19,7 @@ import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreen
 import org.vpilo.babymonitor.app.menu.MenuScreen
 import org.vpilo.babymonitor.app.navigation.Route
+import org.vpilo.babymonitor.app.navigation.ktx.navigateToAppRoleChooser
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
@@ -90,9 +91,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                             }
 
                             AppRole.UNDECIDED -> {
-                                navController.navigate(Route.AppRoleChooser) {
-                                    popUpTo(Route.Onboarding) { inclusive = true }
-                                }
+                                navController.navigateToAppRoleChooser()
                             }
                         }
                     },
@@ -135,9 +134,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                         navController.navigate(Route.ServerHome)
                     },
                     onBackClicked = {
-                        navController.navigate(Route.AppRoleChooser) {
-                            popUpTo(Route.AppRoleChooser) { inclusive = true }
-                        }
+                        navController.navigateToAppRoleChooser()
                     },
                 )
             }

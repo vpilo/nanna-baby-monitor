@@ -14,7 +14,7 @@ internal expect class ServerForegroundServiceLink() {
     /**
      * Stops the foreground service.
      *
-     * Must be called when the server stops..
+     * Must be called when the server stops.
      */
     fun stop()
 }

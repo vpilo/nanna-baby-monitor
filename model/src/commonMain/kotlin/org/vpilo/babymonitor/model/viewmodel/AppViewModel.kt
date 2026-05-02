@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 
@@ -60,7 +62,9 @@ abstract class AppViewModel<A, S, E>(
                 internalActionsChannel.cancel()
                 actionsJob?.cancel()
                 actionsJob = null
-                onUnsubscribed()
+                withContext(NonCancellable) {
+                    onUnsubscribed()
+                }
             }.stateIn(
                 vmScope,
                 SharingStarted.Lazily,
@@ -91,7 +95,7 @@ abstract class AppViewModel<A, S, E>(
         // Nothing gets subscribed
     }
 
-    protected open fun onUnsubscribed() {
+    protected open suspend fun onUnsubscribed() {
         // Nothing gets unsubscribed
     }
 

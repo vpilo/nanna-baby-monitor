@@ -23,6 +23,8 @@ import babymonitor.appcommon.generated.resources.app_copyright
 import babymonitor.appcommon.generated.resources.app_name
 import babymonitor.appcommon.generated.resources.app_title_menu
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.app.navigation.Route
+import org.vpilo.babymonitor.app.navigation.ktx.navigateToAppRoleChooser
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -45,7 +47,17 @@ fun MenuScreen(
     ) {
         MenuScreenContent(
             modifier = modifier,
-            menuItems = { AppMenuContents(currentRole = state.currentRole, onNavigateTo = { navController.navigate(it) }) },
+            menuItems = {
+                AppMenuContents(
+                    currentRole = state.currentRole,
+                    onNavigateTo = { route ->
+                        when (route) {
+                            Route.AppRoleChooser -> navController.navigateToAppRoleChooser()
+                            else -> navController.navigate(route)
+                        }
+                    },
+                )
+            },
         )
     }
 }

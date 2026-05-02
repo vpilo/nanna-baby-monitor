@@ -36,10 +36,8 @@ class ServerHomeScreenViewModel(
         }
     }
 
-    override fun onCleared() {
-        vmScope.launch {
-            server.stop()
-        }
+    override suspend fun onUnsubscribed() {
+        server.stop()
     }
 
     override fun onAction(action: ServerHomeScreenAction) {
