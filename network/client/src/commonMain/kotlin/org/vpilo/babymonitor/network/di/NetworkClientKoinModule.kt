@@ -9,6 +9,7 @@ import org.koin.dsl.module
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
+import org.vpilo.babymonitor.network.client.ConnectionTargetDataSource
 import org.vpilo.babymonitor.network.client.DefaultNetworkClientRepository
 import org.vpilo.babymonitor.network.client.NetworkAudioDataSource
 import org.vpilo.babymonitor.network.client.NetworkAudioReceiverRepository
@@ -21,6 +22,7 @@ import org.vpilo.babymonitor.network.common.DiscoveryManager
 val networkClientKoinModule: Module =
     module {
         singleOf(::NetworkControlDataSource)
+        singleOf(::ConnectionTargetDataSource)
         singleOf(::NetworkAudioDataSource)
         singleOf(::NetworkVideoDataSource)
         singleOf(::RelayDiscoveryDataSource)
