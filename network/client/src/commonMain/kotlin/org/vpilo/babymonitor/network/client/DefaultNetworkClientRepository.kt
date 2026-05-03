@@ -117,14 +117,6 @@ internal class DefaultNetworkClientRepository(
         controlHandler = null
     }
 
-    override fun enableAudio(enable: Boolean) {
-        // No-op: audio WebSocket lifetime is now driven by NetworkAudioReceiverRepository's subscriber count.
-    }
-
-    override fun enableVideo(enable: Boolean) {
-        // No-op: video WebSocket lifetime is now driven by NetworkVideoReceiverRepository's subscriber count.
-    }
-
     override suspend fun disconnect() {
         closeAllConnections()
         connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)

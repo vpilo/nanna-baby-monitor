@@ -15,10 +15,6 @@ interface NetworkClientRepository {
 
     suspend fun disconnect()
 
-    fun enableAudio(enable: Boolean)
-
-    fun enableVideo(enable: Boolean)
-
     fun setRelayHost(host: String)
 
     fun setDeviceName(name: String)
