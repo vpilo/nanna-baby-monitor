@@ -4,7 +4,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,18 +11,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
-import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.model.repository.ServerState
-import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
-import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
-import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveredServer
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -36,6 +30,7 @@ import kotlin.coroutines.CoroutineContext
 internal class DefaultNetworkClientRepository(
     private val discoveryManager: DiscoveryManager,
     private val networkControlDataSource: NetworkControlDataSource,
+    private val connectionTargetDataSource: ConnectionTargetDataSource,
     private val relayDiscoveryDataSource: RelayDiscoveryDataSource,
     private val coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
@@ -60,42 +55,13 @@ internal class DefaultNetworkClientRepository(
 
     private var relayHost: String = ""
     private var lastConnectedServerId: ServerId? = null
-    private var currentAddress: InetAddress? = null
-    private var lastServerState: ServerState = ServerState()
-    private var isAudioEnabled: Boolean = false
-    private var isVideoEnabled: Boolean = true
 
     private var controlHandler: WebSocketConnectionHandler? = null
-    private var audioHandler: WebSocketConnectionHandler? = null
-    private var videoHandler: WebSocketConnectionHandler? = null
 
     init {
         discoveryManager.discoveredServers
             .onEach { localServers.value = it }
             .launchIn(scope)
-
-        scope.launch {
-            networkControlDataSource.serverState.collect { serverState ->
-                lastServerState = serverState
-                if (!serverState.isAvailable) {
-                    return@collect
-                }
-                Logger.i(TAG) { "Server changed capture mode: ${serverState.captureMode}" }
-                when (serverState.captureMode) {
-                    CaptureMode.AUDIO_ONLY -> {
-                        stopVideoStream()
-                    }
-
-                    CaptureMode.VIDEO_ONLY -> {
-                        stopAudioStream()
-                    }
-
-                    CaptureMode.AUDIO_AND_VIDEO -> {
-                        // Do nothing
-                    }
-                }
-            }
-        }
     }
 
     override suspend fun connect(server: ServerId) {
@@ -141,102 +107,22 @@ internal class DefaultNetworkClientRepository(
             Logger.w(TAG) { "No server to reconnect to." }
             return
         }
-        Logger.i(TAG) {
-            "Reconnecting to ${last.name}"
-        }
+        Logger.i(TAG) { "Reconnecting to ${last.name}" }
         connect(last)
     }
 
-    private fun startAudioStream() {
-        if (currentAddress == null || lastServerState.captureMode == CaptureMode.VIDEO_ONLY) return
-        if (audioHandler != null) {
-            Logger.w(TAG) { "Audio stream is already running" }
-            return
-        }
-        val serverId = checkNotNull(lastConnectedServerId)
-
-        audioHandler =
-            WebSocketConnectionHandler(
-                hosts = setOf(checkNotNull(currentAddress)),
-                endpointPath = Endpoints.STREAM_AUDIO,
-                serverId = serverId,
-                onDisconnected = {
-                    networkControlDataSource.setIsStreamingAudio(false)
-                    Logger.i(TAG) { "Audio disconnected, reconnecting" }
-                    delay(Constants.RECONNECTION_TIMEOUT)
-                    audioHandler?.connect()
-                },
-                sessionBlock = { _ ->
-                    networkControlDataSource.setIsStreamingAudio(true)
-                    audioStreamingClientWebSocket()
-                },
-                coroutineScope = scope,
-            ).apply { connect() }
-
-        Logger.d(TAG) { "Audio stream started" }
-    }
-
-    private fun startVideoStream() {
-        if (currentAddress == null || lastServerState.captureMode == CaptureMode.AUDIO_ONLY) return
-        if (videoHandler != null) {
-            Logger.w(TAG) { "Video stream is already running" }
-            return
-        }
-        val serverId = checkNotNull(lastConnectedServerId)
-
-        videoHandler =
-            WebSocketConnectionHandler(
-                hosts = setOf(checkNotNull(currentAddress)),
-                endpointPath = Endpoints.STREAM_VIDEO,
-                serverId = serverId,
-                onDisconnected = {
-                    networkControlDataSource.setIsStreamingVideo(false)
-                    Logger.i(TAG) { "Video disconnected, reconnecting" }
-                    delay(Constants.RECONNECTION_TIMEOUT)
-                    videoHandler?.connect()
-                },
-                sessionBlock = { _ ->
-                    networkControlDataSource.setIsStreamingVideo(true)
-                    videoStreamingClientWebSocket()
-                },
-                coroutineScope = scope,
-            ).apply { connect() }
-
-        Logger.d(TAG) { "Video stream started" }
-    }
-
-    private fun stopAudioStream() {
-        audioHandler?.let { Logger.d(TAG) { "Audio stream stopped" } }
-        audioHandler?.disconnect()
-        audioHandler = null
-    }
-
-    private fun stopVideoStream() {
-        videoHandler?.let { Logger.d(TAG) { "Video stream stopped" } }
-        videoHandler?.disconnect()
-        videoHandler = null
-    }
-
     private fun closeAllConnections() {
-        stopAudioStream()
-        stopVideoStream()
+        connectionTargetDataSource.set(null)
         controlHandler?.disconnect()
         controlHandler = null
-        currentAddress = null
     }
 
     override fun enableAudio(enable: Boolean) {
-        Logger.i(TAG) { "enableAudio: $enable" }
-        isAudioEnabled = enable
-        if (currentAddress == null || lastServerState.isStreamingAudio == enable) return
-        if (enable) startAudioStream() else stopAudioStream()
+        // No-op: audio WebSocket lifetime is now driven by NetworkAudioReceiverRepository's subscriber count.
     }
 
     override fun enableVideo(enable: Boolean) {
-        Logger.i(TAG) { "enableVideo: $enable" }
-        isVideoEnabled = enable
-        if (currentAddress == null || lastServerState.isStreamingVideo == enable) return
-        if (enable) startVideoStream() else stopVideoStream()
+        // No-op: video WebSocket lifetime is now driven by NetworkVideoReceiverRepository's subscriber count.
     }
 
     override suspend fun disconnect() {
@@ -258,12 +144,9 @@ internal class DefaultNetworkClientRepository(
         server: ServerId,
         address: InetAddress,
     ) {
-        currentAddress = address
+        connectionTargetDataSource.set(ConnectionTarget(address, server))
         connectionState.value = NetworkState.Connected(server)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
-
-        if (isAudioEnabled) startAudioStream()
-        if (isVideoEnabled) startVideoStream()
     }
 
     private fun onControlConnectionClosed(exception: Throwable) {
