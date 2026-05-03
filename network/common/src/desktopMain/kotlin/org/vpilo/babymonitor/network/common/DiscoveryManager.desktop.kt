@@ -23,7 +23,7 @@ actual class DiscoveryManager {
 
     private var deviceName = ""
 
-    actual val discoveredServers: Flow<Set<DiscoveredServer>> =
+    actual val discoveredServersFlow: Flow<Set<Server>> =
         remoteServiceListener.discoveredServers
             .map { it.toSortedSet() }
             .distinctUntilChanged()
@@ -80,12 +80,14 @@ actual class DiscoveryManager {
         }
     }
 
+    actual fun getDiscoveredServers(): Set<Server> = remoteServiceListener.discoveredServers.value
+
     private class RemoteServiceListener(
         private val isLocalDeviceHost: (Set<InetAddress>) -> Boolean,
     ) : ServiceListener {
-        private val _discoveredServers: MutableStateFlow<Set<DiscoveredServer>> = MutableStateFlow(emptySet())
+        private val _discoveredServers: MutableStateFlow<Set<Server>> = MutableStateFlow(emptySet())
 
-        val discoveredServers: StateFlow<Set<DiscoveredServer>> = _discoveredServers.asStateFlow()
+        val discoveredServers: StateFlow<Set<Server>> = _discoveredServers.asStateFlow()
 
         fun reset() {
             _discoveredServers.value = emptySet()
@@ -125,7 +127,7 @@ actual class DiscoveryManager {
 
             Logger.i(TAG) { "Service resolved: $name -> $hosts" }
             _discoveredServers.update { servers ->
-                val new = DiscoveredServer(ServerId(name), hosts)
+                val new = Server(ServerId(name), hosts)
                 servers
                     .firstOrNull { it.matchesAddresses(hosts) }
                     ?.let { old -> servers + new - old }

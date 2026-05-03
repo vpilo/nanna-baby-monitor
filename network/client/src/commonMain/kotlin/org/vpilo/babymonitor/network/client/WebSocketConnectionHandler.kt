@@ -12,9 +12,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
-import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
+import org.vpilo.babymonitor.network.common.Server
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.InetAddress
@@ -22,10 +22,9 @@ import java.net.SocketException
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebSocketConnectionHandler(
-    private val hosts: Set<InetAddress>,
+    private val server: Server,
     private val endpointPath: String,
-    private val serverId: ServerId,
-    private val sessionBlock: suspend DefaultClientWebSocketSession.(InetAddress) -> Boolean,
+    private val sessionBlock: suspend DefaultClientWebSocketSession.() -> Boolean,
     private val onDisconnected: suspend (exception: Throwable) -> Unit,
     private val coroutineScope: CoroutineScope,
 ) {
@@ -36,12 +35,12 @@ internal class WebSocketConnectionHandler(
         if (connectionJob?.isActive == true) {
             return
         }
-        connect(hosts)
+        connect(server.addresses)
     }
 
     private fun connect(remainingHosts: Set<InetAddress>) {
         val host = remainingHosts.first()
-        Logger.i(TAG) { "Connecting with $host (local: ${serverId.isLocalServer})" }
+        Logger.i(TAG) { "Connecting with $host (local: ${server.id.isLocalServer})" }
         isDisconnectionHandled = false
         connectionJob =
             coroutineScope
@@ -52,7 +51,7 @@ internal class WebSocketConnectionHandler(
                     val connectionSucceeded =
                         try {
                             var result = false
-                            if (serverId.isLocalServer) {
+                            if (server.id.isLocalServer) {
                                 networkClient.webSocket(
                                     method = HttpMethod.Get,
                                     host = host.hostAddress,
@@ -62,20 +61,20 @@ internal class WebSocketConnectionHandler(
                                     pingInterval = Constants.WEBSOCKET_PING_PERIOD
                                     timeout = Constants.WEBSOCKET_TIMEOUT
 
-                                    result = sessionBlock(host)
+                                    result = sessionBlock()
                                 }
                             } else {
                                 relayHttpClient.wss(
                                     method = HttpMethod.Get,
                                     host = host.hostName,
                                     port = Constants.RELAY_PORT,
-                                    path = "/relay/client$endpointPath/${serverId.name.encodeURLPathPart()}",
+                                    path = "/relay/client$endpointPath/${server.id.name.encodeURLPathPart()}",
                                 ) {
                                     pingInterval = Constants.WEBSOCKET_PING_PERIOD
                                     timeout = Constants.WEBSOCKET_TIMEOUT
 
                                     RelayHandshake.send(this, secret)
-                                    result = sessionBlock(host)
+                                    result = sessionBlock()
                                 }
                             }
                             result

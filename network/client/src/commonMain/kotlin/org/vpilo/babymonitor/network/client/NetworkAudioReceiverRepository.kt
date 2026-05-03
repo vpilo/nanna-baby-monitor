@@ -18,7 +18,7 @@ import kotlin.coroutines.CoroutineContext
 
 internal class NetworkAudioReceiverRepository(
     dataSource: NetworkAudioDataSource,
-    private val connectionTargetDataSource: ConnectionTargetDataSource,
+    private val serverSelectionDataSource: ServerSelectionDataSource,
     coroutineContext: CoroutineContext,
 ) : SharedResourceHolder<AudioFrame>(
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
@@ -34,23 +34,21 @@ internal class NetworkAudioReceiverRepository(
         )
 
     private var handler: WebSocketConnectionHandler? = null
-    private var targetJob: Job? = null
+    private var connectionJob: Job? = null
 
     override fun start() {
-        decoder.start()
-        targetJob =
+        connectionJob =
             coroutineScope.launch {
                 try {
-                    connectionTargetDataSource.target.collect { target ->
+                    serverSelectionDataSource.server.collect { target ->
                         handler?.disconnect()
                         handler = null
                         if (target == null) return@collect
                         handler =
                             WebSocketConnectionHandler(
-                                hosts = setOf(target.address),
+                                server = target,
                                 endpointPath = Endpoints.STREAM_AUDIO,
-                                serverId = target.serverId,
-                                sessionBlock = { _ -> audioStreamingClientWebSocket() },
+                                sessionBlock = { audioStreamingClientWebSocket() },
                                 onDisconnected = {
                                     Logger.i(TAG) { "Audio disconnected, reconnecting" }
                                     delay(Constants.RECONNECTION_TIMEOUT)
@@ -64,11 +62,12 @@ internal class NetworkAudioReceiverRepository(
                     handler = null
                 }
             }
+        decoder.start()
     }
 
     override fun stop() {
-        targetJob?.cancel()
-        targetJob = null
+        connectionJob?.cancel()
+        connectionJob = null
         decoder.stop()
     }
 }

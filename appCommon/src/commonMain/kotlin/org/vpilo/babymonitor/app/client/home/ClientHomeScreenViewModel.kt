@@ -22,7 +22,6 @@ import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class ClientHomeScreenViewModel(
     private val audioReceiverRepository: StreamingAudioReceiverRepository,
     private val videoReceiverRepository: StreamingVideoReceiverRepository,
@@ -32,24 +31,25 @@ class ClientHomeScreenViewModel(
 ) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, Unit>(
         initialState = ClientHomeScreenState(),
     ) {
-    private val videoGate: Flow<Boolean> =
-        combine(
-            settingsRepository.flowOf(Setting.ClientEnabledVideo),
-            networkClientRepository.serverStateFlow,
-        ) { enabled, server ->
-            enabled && server.isAvailable && server.captureMode != CaptureMode.AUDIO_ONLY
-        }.distinctUntilChanged()
-
-    private val shouldPlayAudio: Flow<Boolean> =
+    private val isAudioEnabled: Flow<Boolean> =
         combine(
             settingsRepository.flowOf(Setting.ClientEnabledAudio),
             networkClientRepository.serverStateFlow,
-        ) { enabled, server ->
-            enabled && server.isAvailable && server.captureMode != CaptureMode.VIDEO_ONLY
+        ) { isEnabled, serverState ->
+            isEnabled && serverState.isAvailable && serverState.captureMode != CaptureMode.VIDEO_ONLY
         }.distinctUntilChanged()
 
-    val frames: Flow<ImageBitmap> =
-        videoGate.flatMapLatest { open ->
+    private val isVideoEnabled: Flow<Boolean> =
+        combine(
+            settingsRepository.flowOf(Setting.ClientEnabledVideo),
+            networkClientRepository.serverStateFlow,
+        ) { isEnabled, serverState ->
+            isEnabled && serverState.isAvailable && serverState.captureMode != CaptureMode.AUDIO_ONLY
+        }.distinctUntilChanged()
+
+    val framesFlow: Flow<ImageBitmap> =
+        @OptIn(ExperimentalCoroutinesApi::class)
+        isVideoEnabled.flatMapLatest { open ->
             if (open) videoReceiverRepository.decodedFrames else emptyFlow()
         }
 
@@ -77,11 +77,10 @@ class ClientHomeScreenViewModel(
                 ).update()
         }.collectLatest()
 
-        shouldPlayAudio.subscribe { should ->
-            if (should == playReceivedAudio.isPlaying.value) return@subscribe
-            Logger.d(TAG) {
-                "Audio playback should be: $should (was ${playReceivedAudio.isPlaying.value})"
-            }
+        isAudioEnabled.subscribe { isEnabled ->
+            val current = playReceivedAudio.isPlaying.value
+            if (isEnabled == current) return@subscribe
+            Logger.d(TAG) { "Audio playback enabled: $isEnabled (was $current)" }
             playReceivedAudio.toggle(vmScope)
         }
 
@@ -105,21 +104,17 @@ class ClientHomeScreenViewModel(
     }
 
     override fun onAction(action: ClientHomeScreenAction) {
-        when (action) {
-            ClientHomeScreenAction.ToggleAudio -> {
-                vmScope.launch {
+        vmScope.launch {
+            when (action) {
+                ClientHomeScreenAction.ToggleAudio -> {
                     settingsRepository.save(Setting.ClientEnabledAudio, !state.isAudioPlaying)
                 }
-            }
 
-            ClientHomeScreenAction.ToggleVideo -> {
-                vmScope.launch {
+                ClientHomeScreenAction.ToggleVideo -> {
                     settingsRepository.save(Setting.ClientEnabledVideo, !state.isVideoPlaying)
                 }
-            }
 
-            ClientHomeScreenAction.Reconnect -> {
-                vmScope.launch {
+                ClientHomeScreenAction.Reconnect -> {
                     networkClientRepository.reconnect()
                 }
             }

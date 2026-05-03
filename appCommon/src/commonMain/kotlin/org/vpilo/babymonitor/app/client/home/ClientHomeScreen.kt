@@ -83,7 +83,7 @@ fun ClientHomeScreen(
     ) {
         ClientHomeScreenContent(
             modifier = modifier.fillMaxSize(),
-            frames = viewModel.frames,
+            frames = viewModel.framesFlow,
             captureMode = state.captureMode,
             isAudioPlaying = state.isAudioPlaying,
             isVideoPlaying = state.isVideoPlaying,

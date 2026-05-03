@@ -18,7 +18,7 @@ import kotlin.coroutines.CoroutineContext
 
 internal class NetworkVideoReceiverRepository(
     dataSource: NetworkVideoDataSource,
-    private val connectionTargetDataSource: ConnectionTargetDataSource,
+    private val serverSelectionDataSource: ServerSelectionDataSource,
     coroutineContext: CoroutineContext,
 ) : SharedResourceHolder<ImageBitmap>(
         bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
@@ -34,23 +34,21 @@ internal class NetworkVideoReceiverRepository(
         )
 
     private var handler: WebSocketConnectionHandler? = null
-    private var targetJob: Job? = null
+    private var connectionJob: Job? = null
 
     override fun start() {
-        decoder.start()
-        targetJob =
+        connectionJob =
             coroutineScope.launch {
                 try {
-                    connectionTargetDataSource.target.collect { target ->
+                    serverSelectionDataSource.server.collect { target ->
                         handler?.disconnect()
                         handler = null
                         if (target == null) return@collect
                         handler =
                             WebSocketConnectionHandler(
-                                hosts = setOf(target.address),
+                                server = target,
                                 endpointPath = Endpoints.STREAM_VIDEO,
-                                serverId = target.serverId,
-                                sessionBlock = { _ -> videoStreamingClientWebSocket() },
+                                sessionBlock = { videoStreamingClientWebSocket() },
                                 onDisconnected = {
                                     Logger.i(TAG) { "Video disconnected, reconnecting" }
                                     delay(Constants.RECONNECTION_TIMEOUT)
@@ -64,11 +62,12 @@ internal class NetworkVideoReceiverRepository(
                     handler = null
                 }
             }
+        decoder.start()
     }
 
     override fun stop() {
-        targetJob?.cancel()
-        targetJob = null
+        connectionJob?.cancel()
+        connectionJob = null
         decoder.stop()
     }
 }

@@ -3,7 +3,7 @@ package org.vpilo.babymonitor.network.common
 import kotlinx.coroutines.flow.Flow
 
 expect class DiscoveryManager {
-    val discoveredServers: Flow<Set<DiscoveredServer>>
+    val discoveredServersFlow: Flow<Set<Server>>
 
     val state: Flow<DiscoveryManagerState>
 
@@ -16,4 +16,6 @@ expect class DiscoveryManager {
     fun stopDiscovery()
 
     fun setDeviceName(name: String)
+
+    fun getDiscoveredServers(): Set<Server>
 }

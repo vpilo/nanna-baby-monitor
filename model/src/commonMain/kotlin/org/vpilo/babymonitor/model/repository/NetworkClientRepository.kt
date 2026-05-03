@@ -9,7 +9,7 @@ interface NetworkClientRepository {
 
     val discoveredServerIdsFlow: Flow<Set<ServerId>>
 
-    suspend fun connect(server: ServerId)
+    suspend fun connect(serverId: ServerId)
 
     suspend fun reconnect()
 

@@ -37,10 +37,10 @@ actual class DiscoveryManager(
 
     private var multicastLock: WifiManager.MulticastLock? = null
 
-    private val _discoveredServers: MutableStateFlow<Set<DiscoveredServer>> =
+    private val _discoveredServers: MutableStateFlow<Set<Server>> =
         MutableStateFlow(emptySet())
 
-    actual val discoveredServers: Flow<Set<DiscoveredServer>> =
+    actual val discoveredServersFlow: Flow<Set<Server>> =
         _discoveredServers
             .map { it.toSortedSet() }
             .distinctUntilChanged()
@@ -204,6 +204,8 @@ actual class DiscoveryManager(
         }
     }
 
+    actual fun getDiscoveredServers(): Set<Server> = _discoveredServers.value
+
     private fun resolveService(serviceInfo: NsdServiceInfo) {
         scope.launch {
             @Suppress("DEPRECATION")
@@ -230,7 +232,7 @@ actual class DiscoveryManager(
 
                         Logger.d(TAG) { "Service resolved: $name -> $hosts" }
                         _discoveredServers.update { servers ->
-                            val new = DiscoveredServer(ServerId(name), hosts)
+                            val new = Server(ServerId(name), hosts)
                             servers
                                 .firstOrNull { it.matchesAddresses(hosts) }
                                 ?.let { old -> servers + new - old }
