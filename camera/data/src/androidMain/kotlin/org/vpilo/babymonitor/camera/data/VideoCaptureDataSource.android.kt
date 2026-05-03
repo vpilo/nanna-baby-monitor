@@ -198,7 +198,7 @@ internal actual class VideoCaptureDataSource(
     actual fun setResolution(resolution: CameraResolution) {
         if (this.resolution == resolution) return
         this.resolution = resolution
-        if (isActive) {
+        if (isActiveNow) {
             Logger.i(TAG) { "Resolution changed to $resolution, restarting capture" }
             stop()
             start()

@@ -4,7 +4,10 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.ktx.reactor
 import kotlin.reflect.KClass
@@ -32,7 +35,12 @@ abstract class SharedResourceHolder<T>(
         collector.reactor(coroutineScope, onActive = ::onActive, onInactive = ::onInactive)
     }
 
-    val isActive: Boolean
+    val isActive: Flow<Boolean> =
+        collector.subscriptionCount
+            .map { it > 0 }
+            .distinctUntilChanged()
+
+    protected val isActiveNow: Boolean
         get() = collector.subscriptionCount.value > 0
 
     protected abstract fun start()

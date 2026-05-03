@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.model.repository
 
 import androidx.compose.ui.graphics.ImageBitmap
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 
 /**
@@ -9,4 +10,5 @@ import kotlinx.coroutines.flow.SharedFlow
  */
 interface StreamingVideoReceiverRepository {
     val decodedFrames: SharedFlow<ImageBitmap>
+    val isActive: Flow<Boolean>
 }
