@@ -21,6 +21,13 @@
 - Fix ktor engines setup.
 - on exit, close all http clients, servers, etc first.
 - where is the notification?
+Trailing reconnect race in receiver repo. The onDisconnected lambda captures the field reference handler?.connect(). Between stop() setting handler = null and the lambda's delay, if a fresh start() ran and assigned a new handler, the lambda would call the new handler's connect(). New handler also calls connect() itself, but WebSocketConnectionHandler.connect() short-circuits if connectionJob?.isActive == true (line 36–38), so the duplicate is a no-op. Acceptable.
+- PlayReceivedAudioUseCase.toggle relies on invokeOnCompletion for _isPlaying=false
+- AppViewModel.collectLatest extension is actually collect
+- **Server-facing flap.** Rapid resume/pause cycles or fast capture-mode changes flap the per-medium WebSocket open/closed.
+- **`PlayReceivedAudioUseCase.toggle` race.** The `shouldPlayAudio.subscribe` block guards on `playReceivedAudio.isPlaying.value`, which lags reality (it only goes back to `false` via the playback job's `invokeOnCompletion`). A pathological rapid off-then-on toggle could leave audio off because the lagged value matches the new desired value. Latency through the gate (settings save → settings flow → combine → distinctUntilChanged → subscribe) is generally larger than the cancellation window, so this is unlikely in practice. If observed, change `PlayReceivedAudioUseCase` to expose `setPlaying(Boolean)` that branches on `playbackJob?.isActive == true` rather than on `_isPlaying.value`, and call that from the VM.
+- **Trailing reconnect race in receiver repo.** The `onDisconnected` lambda captures the field reference `handler?.connect()`. If `stop()` runs and a fresh `start()` reassigns `handler` before the `delay(RECONNECTION_TIMEOUT)` completes, the lambda calls the new handler's `connect()`. The new handler also calls `connect()` itself, but `WebSocketConnectionHandler.connect()` short-circuits if `connectionJob?.isActive == true`, so the duplicate is a no-op.
+
 
 # Completed features
 

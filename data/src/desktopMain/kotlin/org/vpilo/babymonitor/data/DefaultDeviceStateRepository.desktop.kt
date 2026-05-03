@@ -25,6 +25,12 @@ internal actual class DefaultDeviceStateRepository : DeviceStateRepository {
                 }
 
                 val remainingCapacity = (powerSources[0].remainingCapacityPercent * 100).toInt()
+                if (remainingCapacity < 0) {
+                    Logger.w(TAG) { "Invalid battery level: $remainingCapacity%" }
+                    emit(DEVICE_STATE_DATA_UNAVAILABLE)
+                    return@flow
+                }
+
                 emit(remainingCapacity)
                 delay(DEVICE_STATE_UPDATE_INTERVAL)
             }
