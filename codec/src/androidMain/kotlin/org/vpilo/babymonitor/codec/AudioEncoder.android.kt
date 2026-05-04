@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.codec
 
 import android.media.MediaCodec
 import android.media.MediaFormat
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
@@ -41,6 +42,9 @@ actual class AudioEncoder actual constructor(
                         if (!isActive) return@collect
                         encodeAudioChunk(codec, pcmChunk)
                     }
+                } catch (ex: MediaCodec.CodecException) {
+                    Logger.e(TAG, ex) { "Failed to encode audio; stopping encode loop" }
+                    throw CancellationException("Audio codec error", ex)
                 } finally {
                     releaseCodec(codec)
                     encoder = null
