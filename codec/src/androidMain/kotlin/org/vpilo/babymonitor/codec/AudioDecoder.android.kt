@@ -2,9 +2,11 @@ package org.vpilo.babymonitor.codec
 
 import android.media.MediaCodec
 import android.media.MediaFormat
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
@@ -15,6 +17,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("LoopWithTooManyJumpStatements")
 actual class AudioDecoder actual constructor(
     private val input: StreamingAudioFlow,
     private val output: MutableAudioFrameFlow,
@@ -40,7 +43,16 @@ actual class AudioDecoder actual constructor(
                     // Channel to receive output buffer indices + info from the codec callback
                     val outputBufferAvailable = Channel<OutputBufferInfo>(Channel.BUFFERED)
 
-                    codec = createAudioDecoder(inputBufferAvailable, outputBufferAvailable)
+                    codec =
+                        createAudioDecoder(
+                            inputBufferAvailable = inputBufferAvailable,
+                            outputBufferAvailable = outputBufferAvailable,
+                            onCodecError = { error ->
+                                Logger.e(TAG, error) { "Audio decoder error; stopping decode loop" }
+                                inputBufferAvailable.close()
+                                outputBufferAvailable.close()
+                            },
+                        )
                     decoder = codec
                     Logger.d(TAG) { "Audio decoder started" }
 
@@ -57,8 +69,11 @@ actual class AudioDecoder actual constructor(
                                     outputBuffer.get(pcmBytes)
 
                                     output.tryEmit(pcmBytes)
+                                } catch (ex: IllegalStateException) {
+                                    Logger.w(TAG, ex) { "Failed to drain audio output buffer" }
+                                    break
                                 } finally {
-                                    codec.releaseOutputBuffer(out.index, false)
+                                    runCatching { codec.releaseOutputBuffer(out.index, false) }
                                 }
                             }
                         }
@@ -68,13 +83,15 @@ actual class AudioDecoder actual constructor(
                         input.collect { chunk ->
                             if (!isActive) return@collect
 
-                            // Wait for an input buffer to become available
-                            val inputIndex = inputBufferAvailable.receive()
-                            val inputBuffer = codec.getInputBuffer(inputIndex) ?: return@collect
-                            inputBuffer.clear()
-                            val size = minOf(chunk.data.size, inputBuffer.remaining())
-                            inputBuffer.put(chunk.data, 0, size)
-                            codec.queueInputBuffer(inputIndex, 0, size, presentationTimeUs, 0)
+                            // Wait for an input buffer to become available; the channel is
+                            // closed when the codec reports an asynchronous error.
+                            val inputIndex =
+                                try {
+                                    inputBufferAvailable.receive()
+                                } catch (ex: ClosedReceiveChannelException) {
+                                    throw CancellationException("Audio codec stopped", ex)
+                                }
+                            queueChunk(codec, inputIndex, chunk.data, presentationTimeUs)
                             presentationTimeUs += MediaFormats.Audio.FRAME_DURATION_MS * 1_000L
                         }
                     } finally {
@@ -95,9 +112,37 @@ actual class AudioDecoder actual constructor(
         decodeJob = null
     }
 
+    /**
+     * Copies [data] into the codec's input buffer at [inputIndex] and queues it.
+     * Throws [CancellationException] if the codec rejects the buffer or is in an
+     * invalid state, so the surrounding decode loop unwinds cleanly instead of
+     * propagating the failure as an unhandled exception.
+     */
+    private fun queueChunk(
+        codec: MediaCodec,
+        inputIndex: Int,
+        data: ByteArray,
+        presentationTimeUs: Long,
+    ) {
+        try {
+            val inputBuffer = codec.getInputBuffer(inputIndex) ?: return
+            inputBuffer.clear()
+            val size = minOf(data.size, inputBuffer.remaining())
+            inputBuffer.put(data, 0, size)
+            codec.queueInputBuffer(inputIndex, 0, size, presentationTimeUs, 0)
+        } catch (ex: MediaCodec.CodecException) {
+            Logger.e(TAG, ex) { "Failed to queue audio input buffer; stopping decode loop" }
+            throw CancellationException("Audio codec error", ex)
+        } catch (ex: IllegalStateException) {
+            Logger.w(TAG, ex) { "Audio codec in invalid state; stopping decode loop" }
+            throw CancellationException("Audio codec invalid state", ex)
+        }
+    }
+
     private fun createAudioDecoder(
         inputBufferAvailable: Channel<Int>,
         outputBufferAvailable: Channel<OutputBufferInfo>,
+        onCodecError: (MediaCodec.CodecException) -> Unit,
     ): MediaCodec {
         val format =
             MediaFormat
@@ -138,7 +183,7 @@ actual class AudioDecoder actual constructor(
                     mc: MediaCodec,
                     e: MediaCodec.CodecException,
                 ) {
-                    Logger.e(TAG, e) { "Audio decoder error" }
+                    onCodecError(e)
                 }
 
                 override fun onOutputFormatChanged(
