@@ -36,7 +36,9 @@ plugins {
 include(":common")
 
 include(":androidService")
+
 include(":codec")
+include(":filters")
 
 include(":network:common")
 include(":network:client")

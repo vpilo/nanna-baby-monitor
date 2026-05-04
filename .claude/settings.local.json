@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./gradlew :appDesktop:desktopJar :appAndroid:assembleDebug)"
+      "Bash(./gradlew :appDesktop:desktopJar :appAndroid:assembleDebug)",
+      "Bash(./gradlew :codec:compileAndroidMain)",
+      "Bash(./gradlew :codec:detekt :codec:compileAndroidMain)",
+      "Bash(./gradlew :appAndroid:assembleDebug)",
+      "Bash(grep -E \"\\\\.kt$\")"
     ]
   }
 }

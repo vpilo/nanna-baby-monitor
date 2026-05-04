@@ -7,7 +7,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "org.vpilo.babymonitor.camera.data"
+        namespace = "org.vpilo.babymonitor.filters"
         compileSdk =
             libs.versions.android.compileSdk
                 .get()
@@ -16,10 +16,6 @@ kotlin {
             libs.versions.android.minSdk
                 .get()
                 .toInt()
-
-        androidResources {
-            enable = true
-        }
 
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
@@ -32,24 +28,8 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":common"))
             implementation(project(":model"))
-            implementation(project(":camera:model"))
-            implementation(project(":settings:model"))
-            implementation(project(":filters"))
-
-            implementation(libs.koin.core)
-        }
-        androidMain.dependencies {
-            implementation(project(":androidService"))
-
-            implementation(libs.androidx.core)
-            implementation(libs.androidx.camera.core)
-            implementation(libs.androidx.camera.impl)
-            implementation(libs.androidx.camera.lifecycle)
         }
         val desktopMain by getting
-        desktopMain.dependencies {
-            implementation(libs.webcam.capture)
-        }
     }
 
     compilerOptions {
