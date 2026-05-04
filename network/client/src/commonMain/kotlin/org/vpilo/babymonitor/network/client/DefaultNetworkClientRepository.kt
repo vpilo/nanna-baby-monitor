@@ -15,6 +15,7 @@ import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.model.repository.ServerState
+import org.vpilo.babymonitor.model.repository.ktx.reactor
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -52,6 +53,15 @@ internal class DefaultNetworkClientRepository(
     private var relayHost: String = ""
 
     private var controlHandler: WebSocketConnectionHandler? = null
+
+    init {
+        // Ensure discovery is active if any clients are too.
+        connectionState.reactor(
+            scope = scope,
+            onActive = { discoveryManager.startDiscovery() },
+            onInactive = { discoveryManager.stopDiscovery() },
+        )
+    }
 
     override suspend fun connect(serverId: ServerId) {
         val server =

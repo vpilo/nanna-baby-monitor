@@ -31,10 +31,6 @@ actual class DiscoveryManager {
     private val _state = MutableStateFlow(DiscoveryManagerState.Idle)
     actual val state: Flow<DiscoveryManagerState> = _state.asStateFlow()
 
-    init {
-        startDiscovery()
-    }
-
     actual fun registerService() {
         if (_state.value == DiscoveryManagerState.DiscoveringServices) {
             stopDiscovery()
