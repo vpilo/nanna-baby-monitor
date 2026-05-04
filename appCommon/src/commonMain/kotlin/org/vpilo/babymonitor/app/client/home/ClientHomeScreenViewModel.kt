@@ -78,10 +78,8 @@ class ClientHomeScreenViewModel(
         }.collectLatest()
 
         isAudioEnabled.subscribe { isEnabled ->
-            val current = playReceivedAudio.isPlaying.value
-            if (isEnabled == current) return@subscribe
-            Logger.d(TAG) { "Audio playback enabled: $isEnabled (was $current)" }
-            playReceivedAudio.toggle(vmScope)
+            Logger.d(TAG) { "Audio playback enabled: $isEnabled" }
+            playReceivedAudio.setPlaying(vmScope, isEnabled)
         }
 
         settingsRepository.flowOf(Setting.DeviceName).subscribe { name ->

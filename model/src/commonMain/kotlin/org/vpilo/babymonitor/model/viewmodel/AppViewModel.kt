@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import kotlinx.coroutines.flow.collectLatest as coroutinesCollectLatest
 
 abstract class AppViewModel<A, S, E>(
     private val initialState: S,
@@ -50,11 +51,11 @@ abstract class AppViewModel<A, S, E>(
 
                 object : SubscriptionScope {
                     override fun <T> Flow<T>.subscribe(collector: suspend (value: T) -> Unit) {
-                        vmScope.launch { this@subscribe.collect(collector) }
+                        vmScope.launch { this@subscribe.coroutinesCollectLatest(collector) }
                     }
 
                     override fun <T> Flow<T>.collectLatest(collector: suspend (value: T) -> Unit) {
-                        vmScope.launch { this@collectLatest.collect(collector) }
+                        vmScope.launch { this@collectLatest.coroutinesCollectLatest(collector) }
                     }
                 }.onSubscribed()
             }.onCompletion {
