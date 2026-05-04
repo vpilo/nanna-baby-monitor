@@ -2,17 +2,14 @@ package org.vpilo.babymonitor.network.client
 
 import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.codec.VideoDecoder
-import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
-import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import kotlin.coroutines.CoroutineContext
 
@@ -49,12 +46,8 @@ internal class NetworkVideoReceiverRepository(
                                 server = target,
                                 endpointPath = Endpoints.STREAM_VIDEO,
                                 sessionBlock = { videoStreamingClientWebSocket() },
-                                onDisconnected = {
-                                    Logger.i(TAG) { "Video disconnected, reconnecting" }
-                                    delay(Constants.RECONNECTION_TIMEOUT)
-                                    handler?.connect()
-                                },
                                 coroutineScope = coroutineScope,
+                                reconnect = true,
                             ).apply { connect() }
                     }
                 } finally {

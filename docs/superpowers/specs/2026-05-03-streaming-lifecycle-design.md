@@ -297,6 +297,3 @@ With subscriber-driven sessions, rapid resume/pause cycles or fast capture-mode 
 ## Risks and open questions
 
 - **Flag flap.** Captured above; accepted, monitor in practice.
-- **`NetworkClientRepository` interface contraction.** Removing `enableAudio` / `enableVideo` is a breaking change for any caller outside `ClientHomeScreenViewModel`. Audit callers before landing.
-- **`ServerState` contraction.** Removing `isStreamingAudio` / `isStreamingVideo` similarly. Audit serializers, presentation code, and any tests that may construct or destructure `ServerState`.
-- **Trailing reconnect race in receiver repo.** The `onDisconnected` lambda captures the field reference `handler?.connect()`. Between `stop()` setting `handler = null` and the lambda's `delay`, if a fresh `start()` ran and assigned a new handler, the lambda would call the new handler's `connect()`. New handler also calls `connect()` itself, but `WebSocketConnectionHandler.connect()` short-circuits if `connectionJob?.isActive == true` (line 36–38), so the duplicate is a no-op. Acceptable.

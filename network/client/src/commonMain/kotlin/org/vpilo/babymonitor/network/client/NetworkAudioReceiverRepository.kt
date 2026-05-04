@@ -1,18 +1,15 @@
 package org.vpilo.babymonitor.network.client
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.codec.AudioDecoder
-import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AudioFrame
 import org.vpilo.babymonitor.model.AudioFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
-import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import kotlin.coroutines.CoroutineContext
 
@@ -49,12 +46,8 @@ internal class NetworkAudioReceiverRepository(
                                 server = target,
                                 endpointPath = Endpoints.STREAM_AUDIO,
                                 sessionBlock = { audioStreamingClientWebSocket() },
-                                onDisconnected = {
-                                    Logger.i(TAG) { "Audio disconnected, reconnecting" }
-                                    delay(Constants.RECONNECTION_TIMEOUT)
-                                    handler?.connect()
-                                },
                                 coroutineScope = coroutineScope,
+                                reconnect = true,
                             ).apply { connect() }
                     }
                 } finally {

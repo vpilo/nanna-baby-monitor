@@ -43,7 +43,6 @@ internal class RelayDiscoveryDataSource {
 
     private suspend fun runDiscoveryLoop() {
         while (true) {
-            @Suppress("TooGenericExceptionCaught")
             try {
                 Logger.d(TAG) { "Relay discovery connection started for $relayHost" }
                 relayHttpClient.wss(
@@ -70,7 +69,9 @@ internal class RelayDiscoveryDataSource {
                         }
                     }
                 }
-            } catch (ex: Exception) {
+            } catch (
+                @Suppress("TooGenericExceptionCaught") ex: Exception,
+            ) {
                 when (ex) {
                     is CancellationException -> {
                         Logger.d(TAG) { "Relay discovery connection closed." }

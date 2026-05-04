@@ -71,7 +71,6 @@ internal class RelayServerRegistration(
 
     private suspend fun runRegistrationLoop() {
         while (true) {
-            @Suppress("TooGenericExceptionCaught")
             try {
                 Logger.d(TAG) { "Connecting to relay at $relayHost as '$deviceName'" }
                 relayHttpClient.wss(
@@ -118,7 +117,6 @@ internal class RelayServerRegistration(
     private fun launchStream(endpoint: String) {
         val job =
             scope.launch {
-                @Suppress("TooGenericExceptionCaught")
                 try {
                     relayHttpClient.wss(
                         method = HttpMethod.Get,
@@ -138,7 +136,9 @@ internal class RelayServerRegistration(
                     }
                 } catch (ex: CancellationException) {
                     throw ex
-                } catch (ex: Exception) {
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") ex: Exception,
+                ) {
                     Logger.w(TAG) { "Relay stream $endpoint failed: ${ex.prettify()}" }
                 }
             }

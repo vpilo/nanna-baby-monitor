@@ -162,7 +162,6 @@ internal actual class VideoCaptureDataSource(
                 useCases = listOf(imageAnalyzer),
                 frameRateRange = fpsRange,
             )
-        @Suppress("TooGenericExceptionCaught")
         try {
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(
@@ -170,7 +169,9 @@ internal actual class VideoCaptureDataSource(
                 cameraSelector,
                 sessionConfig,
             )
-        } catch (ex: Exception) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") ex: Exception,
+        ) {
             Logger.e(TAG) { "Failed to bind camera: ${ex.prettify()}" }
             return
         }

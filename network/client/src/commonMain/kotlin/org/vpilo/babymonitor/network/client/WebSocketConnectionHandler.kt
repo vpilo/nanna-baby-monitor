@@ -9,6 +9,7 @@ import io.ktor.websocket.pingInterval
 import io.ktor.websocket.timeout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
@@ -25,8 +26,9 @@ internal class WebSocketConnectionHandler(
     private val server: Server,
     private val endpointPath: String,
     private val sessionBlock: suspend DefaultClientWebSocketSession.() -> Boolean,
-    private val onDisconnected: suspend (exception: Throwable) -> Unit,
+    private val onDisconnected: suspend (exception: Throwable) -> Unit = {},
     private val coroutineScope: CoroutineScope,
+    private val reconnect: Boolean = false,
 ) {
     private var connectionJob: Job? = null
     private var isDisconnectionHandled = false
@@ -47,48 +49,22 @@ internal class WebSocketConnectionHandler(
                 .launch {
                     var lastException: Exception? = null
 
-                    @Suppress("TooGenericExceptionCaught")
                     val connectionSucceeded =
                         try {
-                            var result = false
-                            if (server.id.isLocalServer) {
-                                networkClient.webSocket(
-                                    method = HttpMethod.Get,
-                                    host = host.hostAddress,
-                                    port = Constants.WEBSOCKET_PORT,
-                                    path = endpointPath,
-                                ) {
-                                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                                    timeout = Constants.WEBSOCKET_TIMEOUT
-
-                                    result = sessionBlock()
-                                }
-                            } else {
-                                relayHttpClient.wss(
-                                    method = HttpMethod.Get,
-                                    host = host.hostName,
-                                    port = Constants.RELAY_PORT,
-                                    path = "/relay/client$endpointPath/${server.id.name.encodeURLPathPart()}",
-                                ) {
-                                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                                    timeout = Constants.WEBSOCKET_TIMEOUT
-
-                                    RelayHandshake.send(this, secret)
-                                    result = sessionBlock()
-                                }
-                            }
-                            result
-                        } catch (ex: Exception) {
+                            startWebSocket(host)
+                        } catch (
+                            @Suppress("TooGenericExceptionCaught") ex: Exception,
+                        ) {
                             when (ex) {
                                 is CancellationException -> {
-                                    Logger.i(TAG) { "Connection closed" }
+                                    Logger.i(TAG) { "Connection closed for $endpointPath" }
                                     isDisconnectionHandled = true
                                     onDisconnected(ex)
                                     throw ex
                                 }
 
                                 else -> {
-                                    Logger.w(TAG) { "Failed to connect to $host: ${ex.prettify()}" }
+                                    Logger.w(TAG) { "Failed to connect to $host for $endpointPath: ${ex.prettify()}" }
                                     isDisconnectionHandled = true
                                     lastException = ex
                                     false
@@ -100,7 +76,7 @@ internal class WebSocketConnectionHandler(
                         if (nextHosts.isNotEmpty()) {
                             connect(nextHosts)
                         } else {
-                            Logger.w(TAG) { "Failed to connect to any of the hosts" }
+                            Logger.w(TAG) { "Failed to connect to any of the hosts for $endpointPath" }
                             isDisconnectionHandled = true
                             onDisconnected(lastException ?: SocketException("Failed to connect to any host"))
                         }
@@ -109,11 +85,49 @@ internal class WebSocketConnectionHandler(
                 }.apply {
                     invokeOnCompletion {
                         if (isDisconnectionHandled) return@invokeOnCompletion
-                        Logger.w(TAG) { "Disconnection" }
+                        Logger.w(TAG) { "Disconnection for $endpointPath" }
                         isDisconnectionHandled = true
-                        coroutineScope.launch { onDisconnected(it ?: CancellationException("Unhandled closure")) }
+                        coroutineScope.launch {
+                            onDisconnected(it ?: CancellationException("Unhandled closure"))
+                            if (reconnect) {
+                                Logger.i(TAG) { "Attempting to reconnect for $endpointPath" }
+                                delay(Constants.RECONNECTION_TIMEOUT)
+                                connect()
+                            }
+                        }
                     }
                 }
+    }
+
+    private suspend fun startWebSocket(host: InetAddress): Boolean {
+        var result = false
+        if (server.id.isLocalServer) {
+            networkClient.webSocket(
+                method = HttpMethod.Get,
+                host = host.hostAddress,
+                port = Constants.WEBSOCKET_PORT,
+                path = endpointPath,
+            ) {
+                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                timeout = Constants.WEBSOCKET_TIMEOUT
+
+                result = sessionBlock()
+            }
+        } else {
+            relayHttpClient.wss(
+                method = HttpMethod.Get,
+                host = host.hostName,
+                port = Constants.RELAY_PORT,
+                path = "/relay/client$endpointPath/${server.id.name.encodeURLPathPart()}",
+            ) {
+                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                timeout = Constants.WEBSOCKET_TIMEOUT
+
+                RelayHandshake.send(this, secret)
+                result = sessionBlock()
+            }
+        }
+        return result
     }
 
     fun disconnect() {
