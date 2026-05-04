@@ -6,14 +6,13 @@
 - More secure communication channels with clients (monitors) pairing with server (camera).
 - Plugins for raw AV streams to:
     - reduce noise
-    - detect silence
     - detect no movement
 - Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start
   streaming audio.
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
-- Systemctl service to re-run relay when closed/crashed.
+- Add slider setting for noise sensitivity.
 
 # Issues
 
@@ -32,6 +31,8 @@
 - settings screen in menu
 - Client can play and pause independently audio or video
 - Relay server to allow clients to connect to a server from outside the local network.
+- Filter to cut playback of silence.
+- Systemctl service to re-run relay when closed/crashed.
 
 # Resources
 
