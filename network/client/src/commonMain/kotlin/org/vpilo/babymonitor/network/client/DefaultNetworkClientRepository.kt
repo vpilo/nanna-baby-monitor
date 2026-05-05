@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.ServerId
@@ -19,6 +20,7 @@ import org.vpilo.babymonitor.model.repository.ktx.reactor
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
+import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.network.common.Server
 import java.net.ConnectException
 import java.net.InetAddress
@@ -54,6 +56,8 @@ internal class DefaultNetworkClientRepository(
 
     private var controlHandler: WebSocketConnectionHandler? = null
 
+    private val foregroundLink = ForegroundServiceLink(AppRole.CLIENT)
+
     init {
         // Ensure discovery is active if anyone is using this repository.
         connectionState.reactor(
@@ -76,6 +80,7 @@ internal class DefaultNetworkClientRepository(
                     }
             }
 
+        foregroundLink.start()
         closeAllConnections()
 
         Logger.i(TAG) { "Connecting to server ${serverId.name} (local: ${serverId.isLocalServer})" }
@@ -113,6 +118,7 @@ internal class DefaultNetworkClientRepository(
     override suspend fun disconnect() {
         closeAllConnections()
         connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ClientQuit)
+        foregroundLink.stop()
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
