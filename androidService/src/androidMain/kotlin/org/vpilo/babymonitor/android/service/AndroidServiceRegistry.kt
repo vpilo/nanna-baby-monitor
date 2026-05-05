@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.AppRole
 import java.lang.ref.WeakReference
 import kotlin.coroutines.CoroutineContext
 
@@ -20,11 +21,22 @@ object AndroidServiceRegistry : KoinComponent {
     val isServiceRunning: Boolean
         get() = serviceInstance != null
 
+    val currentRole: AppRole
+        get() =
+            synchronized(services) {
+                services.firstNotNullOfOrNull { it.get()?.role } ?: AppRole.UNDECIDED
+            }
+
     fun register(service: AndroidService) {
         synchronized(services) {
             if (services.any { it.get() == service }) {
                 Logger.w(TAG) { "Service $service is already registered" }
                 return
+            }
+
+            val existingRole = services.firstNotNullOfOrNull { it.get()?.role }
+            check(existingRole == null || existingRole == service.role) {
+                "Cannot register service with role ${service.role}; existing services use $existingRole"
             }
 
             services.add(WeakReference(service))
