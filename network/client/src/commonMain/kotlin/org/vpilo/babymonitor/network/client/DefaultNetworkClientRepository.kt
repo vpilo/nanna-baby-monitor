@@ -1,9 +1,7 @@
 package org.vpilo.babymonitor.network.client
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,10 +20,7 @@ import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.network.common.Server
-import java.net.ConnectException
 import java.net.InetAddress
-import java.net.SocketException
-import javax.net.ssl.SSLException
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
@@ -88,12 +83,13 @@ internal class DefaultNetworkClientRepository(
             WebSocketConnectionHandler(
                 server = server,
                 endpointPath = Endpoints.CONTROL,
-                onDisconnected = { onControlConnectionClosed(it) },
+                onDisconnected = { onControlConnectionClosed(serverId, it) },
                 sessionBlock = {
                     onControlConnectionOpened(server)
                     controlClientWebSocket()
                 },
                 coroutineScope = scope,
+                reconnect = true,
             ).apply { connect() }
 
         connectionState.value = ConnectionState.Connecting(serverId)
@@ -137,33 +133,12 @@ internal class DefaultNetworkClientRepository(
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
-    private fun onControlConnectionClosed(exception: Throwable) {
-        closeAllConnections()
-
-        connectionState.value =
-            when (exception) {
-                is ConnectException -> {
-                    Logger.i(TAG) { "Connection refused." }
-                    ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)
-                }
-
-                is ClosedReceiveChannelException,
-                is CancellationException,
-                    -> {
-                        Logger.i(TAG) { "Connection closed by client." }
-                        ConnectionState.Disconnected(ConnectionState.ErrorReason.ClientQuit)
-                    }
-
-                is SocketException, is SSLException -> {
-                    Logger.i(TAG) { "Connection closed: ${exception.prettify()}" }
-                    ConnectionState.Disconnected(ConnectionState.ErrorReason.ConnectionFailed, exception)
-                }
-
-                else -> {
-                    Logger.w(TAG) { "WebSocket failed: ${exception.prettify()}" }
-                    ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerQuit, exception)
-                }
-            }
+    private fun onControlConnectionClosed(
+        serverId: ServerId,
+        exception: Throwable,
+    ) {
+        Logger.i(TAG) { "Control connection closed: ${exception.prettify()}" }
+        connectionState.value = ConnectionState.Reconnecting(serverId)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
