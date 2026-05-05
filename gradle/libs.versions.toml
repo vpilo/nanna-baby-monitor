@@ -1,39 +1,43 @@
 [versions]
-kotlin = "2.3.10"
+kotlin = "2.3.21"
 kotlinx-coroutines = "1.10.2"
-kotlin-serialization = "1.10.0"
-agp = "9.1.0"
-koin = "4.1.1"
+kotlin-serialization = "1.11.0"
+agp = "9.2.0"
+koin = "4.2.1"
 coil3 = "3.4.0"
 ksp = "2.3.2"
 slf4j = "2.0.17"
 
-android-compileSdk = "36"
+#noinspection UnusedVersionCatalogEntry
+android-compileSdk = "37"
+#noinspection UnusedVersionCatalogEntry
 android-minSdk = "26"
-android-targetSdk = "36"
+#noinspection UnusedVersionCatalogEntry
+android-targetSdk = "37"
 
-compose = "1.10.1"
+compose = "1.10.3"
 compose-material = "1.9.0"
 compose-materialIconsExtended = "1.7.3"
 compose-navigation = "2.9.2"
 compose-navigation-event = "1.0.1"
 
-androidx-activityCompose = "1.12.4"
-androidx-core = "1.17.0"
+androidx-activityCompose = "1.13.0"
+androidx-core = "1.18.0"
 androidx-datastore = "1.2.1"
-jetbrains-lifecycle = "2.9.6"
+jetbrains-lifecycle = "2.10.0"
 
-androidx-camera = "1.5.3"
-guava = "33.5.0-android"
+androidx-camera = "1.6.0"
+guava = "33.6.0-android"
 webcam-capture = "0.3.12"
 javacpp = "1.5.13"
 ffmpeg = "8.0.1-1.5.13"
 
-ktor = "3.4.1"
+ktor = "3.4.3"
 jmdns = "3.6.3"
-oshi = "6.10.0"
+oshi = "6.12.0"
 
 ktlint-gradle = "14.2.0"
+#noinspection UnusedVersionCatalogEntry
 ktlint = "1.8.0"
 detekt = "1.23.8"
 
@@ -99,7 +103,6 @@ coil-mp = { module = "io.coil-kt.coil3:coil", version.ref = "coil3" }
 
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
-
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }

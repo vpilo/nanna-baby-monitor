@@ -6,7 +6,6 @@ import android.util.Size
 import android.view.OrientationEventListener
 import androidx.annotation.MainThread
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalSessionConfig
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.SessionConfig
@@ -112,7 +111,6 @@ internal actual class VideoCaptureDataSource(
     }
 
     @MainThread
-    @OptIn(ExperimentalSessionConfig::class)
     fun onCameraReady(
         cameraProvider: ProcessCameraProvider,
         context: Context,
