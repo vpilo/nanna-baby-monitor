@@ -13,6 +13,8 @@ import babymonitor.appcommon.generated.resources.menu_change_role_description
 import babymonitor.appcommon.generated.resources.menu_change_role_title
 import babymonitor.appcommon.generated.resources.menu_disconnect_description
 import babymonitor.appcommon.generated.resources.menu_disconnect_title
+import babymonitor.appcommon.generated.resources.menu_quit_android
+import babymonitor.appcommon.generated.resources.menu_quit_desktop
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.vpilo.babymonitor.app.navigation.Route
@@ -42,7 +44,9 @@ fun AppMenuContents(
                 onNavigateTo(Route.CameraSelection)
             },
         )
-    } else {
+    }
+
+    if (currentRole == AppRole.SERVER) {
         MenuSettingEnumItem(
             setting = Setting.CameraResolution,
             imageVector = vectorResource(Res.drawable.high_quality),
@@ -68,13 +72,17 @@ fun AppMenuContents(
         imageVector = Icons.Default.Cloud,
     )
 
-    if (PlatformAvailability.DesktopOnly.isSupportedOnCurrentPlatform) {
-        MenuItem(
-            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-            title = "Quit",
-            onClick = {
-                onNavigateTo(Route.Quit)
-            },
-        )
-    }
+    val quitLabel =
+        when {
+            PlatformAvailability.DesktopOnly.isSupportedOnCurrentPlatform -> Res.string.menu_quit_desktop
+            PlatformAvailability.AndroidOnly.isSupportedOnCurrentPlatform -> Res.string.menu_quit_android
+            else -> error("Unsupported platform")
+        }
+    MenuItem(
+        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+        title = stringResource(quitLabel),
+        onClick = {
+            onNavigateTo(Route.Quit)
+        },
+    )
 }
