@@ -4,8 +4,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
 import androidx.core.app.NotificationCompat
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.AppRole
 
 /**
  * Empty service to keep the app running in the background while the camera is active.
@@ -25,7 +29,7 @@ internal class AndroidServiceHost : LifecycleService() {
     ): Int {
         Logger.d(TAG) { "Starting service in foreground" }
         super.onStartCommand(intent, flags, startId)
-        startForeground(NOTIFICATION_ID, createNotification())
+        startForeground(NOTIFICATION_ID, createNotification(), foregroundServiceType())
         return START_STICKY
     }
 
@@ -34,6 +38,13 @@ internal class AndroidServiceHost : LifecycleService() {
         Logger.d(TAG) { "Destroyed service" }
         AndroidServiceRegistry.reportServiceStopped()
     }
+
+    private fun foregroundServiceType(): Int =
+        when (AndroidServiceRegistry.currentRole) {
+            AppRole.SERVER -> FOREGROUND_SERVICE_TYPE_CAMERA or FOREGROUND_SERVICE_TYPE_MICROPHONE
+            AppRole.CLIENT -> FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            AppRole.UNDECIDED -> error("Foreground service started with no registered role")
+        }
 
     private fun createNotificationChannel() {
         val serviceChannel =

@@ -6,10 +6,11 @@
         android:required="true" />
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application>
         <service
             android:name=".AndroidServiceHost"
-            android:foregroundServiceType="camera|microphone" />
+            android:foregroundServiceType="camera|microphone|mediaPlayback" />
     </application>
 </manifest>
