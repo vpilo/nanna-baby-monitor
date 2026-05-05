@@ -42,6 +42,7 @@
     <string name="client_pause_video">Stop showing the camera</string>
     <string name="client_disconnect">Disconnect</string>
     <string name="client_disconnected_reconnecting">Disconnected. Reconnecting...</string>
+    <string name="client_reconnecting">Reconnecting…</string>
 
     <string name="relay_host_title">Remote relay hostname</string>
     <string name="relay_host_description">DDNS hostname for remote access (e.g. myhome.dyndns.com)</string>

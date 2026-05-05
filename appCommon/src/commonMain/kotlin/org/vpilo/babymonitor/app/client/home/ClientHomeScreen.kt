@@ -10,7 +10,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +24,7 @@ import babymonitor.appcommon.generated.resources.app_title_client_home
 import babymonitor.appcommon.generated.resources.app_title_client_home_name
 import babymonitor.appcommon.generated.resources.client_disconnect
 import babymonitor.appcommon.generated.resources.client_disconnected_reconnecting
+import babymonitor.appcommon.generated.resources.client_reconnecting
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.compose.resources.stringResource
@@ -57,12 +57,6 @@ fun ClientHomeScreen(
         onBackCancelled = { /* no-op */ },
         onBackCompleted = { onMenuClicked() },
     )
-
-    SideEffect {
-        if (state.connectionState is ConnectionState.Disconnected) {
-            viewModel.send(ClientHomeScreenAction.Reconnect)
-        }
-    }
 
     val title =
         with(state.connectionState) {
@@ -139,7 +133,13 @@ private fun ClientHomeScreenContent(
             }
         }
 
-        if (connectionState is ConnectionState.Disconnected) {
+        val overlayMessage =
+            when (connectionState) {
+                is ConnectionState.Disconnected -> stringResource(Res.string.client_disconnected_reconnecting)
+                is ConnectionState.Reconnecting -> stringResource(Res.string.client_reconnecting)
+                else -> null
+            }
+        if (overlayMessage != null) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = SURFACE_ALPHA),
@@ -148,7 +148,7 @@ private fun ClientHomeScreenContent(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(stringResource(Res.string.client_disconnected_reconnecting))
+                        Text(overlayMessage)
                         Button(
                             modifier = Modifier.padding(top = Theme.Paddings.Medium),
                             onClick = onDisconnected,
