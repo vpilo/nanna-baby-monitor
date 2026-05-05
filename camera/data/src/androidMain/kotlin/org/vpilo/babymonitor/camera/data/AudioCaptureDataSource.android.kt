@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.android.service.AndroidService
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.AudioFrame
 import org.vpilo.babymonitor.model.AudioFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
@@ -26,6 +27,8 @@ internal actual class AudioCaptureDataSource :
     private var recordingJob: Job? = null
 
     actual val samples: AudioFrameFlow = collector.asSharedFlow()
+
+    override val role: AppRole = AppRole.SERVER
 
     override fun onServiceStarted(
         context: Context,

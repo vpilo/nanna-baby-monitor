@@ -15,9 +15,10 @@ import org.vpilo.babymonitor.model.AppRole
 actual class ForegroundServiceLink actual constructor(
     role: AppRole,
 ) {
-    // No callbacks, there is nothing to clean up.
     private val service =
         object : AndroidService {
+            override val role: AppRole = role
+
             override fun onServiceStarted(
                 context: Context,
                 lifecycleOwner: LifecycleOwner,

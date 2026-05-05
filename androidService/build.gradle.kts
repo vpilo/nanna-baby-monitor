@@ -30,6 +30,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(project(":common"))
+            implementation(project(":model"))
 
             api(libs.jetbrains.lifecycle.common)
 

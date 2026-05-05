@@ -25,6 +25,7 @@ import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
 import org.vpilo.babymonitor.camera.model.CameraResolution
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.CameraFrame
 import org.vpilo.babymonitor.model.CameraFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
@@ -41,6 +42,8 @@ internal actual class VideoCaptureDataSource(
     actual constructor() : this(mainDispatcher = Dispatchers.Main)
 
     actual val frames: CameraFrameFlow = collector.asSharedFlow()
+
+    override val role: AppRole = AppRole.SERVER
 
     private var cameraProvider: ProcessCameraProvider? = null
 
