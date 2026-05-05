@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -35,5 +36,8 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.guava)
         }
+
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        remove(commonTest.get())
     }
 }
