@@ -150,7 +150,9 @@ private fun InfoLabel(connectionState: ConnectionState) {
     var labelColor: Color = MaterialTheme.colorScheme.onBackground
 
     when (connectionState) {
-        is ConnectionState.Connecting -> {
+        is ConnectionState.Connecting,
+        is ConnectionState.Reconnecting,
+        -> {
             label = Res.string.client_connection_chooser_connecting
         }
 

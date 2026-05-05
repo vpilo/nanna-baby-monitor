@@ -10,6 +10,10 @@ sealed interface ConnectionState {
         val server: ServerId,
     ) : ConnectionState
 
+    data class Reconnecting(
+        val server: ServerId,
+    ) : ConnectionState
+
     data class Connected(
         val server: ServerId,
     ) : ConnectionState
