@@ -31,6 +31,7 @@ internal class WebSocketConnectionHandler(
     private val reconnect: Boolean = false,
 ) {
     private var connectionJob: Job? = null
+    private var retryJob: Job? = null
     private var isDisconnectionHandled = false
 
     fun connect() {
@@ -87,14 +88,15 @@ internal class WebSocketConnectionHandler(
                         if (isDisconnectionHandled) return@invokeOnCompletion
                         Logger.w(TAG) { "Disconnection for $endpointPath" }
                         isDisconnectionHandled = true
-                        coroutineScope.launch {
-                            onDisconnected(it ?: CancellationException("Unhandled closure"))
-                            if (reconnect) {
-                                Logger.i(TAG) { "Attempting to reconnect for $endpointPath" }
-                                delay(Constants.RECONNECTION_TIMEOUT)
-                                connect()
+                        retryJob =
+                            coroutineScope.launch {
+                                onDisconnected(it ?: CancellationException("Unhandled closure"))
+                                if (reconnect) {
+                                    Logger.i(TAG) { "Attempting to reconnect for $endpointPath" }
+                                    delay(Constants.RECONNECTION_TIMEOUT)
+                                    connect()
+                                }
                             }
-                        }
                     }
                 }
     }
@@ -134,6 +136,8 @@ internal class WebSocketConnectionHandler(
         isDisconnectionHandled = true
         connectionJob?.cancel()
         connectionJob = null
+        retryJob?.cancel()
+        retryJob = null
     }
 
     private companion object {
