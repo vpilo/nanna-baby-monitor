@@ -95,16 +95,6 @@ internal class DefaultNetworkClientRepository(
         connectionState.value = ConnectionState.Connecting(serverId)
     }
 
-    override suspend fun reconnect() {
-        val last = serverSelectionDataSource.lastServerId
-        if (last == null) {
-            Logger.w(TAG) { "No server to reconnect to." }
-            return
-        }
-        Logger.i(TAG) { "Reconnecting to ${last.name}" }
-        connect(last)
-    }
-
     private fun closeAllConnections() {
         serverSelectionDataSource.set(null)
         controlHandler?.disconnect()

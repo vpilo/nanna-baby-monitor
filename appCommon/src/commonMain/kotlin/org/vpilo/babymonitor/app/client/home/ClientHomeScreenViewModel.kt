@@ -111,10 +111,6 @@ class ClientHomeScreenViewModel(
                 ClientHomeScreenAction.ToggleVideo -> {
                     settingsRepository.save(Setting.ClientEnabledVideo, !state.isVideoPlaying)
                 }
-
-                ClientHomeScreenAction.Reconnect -> {
-                    networkClientRepository.reconnect()
-                }
             }
         }
     }
