@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.model.repository.ktx.reactor
@@ -35,9 +35,9 @@ internal class DefaultNetworkClientRepository(
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
 
-    private val connectionState: MutableStateFlow<NetworkState> =
-        MutableStateFlow(NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet))
-    override val connectionStateFlow: Flow<NetworkState> = connectionState.asStateFlow()
+    private val connectionState: MutableStateFlow<ConnectionState> =
+        MutableStateFlow(ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet))
+    override val connectionStateFlow: Flow<ConnectionState> = connectionState.asStateFlow()
 
     override val serverStateFlow: Flow<ServerState> = networkControlDataSource.serverState
 
@@ -55,7 +55,7 @@ internal class DefaultNetworkClientRepository(
     private var controlHandler: WebSocketConnectionHandler? = null
 
     init {
-        // Ensure discovery is active if any clients are too.
+        // Ensure discovery is active if anyone is using this repository.
         connectionState.reactor(
             scope = scope,
             onActive = { discoveryManager.startDiscovery() },
@@ -71,7 +71,7 @@ internal class DefaultNetworkClientRepository(
                 discoveryManager.getDiscoveredServers().firstOrNull { it.id.name == serverId.name }
                     ?: run {
                         Logger.w(TAG) { "Server ${serverId.name} not found in local servers." }
-                        connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
+                        connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)
                         return
                     }
             }
@@ -91,7 +91,7 @@ internal class DefaultNetworkClientRepository(
                 coroutineScope = scope,
             ).apply { connect() }
 
-        connectionState.value = NetworkState.Connecting(serverId)
+        connectionState.value = ConnectionState.Connecting(serverId)
     }
 
     override suspend fun reconnect() {
@@ -112,7 +112,7 @@ internal class DefaultNetworkClientRepository(
 
     override suspend fun disconnect() {
         closeAllConnections()
-        connectionState.value = NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
+        connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ClientQuit)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
@@ -127,7 +127,7 @@ internal class DefaultNetworkClientRepository(
 
     private fun onControlConnectionOpened(server: Server) {
         serverSelectionDataSource.set(server)
-        connectionState.value = NetworkState.Connected(server.id)
+        connectionState.value = ConnectionState.Connected(server.id)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
@@ -138,24 +138,24 @@ internal class DefaultNetworkClientRepository(
             when (exception) {
                 is ConnectException -> {
                     Logger.i(TAG) { "Connection refused." }
-                    NetworkState.Disconnected(NetworkState.ErrorReason.ServerNotFound)
+                    ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)
                 }
 
                 is ClosedReceiveChannelException,
                 is CancellationException,
                     -> {
                         Logger.i(TAG) { "Connection closed by client." }
-                        NetworkState.Disconnected(NetworkState.ErrorReason.ClientQuit)
+                        ConnectionState.Disconnected(ConnectionState.ErrorReason.ClientQuit)
                     }
 
                 is SocketException, is SSLException -> {
                     Logger.i(TAG) { "Connection closed: ${exception.prettify()}" }
-                    NetworkState.Disconnected(NetworkState.ErrorReason.ConnectionFailed, exception)
+                    ConnectionState.Disconnected(ConnectionState.ErrorReason.ConnectionFailed, exception)
                 }
 
                 else -> {
                     Logger.w(TAG) { "WebSocket failed: ${exception.prettify()}" }
-                    NetworkState.Disconnected(NetworkState.ErrorReason.ServerQuit, exception)
+                    ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerQuit, exception)
                 }
             }
         Logger.i(TAG) { "Client state: ${connectionState.value}" }

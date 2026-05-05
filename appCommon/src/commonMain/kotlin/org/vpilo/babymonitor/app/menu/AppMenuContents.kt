@@ -30,9 +30,10 @@ import org.vpilo.babymonitor.settings.presentation.composables.MenuSettingItem
 @Composable
 fun AppMenuContents(
     currentRole: AppRole,
+    showDisconnect: Boolean,
     onNavigateTo: (Route) -> Unit,
 ) {
-    if (currentRole == AppRole.CLIENT) {
+    if (currentRole == AppRole.CLIENT && showDisconnect) {
         MenuItem(
             imageVector = vectorResource(Res.drawable.disconnect),
             title = stringResource(Res.string.menu_disconnect_title),

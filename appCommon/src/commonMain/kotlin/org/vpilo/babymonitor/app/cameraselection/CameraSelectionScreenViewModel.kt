@@ -2,8 +2,8 @@ package org.vpilo.babymonitor.app.cameraselection
 
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.RelayHost
+import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
@@ -23,8 +23,8 @@ class CameraSelectionScreenViewModel(
 
         networkClientRepository.connectionStateFlow
             .subscribe { netState ->
-                state.copy(networkState = netState).update()
-                if (netState is NetworkState.Connected) {
+                state.copy(connectionState = netState).update()
+                if (netState is ConnectionState.Connected) {
                     CameraSelectionScreenEffect.Connected.sendEffect()
                 }
             }

@@ -3,7 +3,7 @@ package org.vpilo.babymonitor.model.repository
 import kotlinx.coroutines.flow.Flow
 
 interface NetworkClientRepository {
-    val connectionStateFlow: Flow<NetworkState>
+    val connectionStateFlow: Flow<ConnectionState>
 
     val serverStateFlow: Flow<ServerState>
 

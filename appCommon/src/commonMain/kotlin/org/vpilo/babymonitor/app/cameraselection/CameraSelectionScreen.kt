@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.app.cameraselection
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,7 +36,7 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_unkno
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.common.ktx.prettify
-import org.vpilo.babymonitor.model.repository.NetworkState
+import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
@@ -73,7 +72,7 @@ fun CameraSelectionScreen(
                 modifier
                     .fillMaxSize()
                     .padding(Theme.Paddings.Medium),
-            networkState = state.networkState,
+            connectionState = state.connectionState,
             servers = state.availableServers,
             onConnectRequested = { viewModel.send(CameraSelectionScreenAction.ConnectToServer(it)) },
         )
@@ -83,17 +82,17 @@ fun CameraSelectionScreen(
 @Composable
 private fun CameraSelectionScreenContent(
     modifier: Modifier = Modifier,
-    networkState: NetworkState,
+    connectionState: ConnectionState,
     servers: Set<ServerId>,
     onConnectRequested: (server: ServerId) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
 
     Column(modifier = modifier) {
-        InfoLabel(networkState)
+        InfoLabel(connectionState)
         Spacer(modifier = Modifier.size(Theme.Paddings.Medium))
 
-        (networkState as? NetworkState.Disconnected)
+        (connectionState as? ConnectionState.Disconnected)
             ?.additionalInfo
             ?.let { exception ->
                 Text(
@@ -123,7 +122,7 @@ private fun CameraSelectionScreenContent(
 
             items(items = servers.toList()) { server ->
                 Button(
-                    enabled = networkState !is NetworkState.Connecting,
+                    enabled = connectionState !is ConnectionState.Connecting,
                     onClick = { onConnectRequested(server) },
                 ) {
                     if (!server.isLocalServer) {
@@ -134,7 +133,7 @@ private fun CameraSelectionScreenContent(
                         text = server.name,
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    if ((networkState as? NetworkState.Connecting)?.server == server) {
+                    if ((connectionState as? ConnectionState.Connecting)?.server == server) {
                         LoadingIcon()
                     }
                 }
@@ -145,38 +144,38 @@ private fun CameraSelectionScreenContent(
 }
 
 @Composable
-private fun InfoLabel(networkState: NetworkState) {
+private fun InfoLabel(connectionState: ConnectionState) {
     val label: StringResource
     var argument: String? = null
     var labelColor: Color = MaterialTheme.colorScheme.onBackground
 
-    when (networkState) {
-        is NetworkState.Connecting -> {
+    when (connectionState) {
+        is ConnectionState.Connecting -> {
             label = Res.string.client_connection_chooser_connecting
         }
 
-        is NetworkState.Connected -> {
+        is ConnectionState.Connected -> {
             label = Res.string.client_connection_chooser_connected
-            argument = networkState.server.name
+            argument = connectionState.server.name
         }
 
-        is NetworkState.Disconnected -> {
-            when (networkState.reason) {
-                NetworkState.ErrorReason.NotConnectedYet -> {
+        is ConnectionState.Disconnected -> {
+            when (connectionState.reason) {
+                ConnectionState.ErrorReason.NotConnectedYet -> {
                     label = Res.string.client_connection_chooser_choose
                 }
 
-                NetworkState.ErrorReason.ServerNotFound -> {
+                ConnectionState.ErrorReason.ServerNotFound -> {
                     label = Res.string.client_connection_chooser_server_not_found
                     labelColor = MaterialTheme.colorScheme.error
                 }
 
-                NetworkState.ErrorReason.ServerQuit -> {
+                ConnectionState.ErrorReason.ServerQuit -> {
                     label = Res.string.client_connection_chooser_server_quit
                     labelColor = MaterialTheme.colorScheme.error
                 }
 
-                NetworkState.ErrorReason.ClientQuit -> {
+                ConnectionState.ErrorReason.ClientQuit -> {
                     label = Res.string.client_connection_chooser_client_quit
                 }
 
@@ -199,7 +198,7 @@ private fun InfoLabel(networkState: NetworkState) {
 private fun CameraSelectionScreenPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
-            networkState = NetworkState.Disconnected(NetworkState.ErrorReason.NotConnectedYet),
+            connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet),
             servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera"), ServerId("Remote Cam", isLocalServer = false)),
             onConnectRequested = {},
         )
@@ -210,7 +209,7 @@ private fun CameraSelectionScreenPreview() =
 private fun CameraSelectionScreenConnectingPreview() =
     AppPreviewTheme(modifier = Modifier.fillMaxSize()) {
         CameraSelectionScreenContent(
-            networkState = NetworkState.Connecting(ServerId("Bedroom Camera")),
+            connectionState = ConnectionState.Connecting(ServerId("Bedroom Camera")),
             servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
             onConnectRequested = {},
         )
@@ -221,7 +220,7 @@ private fun CameraSelectionScreenConnectingPreview() =
 private fun CameraSelectionScreenNoServersPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
-            networkState = NetworkState.Disconnected(NetworkState.ErrorReason.ConnectionFailed),
+            connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.ConnectionFailed),
             servers = emptySet(),
             onConnectRequested = {},
         )

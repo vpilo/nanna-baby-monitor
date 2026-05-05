@@ -56,7 +56,7 @@ class ClientHomeScreenViewModel(
     override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.connectionStateFlow.subscribe { netState ->
             Logger.d(TAG) { "Network state changed: $netState" }
-            state.copy(networkState = netState).update()
+            state.copy(connectionState = netState).update()
         }
 
         combine(

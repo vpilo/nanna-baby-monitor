@@ -50,6 +50,7 @@ fun MenuScreen(
             menuItems = {
                 AppMenuContents(
                     currentRole = state.currentRole,
+                    showDisconnect = state.isConnected,
                     onNavigateTo = { route ->
                         when (route) {
                             Route.AppRoleChooser -> navController.navigateToAppRoleChooser()

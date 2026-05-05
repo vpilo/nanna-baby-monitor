@@ -1,18 +1,18 @@
 package org.vpilo.babymonitor.model.repository
 
-sealed interface NetworkState {
+sealed interface ConnectionState {
     data class Disconnected(
         val reason: ErrorReason,
         val additionalInfo: Throwable? = null,
-    ) : NetworkState
+    ) : ConnectionState
 
     data class Connecting(
         val server: ServerId,
-    ) : NetworkState
+    ) : ConnectionState
 
     data class Connected(
         val server: ServerId,
-    ) : NetworkState
+    ) : ConnectionState
 
     enum class ErrorReason {
         ServerNotFound,

@@ -29,8 +29,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
-import org.vpilo.babymonitor.model.repository.NetworkState
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.SURFACE_ALPHA
@@ -59,14 +59,14 @@ fun ClientHomeScreen(
     )
 
     SideEffect {
-        if (state.networkState is NetworkState.Disconnected) {
+        if (state.connectionState is ConnectionState.Disconnected) {
             viewModel.send(ClientHomeScreenAction.Reconnect)
         }
     }
 
     val title =
-        with(state.networkState) {
-            if (this is NetworkState.Connected) {
+        with(state.connectionState) {
+            if (this is ConnectionState.Connected) {
                 stringResource(Res.string.app_title_client_home_name, server.name)
             } else {
                 stringResource(Res.string.app_title_client_home)
@@ -91,7 +91,7 @@ fun ClientHomeScreen(
             onToggleVideo = { viewModel.send(ClientHomeScreenAction.ToggleVideo) },
             batteryLevel = state.batteryLevel,
             signalQuality = state.signalQuality,
-            networkState = state.networkState,
+            connectionState = state.connectionState,
             onDisconnected = onDisconnected,
         )
     }
@@ -108,7 +108,7 @@ private fun ClientHomeScreenContent(
     onToggleVideo: () -> Unit,
     batteryLevel: Int,
     signalQuality: Int,
-    networkState: NetworkState,
+    connectionState: ConnectionState,
     onDisconnected: () -> Unit,
 ) {
     Box(modifier = modifier) {
@@ -139,7 +139,7 @@ private fun ClientHomeScreenContent(
             }
         }
 
-        if (networkState is NetworkState.Disconnected) {
+        if (connectionState is ConnectionState.Disconnected) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = SURFACE_ALPHA),
@@ -176,7 +176,7 @@ private fun ClientHomeScreenPreview() =
             onToggleVideo = { },
             batteryLevel = 5,
             signalQuality = 3,
-            networkState = NetworkState.Connected(ServerId("Test Server")),
+            connectionState = ConnectionState.Connected(ServerId("Test Server")),
             onDisconnected = { },
         )
     }
@@ -195,7 +195,7 @@ private fun ClientHomeScreenVideoOnlyPreview() =
             onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = 93,
-            networkState = NetworkState.Connected(ServerId("Test Server")),
+            connectionState = ConnectionState.Connected(ServerId("Test Server")),
             onDisconnected = { },
         )
     }
@@ -214,7 +214,7 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
             onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
-            networkState = NetworkState.Connected(ServerId("Test Server")),
+            connectionState = ConnectionState.Connected(ServerId("Test Server")),
             onDisconnected = { },
         )
     }
@@ -233,7 +233,7 @@ private fun ClientHomeScreenDisconnectedPreview() =
             onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
-            networkState = NetworkState.Disconnected(reason = NetworkState.ErrorReason.ClientQuit),
+            connectionState = ConnectionState.Disconnected(reason = ConnectionState.ErrorReason.ClientQuit),
             onDisconnected = { },
         )
     }

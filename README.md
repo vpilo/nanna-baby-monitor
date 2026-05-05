@@ -18,7 +18,6 @@
 
 - The role selection screen show be redone.
 - Fix ktor engines setup.
-- on exit, close all http clients, servers, etc first.
 - where is the notification?
 
 # Completed features
