@@ -10,8 +10,6 @@ import org.vpilo.babymonitor.network.common.protocol.protocolReceiveAudio
 internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket(): Boolean {
     val dataSource = KoinPlatform.getKoin().get<NetworkAudioDataSource>()
 
-    Logger.d(TAG) { "Connection established" }
-
     return catchSessionResult(TAG) {
         while (true) {
             val frame: EncodedAudioStreamChunk = protocolReceiveAudio()

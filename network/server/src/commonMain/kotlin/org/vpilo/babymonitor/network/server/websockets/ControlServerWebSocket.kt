@@ -15,7 +15,7 @@ import kotlin.coroutines.cancellation.CancellationException
 internal suspend fun DefaultWebSocketSession.controlServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<NetworkServerRepository>()
 
-    Logger.d(TAG) { "New client connected" }
+    Logger.d(TAG) { "WebSocket opened" }
 
     val stateSendingJob =
         launch {
@@ -30,7 +30,9 @@ internal suspend fun DefaultWebSocketSession.controlServerWebSocket() {
         }
     }.onFailure { ex ->
         if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-            Logger.i(TAG) { "WebSocket closed: ${ex.prettify()}" }
+            Logger.d(TAG) { "WebSocket closed: ${ex.prettify()}" }
+        } else {
+            Logger.d(TAG) { "WebSocket closed" }
         }
     }.also {
         stateSendingJob.cancel()

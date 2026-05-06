@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.network.common
 
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 object Constants {
@@ -18,6 +19,7 @@ object Constants {
     val RECONNECTION_TIMEOUT: Duration = 3.seconds
     val WEBSOCKET_PING_PERIOD: Duration = 30.seconds
     val WEBSOCKET_TIMEOUT: Duration = 10.seconds
+    val WEBSOCKET_CONNECTION_ATTEMPT_DELAY: Duration = 100.milliseconds
 
     val RELAY_HANDSHAKE_TIMEOUT: Duration = 2.seconds
     val RELAY_RENDEZVOUS_TIMEOUT: Duration = 15.seconds

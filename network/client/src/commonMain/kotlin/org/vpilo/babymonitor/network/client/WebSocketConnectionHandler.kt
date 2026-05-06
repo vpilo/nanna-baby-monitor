@@ -32,7 +32,7 @@ internal class WebSocketConnectionHandler(
 ) {
     private var connectionJob: Job? = null
     private var retryJob: Job? = null
-    private var isDisconnectionHandled = false
+    private var wasCleanlyClosed = false
 
     fun connect() {
         if (connectionJob?.isActive == true) {
@@ -43,8 +43,8 @@ internal class WebSocketConnectionHandler(
 
     private fun connect(remainingHosts: Set<InetAddress>) {
         val host = remainingHosts.first()
-        Logger.i(TAG) { "Connecting with $host (local: ${server.id.isLocalServer})" }
-        isDisconnectionHandled = false
+        Logger.i(TAG) { "Connecting to $host for $endpointPath (local: ${server.id.isLocalServer})" }
+        wasCleanlyClosed = false
         connectionJob =
             coroutineScope
                 .launch {
@@ -58,36 +58,40 @@ internal class WebSocketConnectionHandler(
                         ) {
                             when (ex) {
                                 is CancellationException -> {
-                                    Logger.i(TAG) { "Connection closed for $endpointPath" }
-                                    isDisconnectionHandled = true
+                                    Logger.i(TAG) { "Connection closed to $host for $endpointPath" }
+                                    wasCleanlyClosed = true
                                     onDisconnected(ex)
                                     throw ex
                                 }
 
                                 else -> {
                                     Logger.w(TAG) { "Failed to connect to $host for $endpointPath: ${ex.prettify()}" }
-                                    isDisconnectionHandled = true
+                                    wasCleanlyClosed = true
                                     lastException = ex
                                     false
                                 }
                             }
                         }
+                    connectionJob = null
                     if (!connectionSucceeded) {
                         val nextHosts = remainingHosts - host
                         if (nextHosts.isNotEmpty()) {
-                            connect(nextHosts)
+                            retryJob =
+                                coroutineScope.launch {
+                                    delay(Constants.WEBSOCKET_CONNECTION_ATTEMPT_DELAY)
+                                    connect(nextHosts)
+                                }
                         } else {
                             Logger.w(TAG) { "Failed to connect to any of the hosts for $endpointPath" }
-                            isDisconnectionHandled = true
+                            wasCleanlyClosed = true
                             onDisconnected(lastException ?: SocketException("Failed to connect to any host"))
                         }
                     }
-                    connectionJob = null
                 }.apply {
                     invokeOnCompletion {
-                        if (isDisconnectionHandled) return@invokeOnCompletion
+                        if (wasCleanlyClosed) return@invokeOnCompletion
+                        wasCleanlyClosed = true
                         Logger.w(TAG) { "Disconnection for $endpointPath" }
-                        isDisconnectionHandled = true
                         retryJob =
                             coroutineScope.launch {
                                 onDisconnected(it ?: CancellationException("Unhandled closure"))
@@ -133,7 +137,7 @@ internal class WebSocketConnectionHandler(
     }
 
     fun disconnect() {
-        isDisconnectionHandled = true
+        wasCleanlyClosed = true
         connectionJob?.cancel()
         connectionJob = null
         retryJob?.cancel()

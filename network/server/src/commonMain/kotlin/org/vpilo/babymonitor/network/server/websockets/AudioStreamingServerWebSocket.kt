@@ -13,7 +13,7 @@ import kotlin.coroutines.cancellation.CancellationException
 internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
 
-    Logger.d(TAG) { "Client connected" }
+    Logger.d(TAG) { "WebSocket opened" }
 
     runCatching {
         repository.chunks
@@ -22,7 +22,9 @@ internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket() {
             }
     }.onFailure { ex ->
         if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-            Logger.i(TAG) { "WebSocket closed: ${ex.prettify()}" }
+            Logger.d(TAG) { "WebSocket closed: ${ex.prettify()}" }
+        } else {
+            Logger.d(TAG) { "WebSocket closed" }
         }
     }
 }

@@ -14,7 +14,7 @@ import kotlin.coroutines.cancellation.CancellationException
 internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket() {
     val repository = KoinPlatform.getKoin().get<StreamingVideoSenderRepository>()
 
-    Logger.d(TAG) { "New video streaming client connected" }
+    Logger.d(TAG) { "WebSocket opened" }
 
     runCatching {
         repository.chunks
@@ -24,7 +24,9 @@ internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket() {
             }
     }.onFailure { ex ->
         if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-            Logger.i(TAG) { "WebSocket closed: ${ex.prettify()}" }
+            Logger.d(TAG) { "WebSocket closed: ${ex.prettify()}" }
+        } else {
+            Logger.d(TAG) { "WebSocket closed" }
         }
     }
 }

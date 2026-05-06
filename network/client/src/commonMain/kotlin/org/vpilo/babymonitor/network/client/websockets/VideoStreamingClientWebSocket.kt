@@ -9,8 +9,6 @@ import org.vpilo.babymonitor.network.common.protocol.protocolReceiveVideo
 internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket(): Boolean {
     val dataSource = KoinPlatform.getKoin().get<NetworkVideoDataSource>()
 
-    Logger.d(TAG) { "Connection established" }
-
     return catchSessionResult(TAG) {
         while (true) {
             val frame = protocolReceiveVideo()

@@ -1,7 +1,6 @@
 package org.vpilo.babymonitor.network.client.websockets
 
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
-import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.network.client.NetworkControlDataSource
@@ -11,21 +10,12 @@ import org.vpilo.babymonitor.network.common.protocol.receiveServerMessage
 internal suspend fun DefaultClientWebSocketSession.controlClientWebSocket(): Boolean {
     val dataSource = KoinPlatform.getKoin().get<NetworkControlDataSource>()
 
-    Logger.d(TAG) { "Connection established" }
-
-    val frameSenderJob =
-        launch {
-            // None yet.
-        }
-
     return catchSessionResult(TAG) {
         while (true) {
             when (val message = receiveServerMessage()) {
                 is ServerMessage.State -> dataSource.onServerStateReceived(message.payload)
             }
         }
-    }.also {
-        frameSenderJob.cancel()
     }
 }
 

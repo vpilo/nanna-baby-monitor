@@ -11,16 +11,18 @@ internal suspend fun DefaultClientWebSocketSession.catchSessionResult(
     tag: String,
     lambda: suspend DefaultClientWebSocketSession.() -> Unit,
 ): Boolean =
-    runCatching { lambda() }
-        .fold(
-            onSuccess = { true },
-            onFailure = { ex ->
-                if (ex is CancellationException) throw ex
-                if (ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-                    Logger.i(tag) { "WebSocket closed: ${ex.prettify()}" }
-                    false
-                } else {
-                    true
-                }
-            },
-        )
+    runCatching {
+        Logger.d(tag) { "WebSocket opened" }
+        lambda()
+    }.fold(
+        onSuccess = { true },
+        onFailure = { ex ->
+            if (ex is CancellationException) throw ex
+            if (ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
+                Logger.d(tag) { "WebSocket closed: ${ex.prettify()}" }
+                false
+            } else {
+                true
+            }
+        },
+    )
