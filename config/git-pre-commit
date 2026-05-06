@@ -1,50 +1,83 @@
 #!/bin/bash
 
-# Snapshot stash ref so we can detect whether we actually stashed anything.
-OLD_STASH=$(git rev-parse -q --verify refs/stash)
+# Set up paths inside .git for storing the saved working-copy state.
+GIT_DIR=$(git rev-parse --git-dir)
+PATCH_FILE="$GIT_DIR/pre-commit-unstaged.patch"
+UNTRACKED_BACKUP="$GIT_DIR/pre-commit-untracked"
 
-# Capture the files staged for this commit (excluding deletions) before stashing.
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=d)
+restore_changes() {
+    # Move untracked files back to their original locations.
+    if [ -d "$UNTRACKED_BACKUP" ]; then
+        while IFS= read -r -d '' f; do
+            rel="${f#"$UNTRACKED_BACKUP"/}"
+            mkdir -p -- "$(dirname -- "$rel")"
+            mv -- "$f" "$rel"
+        done < <(find "$UNTRACKED_BACKUP" -type f -print0)
+        rm -rf "$UNTRACKED_BACKUP"
+    fi
 
-# Stash unstaged changes and untracked files, keeping the index intact so
-# the checks (and any reformatting) only see what's about to be committed.
-git stash push --keep-index --include-untracked --message "pre-commit-stash" --quiet 2>/dev/null
+    # Re-apply unstaged tracked changes; --reject leaves .rej files instead of merge markers.
+    if [ -s "$PATCH_FILE" ]; then
+        if git apply --reject "$PATCH_FILE" 2>/dev/null; then
+            rm -f "$PATCH_FILE"
+        else
+            echo
+            echo "⚠️  Some unstaged changes could not be re-applied cleanly."
+            echo "⚠️  Conflicting hunks were written next to their target files as .rej files."
+            echo "⚠️  Original patch kept at: $PATCH_FILE"
+        fi
+    else
+        rm -f "$PATCH_FILE"
+    fi
+}
 
-NEW_STASH=$(git rev-parse -q --verify refs/stash)
-STASHED=0
-if [ "$OLD_STASH" != "$NEW_STASH" ]; then
-    STASHED=1
-fi
-
+CLEANUP_DONE=0
 cleanup() {
     EXIT_CODE=$?
-    if [ "$STASHED" = "1" ]; then
-        if ! git stash pop --quiet 2>/dev/null; then
-            echo
-            echo "⚠️ Could not auto-restore stashed changes (conflicts)."
-            echo "⚠️ Resolve manually with: git stash pop"
-        fi
+    if [ "$CLEANUP_DONE" = "0" ]; then
+        CLEANUP_DONE=1
+        restore_changes
     fi
     exit $EXIT_CODE
 }
 trap cleanup EXIT INT TERM
 
-echo "Running pre-commit checks (ktlintFormat, detekt)..."
-./gradlew ktlintFormat detekt --daemon --quiet
-if [ $? -ne 0 ]; then
-    echo
-    echo "❌ pre-commit checks failed."
-    exit 1
+# 1. Save unstaged tracked changes as a patch.
+git diff --binary > "$PATCH_FILE"
+
+# 1. Save untracked files by moving them to a backup directory.
+UNTRACKED=$(git ls-files --others --exclude-standard)
+if [ -n "$UNTRACKED" ]; then
+    rm -rf "$UNTRACKED_BACKUP"
+    mkdir -p "$UNTRACKED_BACKUP"
+    while IFS= read -r f; do
+        mkdir -p -- "$UNTRACKED_BACKUP/$(dirname -- "$f")"
+        mv -- "$f" "$UNTRACKED_BACKUP/$f"
+    done <<< "$UNTRACKED"
 fi
 
-# Re-stage any reformatting performed on originally-staged files so it
-# becomes part of the commit.
+# Reset working tree to match the index so checks see exactly what's being committed.
+git checkout-index --all --force --quiet
+
+# 2. Run the checks against the would-be commit.
+echo "Running pre-commit checks (ktlintFormat, detekt)..."
+./gradlew ktlintFormat detekt --daemon --quiet
+CHECKS_RESULT=$?
+
+# 3. Re-stage any reformatting that touched originally-staged files, then let the trap restore.
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=d)
 if [ -n "$STAGED_FILES" ]; then
     while IFS= read -r f; do
         if [ -n "$f" ] && [ -f "$f" ]; then
             git add -- "$f"
         fi
     done <<< "$STAGED_FILES"
+fi
+
+if [ "$CHECKS_RESULT" -ne 0 ]; then
+    echo
+    echo "❌ pre-commit checks failed."
+    exit 1
 fi
 
 echo "✅ All pre-commit checks passed."
