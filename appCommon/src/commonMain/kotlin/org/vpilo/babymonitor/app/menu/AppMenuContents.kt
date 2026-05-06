@@ -41,7 +41,7 @@ fun AppMenuContents(
             title = stringResource(Res.string.menu_disconnect_title),
             description = stringResource(Res.string.menu_disconnect_description),
             onClick = {
-                onNavigateTo(Route.CameraSelection)
+                onNavigateTo(Route.ClientHome(requestDisconnect = true))
             },
         )
     }

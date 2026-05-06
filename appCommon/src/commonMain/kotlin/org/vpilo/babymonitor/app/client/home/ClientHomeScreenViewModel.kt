@@ -28,7 +28,7 @@ class ClientHomeScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
     private val settingsRepository: SettingsRepository,
-) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, Unit>(
+) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
         initialState = ClientHomeScreenState(),
     ) {
     private val isAudioEnabled: Flow<Boolean> =
@@ -110,6 +110,11 @@ class ClientHomeScreenViewModel(
 
                 ClientHomeScreenAction.ToggleVideo -> {
                     settingsRepository.save(Setting.ClientEnabledVideo, !state.isVideoPlaying)
+                }
+
+                ClientHomeScreenAction.Disconnect -> {
+                    networkClientRepository.disconnect()
+                    ClientHomeScreenEffect.Disconnected.sendEffect()
                 }
             }
         }

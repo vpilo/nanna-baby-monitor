@@ -25,7 +25,9 @@ sealed interface Route {
     data object CameraSelection : Route
 
     @Serializable
-    data object ClientHome : Route
+    data class ClientHome(
+        val requestDisconnect: Boolean = false,
+    ) : Route
 
     @Serializable
     data object ServerHome : Route

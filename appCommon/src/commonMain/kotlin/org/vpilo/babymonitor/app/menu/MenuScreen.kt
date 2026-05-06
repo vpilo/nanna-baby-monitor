@@ -53,8 +53,14 @@ fun MenuScreen(
                     showDisconnect = state.isConnected,
                     onNavigateTo = { route ->
                         when (route) {
-                            Route.AppRoleChooser -> navController.navigateToAppRoleChooser()
-                            else -> navController.navigate(route)
+                            Route.AppRoleChooser -> {
+                                navController.navigateToAppRoleChooser()
+                            }
+
+                            else -> {
+                                navController.popBackStack(route = route, inclusive = true, saveState = false)
+                                navController.navigate(route)
+                            }
                         }
                     },
                 )

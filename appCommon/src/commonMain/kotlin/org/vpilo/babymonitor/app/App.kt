@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
@@ -152,7 +153,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                 CameraSelectionScreen(
                     viewModel = koinViewModel(),
                     onConnected = {
-                        navController.navigate(Route.ClientHome)
+                        navController.navigate(Route.ClientHome())
                     },
                     onMenuClicked = {
                         navController.navigate(Route.Menu)
@@ -161,7 +162,9 @@ private fun NavigationRoutes(navController: NavHostController) {
             }
 
             composable<Route.ClientHome> {
+                val route = it.toRoute<Route.ClientHome>()
                 ClientHomeScreen(
+                    route = route,
                     viewModel = koinViewModel(),
                     onDisconnected = {
                         navController.navigate(Route.CameraSelection) {

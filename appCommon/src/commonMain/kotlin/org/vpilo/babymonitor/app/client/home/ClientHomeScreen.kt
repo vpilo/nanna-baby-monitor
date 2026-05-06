@@ -10,6 +10,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +30,8 @@ import babymonitor.appcommon.generated.resources.client_reconnecting
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreenEffect
+import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
@@ -45,11 +49,27 @@ import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
 @Composable
 fun ClientHomeScreen(
     modifier: Modifier = Modifier,
+    route: Route.ClientHome,
     viewModel: ClientHomeScreenViewModel,
     onDisconnected: () -> Unit,
     onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
+
+    SideEffect {
+        when {
+            route.requestDisconnect -> {
+                viewModel.send(ClientHomeScreenAction.Disconnect)
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        viewModel.effectsFlow.collect { effect ->
+            when (effect) {
+                is ClientHomeScreenEffect.Disconnected -> onDisconnected()
+            }
+        }
+    }
 
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
@@ -71,7 +91,6 @@ fun ClientHomeScreen(
         title = title,
         mainAction = AppDestinationMainAction.Menu,
         onMainActionClicked = {
-            viewModel.disconnect()
             onMenuClicked()
         },
     ) {
