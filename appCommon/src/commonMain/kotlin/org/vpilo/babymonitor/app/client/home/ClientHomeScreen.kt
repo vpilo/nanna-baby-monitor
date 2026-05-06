@@ -25,12 +25,10 @@ import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_home
 import babymonitor.appcommon.generated.resources.app_title_client_home_name
 import babymonitor.appcommon.generated.resources.client_disconnect
-import babymonitor.appcommon.generated.resources.client_disconnected_reconnecting
 import babymonitor.appcommon.generated.resources.client_reconnecting
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreenEffect
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.repository.ConnectionState
@@ -152,13 +150,7 @@ private fun ClientHomeScreenContent(
             }
         }
 
-        val overlayMessage =
-            when (connectionState) {
-                is ConnectionState.Disconnected -> Res.string.client_disconnected_reconnecting
-                is ConnectionState.Reconnecting -> Res.string.client_reconnecting
-                else -> null
-            }
-        if (overlayMessage != null) {
+        if (connectionState is ConnectionState.Reconnecting) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = SURFACE_ALPHA),
@@ -167,7 +159,7 @@ private fun ClientHomeScreenContent(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(stringResource(overlayMessage))
+                        Text(stringResource(Res.string.client_reconnecting))
                         Button(
                             modifier = Modifier.padding(top = Theme.Paddings.Medium),
                             onClick = onDisconnected,

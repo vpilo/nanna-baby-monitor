@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.network.client
 
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.plugins.websocket.WebSocketException
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
@@ -9,6 +10,8 @@ import io.ktor.websocket.pingInterval
 import io.ktor.websocket.timeout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
@@ -19,20 +22,18 @@ import org.vpilo.babymonitor.network.common.Server
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.InetAddress
-import java.net.SocketException
+import java.net.ProtocolException
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebSocketConnectionHandler(
     private val server: Server,
     private val endpointPath: String,
-    private val sessionBlock: suspend DefaultClientWebSocketSession.() -> Boolean,
+    private val sessionBlock: suspend DefaultClientWebSocketSession.() -> Unit,
     private val onDisconnected: suspend (exception: Throwable) -> Unit = {},
     private val coroutineScope: CoroutineScope,
-    private val reconnect: Boolean = false,
 ) {
     private var connectionJob: Job? = null
     private var retryJob: Job? = null
-    private var wasCleanlyClosed = false
 
     fun connect() {
         if (connectionJob?.isActive == true) {
@@ -42,71 +43,61 @@ internal class WebSocketConnectionHandler(
     }
 
     private fun connect(remainingHosts: Set<InetAddress>) {
+        check(connectionJob == null)
         val host = remainingHosts.first()
-        Logger.i(TAG) { "Connecting to $host for $endpointPath (local: ${server.id.isLocalServer})" }
-        wasCleanlyClosed = false
-        connectionJob =
-            coroutineScope
-                .launch {
-                    var lastException: Exception? = null
-
-                    val connectionSucceeded =
-                        try {
-                            startWebSocket(host)
-                        } catch (
-                            @Suppress("TooGenericExceptionCaught") ex: Exception,
-                        ) {
-                            when (ex) {
-                                is CancellationException -> {
-                                    Logger.i(TAG) { "Connection closed to $host for $endpointPath" }
-                                    wasCleanlyClosed = true
-                                    onDisconnected(ex)
-                                    throw ex
-                                }
-
-                                else -> {
-                                    Logger.w(TAG) { "Failed to connect to $host for $endpointPath: ${ex.prettify()}" }
-                                    wasCleanlyClosed = true
-                                    lastException = ex
-                                    false
-                                }
-                            }
-                        }
-                    connectionJob = null
-                    if (!connectionSucceeded) {
-                        val nextHosts = remainingHosts - host
-                        if (nextHosts.isNotEmpty()) {
-                            retryJob =
-                                coroutineScope.launch {
-                                    delay(Constants.WEBSOCKET_CONNECTION_ATTEMPT_DELAY)
-                                    connect(nextHosts)
-                                }
-                        } else {
-                            Logger.w(TAG) { "Failed to connect to any of the hosts for $endpointPath" }
-                            wasCleanlyClosed = true
-                            onDisconnected(lastException ?: SocketException("Failed to connect to any host"))
-                        }
-                    }
-                }.apply {
-                    invokeOnCompletion {
-                        if (wasCleanlyClosed) return@invokeOnCompletion
-                        wasCleanlyClosed = true
-                        Logger.w(TAG) { "Disconnection for $endpointPath" }
-                        retryJob =
-                            coroutineScope.launch {
-                                onDisconnected(it ?: CancellationException("Unhandled closure"))
-                                if (reconnect) {
-                                    Logger.i(TAG) { "Attempting to reconnect for $endpointPath" }
-                                    delay(Constants.RECONNECTION_TIMEOUT)
-                                    connect()
-                                }
-                            }
-                    }
-                }
+        val nextHosts = remainingHosts - host
+        connectionJob = coroutineScope.launch { doConnect(host, nextHosts) }
     }
 
-    private suspend fun startWebSocket(host: InetAddress): Boolean {
-        var result = false
+    private suspend fun doConnect(
+        host: InetAddress,
+        nextHosts: Set<InetAddress>,
+    ) {
+        var lastException: Exception? = null
+
+        Logger.i(TAG) { "Connecting to $host for $endpointPath (local: ${server.id.isLocalServer})" }
+
+        try {
+            startWebSocket(host)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") ex: Exception,
+        ) {
+            lastException = ex
+        } finally {
+            when (lastException) {
+                is CancellationException,
+                null,
+                    -> {
+                        Logger.i(TAG) { "Connection closed to $host for $endpointPath" }
+                        onDisconnected(lastException ?: CancellationException("Closed by client"))
+                    }
+
+                is ClosedSendChannelException,
+                is ClosedReceiveChannelException,
+                is WebSocketException,
+                is ProtocolException,
+                    -> {
+                        Logger.i(TAG) { "Connection closed by server $host for $endpointPath: ${lastException.prettify()}" }
+                        onDisconnected(lastException)
+                    }
+
+                else -> {
+                    Logger.w(TAG) { "Failed to connect to $host for $endpointPath: ${lastException.prettify()}" }
+                    if (nextHosts.isNotEmpty()) {
+                        delay(Constants.WEBSOCKET_CONNECTION_ATTEMPT_DELAY)
+                        val nextHost = nextHosts.first()
+                        doConnect(nextHost, nextHosts - nextHost)
+                    } else {
+                        Logger.w(TAG) { "Failed to connect to any of the hosts for $endpointPath" }
+                        connectionJob = null
+                    }
+                }
+            }
+        }
+        connectionJob = null
+    }
+
+    private suspend fun startWebSocket(host: InetAddress) {
         if (server.id.isLocalServer) {
             networkClient.webSocket(
                 method = HttpMethod.Get,
@@ -117,7 +108,7 @@ internal class WebSocketConnectionHandler(
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
-                result = sessionBlock()
+                sessionBlock()
             }
         } else {
             relayHttpClient.wss(
@@ -130,14 +121,12 @@ internal class WebSocketConnectionHandler(
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
                 RelayHandshake.send(this, secret)
-                result = sessionBlock()
+                sessionBlock()
             }
         }
-        return result
     }
 
     fun disconnect() {
-        wasCleanlyClosed = true
         connectionJob?.cancel()
         connectionJob = null
         retryJob?.cancel()

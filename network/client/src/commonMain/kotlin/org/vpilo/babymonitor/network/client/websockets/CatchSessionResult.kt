@@ -17,9 +17,9 @@ internal suspend fun DefaultClientWebSocketSession.catchSessionResult(
     }.fold(
         onSuccess = { true },
         onFailure = { ex ->
+            Logger.d(tag) { "WebSocket closed: ${ex.prettify()}" }
             if (ex is CancellationException) throw ex
             if (ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-                Logger.d(tag) { "WebSocket closed: ${ex.prettify()}" }
                 false
             } else {
                 true

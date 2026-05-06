@@ -2,11 +2,13 @@ package org.vpilo.babymonitor.network.client
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
@@ -16,6 +18,7 @@ import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.model.repository.ktx.reactor
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
+import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
@@ -70,10 +73,16 @@ internal class DefaultNetworkClientRepository(
                 discoveryManager.getDiscoveredServers().firstOrNull { it.id.name == serverId.name }
                     ?: run {
                         Logger.w(TAG) { "Server ${serverId.name} not found in local servers." }
-                        connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)
+                        if (connectionState.value !is ConnectionState.Reconnecting) {
+                            connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)
+                        }
                         return
                     }
             }
+
+        if (connectionState.value is ConnectionState.Connecting || connectionState.value is ConnectionState.Connected) {
+            return
+        }
 
         foregroundLink.start()
         closeAllConnections()
@@ -89,7 +98,6 @@ internal class DefaultNetworkClientRepository(
                     controlClientWebSocket()
                 },
                 coroutineScope = scope,
-                reconnect = true,
             ).apply { connect() }
 
         connectionState.value = ConnectionState.Connecting(serverId)
@@ -130,6 +138,13 @@ internal class DefaultNetworkClientRepository(
         Logger.i(TAG) { "Control connection closed: ${exception.prettify()}" }
         connectionState.value = ConnectionState.Reconnecting(serverId)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
+
+        scope.launch {
+            do {
+                delay(Constants.RECONNECTION_TIMEOUT)
+                connect(serverId)
+            } while (connectionState.value is ConnectionState.Reconnecting)
+        }
     }
 
     private companion object {
