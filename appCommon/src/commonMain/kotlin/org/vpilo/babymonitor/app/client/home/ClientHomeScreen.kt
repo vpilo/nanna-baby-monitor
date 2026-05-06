@@ -135,8 +135,8 @@ private fun ClientHomeScreenContent(
 
         val overlayMessage =
             when (connectionState) {
-                is ConnectionState.Disconnected -> stringResource(Res.string.client_disconnected_reconnecting)
-                is ConnectionState.Reconnecting -> stringResource(Res.string.client_reconnecting)
+                is ConnectionState.Disconnected -> Res.string.client_disconnected_reconnecting
+                is ConnectionState.Reconnecting -> Res.string.client_reconnecting
                 else -> null
             }
         if (overlayMessage != null) {
@@ -148,7 +148,7 @@ private fun ClientHomeScreenContent(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(overlayMessage)
+                        Text(stringResource(overlayMessage))
                         Button(
                             modifier = Modifier.padding(top = Theme.Paddings.Medium),
                             onClick = onDisconnected,

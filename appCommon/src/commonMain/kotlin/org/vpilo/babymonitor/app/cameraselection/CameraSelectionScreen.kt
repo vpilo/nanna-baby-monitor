@@ -152,9 +152,9 @@ private fun InfoLabel(connectionState: ConnectionState) {
     when (connectionState) {
         is ConnectionState.Connecting,
         is ConnectionState.Reconnecting,
-        -> {
-            label = Res.string.client_connection_chooser_connecting
-        }
+            -> {
+                label = Res.string.client_connection_chooser_connecting
+            }
 
         is ConnectionState.Connected -> {
             label = Res.string.client_connection_chooser_connected
