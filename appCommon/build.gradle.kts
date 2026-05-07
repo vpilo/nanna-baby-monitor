@@ -62,7 +62,7 @@ kotlin {
             implementation(libs.compose.material)
             implementation(libs.compose.material.icons.extended)
             implementation(libs.compose.ui)
-            implementation(libs.compose.resources)
+            api(libs.compose.resources)
             implementation(libs.compose.ui.tooling)
 
             implementation(libs.compose.navigation)
@@ -75,4 +75,8 @@ kotlin {
             implementation(libs.koin.core)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
 }

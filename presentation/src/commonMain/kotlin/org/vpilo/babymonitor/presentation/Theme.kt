@@ -5,7 +5,6 @@ import androidx.compose.ui.unit.dp
 
 object Theme {
     object Sizes {
-
         val Button: Dp = 40.dp
         val Blur: Dp = 2.dp
 

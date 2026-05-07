@@ -12,6 +12,7 @@
     <string name="navigation_title_app_permissions">App permissions</string>
     <string name="app_permissions_needed">The app needs the Notification permission to continue.</string>
 
+    <string name="app_role_choice_icon_description">App icon</string>
     <string name="app_role_choice_presentation_title">Welcome to Baby Monitor!</string>
     <string name="app_role_choice_presentation_description">This app lets you use a device to point the camera and microphone at something, and another device to see and hear what's being recorded. Either may be an Android phone or a computer.</string>
     <string name="app_role_record">Record something with this device's camera</string>

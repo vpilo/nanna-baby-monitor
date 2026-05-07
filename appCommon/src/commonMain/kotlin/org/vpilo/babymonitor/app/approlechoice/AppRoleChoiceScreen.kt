@@ -18,7 +18,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
+import babymonitor.appcommon.generated.resources.app_icon
 import babymonitor.appcommon.generated.resources.app_role_choice_alternative
+import babymonitor.appcommon.generated.resources.app_role_choice_icon_description
 import babymonitor.appcommon.generated.resources.app_role_choice_presentation_description
 import babymonitor.appcommon.generated.resources.app_role_choice_presentation_title
 import babymonitor.appcommon.generated.resources.app_role_choice_prompt
@@ -63,10 +65,18 @@ private fun AppRoleChoiceScreenContent(
     onRoleChosen: (role: AppRole) -> Unit,
 ) {
     Column(
-        modifier = modifier.padding(Theme.Paddings.Large),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(Theme.Paddings.Large),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Medium),
     ) {
+        Image(
+            modifier = Modifier.size(Theme.Sizes.IconHeader),
+            painter = painterResource(Res.drawable.app_icon),
+            contentDescription = stringResource(Res.string.app_role_choice_icon_description),
+        )
         Text(
             text = stringResource(Res.string.app_role_choice_presentation_title),
             style = MaterialTheme.typography.headlineSmall,

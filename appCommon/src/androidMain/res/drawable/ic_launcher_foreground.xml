@@ -1,0 +1,121 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Camera mount -->
+    <path
+        android:fillColor="#C6C6C6"
+        android:pathData="M114,230 L286,230 C288,230 290,232 290,234 L290,250 C290,252 288,254 286,254 L114,254 C112,254 110,252 110,250 L110,234 C110,232 112,230 114,230 Z" />
+
+    <!-- Dome -->
+    <path android:pathData="M110,230 A90,120 0 0 1 290,230 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="290"
+                android:endY="230"
+                android:startX="110"
+                android:startY="120"
+                android:type="linear">
+                <item
+                    android:color="#F2F0F4F6"
+                    android:offset="0" />
+                <item
+                    android:color="#D9A8C0CC"
+                    android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Dome glass highlight -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M135,180 Q145,140 185,128"
+        android:strokeWidth="6"
+        android:strokeAlpha="0.7"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- Lens outer ring (offset toward gem to indicate aim) -->
+    <path
+        android:fillColor="#3B618C"
+        android:pathData="M230,154 a36,36 0 1 0 0,72 a36,36 0 1 0 0,-72 Z" />
+
+    <!-- Lens mid -->
+    <path
+        android:fillColor="#0D3309"
+        android:pathData="M230,162 a28,28 0 1 0 0,56 a28,28 0 1 0 0,-56 Z" />
+
+    <!-- Lens inner -->
+    <path
+        android:fillColor="#1F1F1F"
+        android:pathData="M230,173 a17,17 0 1 0 0,34 a17,17 0 1 0 0,-34 Z" />
+
+    <!-- Lens glint -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M210,174.5 a6,3.5 0 1 0 0,7 a6,3.5 0 1 0 0,-7 Z" />
+
+    <!-- Mount screws -->
+    <path
+        android:fillColor="#1F1F1F"
+        android:pathData="M135,239.5 a2.5,2.5 0 1 0 0,5 a2.5,2.5 0 1 0 0,-5 Z" />
+    <path
+        android:fillColor="#1F1F1F"
+        android:pathData="M265,239.5 a2.5,2.5 0 1 0 0,5 a2.5,2.5 0 1 0 0,-5 Z" />
+
+    <!-- Diamond fill -->
+    <path android:pathData="M270,260 L410,260 L445,300 L340,425 L235,300 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="340"
+                android:endY="425"
+                android:startX="340"
+                android:startY="260"
+                android:type="linear">
+                <item
+                    android:color="#FFFFFFFF"
+                    android:offset="0" />
+                <item
+                    android:color="#FF6DAFC3"
+                    android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Diamond facet lines -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M235,300 L445,300"
+        android:strokeWidth="2.5"
+        android:strokeAlpha="0.6"
+        android:strokeColor="#3B618C" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M270,260 L340,425"
+        android:strokeWidth="2.5"
+        android:strokeAlpha="0.6"
+        android:strokeColor="#3B618C" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M410,260 L340,425"
+        android:strokeWidth="2.5"
+        android:strokeAlpha="0.6"
+        android:strokeColor="#3B618C" />
+
+    <!-- Diamond outline -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M270,260 L410,260 L445,300 L340,425 L235,300 Z"
+        android:strokeWidth="3"
+        android:strokeColor="#3B618C"
+        android:strokeLineJoin="round" />
+
+    <!-- Crown highlight -->
+    <path
+        android:fillAlpha="0.5"
+        android:fillColor="#FFFFFF"
+        android:pathData="M270,260 L340,260 L290,300 Z" />
+</vector>
