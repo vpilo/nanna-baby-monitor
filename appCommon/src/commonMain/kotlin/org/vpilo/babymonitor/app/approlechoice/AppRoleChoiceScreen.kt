@@ -1,31 +1,27 @@
 package org.vpilo.babymonitor.app.approlechoice
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_role_choice_alternative
-import babymonitor.appcommon.generated.resources.app_role_choice_presentation
+import babymonitor.appcommon.generated.resources.app_role_choice_presentation_description
+import babymonitor.appcommon.generated.resources.app_role_choice_presentation_title
+import babymonitor.appcommon.generated.resources.app_role_choice_prompt
 import babymonitor.appcommon.generated.resources.app_role_monitor
 import babymonitor.appcommon.generated.resources.app_role_record
 import babymonitor.appcommon.generated.resources.role_recorder
@@ -61,130 +57,74 @@ fun AppRoleChoiceScreen(
     )
 }
 
-private val TopLeftTriangle =
-    GenericShape { size, _ ->
-        moveTo(0f, 0f)
-        lineTo(size.width, 0f)
-        lineTo(0f, size.height)
-        close()
-    }
-
-private val BottomRightTriangle =
-    GenericShape { size, _ ->
-        moveTo(size.width, 0f)
-        lineTo(size.width, size.height)
-        lineTo(0f, size.height)
-        close()
-    }
-
 @Composable
 private fun AppRoleChoiceScreenContent(
     modifier: Modifier = Modifier,
     onRoleChosen: (role: AppRole) -> Unit,
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.padding(Theme.Paddings.Large),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Medium),
     ) {
         Text(
-            text = stringResource(Res.string.app_role_choice_presentation),
-            style = MaterialTheme.typography.headlineLarge,
+            text = stringResource(Res.string.app_role_choice_presentation_title),
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier =
-                Modifier
-                    .padding(Theme.Paddings.Medium),
         )
-        Box(modifier = modifier) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .clip(TopLeftTriangle)
-                        .clickable { onRoleChosen(AppRole.SERVER) },
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .padding(Theme.Paddings.Large),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Top,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.app_role_record),
-                            style = MaterialTheme.typography.headlineMedium,
-                            textAlign = TextAlign.Start,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth(.75f),
-                        )
-                        Image(
-                            modifier = Modifier.size(Theme.Sizes.MainIcon),
-                            painter = painterResource(Res.drawable.role_recorder),
-                            contentScale = ContentScale.FillBounds,
-                            colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.onPrimaryContainer),
-                            contentDescription = null,
-                        )
-                    }
-                }
-            }
+        Text(
+            text = stringResource(Res.string.app_role_choice_presentation_description),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Text(
+            modifier = Modifier.padding(top = Theme.Paddings.Medium),
+            text = stringResource(Res.string.app_role_choice_prompt),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
 
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .clip(BottomRightTriangle)
-                        .clickable { onRoleChosen(AppRole.CLIENT) },
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(Theme.Paddings.Large),
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.Bottom,
-                    ) {
-                        Image(
-                            modifier = Modifier.size(Theme.Sizes.MainIcon),
-                            painter = painterResource(Res.drawable.role_watcher),
-                            contentScale = ContentScale.FillBounds,
-                            colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.onPrimaryContainer),
-                            contentDescription = null,
-                        )
-                        Text(
-                            text = stringResource(Res.string.app_role_monitor),
-                            style = MaterialTheme.typography.headlineMedium,
-                            textAlign = TextAlign.End,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth(.75f),
-                        )
-                    }
-                }
-            }
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize(),
-            ) {
-                Text(
-                    text = stringResource(Res.string.app_role_choice_alternative),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier =
-                        Modifier
-                            .align(Alignment.Center),
-                )
-            }
+        Button(
+            modifier = Modifier,
+            onClick = { onRoleChosen(AppRole.SERVER) },
+        ) {
+            Image(
+                modifier = Modifier.size(Theme.Sizes.IconLarge),
+                painter = painterResource(Res.drawable.role_recorder),
+                colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.onPrimary),
+                contentDescription = null,
+            )
+            Text(
+                modifier = Modifier.padding(start = Theme.Paddings.Medium),
+                text = stringResource(Res.string.app_role_record),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
         }
+
+        Text(
+            text = stringResource(Res.string.app_role_choice_alternative),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        Button(
+            onClick = { onRoleChosen(AppRole.CLIENT) },
+        ) {
+            Image(
+                modifier = Modifier.size(Theme.Sizes.IconLarge),
+                painter = painterResource(Res.drawable.role_watcher),
+                colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.onPrimary),
+                contentDescription = null,
+            )
+            Text(
+                modifier = Modifier.padding(start = Theme.Paddings.Medium),
+                text = stringResource(Res.string.app_role_monitor),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 
@@ -194,6 +134,7 @@ private fun AppRoleChoiceScreenPreview() =
     AppPreviewTheme {
         Column {
             AppRoleChoiceScreenContent(
+                modifier = Modifier.fillMaxSize(),
                 onRoleChosen = {},
             )
         }
@@ -205,6 +146,7 @@ private fun AppRoleChoiceScreenDarkPreview() =
     AppPreviewTheme(useDarkTheme = true) {
         Column {
             AppRoleChoiceScreenContent(
+                modifier = Modifier.fillMaxSize(),
                 onRoleChosen = {},
             )
         }

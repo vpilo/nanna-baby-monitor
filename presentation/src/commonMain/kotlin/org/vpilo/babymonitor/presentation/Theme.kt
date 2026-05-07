@@ -5,13 +5,13 @@ import androidx.compose.ui.unit.dp
 
 object Theme {
     object Sizes {
-        val MainIcon: Dp = 128.dp
 
         val Button: Dp = 40.dp
         val Blur: Dp = 2.dp
 
         val IconSmall: Dp = 16.dp
-        val IconMedium: Dp = 24.dp
+        val IconLarge: Dp = 64.dp
+        val IconHeader: Dp = 128.dp
     }
 
     object Paddings {
@@ -19,12 +19,9 @@ object Theme {
         val Small: Dp = 8.dp
         val Medium: Dp = 16.dp
         val Large: Dp = 32.dp
-        val Huge: Dp = 48.dp
     }
 
     object Borders {
         val Thin: Dp = 1.dp
-        val Medium: Dp = 2.dp
-        val Thick: Dp = 4.dp
     }
 }
