@@ -15,8 +15,13 @@ fun main() {
     val relay = koin.get<DefaultNetworkRelayRepository>()
     relay.start()
 
-    println("Relay running. Press Enter to stop.")
-    runBlocking { readlnOrNull() }
+    println("Relay running. Write `quit` to stop.")
+    runBlocking {
+        var input: String?
+        do {
+            input = readlnOrNull()
+        } while (input?.lowercase()?.trim() != "quit")
+    }
 
     relay.stop()
     koin.close()
