@@ -19,7 +19,10 @@ sealed interface Route {
     data object Quit : Route
 
     @Serializable
-    data object PermissionCheck : Route
+    data object AppPermissionCheck : Route
+
+    @Serializable
+    data object CameraPermissionCheck : Route
 
     @Serializable
     data object CameraSelection : Route

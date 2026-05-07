@@ -24,7 +24,7 @@ import babymonitor.appcommon.generated.resources.app_name
 import babymonitor.appcommon.generated.resources.app_title_menu
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.app.navigation.Route
-import org.vpilo.babymonitor.app.navigation.ktx.navigateToAppRoleChooser
+import org.vpilo.babymonitor.app.navigation.ktx.navigateToAppPermissionCheck
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -54,7 +54,7 @@ fun MenuScreen(
                     onNavigateTo = { route ->
                         when (route) {
                             Route.AppRoleChooser -> {
-                                navController.navigateToAppRoleChooser()
+                                navController.navigateToAppPermissionCheck()
                             }
 
                             else -> {

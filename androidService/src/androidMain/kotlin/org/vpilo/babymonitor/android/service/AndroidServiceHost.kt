@@ -50,20 +50,27 @@ internal class AndroidServiceHost : LifecycleService() {
         val serviceChannel =
             NotificationChannel(
                 CHANNEL_ID,
-                "Camera active",
+                "Background service",
                 NotificationManager.IMPORTANCE_DEFAULT,
             )
         getSystemService(NotificationManager::class.java)
             .createNotificationChannel(serviceChannel)
     }
 
-    private fun createNotification(): Notification =
-        NotificationCompat
+    private fun createNotification(): Notification {
+        val text =
+            when (AndroidServiceRegistry.currentRole) {
+                AppRole.SERVER -> "Camera is active."
+                AppRole.CLIENT -> "Receiving from the camera."
+                AppRole.UNDECIDED -> error("Foreground service started with no registered role")
+            }
+        return NotificationCompat
             .Builder(this, CHANNEL_ID)
             .setContentTitle("Baby Monitor")
-            .setContentText("Camera is recording.")
+            .setContentText(text)
             .setSmallIcon(R.drawable.ic_launcher)
             .build()
+    }
 
     companion object {
         private val TAG = AndroidServiceHost::class

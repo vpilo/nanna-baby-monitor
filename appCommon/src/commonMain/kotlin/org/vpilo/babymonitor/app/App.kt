@@ -20,10 +20,11 @@ import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreen
 import org.vpilo.babymonitor.app.menu.MenuScreen
 import org.vpilo.babymonitor.app.navigation.Route
-import org.vpilo.babymonitor.app.navigation.ktx.navigateToAppRoleChooser
+import org.vpilo.babymonitor.app.navigation.ktx.navigateToAppPermissionCheck
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
+import org.vpilo.babymonitor.app.permissioncheck.AppPermissionCheckScreen
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreen
-import org.vpilo.babymonitor.camera.presentation.permissioncheck.PermissionCheckScreen
+import org.vpilo.babymonitor.camera.presentation.permissioncheck.CameraPermissionCheckScreen
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.AppTheme
@@ -80,7 +81,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                     onSavedRole = { role ->
                         when (role) {
                             AppRole.SERVER -> {
-                                navController.navigate(Route.PermissionCheck) {
+                                navController.navigate(Route.CameraPermissionCheck) {
                                     popUpTo(Route.Onboarding) { inclusive = true }
                                 }
                             }
@@ -92,7 +93,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                             }
 
                             AppRole.UNDECIDED -> {
-                                navController.navigateToAppRoleChooser()
+                                navController.navigateToAppPermissionCheck()
                             }
                         }
                     },
@@ -105,7 +106,7 @@ private fun NavigationRoutes(navController: NavHostController) {
                         Logger.d(TAG) { "Role chosen: $role" }
                         navController.navigate(
                             when (role) {
-                                AppRole.SERVER -> Route.PermissionCheck
+                                AppRole.SERVER -> Route.CameraPermissionCheck
                                 AppRole.CLIENT -> Route.CameraSelection
                                 AppRole.UNDECIDED -> error("UNDECIDED role should not be selectable")
                             },
@@ -129,13 +130,23 @@ private fun NavigationRoutes(navController: NavHostController) {
                 quitApplication()
             }
 
-            composable<Route.PermissionCheck> {
-                PermissionCheckScreen(
+            composable<Route.AppPermissionCheck> {
+                AppPermissionCheckScreen(
+                    onAllPermissionsGranted = {
+                        navController.navigate(Route.AppRoleChooser) {
+                            popUpTo(Route.AppPermissionCheck) { inclusive = true }
+                        }
+                    },
+                )
+            }
+
+            composable<Route.CameraPermissionCheck> {
+                CameraPermissionCheckScreen(
                     onAllPermissionsGranted = {
                         navController.navigate(Route.ServerHome)
                     },
                     onBackClicked = {
-                        navController.navigateToAppRoleChooser()
+                        navController.navigateToAppPermissionCheck()
                     },
                 )
             }

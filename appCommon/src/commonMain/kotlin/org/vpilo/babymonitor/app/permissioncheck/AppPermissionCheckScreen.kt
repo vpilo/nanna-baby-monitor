@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.camera.presentation.permissioncheck
+package org.vpilo.babymonitor.app.permissioncheck
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,39 +10,31 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import babymonitor.camera.presentation.generated.resources.Res
-import babymonitor.camera.presentation.generated.resources.navigation_title_permissions
-import babymonitor.camera.presentation.generated.resources.permissions_needed
+import babymonitor.appcommon.generated.resources.Res
+import babymonitor.appcommon.generated.resources.app_permissions_needed
+import babymonitor.appcommon.generated.resources.navigation_title_app_permissions
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.camera.presentation.RequestCameraPermission
-import org.vpilo.babymonitor.camera.presentation.RequestMicrophonePermission
-import org.vpilo.babymonitor.camera.presentation.hasCameraPermission
-import org.vpilo.babymonitor.camera.presentation.hasMicrophonePermission
+import org.vpilo.babymonitor.app.RequestNotificationsPermission
+import org.vpilo.babymonitor.app.hasNotificationsPermission
 import org.vpilo.babymonitor.presentation.composables.AppDestination
+import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 
 @Composable
-fun PermissionCheckScreen(
+fun AppPermissionCheckScreen(
     modifier: Modifier = Modifier,
-    onBackClicked: () -> Unit,
     onAllPermissionsGranted: () -> Unit,
 ) {
     AppDestination(
-        title = Res.string.navigation_title_permissions,
-        onMainActionClicked = onBackClicked,
+        title = Res.string.navigation_title_app_permissions,
+        mainAction = AppDestinationMainAction.None,
+        onMainActionClicked = {},
     ) {
-        val deniedPermissions = remember { mutableIntStateOf(2) }
+        val deniedPermissions = remember { mutableIntStateOf(1) }
 
         when {
-            !hasCameraPermission() -> {
-                RequestCameraPermission(
-                    onGranted = { deniedPermissions.intValue-- },
-                    onDenied = {},
-                )
-            }
-
-            !hasMicrophonePermission() -> {
-                RequestMicrophonePermission(
+            !hasNotificationsPermission() -> {
+                RequestNotificationsPermission(
                     onGranted = { deniedPermissions.intValue-- },
                     onDenied = {},
                 )
@@ -68,7 +60,7 @@ fun PermissionCheckScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = stringResource(Res.string.permissions_needed),
+                    text = stringResource(Res.string.app_permissions_needed),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.error,
                 )

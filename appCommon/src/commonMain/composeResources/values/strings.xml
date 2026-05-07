@@ -9,6 +9,9 @@
     <string name="app_title_client_home_name">%1$s</string>
     <string name="app_title_menu">Menu</string>
 
+    <string name="navigation_title_app_permissions">App permissions</string>
+    <string name="app_permissions_needed">The app needs the Notification permission to continue.</string>
+
     <string name="app_role_choice_presentation">What will this device do?</string>
     <string name="app_role_record">Record something with this device's camera</string>
     <string name="app_role_choice_alternative">or</string>
