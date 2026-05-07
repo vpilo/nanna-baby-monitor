@@ -95,12 +95,6 @@ class ClientHomeScreenViewModel(
         networkClientRepository.disconnect()
     }
 
-    fun disconnect() {
-        vmScope.launch {
-            networkClientRepository.disconnect()
-        }
-    }
-
     override fun onAction(action: ClientHomeScreenAction) {
         vmScope.launch {
             when (action) {

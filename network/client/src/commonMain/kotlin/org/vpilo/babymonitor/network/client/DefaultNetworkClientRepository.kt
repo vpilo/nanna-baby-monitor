@@ -66,6 +66,7 @@ internal class DefaultNetworkClientRepository(
     }
 
     override suspend fun connect(serverId: ServerId) {
+        val currentState = connectionState.value
         val server =
             if (!serverId.isLocalServer) {
                 Server(serverId, InetAddress.getByAddress(relayHost, ByteArray(4)))
@@ -73,14 +74,14 @@ internal class DefaultNetworkClientRepository(
                 discoveryManager.getDiscoveredServers().firstOrNull { it.id.name == serverId.name }
                     ?: run {
                         Logger.w(TAG) { "Server ${serverId.name} not found in local servers." }
-                        if (connectionState.value !is ConnectionState.Reconnecting) {
+                        if (currentState !is ConnectionState.Reconnecting) {
                             connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)
                         }
                         return
                     }
             }
 
-        if (connectionState.value is ConnectionState.Connecting || connectionState.value is ConnectionState.Connected) {
+        if (currentState is ConnectionState.Connecting || currentState is ConnectionState.Connected) {
             return
         }
 
@@ -136,12 +137,18 @@ internal class DefaultNetworkClientRepository(
         exception: Throwable,
     ) {
         Logger.i(TAG) { "Control connection closed: ${exception.prettify()}" }
+
+        if (serverSelectionDataSource.server.value == null) return
+
         connectionState.value = ConnectionState.Reconnecting(serverId)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
 
         scope.launch {
             do {
                 delay(Constants.RECONNECTION_TIMEOUT)
+                if (serverSelectionDataSource.server.value == null) {
+                    return@launch
+                }
                 connect(serverId)
             } while (connectionState.value is ConnectionState.Reconnecting)
         }
