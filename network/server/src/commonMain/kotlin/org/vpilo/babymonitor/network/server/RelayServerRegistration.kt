@@ -11,6 +11,7 @@ import io.ktor.websocket.timeout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,6 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.DiscoveryManagerState
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
@@ -33,7 +33,7 @@ import kotlin.coroutines.CoroutineContext
 internal class RelayServerRegistration(
     coroutineContext: CoroutineContext,
 ) {
-    private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+    private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
 
     private val _isRegistered = MutableStateFlow(false)
     val isRegistered: Flow<Boolean> = _isRegistered.asStateFlow()
@@ -77,7 +77,7 @@ internal class RelayServerRegistration(
                     method = HttpMethod.Get,
                     host = relayHost,
                     port = Constants.RELAY_PORT,
-                    path = "/relay/server",
+                    path = Endpoints.Relay.SERVER_REGISTRATION,
                 ) {
                     pingInterval = Constants.WEBSOCKET_PING_PERIOD
                     timeout = Constants.WEBSOCKET_TIMEOUT
@@ -115,6 +115,13 @@ internal class RelayServerRegistration(
     }
 
     private fun launchStream(endpoint: String) {
+        val streamPath =
+            when (endpoint) {
+                Endpoints.CONTROL -> Endpoints.Relay.SERVER_CONTROL
+                Endpoints.STREAM_AUDIO -> Endpoints.Relay.SERVER_AUDIO
+                Endpoints.STREAM_VIDEO -> Endpoints.Relay.SERVER_VIDEO
+                else -> error("Unknown endpoint: $endpoint")
+            }
         val job =
             scope.launch {
                 try {
@@ -122,7 +129,7 @@ internal class RelayServerRegistration(
                         method = HttpMethod.Get,
                         host = relayHost,
                         port = Constants.RELAY_PORT,
-                        path = "/relay/server$endpoint/${deviceName.encodeURLPathPart()}",
+                        path = "$streamPath/${deviceName.encodeURLPathPart()}",
                     ) {
                         pingInterval = Constants.WEBSOCKET_PING_PERIOD
                         timeout = Constants.WEBSOCKET_TIMEOUT

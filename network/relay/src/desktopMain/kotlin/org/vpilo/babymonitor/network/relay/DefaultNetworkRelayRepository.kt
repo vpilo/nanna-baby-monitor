@@ -27,7 +27,6 @@ import io.ktor.websocket.timeout
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -71,6 +70,7 @@ class DefaultNetworkRelayRepository(
         discoveryManager.discoveredServersFlow
             .onEach { currentServers.value = it }
             .launchIn(scope)
+        discoveryManager.startDiscovery()
 
         val keyStore = loadKeyStore()
 
@@ -96,13 +96,13 @@ class DefaultNetworkRelayRepository(
     }
 
     fun stop() {
+        discoveryManager.stopDiscovery()
         server?.stop(
             shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
             shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
             timeUnit = TimeUnit.MILLISECONDS,
         )
         server = null
-        relayHttpClient.close()
         Logger.i(TAG) { "Relay stopped" }
     }
 
@@ -279,7 +279,7 @@ class DefaultNetworkRelayRepository(
                             server.send(frame)
                         }
                     } finally {
-                        coroutineContext.cancel()
+                        server.close()
                     }
                 }
                 launch {
@@ -288,7 +288,7 @@ class DefaultNetworkRelayRepository(
                             client.send(frame)
                         }
                     } finally {
-                        coroutineContext.cancel()
+                        client.close()
                     }
                 }
             }

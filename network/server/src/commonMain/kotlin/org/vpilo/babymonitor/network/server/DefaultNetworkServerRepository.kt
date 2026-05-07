@@ -1,7 +1,7 @@
 package org.vpilo.babymonitor.network.server
 
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.ApplicationEnvironment
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.ServerReady
 import io.ktor.server.application.install
@@ -42,6 +42,7 @@ import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
@@ -56,8 +57,8 @@ internal class DefaultNetworkServerRepository(
 
     private val foregroundLink = ForegroundServiceLink(AppRole.SERVER)
 
-    private val activeAudioSessions = mutableListOf<WebSocketSession>()
-    private val activeVideoSessions = mutableListOf<WebSocketSession>()
+    private val activeAudioSessions = CopyOnWriteArrayList<WebSocketSession>()
+    private val activeVideoSessions = CopyOnWriteArrayList<WebSocketSession>()
 
     private val state = MutableStateFlow(ServerState())
     override val serverStateFlow: Flow<ServerState> = state.asStateFlow()
@@ -110,16 +111,19 @@ internal class DefaultNetworkServerRepository(
             ).apply {
                 server = this
 
-                monitor.subscribe(ServerReady) {
+                val readyHandler: (ApplicationEnvironment) -> Unit = {
                     Logger.i(TAG) { "Server is ready at ${Constants.SERVICES_LISTEN_ADDRESS}" }
                     isServerReady.value = true
                 }
-                monitor.subscribe(ApplicationStopped) {
+                lateinit var stoppedHandler: (Application) -> Unit
+                stoppedHandler = {
                     Logger.i(TAG) { "Server is stopping" }
                     isServerReady.value = false
-                    monitor.unsubscribe(ApplicationStarted) {}
-                    monitor.unsubscribe(ApplicationStopped) {}
+                    monitor.unsubscribe(ServerReady, readyHandler)
+                    monitor.unsubscribe(ApplicationStopped, stoppedHandler)
                 }
+                monitor.subscribe(ServerReady, readyHandler)
+                monitor.subscribe(ApplicationStopped, stoppedHandler)
                 start(wait = false)
             }
         }

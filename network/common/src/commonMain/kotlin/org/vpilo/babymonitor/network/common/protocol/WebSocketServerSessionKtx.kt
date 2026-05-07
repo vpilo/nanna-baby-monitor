@@ -8,11 +8,6 @@ import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.model.repository.ServerState
-import org.vpilo.babymonitor.network.common.ktx.moveToByteArray
-import java.nio.ByteBuffer
-
-private val byteArrayTrue by lazy { byteArrayOf(1) }
-private val byteArrayFalse by lazy { byteArrayOf(0) }
 
 suspend fun WebSocketSession.protocolSendAudio(chunk: EncodedAudioStreamChunk) {
     send(Frame.Binary(fin = true, data = chunk.data))
@@ -21,21 +16,16 @@ suspend fun WebSocketSession.protocolSendAudio(chunk: EncodedAudioStreamChunk) {
 suspend fun WebSocketSession.protocolReceiveAudio(): EncodedAudioStreamChunk = EncodedAudioStreamChunk(incoming.receive().data)
 
 suspend fun WebSocketSession.protocolSendVideo(chunk: EncodedVideoStreamChunk) {
-    val data =
-        ByteBuffer
-            .allocate(chunk.data.size + 1)
-            .put(if (chunk.isKeyFrame) byteArrayTrue else byteArrayFalse)
-            .put(chunk.data)
-            .flip()
-            as ByteBuffer // Type inference fails without this cast, even if the type is correct.
-
-    send(Frame.Binary(fin = true, data = data.moveToByteArray()))
+    val frame = ByteArray(chunk.data.size + 1)
+    frame[0] = if (chunk.isKeyFrame) 1 else 0
+    chunk.data.copyInto(frame, destinationOffset = 1)
+    send(Frame.Binary(fin = true, data = frame))
 }
 
 suspend fun WebSocketSession.protocolReceiveVideo(): EncodedVideoStreamChunk {
-    val data = ByteBuffer.wrap(incoming.receive().data)
-    val isKeyFrame = data.get().toInt() != 0
-    return EncodedVideoStreamChunk(data.moveToByteArray(), isKeyFrame)
+    val data = incoming.receive().data
+    val isKeyFrame = data[0].toInt() != 0
+    return EncodedVideoStreamChunk(data.copyOfRange(1, data.size), isKeyFrame)
 }
 
 sealed interface ServerMessage {

@@ -51,10 +51,6 @@ actual class DiscoveryManager(
     private val _state = MutableStateFlow(DiscoveryManagerState.Idle)
     actual val state: Flow<DiscoveryManagerState> = _state.asStateFlow()
 
-    init {
-        startDiscovery()
-    }
-
     actual fun registerService() {
         check(deviceName.isNotEmpty()) { "Device name must be set before registering service!" }
         if (_state.value == DiscoveryManagerState.DiscoveringServices) {
@@ -177,7 +173,6 @@ actual class DiscoveryManager(
                 NsdManager.PROTOCOL_DNS_SD,
                 listener,
             )
-            releaseMulticastLock()
             _state.value = DiscoveryManagerState.DiscoveringServices
         }
     }

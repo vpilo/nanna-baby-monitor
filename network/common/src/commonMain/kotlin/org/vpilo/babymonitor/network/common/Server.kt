@@ -3,7 +3,7 @@ package org.vpilo.babymonitor.network.common
 import org.vpilo.babymonitor.model.repository.ServerId
 import java.net.InetAddress
 
-class Server(
+data class Server(
     val id: ServerId,
     val addresses: Set<InetAddress>,
 ) : Comparable<Server> {
