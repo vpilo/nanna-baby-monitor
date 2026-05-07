@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_notification_channel_name">Background service notification</string>
+    <string name="service_title">Baby Monitor</string>
+    <string name="service_description_server">Recording from the camera and microphone.</string>
+    <string name="service_description_client">Receiving audio/video from a camera.</string>
+</resources>

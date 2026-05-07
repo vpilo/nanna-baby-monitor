@@ -7,7 +7,9 @@ import android.content.Intent
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
 
@@ -27,9 +29,9 @@ internal class AndroidServiceHost : LifecycleService() {
         flags: Int,
         startId: Int,
     ): Int {
-        Logger.d(TAG) { "Starting service in foreground" }
+        Logger.d(TAG) { "Starting foreground service" }
         super.onStartCommand(intent, flags, startId)
-        startForeground(NOTIFICATION_ID, createNotification(), foregroundServiceType())
+        ServiceCompat.startForeground(this, NOTIFICATION_ID, createNotification(), foregroundServiceType())
         return START_STICKY
     }
 
@@ -40,17 +42,21 @@ internal class AndroidServiceHost : LifecycleService() {
     }
 
     private fun foregroundServiceType(): Int =
-        when (AndroidServiceRegistry.currentRole) {
-            AppRole.SERVER -> FOREGROUND_SERVICE_TYPE_CAMERA or FOREGROUND_SERVICE_TYPE_MICROPHONE
-            AppRole.CLIENT -> FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-            AppRole.UNDECIDED -> error("Foreground service started with no registered role")
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            0
+        } else {
+            when (AndroidServiceRegistry.currentRole) {
+                AppRole.SERVER -> FOREGROUND_SERVICE_TYPE_CAMERA or FOREGROUND_SERVICE_TYPE_MICROPHONE
+                AppRole.CLIENT -> FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                AppRole.UNDECIDED -> error("Foreground service started with no registered role")
+            }
         }
 
     private fun createNotificationChannel() {
         val serviceChannel =
             NotificationChannel(
                 CHANNEL_ID,
-                "Background service",
+                getString(R.string.service_notification_channel_name),
                 NotificationManager.IMPORTANCE_DEFAULT,
             )
         getSystemService(NotificationManager::class.java)
@@ -58,16 +64,16 @@ internal class AndroidServiceHost : LifecycleService() {
     }
 
     private fun createNotification(): Notification {
-        val text =
+        val textRes =
             when (AndroidServiceRegistry.currentRole) {
-                AppRole.SERVER -> "Camera is active."
-                AppRole.CLIENT -> "Receiving from the camera."
+                AppRole.SERVER -> R.string.service_description_server
+                AppRole.CLIENT -> R.string.service_description_client
                 AppRole.UNDECIDED -> error("Foreground service started with no registered role")
             }
         return NotificationCompat
             .Builder(this, CHANNEL_ID)
-            .setContentTitle("Baby Monitor")
-            .setContentText(text)
+            .setContentTitle(getString(R.string.service_title))
+            .setContentText(getString(textRes))
             .setSmallIcon(R.drawable.ic_launcher)
             .build()
     }
