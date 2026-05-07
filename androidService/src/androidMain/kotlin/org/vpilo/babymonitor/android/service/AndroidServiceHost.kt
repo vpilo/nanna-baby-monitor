@@ -29,8 +29,13 @@ internal class AndroidServiceHost : LifecycleService() {
         flags: Int,
         startId: Int,
     ): Int {
-        Logger.d(TAG) { "Starting foreground service" }
         super.onStartCommand(intent, flags, startId)
+        if (AndroidServiceRegistry.currentRole == AppRole.UNDECIDED) {
+            Logger.w(TAG) { "Service started with no registered role; stopping" }
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
+        Logger.d(TAG) { "Starting foreground service" }
         ServiceCompat.startForeground(this, NOTIFICATION_ID, createNotification(), foregroundServiceType())
         return START_STICKY
     }
@@ -48,7 +53,7 @@ internal class AndroidServiceHost : LifecycleService() {
             when (AndroidServiceRegistry.currentRole) {
                 AppRole.SERVER -> FOREGROUND_SERVICE_TYPE_CAMERA or FOREGROUND_SERVICE_TYPE_MICROPHONE
                 AppRole.CLIENT -> FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-                AppRole.UNDECIDED -> error("Foreground service started with no registered role")
+                AppRole.UNDECIDED -> 0
             }
         }
 
@@ -68,13 +73,13 @@ internal class AndroidServiceHost : LifecycleService() {
             when (AndroidServiceRegistry.currentRole) {
                 AppRole.SERVER -> R.string.service_description_server
                 AppRole.CLIENT -> R.string.service_description_client
-                AppRole.UNDECIDED -> error("Foreground service started with no registered role")
+                AppRole.UNDECIDED -> R.string.service_title
             }
         return NotificationCompat
             .Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.service_title))
             .setContentText(getString(textRes))
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .build()
     }
 
