@@ -19,6 +19,7 @@ val networkServerKoinModule: Module =
     module {
         singleOf(::RelayServerRegistration)
 
+        // SharedResourceHolder repositories must be singletons to maintain their state.
         singleOf(::NetworkAudioSenderRepository)
             .bind<StreamingAudioSenderRepository>()
         singleOf(::NetworkVideoSenderRepository)

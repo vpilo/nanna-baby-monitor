@@ -24,19 +24,20 @@ import org.vpilo.babymonitor.network.common.DiscoveryManager
 
 val networkClientKoinModule: Module =
     module {
-        singleOf(::NetworkControlDataSource)
         singleOf(::ServerSelectionDataSource)
+        singleOf(::RelayDiscoveryDataSource)
+        singleOf(::NetworkControlDataSource)
         singleOf(::NetworkAudioDataSource)
         singleOf(::NetworkVideoDataSource)
-        singleOf(::RelayDiscoveryDataSource)
 
-        factoryOf(::NetworkAudioReceiverRepository)
+        // SharedResourceHolder repositories must be singletons to maintain their state.
+        singleOf(::NetworkAudioReceiverRepository)
             .bind<StreamingAudioReceiverRepository>()
-        factoryOf(::NetworkVideoReceiverRepository)
+        singleOf(::NetworkVideoReceiverRepository)
             .bind<StreamingVideoReceiverRepository>()
+
         factoryOf(::DefaultIsConnectionAvailableRepository)
             .bind<IsConnectionAvailableRepository>()
-
         singleOf(::DefaultNetworkClientRepository)
             .bind<NetworkClientRepository>()
 

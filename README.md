@@ -16,9 +16,9 @@
 
 # Issues
 
-- The role selection screen show be redone.
-- Fix ktor engines setup.
+- The role selection screen needs to be redone.
 - where is the notification?
+- AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
 
 # Completed features
 
