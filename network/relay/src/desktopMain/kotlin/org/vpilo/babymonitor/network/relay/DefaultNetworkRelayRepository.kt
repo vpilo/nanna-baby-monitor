@@ -192,7 +192,7 @@ class DefaultNetworkRelayRepository(
         Logger.i(TAG) { "Camera '$cameraName' registered" }
         remoteServers.update { it + (cameraName to this) }
         try {
-            @Suppress("UnusedPrivateProperty")
+            @Suppress("UnusedPrivateProperty", "ControlFlowWithEmptyBody")
             for (ignored in incoming) {
                 // drain to detect disconnect
             }

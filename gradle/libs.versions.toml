@@ -65,9 +65,11 @@ androidx-core = { group = "androidx.core", name = "core", version.ref = "android
 androidx-datastore = { module = "androidx.datastore:datastore-preferences-core", version.ref = "androidx-datastore" }
 
 # Camera libraries
+androidx-camera-compose = { group = "androidx.camera", name = "camera-compose", version.ref = "androidx-camera" }
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "androidx-camera" }
 androidx-camera-impl = { group = "androidx.camera", name = "camera-camera2", version.ref = "androidx-camera" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "androidx-camera" }
+androidx-camera-video = { group = "androidx.camera", name = "camera-video", version.ref = "androidx-camera" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version.ref = "webcam-capture" }
 javacpp = { group = "org.bytedeco", name = "javacpp", version.ref = "javacpp" }

@@ -5,7 +5,13 @@
       "Bash(./gradlew :codec:compileAndroidMain)",
       "Bash(./gradlew :codec:detekt :codec:compileAndroidMain)",
       "Bash(./gradlew :appAndroid:assembleDebug)",
-      "Bash(grep -E \"\\\\.kt$\")"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "mcp__android-studio-index__*",
+      "WebSearch",
+      "Skill(superpowers:*)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }

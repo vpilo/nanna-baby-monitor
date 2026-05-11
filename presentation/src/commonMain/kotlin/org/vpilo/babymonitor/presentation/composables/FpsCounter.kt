@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableDoubleStateOf
@@ -16,21 +17,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.tooling.preview.Preview
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 /**
- * Composable FPS counter that updates every time it is recomposed.
- * Not a general purpose FPS counter: only useful to track the updates of the value
- * given as the [frameKey] parameter.
+ * Composable FPS counter that computes frame time based upon `OpaqueVideoStream.frameCounter`.
  */
 @Composable
 fun FpsCounter(
-    frameKey: Any?,
+    videoStream: OpaqueVideoStream,
     modifier: Modifier = Modifier,
 ) {
+    val frameKey by videoStream.frameCounter.collectAsState()
     var frameCount by remember { mutableIntStateOf(0) }
     var fps by remember { mutableDoubleStateOf(0.0) }
     var lastMark by remember { mutableStateOf(TimeSource.Monotonic.markNow()) }
@@ -70,12 +71,11 @@ fun FpsCounter(
     )
 }
 
-@Preview
-@Composable
-private fun FpsCounterPreview() =
-    AppPreviewTheme(useDarkTheme = true) {
-        FpsCounter(
-            modifier = Modifier,
-            frameKey = Any(),
-        )
-    }
+// @Preview
+// @Composable
+// private fun FpsCounterPreview() =
+//    AppPreviewTheme(useDarkTheme = true) {
+//        FpsCounter(
+//            modifier = Modifier,
+//        )
+//    }

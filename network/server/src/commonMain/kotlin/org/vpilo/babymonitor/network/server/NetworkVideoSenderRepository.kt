@@ -21,7 +21,7 @@ internal class NetworkVideoSenderRepository(
 
     private val encoder: VideoEncoder =
         VideoEncoder(
-            input = videoRepository.frames,
+            source = videoRepository.videoStream,
             output = collector,
             coroutineContext = coroutineContext,
         )

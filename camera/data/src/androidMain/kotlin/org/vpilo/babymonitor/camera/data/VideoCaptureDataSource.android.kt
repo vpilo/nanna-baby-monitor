@@ -1,142 +1,163 @@
 package org.vpilo.babymonitor.camera.data
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Range
 import android.util.Size
 import android.view.OrientationEventListener
+import android.view.Surface
 import androidx.annotation.MainThread
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
 import androidx.camera.core.SessionConfig
-import androidx.camera.core.UseCase
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.VideoCapture
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.android.service.AndroidService
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
 import org.vpilo.babymonitor.camera.model.CameraResolution
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.AndroidServerVideoStream
 import org.vpilo.babymonitor.model.AppRole
-import org.vpilo.babymonitor.model.CameraFrame
-import org.vpilo.babymonitor.model.CameraFrameFlow
-import org.vpilo.babymonitor.model.MediaFormats
-import org.vpilo.babymonitor.model.repository.SharedResourceHolder
-import java.lang.ref.WeakReference
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import kotlin.math.abs
 
 internal actual class VideoCaptureDataSource(
     private val mainDispatcher: CoroutineDispatcher,
-) : SharedResourceHolder<CameraFrame>(
-        bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
-    ),
-    AndroidService {
-    actual constructor() : this(mainDispatcher = Dispatchers.Main)
+    backgroundDispatcher: CoroutineDispatcher,
+) : AndroidService {
+    actual constructor() : this(Dispatchers.Main, Dispatchers.Default)
 
-    actual val frames: CameraFrameFlow = collector.asSharedFlow()
+    private val mutableVideoStream = AndroidServerVideoStream()
+    actual val videoStream: OpaqueVideoStream = mutableVideoStream
 
     override val role: AppRole = AppRole.SERVER
 
     private var cameraProvider: ProcessCameraProvider? = null
+    private var serviceContext: Context? = null
+    private var serviceLifecycleOwner: LifecycleOwner? = null
 
-    private val executor = coroutineDispatcher.asExecutor()
+    private val mainExecutor = mainDispatcher.asExecutor()
 
     private var resolution: CameraResolution = CameraResolution.Medium
 
-    private val resolutionSelector: ResolutionSelector by lazy {
-        val size =
-            when (resolution) {
-                CameraResolution.Low -> Size(640, 480)
-                CameraResolution.Medium -> Size(1280, 720)
-                CameraResolution.High -> Size(1920, 1080)
+    private var videoCapture: VideoCapture<EncoderVideoOutput>? = null
+
+    @Volatile
+    private var renderer: CameraGlRenderer =
+        CameraGlRenderer(
+            bridgeSize = resolutionToSize(resolution),
+            onFrameRendered = { mutableVideoStream.signalFrameRendered() },
+        )
+        get() {
+            if (field.isReleased()) {
+                Logger.w(TAG) { "Renderer was released, creating a new one" }
+                field =
+                    CameraGlRenderer(
+                        bridgeSize = resolutionToSize(resolution),
+                        onFrameRendered = { mutableVideoStream.signalFrameRendered() },
+                    )
             }
-        ResolutionSelector
-            .Builder()
-            .setResolutionStrategy(ResolutionStrategy(size, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
-            .build()
-    }
+            return field
+        }
+
+    private val resolutionSelector: ResolutionSelector
+        get() {
+            val size = resolutionToSize(resolution)
+            return ResolutionSelector
+                .Builder()
+                .setResolutionStrategy(
+                    ResolutionStrategy(size, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER),
+                ).build()
+        }
 
     private var orientationListener: OrientationEventListener? = null
 
-    /**
-     * Converts a YUV_420_888 [ImageProxy] to tightly-packed NV12 bytes
-     * (Y plane followed by interleaved UV pairs), respecting per-plane
-     * row strides and pixel strides so it works on all devices.
-     */
-    private fun onFrameReceived(image: ImageProxy) {
-        val w = image.width
-        val h = image.height
+    private val backgroundScope = CoroutineScope(backgroundDispatcher)
 
-        val yPlane = image.planes[0]
-        val uPlane = image.planes[1]
-        val vPlane = image.planes[2]
-
-        val yRowStride = yPlane.rowStride
-        val uvRowStride = uPlane.rowStride
-        val uvPixelStride = uPlane.pixelStride
-
-        val yBuf = yPlane.buffer
-        val uBuf = uPlane.buffer
-        val vBuf = vPlane.buffer
-
-        // Tightly-packed NV12: w*h Y bytes + w*h/2 interleaved UV bytes
-        val nv12 = ByteArray(w * h * 3 / 2)
-
-        // Copy Y plane row-by-row, stripping any padding
-        var destPos = 0
-        for (row in 0 until h) {
-            yBuf.position(row * yRowStride)
-            yBuf.get(nv12, destPos, w)
-            destPos += w
-        }
-
-        // Copy UV planes interleaved as NV12 (U, V, U, V, …)
-        val uvHeight = h / 2
-        val uvWidth = w / 2
-        for (row in 0 until uvHeight) {
-            for (col in 0 until uvWidth) {
-                val uvIndex = row * uvRowStride + col * uvPixelStride
-                nv12[destPos++] = uBuf.get(uvIndex)
-                nv12[destPos++] = vBuf.get(uvIndex)
+    init {
+        backgroundScope.launch {
+            mutableVideoStream.isActive.collect { active ->
+                Logger.d(TAG) { "Data source is ${if (active) "starting" else "stopping"}" }
+                if (active) {
+                    AndroidServiceRegistry.register(this@VideoCaptureDataSource)
+                } else {
+                    AndroidServiceRegistry.unregister(this@VideoCaptureDataSource)
+                }
             }
         }
-
-        image.close()
-        collector.tryEmit(CameraFrame(bytes = nv12, width = w, height = h))
+        // Drive renderer attach/detach for the encoder.
+        backgroundScope.launch {
+            mutableVideoStream.encoderSurface.collect { surface ->
+                with(renderer) {
+                    if (surface != null) {
+                        attachEncoder(surface)
+                        Logger.d(TAG) { "Encoder attached" }
+                    } else {
+                        detachEncoder()
+                        Logger.d(TAG) { "Encoder detached" }
+                    }
+                }
+            }
+        }
+        // Drive renderer attach/detach for the viewfinder.
+        backgroundScope.launch {
+            mutableVideoStream.surface.collect { surface ->
+                with(renderer) {
+                    if (surface != null) {
+                        Logger.d(TAG) { "Viewfinder attached" }
+                        attachViewfinder(surface)
+                    } else {
+                        Logger.d(TAG) { "Viewfinder detached" }
+                        detachViewfinder()
+                    }
+                }
+            }
+        }
     }
 
     @MainThread
-    fun onCameraReady(
+    private fun bind(
         cameraProvider: ProcessCameraProvider,
         context: Context,
         lifecycleOwner: LifecycleOwner,
     ) {
-        val imageAnalyzer =
-            ImageAnalysis
-                .Builder()
-                .setOutputImageRotationEnabled(true)
-                .setResolutionSelector(resolutionSelector)
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-                .setBackgroundExecutor(executor)
-                .build()
-                .also {
-                    it.setAnalyzer(executor, ::onFrameReceived)
-                }
+        val selector = resolutionSelector
+
         val cameraSelector =
             CameraSelector
                 .Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build()
-        val supportedFpsRanges = cameraProvider.getCameraInfo(cameraSelector).supportedFrameRateRanges.sortedBy { it.upper }
+
+        val cameraInfo = cameraProvider.getCameraInfo(cameraSelector)
+
+        // Lock targetRotation so CameraX applies no rotation between sensor and consumer,
+        // keeping the buffer sensor-native landscape regardless of device orientation.
+        // CameraX computes relativeRotation = (sensorMount + targetDegrees) % 360;
+        // we want zero, so targetDegrees = (360 - sensorMount) % 360.
+        val sensorTargetRotation = sensorRotationToSurfaceRotation(cameraInfo.sensorRotationDegrees)
+
+        val videoCapture =
+            @SuppressLint("RestrictedApi")
+            VideoCapture
+                .Builder(EncoderVideoOutput(resolution, renderer, mainExecutor))
+                .setResolutionSelector(selector)
+                .setTargetRotation(sensorTargetRotation)
+                .build()
+
+        val supportedFpsRanges =
+            cameraInfo
+                .supportedFrameRateRanges
+                .sortedBy { it.upper }
         val desiredFpsRange =
             when (resolution) {
                 CameraResolution.Low -> Range(CameraConstants.MIN_FPS, CameraConstants.MAX_FPS_LOW_QUALITY)
@@ -146,30 +167,25 @@ internal actual class VideoCaptureDataSource(
         val fpsRange =
             desiredFpsRange
                 .takeIf { supportedFpsRanges.contains(it) }
-                ?: run {
-                    supportedFpsRanges
-                        .map { it to abs(it.lower - desiredFpsRange.lower + it.upper - desiredFpsRange.upper) }
-                        .also {
-                            Logger.w(TAG) {
-                                "FPS range $desiredFpsRange not supported, selecting one from: ${it.joinToString(", ")}"
-                            }
-                        }.minBy { it.second }
-                        .first
-                }
+                ?: supportedFpsRanges
+                    .map { it to abs(it.lower - desiredFpsRange.lower + it.upper - desiredFpsRange.upper) }
+                    .also {
+                        Logger.w(TAG) {
+                            "FPS range $desiredFpsRange not supported, selecting one from: ${it.joinToString(", ")}"
+                        }
+                    }.minBy { it.second }
+                    .first
         Logger.i(TAG) { "Selected FPS range: $fpsRange" }
 
         val sessionConfig =
             SessionConfig(
-                useCases = listOf(imageAnalyzer),
+                useCases = listOf(videoCapture),
                 frameRateRange = fpsRange,
             )
+
         try {
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner,
-                cameraSelector,
-                sessionConfig,
-            )
+            cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, sessionConfig)
         } catch (
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
@@ -177,22 +193,32 @@ internal actual class VideoCaptureDataSource(
             return
         }
 
+        this.videoCapture = videoCapture
+
+        (videoCapture.resolutionInfo?.resolution ?: resolutionToSize(resolution))
+            .let { resolution ->
+                Logger.d(TAG) { "Camera bound with size $resolution" }
+                mutableVideoStream.setFrameSize(resolution.width, resolution.height)
+            }
+
+        orientationListener?.disable()
         orientationListener =
             object : OrientationEventListener(context) {
+                private var lastRotationDegrees = -1
+
                 init {
                     enable()
                 }
 
-                private var lastRotation = ORIENTATION_UNKNOWN
-                private val target = WeakReference(imageAnalyzer)
-
                 override fun onOrientationChanged(orientation: Int) {
-                    if (orientation == ORIENTATION_UNKNOWN || orientation == lastRotation) return
-                    lastRotation = orientation
-                    target
-                        .get()
-                        ?.setTargetRotation(UseCase.snapToSurfaceRotation(orientation))
-                        ?: this.disable()
+                    if (orientation == ORIENTATION_UNKNOWN) return
+
+                    val rotation = ((orientation + 45) / 90 * 90) % 360
+                    if (rotation == lastRotationDegrees) return
+                    lastRotationDegrees = rotation
+
+                    Logger.i(TAG) { "Device rotation changed: $rotation°" }
+                    mutableVideoStream.setRotation(rotation)
                 }
             }
     }
@@ -200,10 +226,12 @@ internal actual class VideoCaptureDataSource(
     actual fun setResolution(resolution: CameraResolution) {
         if (this.resolution == resolution) return
         this.resolution = resolution
-        if (isActiveNow) {
-            Logger.i(TAG) { "Resolution changed to $resolution, restarting capture" }
-            stop()
-            start()
+        val provider = cameraProvider
+        val context = serviceContext
+        val owner = serviceLifecycleOwner
+        if (provider != null && context != null && owner != null) {
+            Logger.i(TAG) { "Resolution changed to $resolution" }
+            owner.lifecycleScope.launch(mainDispatcher) { bind(provider, context, owner) }
         }
     }
 
@@ -211,34 +239,52 @@ internal actual class VideoCaptureDataSource(
         context: Context,
         lifecycleOwner: LifecycleOwner,
     ) {
+        serviceContext = context
+        serviceLifecycleOwner = lifecycleOwner
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener(
             {
-                cameraProvider =
-                    cameraProviderFuture
-                        .get()
-                        .also {
-                            CoroutineScope(mainDispatcher).launch {
-                                onCameraReady(it, context, lifecycleOwner)
-                            }
-                        }
+                val provider = cameraProviderFuture.get()
+                cameraProvider = provider
+                lifecycleOwner.lifecycleScope.launch(mainDispatcher) {
+                    bind(provider, context, lifecycleOwner)
+                }
             },
-            executor,
+            mainExecutor,
         )
     }
 
     override fun onServiceStopped() {
-        CoroutineScope(mainDispatcher).launch {
+        serviceLifecycleOwner?.lifecycleScope?.launch(mainDispatcher) {
+            mutableVideoStream.setFrameSize(0, 0)
+            mutableVideoStream.setRotation(0)
             cameraProvider?.unbindAll()
             cameraProvider = null
+            videoCapture = null
+            orientationListener?.disable()
+            orientationListener = null
+            renderer.release()
+            serviceContext = null
+            serviceLifecycleOwner = null
         }
     }
 
-    override fun start() {
-        AndroidServiceRegistry.register(this)
-    }
+    private fun resolutionToSize(resolution: CameraResolution): Size =
+        when (resolution) {
+            CameraResolution.Low -> Size(640, 480)
+            CameraResolution.Medium -> Size(1280, 720)
+            CameraResolution.High -> Size(1920, 1080)
+        }
 
-    override fun stop() {
-        AndroidServiceRegistry.unregister(this)
+    private fun sensorRotationToSurfaceRotation(sensorDegrees: Int): Int =
+        when (sensorDegrees) {
+            90 -> Surface.ROTATION_270
+            180 -> Surface.ROTATION_180
+            270 -> Surface.ROTATION_90
+            else -> Surface.ROTATION_0
+        }
+
+    private companion object {
+        private val TAG = VideoCaptureDataSource::class
     }
 }

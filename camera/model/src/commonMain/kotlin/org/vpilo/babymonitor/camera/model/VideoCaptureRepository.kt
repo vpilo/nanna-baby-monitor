@@ -1,11 +1,12 @@
 package org.vpilo.babymonitor.camera.model
 
-import org.vpilo.babymonitor.model.CameraFrameFlow
+import org.vpilo.babymonitor.model.OpaqueVideoStream
+import org.vpilo.babymonitor.model.VideoStream
 
 /**
- * Repository for raw captured camera frames.
- * This repository provides uncompressed camera frames, as captured by a webcam or camera.
+ * Repository for the camera capture pipeline.
+ * Exposes a [VideoStream] consumed by both the viewfinder and the encoder.
  */
 interface VideoCaptureRepository {
-    val frames: CameraFrameFlow
+    val videoStream: OpaqueVideoStream
 }

@@ -15,17 +15,31 @@ suspend fun WebSocketSession.protocolSendAudio(chunk: EncodedAudioStreamChunk) {
 
 suspend fun WebSocketSession.protocolReceiveAudio(): EncodedAudioStreamChunk = EncodedAudioStreamChunk(incoming.receive().data)
 
+private const val VIDEO_HEADER_SIZE = 1 + 1 + 4 + 4
+
 suspend fun WebSocketSession.protocolSendVideo(chunk: EncodedVideoStreamChunk) {
-    val frame = ByteArray(chunk.data.size + 1)
+    val frame = ByteArray(VIDEO_HEADER_SIZE + chunk.data.size)
     frame[0] = if (chunk.isKeyFrame) 1 else 0
-    chunk.data.copyInto(frame, destinationOffset = 1)
+    frame[1] = (chunk.rotation / 90).toByte()
+    frame.storeIntAt(2, chunk.frameWidth)
+    frame.storeIntAt(6, chunk.frameHeight)
+    chunk.data.copyInto(frame, destinationOffset = VIDEO_HEADER_SIZE)
     send(Frame.Binary(fin = true, data = frame))
 }
 
 suspend fun WebSocketSession.protocolReceiveVideo(): EncodedVideoStreamChunk {
     val data = incoming.receive().data
     val isKeyFrame = data[0].toInt() != 0
-    return EncodedVideoStreamChunk(data.copyOfRange(1, data.size), isKeyFrame)
+    val rotation = (data[1].toInt() and 0xFF) * 90
+    val frameWidth = data.getIntAt(2)
+    val frameHeight = data.getIntAt(6)
+    return EncodedVideoStreamChunk(
+        data = data.copyOfRange(VIDEO_HEADER_SIZE, data.size),
+        isKeyFrame = isKeyFrame,
+        frameWidth = frameWidth,
+        frameHeight = frameHeight,
+        rotation = rotation,
+    )
 }
 
 sealed interface ServerMessage {
@@ -69,3 +83,19 @@ suspend fun WebSocketSession.receiveServerMessage(): ServerMessage {
         }
     }
 }
+
+private fun ByteArray.storeIntAt(
+    index: Int,
+    value: Int,
+) {
+    this[index + 0] = (value shr 24).toByte()
+    this[index + 1] = (value shr 16).toByte()
+    this[index + 2] = (value shr 8).toByte()
+    this[index + 3] = value.toByte()
+}
+
+private fun ByteArray.getIntAt(index: Int): Int =
+    ((this[index + 0].toInt() and 0xFF) shl 24) or
+        ((this[index + 1].toInt() and 0xFF) shl 16) or
+        ((this[index + 2].toInt() and 0xFF) shl 8) or
+        (this[index + 3].toInt() and 0xFF)

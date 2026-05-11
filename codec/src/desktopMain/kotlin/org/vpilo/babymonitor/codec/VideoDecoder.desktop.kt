@@ -4,7 +4,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.bytedeco.ffmpeg.avcodec.AVCodecContext
@@ -33,6 +32,8 @@ import org.bytedeco.ffmpeg.swscale.SwsContext
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.DoublePointer
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.DesktopVideoStream
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.StreamingVideoFlow
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
@@ -41,12 +42,14 @@ import kotlin.coroutines.CoroutineContext
 @Suppress("LongMethod", "LoopWithTooManyJumpStatements")
 actual class VideoDecoder actual constructor(
     private val input: StreamingVideoFlow,
-    private val output: MutableSharedFlow<ImageBitmap>,
     coroutineContext: CoroutineContext,
 ) {
     private val coroutineScope = CoroutineScope(coroutineContext)
 
     private var decodeJob: Job? = null
+
+    private val mutableVideoStream = DesktopVideoStream()
+    actual val videoStream: OpaqueVideoStream = mutableVideoStream
 
     actual fun start() {
         if (decodeJob?.isActive == true) {
@@ -56,10 +59,26 @@ actual class VideoDecoder actual constructor(
 
         decodeJob =
             coroutineScope.launch {
+                var lastRotation = 0
+                var lastFrameWidth = 0
+                var lastFrameHeight = 0
                 var ctx: VideoDecoderContext? = null
                 try {
                     input.collect { chunk ->
                         if (!isActive) return@collect
+
+                        if (chunk.frameWidth != lastFrameWidth || chunk.frameHeight != lastFrameHeight) {
+                            Logger.d(TAG) { "Frame size updated: ${chunk.frameWidth}x${chunk.frameHeight}" }
+                            mutableVideoStream.setFrameSize(chunk.frameWidth, chunk.frameHeight)
+                            lastFrameWidth = chunk.frameWidth
+                            lastFrameHeight = chunk.frameHeight
+                        }
+
+                        if (chunk.rotation != lastRotation) {
+                            Logger.d(TAG) { "Rotation updated: ${chunk.rotation}" }
+                            mutableVideoStream.setRotation(chunk.rotation)
+                            lastRotation = chunk.rotation
+                        }
 
                         if (ctx == null) {
                             ctx = VideoDecoderContext.create()
@@ -67,7 +86,7 @@ actual class VideoDecoder actual constructor(
                         }
 
                         ctx.decode(chunk.data) { bitmap ->
-                            output.tryEmit(bitmap)
+                            mutableVideoStream.onFrame(bitmap)
                         }
                     }
                 } finally {

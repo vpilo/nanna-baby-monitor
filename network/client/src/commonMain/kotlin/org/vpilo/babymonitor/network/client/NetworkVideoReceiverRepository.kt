@@ -1,14 +1,14 @@
 package org.vpilo.babymonitor.network.client
 
-import androidx.compose.ui.graphics.ImageBitmap
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.codec.VideoDecoder
-import org.vpilo.babymonitor.model.MediaFormats
-import org.vpilo.babymonitor.model.repository.SharedResourceHolder
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
@@ -19,23 +19,33 @@ internal class NetworkVideoReceiverRepository(
     dataSource: NetworkVideoDataSource,
     private val serverSelectionDataSource: ServerSelectionDataSource,
     coroutineContext: CoroutineContext,
-) : SharedResourceHolder<ImageBitmap>(
-        bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
-    ),
-    StreamingVideoReceiverRepository {
-    override val decodedFrames: SharedFlow<ImageBitmap> = collector.asSharedFlow()
+) : StreamingVideoReceiverRepository {
+    private val coroutineScope = CoroutineScope(coroutineContext)
 
     private val decoder: VideoDecoder =
         VideoDecoder(
             input = dataSource.frames,
-            output = collector,
             coroutineContext = coroutineContext,
         )
+
+    override val videoStream: OpaqueVideoStream = decoder.videoStream
+    override val isActive: Flow<Boolean> = videoStream.isActive
 
     private var handler: WebSocketConnectionHandler? = null
     private var connectionJob: Job? = null
 
-    override fun start() {
+    init {
+        isActive
+            .map { isActive ->
+                if (isActive) {
+                    start()
+                } else {
+                    stop()
+                }
+            }.launchIn(coroutineScope)
+    }
+
+    private fun start() {
         connectionJob =
             coroutineScope.launch {
                 try {
@@ -63,9 +73,9 @@ internal class NetworkVideoReceiverRepository(
         decoder.start()
     }
 
-    override fun stop() {
+    private fun stop() {
+        decoder.stop()
         connectionJob?.cancel()
         connectionJob = null
-        decoder.stop()
     }
 }

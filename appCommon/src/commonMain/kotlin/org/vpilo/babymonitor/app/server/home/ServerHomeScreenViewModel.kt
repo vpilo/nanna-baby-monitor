@@ -3,6 +3,8 @@ package org.vpilo.babymonitor.app.server.home
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.LastCaptureMode
 import org.vpilo.babymonitor.app.settings.RelayHost
+import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
@@ -12,9 +14,12 @@ import org.vpilo.babymonitor.settings.model.settings.DeviceName
 class ServerHomeScreenViewModel(
     private val server: NetworkServerRepository,
     private val settings: SettingsRepository,
+    videoCaptureRepository: VideoCaptureRepository,
 ) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, Unit>(
         initialState = ServerHomeScreenState(),
     ) {
+    val videoStream: OpaqueVideoStream = videoCaptureRepository.videoStream
+
     override fun SubscriptionScope.onSubscribed() {
         server.serverStateFlow.subscribe { serverState ->
             state.copy(isAvailable = serverState.isAvailable, captureMode = serverState.captureMode).update()

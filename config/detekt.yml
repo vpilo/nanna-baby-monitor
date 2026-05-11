@@ -41,3 +41,5 @@ style:
   UnusedPrivateMember:
     allowedNames: "(_.*|TAG)"
     ignoreAnnotated: [ 'Preview' ]
+  ReturnCount:
+    max: 3

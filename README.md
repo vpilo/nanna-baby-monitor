@@ -13,13 +13,13 @@
 - Report if audio is unavailable, and enforce video mode
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
 - Add slider setting for noise sensitivity.
-- On server, allow disabling video rotation.
+- On server and/or client, allow disabling video rotation.
 - Tapping on the Android notification should open the app.
-- Remember panning position on server, and remember it per server on client.
-- Remember and reconnect to last server on client.
 
 # Issues
 
+- remove nullability for PanningVideoFeed in screens by making a custom version for Previews (from makePlaceholderCameraFrame)
+- All DeviceStateRepository values should be `distinctUntilChanged` on both platforms.
 - AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
 
 # Completed features

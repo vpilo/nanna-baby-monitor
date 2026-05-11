@@ -4,177 +4,97 @@ import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.os.Bundle
+import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.CameraFrame
-import org.vpilo.babymonitor.model.CameraFrameFlow
+import org.vpilo.babymonitor.model.AndroidServerVideoStream
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.MutableStreamingVideoFlow
+import org.vpilo.babymonitor.model.OpaqueVideoStream
+import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("LoopWithTooManyJumpStatements", "ComplexCondition")
 actual class VideoEncoder actual constructor(
-    private val input: CameraFrameFlow,
+    source: OpaqueVideoStream,
     private val output: MutableStreamingVideoFlow,
     coroutineContext: CoroutineContext,
 ) {
     private val coroutineScope = CoroutineScope(coroutineContext)
+    private var encodingJob: Job? = null
 
-    private var encoder: MediaCodec? = null
-    private var videoEncodeJob: Job? = null
-    private var videoFrameCount = 0L
-
-    /** Stride (in bytes) the encoder expects for the Y plane. */
-    private var encoderStride = 0
-
-    /** Vertical stride (slice height) the encoder uses before the UV plane starts. */
-    private var encoderSliceHeight = 0
-
-    /** SPS/PPS bytes emitted by the encoder as BUFFER_FLAG_CODEC_CONFIG. */
-    private var codecConfigData: ByteArray? = null
+    private val videoStream: AndroidServerVideoStream =
+        checkNotNull(source as? AndroidServerVideoStream) { "Invalid VideoStream" }
 
     actual fun start() {
-        if (videoEncodeJob?.isActive == true) return
-
-        videoEncodeJob =
+        Logger.d(TAG) { "Starting, isActive=${encodingJob?.isActive == true}" }
+        if (encodingJob?.isActive == true) {
+            Logger.w(TAG) { "Video encoder is already running, ignoring start request." }
+            return
+        }
+        encodingJob =
             coroutineScope.launch {
-                var codec: MediaCodec? = null
-                var configuredWidth = 0
-                var configuredHeight = 0
-
-                try {
-                    input.collect { frame ->
-                        if (!isActive) return@collect
-
-                        // (Re)create encoder if resolution changed
-                        if (codec == null || frame.width != configuredWidth || frame.height != configuredHeight) {
-                            codec?.let { releaseCodec(it) }
-                            configuredWidth = frame.width
-                            configuredHeight = frame.height
-                            codec = createVideoEncoder(configuredWidth, configuredHeight)
-                            encoder = codec
-                            videoFrameCount = 0
-                            codecConfigData = null
-                            Logger.d(TAG) {
-                                "Video encoder configured for ${configuredWidth}x$configuredHeight" +
-                                    ", stride=$encoderStride, sliceHeight=$encoderSliceHeight"
-                            }
-                        }
-
-                        encodeVideoFrame(codec, frame)
+                videoStream
+                    .frameSize
+                    .filter { it != IntSize.Zero }
+                    .collectLatest { frameSize ->
+                        Logger.d(TAG) { "Frame size updated: $frameSize" }
+                        runEncodeLoop(frameSize)
                     }
-                } finally {
-                    codec?.let { releaseCodec(it) }
-                    encoder = null
-                }
             }
     }
 
     actual fun stop() {
-        videoEncodeJob?.cancel()
-        videoEncodeJob = null
+        Logger.d(TAG) { "Stopping, isActive=${encodingJob?.isActive == true}" }
+        encodingJob?.cancel()
+        encodingJob = null
     }
 
-    private fun createVideoEncoder(
+    private suspend fun runEncodeLoop(frameSize: IntSize) {
+        check(frameSize != IntSize.Zero) { "Source size not set" }
+        val width = frameSize.width
+        val height = frameSize.height
+
+        Logger.d(TAG) { "Video encoder starting at ${width}x$height" }
+        val codec = createVideoEncoder(width, height)
+        val inputSurface = codec.createInputSurface()
+        codec.start()
+        try {
+            videoStream.postEncoderSurface(inputSurface)
+            drainEncoderLoop(codec, width, height)
+        } finally {
+            videoStream.postEncoderSurface(null)
+            inputSurface.release()
+            releaseCodec(codec)
+            Logger.d(TAG) { "Video encoder stopped" }
+        }
+    }
+
+    private suspend fun drainEncoderLoop(
+        codec: MediaCodec,
         width: Int,
         height: Int,
-    ): MediaCodec {
-        val format =
-            MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
-                setInteger(MediaFormat.KEY_BIT_RATE, MediaFormats.Video.BIT_RATE)
-                setInteger(MediaFormat.KEY_FRAME_RATE, MediaFormats.Video.FRAME_RATE)
-                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
-                // NV12 (semi-planar): matches the tightly-packed NV12 bytes from capture
-                setInteger(
-                    MediaFormat.KEY_COLOR_FORMAT,
-                    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
-                )
-            }
-        return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
-            it.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            it.start()
-
-            // Query the actual stride / slice-height the encoder expects.
-            // These may differ from width / height due to hardware alignment.
-            val inputFormat = it.inputFormat
-            encoderStride =
-                if (inputFormat.containsKey(MediaFormat.KEY_STRIDE)) {
-                    inputFormat.getInteger(MediaFormat.KEY_STRIDE)
-                } else {
-                    width
-                }
-            encoderSliceHeight =
-                if (inputFormat.containsKey(MediaFormat.KEY_SLICE_HEIGHT)) {
-                    inputFormat.getInteger(MediaFormat.KEY_SLICE_HEIGHT)
-                } else {
-                    height
-                }
-            if (encoderStride < width) encoderStride = width
-            if (encoderSliceHeight < height) encoderSliceHeight = height
-        }
-    }
-
-    private fun encodeVideoFrame(
-        codec: MediaCodec?,
-        frame: CameraFrame,
     ) {
-        if (codec == null) return
-        val presentationTimeUs = videoFrameCount * 1_000_000L / MediaFormats.Video.FRAME_RATE
-        videoFrameCount++
-
-        // Request keyframe periodically to let clients connect at any time
-        if (videoFrameCount % (MediaFormats.Video.FRAME_RATE * MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS) == 0L) {
-            codec.setParameters(keyframeRequest)
-        }
-
-        val inputIndex = codec.dequeueInputBuffer(CODEC_TIMEOUT_US)
-        if (inputIndex >= 0) {
-            val inputBuffer = codec.getInputBuffer(inputIndex) ?: return
-            inputBuffer.clear()
-
-            val w = frame.width
-            val h = frame.height
-
-            if (encoderStride == w && encoderSliceHeight == h) {
-                // No padding needed — copy tightly-packed NV12 directly
-                val size = minOf(frame.bytes.size, inputBuffer.remaining())
-                inputBuffer.put(frame.bytes, 0, size)
-            } else {
-                // Copy Y plane row-by-row with stride padding
-                val src = frame.bytes
-                for (row in 0 until h) {
-                    inputBuffer.position(row * encoderStride)
-                    inputBuffer.put(src, row * w, w)
-                }
-                // Copy UV plane row-by-row with stride padding.
-                // UV plane starts at encoderStride * encoderSliceHeight in the buffer.
-                val uvSrcOffset = w * h
-                val uvDstOffset = encoderStride * encoderSliceHeight
-                val uvHeight = h / 2
-                for (row in 0 until uvHeight) {
-                    inputBuffer.position(uvDstOffset + row * encoderStride)
-                    inputBuffer.put(src, uvSrcOffset + row * w, w)
-                }
-            }
-
-            // Use the buffer's actual capacity — not the computed stride×sliceHeight total,
-            // which may exceed the buffer size on some hardware.
-            codec.queueInputBuffer(inputIndex, 0, inputBuffer.capacity(), presentationTimeUs, 0)
-        }
-
-        drainEncoder(codec)
-    }
-
-    private fun drainEncoder(codec: MediaCodec) {
+        var videoFrameCount = 0L
+        var codecConfigData: ByteArray? = null
         val bufferInfo = MediaCodec.BufferInfo()
-        while (true) {
+        while (currentCoroutineContext().isActive) {
             val outputIndex = codec.dequeueOutputBuffer(bufferInfo, CODEC_TIMEOUT_US)
-            if (outputIndex < 0) break
+            if (outputIndex < 0) {
+                videoFrameCount++
+                if (videoFrameCount % (MediaFormats.Video.FRAME_RATE * MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS) == 0L) {
+                    codec.setParameters(keyframeRequest)
+                }
+                continue
+            }
 
             val outputBuffer: ByteBuffer? = codec.getOutputBuffer(outputIndex)
             if (outputBuffer == null || bufferInfo.size <= 0) {
@@ -191,27 +111,49 @@ actual class VideoEncoder actual constructor(
             val isCodecConfig = (bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0
 
             if (isCodecConfig) {
-                // Store SPS/PPS — don't emit as a separate chunk
                 codecConfigData = ensureAnnexB(data)
             } else {
                 val annexBData = ensureAnnexB(data)
-                // Prepend SPS/PPS to every keyframe so the decoder can always start
+                val cachedConfig = codecConfigData
                 val emitData =
-                    if (isKey && codecConfigData != null) {
-                        codecConfigData!! + annexBData
+                    if (isKey && cachedConfig != null) {
+                        cachedConfig + annexBData
                     } else {
                         annexBData
                     }
-
                 output.tryEmit(
                     EncodedVideoStreamChunk(
                         data = emitData,
                         isKeyFrame = isKey,
+                        rotation = videoStream.rotation.value,
+                        frameWidth = width,
+                        frameHeight = height,
                     ),
                 )
             }
 
             codec.releaseOutputBuffer(outputIndex, false)
+        }
+    }
+
+    private fun createVideoEncoder(
+        width: Int,
+        height: Int,
+    ): MediaCodec {
+        val format =
+            MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
+                setInteger(MediaFormat.KEY_BIT_RATE, MediaFormats.Video.BIT_RATE)
+                setInteger(MediaFormat.KEY_FRAME_RATE, MediaFormats.Video.FRAME_RATE)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
+                // Surface input mode: COLOR_FormatSurface tells MediaCodec we'll
+                // feed it via createInputSurface() — no byte-buffer input.
+                setInteger(
+                    MediaFormat.KEY_COLOR_FORMAT,
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
+                )
+            }
+        return MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
+            it.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         }
     }
 
@@ -246,12 +188,11 @@ actual class VideoEncoder actual constructor(
                 data[1] == byteFalse &&
                 (data[2] == byteTrue || data[3] == byteTrue)
             ) {
-                // Already Annex-B
                 return data
             }
 
-            // Convert AVCC (4-byte big-endian length prefix) → Annex-B
-            val result = java.io.ByteArrayOutputStream(data.size + 16)
+            // Convert AVCC (4-byte big-endian length prefix) to Annex-B
+            val result = ByteArrayOutputStream(data.size + 16)
             var offset = 0
             while (offset + 4 <= data.size) {
                 val nalLen =

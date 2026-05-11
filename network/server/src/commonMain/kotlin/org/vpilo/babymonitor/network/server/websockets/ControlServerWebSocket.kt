@@ -3,7 +3,7 @@ package org.vpilo.babymonitor.network.server.websockets
 import io.ktor.websocket.DefaultWebSocketSession
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
@@ -12,31 +12,37 @@ import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.common.protocol.makeServerMessageFrame
 import kotlin.coroutines.cancellation.CancellationException
 
-internal suspend fun DefaultWebSocketSession.controlServerWebSocket() {
-    val repository = KoinPlatform.getKoin().get<NetworkServerRepository>()
+internal suspend fun DefaultWebSocketSession.controlServerWebSocket() =
+    coroutineScope {
+        val repository = KoinPlatform.getKoin().get<NetworkServerRepository>()
 
-    Logger.d(TAG) { "WebSocket opened" }
+        Logger.d(TAG) { "WebSocket opened" }
 
-    val stateSendingJob =
-        launch {
-            repository.serverStateFlow.collect { state ->
-                send(makeServerMessageFrame(state))
+        val senderJob =
+            launch {
+                runCatching {
+                    repository.serverStateFlow.collect { state ->
+                        send(makeServerMessageFrame(state))
+                    }
+                }.onFailure { ex ->
+                    if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
+                        Logger.w(TAG) { "WebSocket closed: ${ex.prettify()}" }
+                    } else {
+                        Logger.d(TAG) { "WebSocket closed" }
+                    }
+                }
             }
-        }
 
-    runCatching {
-        incoming.consumeEach {
-            Logger.w(TAG) { "Unexpected message received from client: $it" }
-        }
-    }.onFailure { ex ->
-        if (ex !is CancellationException && ex !is ClosedSendChannelException && ex !is ClosedReceiveChannelException) {
-            Logger.d(TAG) { "WebSocket closed: ${ex.prettify()}" }
-        } else {
-            Logger.d(TAG) { "WebSocket closed" }
-        }
-    }.also {
-        stateSendingJob.cancel()
+        // Drain incoming only to detect session closure.
+        val readerJob =
+            launch {
+                for (frame in incoming) {
+                    Logger.w(TAG) { "Unexpected frame from client: $frame" }
+                }
+            }
+
+        senderJob.invokeOnCompletion { readerJob.cancel() }
+        readerJob.invokeOnCompletion { senderJob.cancel() }
     }
-}
 
 private const val TAG = "NetworkServer-Control"

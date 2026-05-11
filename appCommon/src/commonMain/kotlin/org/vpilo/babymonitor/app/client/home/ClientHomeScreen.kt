@@ -12,10 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
@@ -26,11 +26,11 @@ import babymonitor.appcommon.generated.resources.app_title_client_home
 import babymonitor.appcommon.generated.resources.app_title_client_home_name
 import babymonitor.appcommon.generated.resources.client_disconnect
 import babymonitor.appcommon.generated.resources.client_reconnecting
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.app.navigation.Route
+import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.model.repository.ServerId
@@ -42,7 +42,6 @@ import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.Backdrop
-import org.vpilo.babymonitor.presentation.preview.makePlaceholderCameraFrame
 
 @Composable
 fun ClientHomeScreen(
@@ -53,6 +52,7 @@ fun ClientHomeScreen(
     onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
+    val videoStream by viewModel.videoStreamFlow.collectAsState(initial = null)
 
     SideEffect {
         when {
@@ -94,7 +94,7 @@ fun ClientHomeScreen(
     ) {
         ClientHomeScreenContent(
             modifier = modifier.fillMaxSize(),
-            frames = viewModel.framesFlow,
+            videoStream = videoStream,
             captureMode = state.captureMode,
             isAudioPlaying = state.isAudioPlaying,
             isVideoPlaying = state.isVideoPlaying,
@@ -111,7 +111,7 @@ fun ClientHomeScreen(
 @Composable
 private fun ClientHomeScreenContent(
     modifier: Modifier = Modifier,
-    frames: Flow<ImageBitmap>,
+    videoStream: OpaqueVideoStream?,
     captureMode: CaptureMode,
     isAudioPlaying: Boolean,
     isVideoPlaying: Boolean,
@@ -123,7 +123,7 @@ private fun ClientHomeScreenContent(
     onDisconnected: () -> Unit,
 ) {
     Box(modifier = modifier) {
-        CameraFeed(frames = frames)
+        videoStream?.let { PanningVideoFeed(videoStream = it, captureMode = captureMode) }
         Row {
             VideoFeedControlButton(
                 modifier = Modifier.padding(Theme.Paddings.Tiny),
@@ -179,7 +179,7 @@ private fun ClientHomeScreenPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            frames = flowOf(makePlaceholderCameraFrame()),
+            videoStream = null,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
             isVideoPlaying = true,
@@ -198,7 +198,7 @@ private fun ClientHomeScreenVideoOnlyPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            frames = flowOf(makePlaceholderCameraFrame()),
+            videoStream = null,
             captureMode = CaptureMode.VIDEO_ONLY,
             isAudioPlaying = false,
             isVideoPlaying = true,
@@ -217,7 +217,7 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            frames = flowOf(makePlaceholderCameraFrame()),
+            videoStream = null,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
             isVideoPlaying = true,
@@ -236,7 +236,7 @@ private fun ClientHomeScreenDisconnectedPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            frames = flowOf(makePlaceholderCameraFrame()),
+            videoStream = null,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
             isVideoPlaying = true,

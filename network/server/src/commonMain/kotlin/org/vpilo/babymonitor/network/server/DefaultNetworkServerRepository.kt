@@ -186,6 +186,10 @@ internal class DefaultNetworkServerRepository(
             timeout = Constants.WEBSOCKET_TIMEOUT
             maxFrameSize = Long.MAX_VALUE
             masking = false
+            // Bound the outgoing frame queue so a stalled TCP connection doesn't enqueue frames infinitely.
+            channels {
+                outgoing = bounded(MAX_OUTGOING_FRAMES)
+            }
         }
 
         routing {
@@ -236,5 +240,7 @@ internal class DefaultNetworkServerRepository(
 
     private companion object {
         private val TAG = DefaultNetworkServerRepository::class
+
+        private const val MAX_OUTGOING_FRAMES = 32
     }
 }

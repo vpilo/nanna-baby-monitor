@@ -18,13 +18,9 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_server_home
-import kotlinx.coroutines.flow.flowOf
-import org.koin.core.module.dsl.viewModelOf
-import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
-import org.vpilo.babymonitor.camera.presentation.CameraViewFinder
-import org.vpilo.babymonitor.camera.presentation.CameraViewFinderViewModel
-import org.vpilo.babymonitor.model.CameraFrameFlow
+import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -54,6 +50,7 @@ fun ServerHomeScreen(
             modifier = modifier,
             isServerAvailable = state.isAvailable,
             captureMode = state.captureMode,
+            videoStream = viewModel.videoStream,
             onModeSelected = { viewModel.send(ServerHomeScreenAction.CaptureModeSelected(it)) },
         )
     }
@@ -64,6 +61,7 @@ private fun ServerHomeContent(
     modifier: Modifier,
     isServerAvailable: Boolean,
     captureMode: CaptureMode,
+    videoStream: OpaqueVideoStream?,
     onModeSelected: (CaptureMode) -> Unit,
 ) {
     Column(modifier = modifier) {
@@ -87,9 +85,12 @@ private fun ServerHomeContent(
                 captureMode = captureMode,
                 onModeSelected = onModeSelected,
             )
-            CameraViewFinder(
-                captureMode = captureMode,
-            )
+            videoStream?.let {
+                PanningVideoFeed(
+                    videoStream = it,
+                    captureMode = CaptureMode.AUDIO_AND_VIDEO,
+                )
+            }
         }
     }
 }
@@ -97,20 +98,12 @@ private fun ServerHomeContent(
 @Preview
 @Composable
 private fun ServerHomeContentPreview() =
-    AppPreviewTheme(
-        withModule = {
-            factory<VideoCaptureRepository> {
-                object : VideoCaptureRepository {
-                    override val frames: CameraFrameFlow = flowOf()
-                }
-            }
-            viewModelOf(::CameraViewFinderViewModel)
-        },
-    ) {
+    AppPreviewTheme {
         ServerHomeContent(
             modifier = Modifier,
             isServerAvailable = true,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
+            videoStream = null,
             onModeSelected = {},
         )
     }

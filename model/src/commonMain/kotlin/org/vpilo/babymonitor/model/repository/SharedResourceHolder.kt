@@ -22,7 +22,7 @@ import kotlin.reflect.KClass
  * e.g. slow subscribers.
  */
 abstract class SharedResourceHolder<T>(
-    protected val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
     bufferCapacity: Int = 0,
     onBufferOverflow: BufferOverflow = BufferOverflow.DROP_OLDEST,
 ) {
@@ -39,9 +39,6 @@ abstract class SharedResourceHolder<T>(
         collector.subscriptionCount
             .map { it > 0 }
             .distinctUntilChanged()
-
-    protected val isActiveNow: Boolean
-        get() = collector.subscriptionCount.value > 0
 
     protected abstract fun start()
 

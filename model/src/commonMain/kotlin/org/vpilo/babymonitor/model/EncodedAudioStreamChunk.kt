@@ -17,10 +17,7 @@ data class EncodedAudioStreamChunk(
         if (javaClass != other?.javaClass) return false
 
         other as EncodedAudioStreamChunk
-
-        if (!data.contentEquals(other.data)) return false
-
-        return true
+        return data.contentEquals(other.data)
     }
 
     override fun hashCode(): Int = data.contentHashCode()

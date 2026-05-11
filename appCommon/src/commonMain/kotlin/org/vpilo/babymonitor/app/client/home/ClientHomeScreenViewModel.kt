@@ -1,18 +1,16 @@
 package org.vpilo.babymonitor.app.client.home
 
-import androidx.compose.ui.graphics.ImageBitmap
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientEnabledAudio
 import org.vpilo.babymonitor.app.settings.ClientEnabledVideo
 import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
@@ -47,11 +45,11 @@ class ClientHomeScreenViewModel(
             isEnabled && serverState.isAvailable && serverState.captureMode != CaptureMode.AUDIO_ONLY
         }.distinctUntilChanged()
 
-    val framesFlow: Flow<ImageBitmap> =
-        @OptIn(ExperimentalCoroutinesApi::class)
-        isVideoEnabled.flatMapLatest { open ->
-            if (open) videoReceiverRepository.decodedFrames else emptyFlow()
-        }
+    val videoStreamFlow: Flow<OpaqueVideoStream?> =
+        isVideoEnabled
+            .map { isEnabled ->
+                if (isEnabled) videoReceiverRepository.videoStream else null
+            }.distinctUntilChanged()
 
     override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.connectionStateFlow.subscribe { netState ->

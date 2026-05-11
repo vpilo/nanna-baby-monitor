@@ -15,6 +15,10 @@ kotlin {
             libs.versions.android.compileSdk
                 .get()
                 .toInt()
+        minSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
 
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
@@ -31,6 +35,10 @@ kotlin {
             implementation(libs.jetbrains.lifecycle.viewmodel)
             implementation(libs.koin.core)
             implementation(libs.kotlinx.serialization)
+        }
+
+        androidMain.dependencies {
+            api(libs.androidx.camera.core)
         }
     }
 

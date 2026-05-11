@@ -1,38 +1,34 @@
 package org.vpilo.babymonitor.codec
 
-import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
-import android.graphics.Rect
-import android.graphics.YuvImage
-import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaFormat
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
+import android.view.Surface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.AndroidClientVideoStream
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.MediaFormats
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.StreamingVideoFlow
-import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("NestedBlockDepth", "LoopWithTooManyJumpStatements")
 actual class VideoDecoder actual constructor(
     private val input: StreamingVideoFlow,
-    private val output: MutableSharedFlow<ImageBitmap>,
     coroutineContext: CoroutineContext,
 ) {
     private val coroutineScope = CoroutineScope(coroutineContext)
 
     private var decodeJob: Job? = null
-    private var decoder: MediaCodec? = null
-    private var frameIndex = 0L
+
+    private val mutableVideoStream = AndroidClientVideoStream()
+
+    actual val videoStream: OpaqueVideoStream = mutableVideoStream
 
     actual fun start() {
         if (decodeJob?.isActive == true) {
@@ -42,47 +38,9 @@ actual class VideoDecoder actual constructor(
 
         decodeJob =
             coroutineScope.launch {
-                var codec: MediaCodec? = null
-
-                try {
-                    input.collect { chunk ->
-                        if (!isActive) return@collect
-
-                        // Create decoder on first keyframe
-                        if (codec == null && chunk.isKeyFrame) {
-                            val format =
-                                MediaFormat.createVideoFormat(
-                                    MediaFormat.MIMETYPE_VIDEO_AVC,
-                                    // Initial size hint; the actual resolution is determined
-                                    // by the SPS/PPS in the bitstream and will be reported
-                                    // via INFO_OUTPUT_FORMAT_CHANGED.
-                                    MediaFormats.Video.ENCODE_WIDTH,
-                                    MediaFormats.Video.ENCODE_HEIGHT,
-                                )
-
-                            // Extract SPS and PPS NAL units from the keyframe data
-                            // and set them as codec-specific data so the decoder is
-                            // fully initialized before it receives any frames.
-                            val csd = extractCodecSpecificData(chunk.data)
-                            if (csd != null) {
-                                format.setByteBuffer("csd-0", ByteBuffer.wrap(csd))
-                            }
-
-                            codec =
-                                MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also {
-                                    it.configure(format, null, null, 0)
-                                    it.start()
-                                }
-                            decoder = codec
-                            frameIndex = 0
-                            Logger.d(TAG) { "Video decoder started" }
-                        }
-
-                        codec?.let { decodeFrame(it, chunk) }
-                    }
-                } finally {
-                    codec?.let { releaseCodec(it) }
-                    decoder = null
+                mutableVideoStream.surface.collectLatest { surface ->
+                    if (surface == null || !isActive) return@collectLatest
+                    decodeTo(surface)
                 }
             }
     }
@@ -90,6 +48,46 @@ actual class VideoDecoder actual constructor(
     actual fun stop() {
         decodeJob?.cancel()
         decodeJob = null
+    }
+
+    private suspend fun decodeTo(surface: Surface) {
+        var codec: MediaCodec? = null
+        try {
+            input.collect { chunk ->
+                if (codec == null && chunk.isKeyFrame) {
+                    // Initial size hint; the actual resolution is determined
+                    // by the SPS/PPS in the bitstream and will be reported
+                    // via INFO_OUTPUT_FORMAT_CHANGED.
+                    val format =
+                        MediaFormat.createVideoFormat(
+                            MediaFormat.MIMETYPE_VIDEO_AVC,
+                            MediaFormats.Video.ENCODE_WIDTH,
+                            MediaFormats.Video.ENCODE_HEIGHT,
+                        )
+                    // Extract SPS and PPS NAL units from the keyframe data
+                    // and set them as codec-specific data so the decoder is
+                    // fully initialized before it receives any frames.
+                    extractCodecSpecificData(chunk.data)
+                        ?.also {
+                            format.setByteBuffer("csd-0", ByteBuffer.wrap(it))
+                        }
+                    codec =
+                        MediaCodec
+                            .createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+                            .also {
+                                it.configure(format, surface, null, 0)
+                                it.start()
+                            }
+                    Logger.d(TAG) { "Video decoder started" }
+                }
+
+                mutableVideoStream.setRotation(chunk.rotation)
+
+                codec?.let { decodeFrame(it, chunk) }
+            }
+        } finally {
+            codec?.let { releaseCodec(it) }
+        }
     }
 
     private fun decodeFrame(
@@ -104,115 +102,41 @@ actual class VideoDecoder actual constructor(
             val size = minOf(chunk.data.size, inputBuffer.remaining())
             inputBuffer.put(chunk.data, 0, size)
             val flags = if (chunk.isKeyFrame) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0
-            val presentationTimeUs = frameIndex * 1_000_000L / MediaFormats.Video.FRAME_RATE
-            frameIndex++
-            codec.queueInputBuffer(inputIndex, 0, size, presentationTimeUs, flags)
+            // PTS is not used when rendering to a Surface; pass 0.
+            codec.queueInputBuffer(inputIndex, 0, size, 0L, flags)
+        } else {
+            Logger.d(TAG) { "No free input buffer for chunk (key=${chunk.isKeyFrame}, size=${chunk.data.size})" }
         }
 
         // Drain all available decoded frames without blocking
         val bufferInfo = MediaCodec.BufferInfo()
         while (true) {
-            val outputIndex = codec.dequeueOutputBuffer(bufferInfo, OUTPUT_TIMEOUT_US)
+            val outputIndex = codec.dequeueOutputBuffer(bufferInfo, 0L)
 
             if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                Logger.d(TAG) {
-                    with(codec.outputFormat) {
-                        "Output format changed: " +
-                            "${getInteger(MediaFormat.KEY_WIDTH)}" +
-                            "x" +
-                            "${getInteger(MediaFormat.KEY_HEIGHT)}"
-                    }
-                }
+                val format = codec.outputFormat
+                val width = format.getInteger(MediaFormat.KEY_WIDTH)
+                val height = format.getInteger(MediaFormat.KEY_HEIGHT)
+                mutableVideoStream.setFrameSize(width, height)
+                Logger.d(TAG) { "Output format changed: ${width}x$height" }
                 continue
             }
 
             if (outputIndex < 0) break
 
             try {
-                if (bufferInfo.size > 0) {
-                    val image = codec.getOutputImage(outputIndex)
-                    if (image != null) {
-                        output.tryEmit(image.toBitmap())
-                        image.close()
-                    }
+                val render = bufferInfo.size > 0
+                codec.releaseOutputBuffer(outputIndex, render)
+                if (render) {
+                    mutableVideoStream.signalFrameRendered()
+                } else {
+                    Logger.d(TAG) { "Skipped non-render output buffer (size=${bufferInfo.size}, flags=${bufferInfo.flags})" }
                 }
-            } finally {
-                codec.releaseOutputBuffer(outputIndex, false)
+            } catch (ex: IllegalStateException) {
+                Logger.w(TAG, ex) { "Failed to release decoded output buffer" }
+                break
             }
         }
-    }
-
-    /**
-     * Converts a YUV_420_888 [Image] to an [ImageBitmap] using Android's
-     * hardware-accelerated [YuvImage] JPEG path. This is dramatically faster
-     * than a per-pixel Kotlin loop and prevents frame drops that cause
-     * pixelation/corruption during fast motion.
-     */
-    private fun Image.toBitmap(): ImageBitmap {
-        val w = width
-        val h = height
-
-        val yPlane = planes[0]
-        val uPlane = planes[1]
-        val vPlane = planes[2]
-
-        val yRowStride = yPlane.rowStride
-        val uvRowStride = uPlane.rowStride
-        val uvPixelStride = uPlane.pixelStride
-
-        // Build a tightly-packed NV21 byte array (Y plane followed by interleaved VU).
-        // NV21 is the format YuvImage supports natively.
-        val nv21 = ByteArray(w * h + w * (h / 2))
-
-        // Copy Y plane
-        val yBuf = yPlane.buffer
-        if (yRowStride == w) {
-            yBuf.position(0)
-            yBuf.get(nv21, 0, w * h)
-        } else {
-            for (row in 0 until h) {
-                yBuf.position(row * yRowStride)
-                yBuf.get(nv21, row * w, w)
-            }
-        }
-
-        // Copy UV planes into interleaved VU order (NV21)
-        val uBuf = uPlane.buffer
-        val vBuf = vPlane.buffer
-        val uvHeight = h / 2
-        val uvWidth = w / 2
-        var nv21Offset = w * h
-
-        if (uvPixelStride == 2 && uvRowStride == w) {
-            // Semi-planar layout (NV12 or NV21) — the V and U buffers overlap
-            // and are already interleaved in VU order at pixelStride=2.
-            // Bulk-copy each row of interleaved VU data directly.
-            // On the last row the buffer may be 1 byte shorter (no trailing
-            // stride padding), so clamp to the number of bytes remaining.
-            vBuf.position(0)
-            for (row in 0 until uvHeight) {
-                vBuf.position(row * uvRowStride)
-                val bytesToRead = minOf(w, vBuf.remaining())
-                vBuf.get(nv21, nv21Offset, bytesToRead)
-                nv21Offset += w
-            }
-        } else {
-            // Generic path: works for any pixel stride / row stride
-            for (row in 0 until uvHeight) {
-                for (col in 0 until uvWidth) {
-                    val uvIdx = row * uvRowStride + col * uvPixelStride
-                    nv21[nv21Offset++] = vBuf[uvIdx]
-                    nv21[nv21Offset++] = uBuf[uvIdx]
-                }
-            }
-        }
-
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, w, h, null)
-        val jpegStream = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(Rect(0, 0, w, h), 100, jpegStream)
-        val jpegBytes = jpegStream.toByteArray()
-
-        return BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size).asImageBitmap()
     }
 
     /**
@@ -295,12 +219,5 @@ actual class VideoDecoder actual constructor(
 
         /** Timeout when waiting for a free input buffer to submit encoded data. */
         const val INPUT_TIMEOUT_US = 10_000L
-
-        /**
-         * Timeout when draining decoded output frames. Use 0 (non-blocking) so
-         * that the collect-loop is never stalled waiting for the decoder,
-         * preventing back-pressure that causes the SharedFlow to drop chunks.
-         */
-        const val OUTPUT_TIMEOUT_US = 0L
     }
 }

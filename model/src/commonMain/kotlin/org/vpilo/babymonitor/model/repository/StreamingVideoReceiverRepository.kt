@@ -2,13 +2,13 @@ package org.vpilo.babymonitor.model.repository
 
 import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 
 /**
  * Repository that receives encoded video chunks, decodes them,
  * and exposes decoded frames as a flow of [ImageBitmap].
  */
 interface StreamingVideoReceiverRepository {
-    val decodedFrames: SharedFlow<ImageBitmap>
+    val videoStream: OpaqueVideoStream
     val isActive: Flow<Boolean>
 }

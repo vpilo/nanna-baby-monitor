@@ -49,5 +49,8 @@ kotlin {
             implementation(libs.koin.composeViewmodel)
             implementation(libs.koin.core)
         }
+        androidMain.dependencies {
+            implementation(libs.androidx.camera.compose)
+        }
     }
 }

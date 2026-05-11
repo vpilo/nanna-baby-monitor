@@ -18,9 +18,6 @@ object AndroidServiceRegistry : KoinComponent {
 
     private val scope = CoroutineScope(get<CoroutineContext>())
 
-    val isServiceRunning: Boolean
-        get() = serviceInstance != null
-
     val currentRole: AppRole
         get() =
             synchronized(services) {

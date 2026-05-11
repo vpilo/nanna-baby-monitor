@@ -11,7 +11,7 @@ internal class NetworkControlDataSource {
 
     val serverState: StateFlow<ServerState> = collector.asStateFlow()
 
-    internal suspend fun onServerStateReceived(state: ServerState) {
+    internal fun onServerStateReceived(state: ServerState) {
         collector.value =
             collector.value.copy(
                 isAvailable = state.isAvailable,

@@ -13,5 +13,5 @@ val networkRelayKoinModule: Module =
         single<CoroutineContext> { Dispatchers.Default }
 
         singleOf(::DiscoveryManager)
-        single { DefaultNetworkRelayRepository(get(), get()) }
+        singleOf(::DefaultNetworkRelayRepository)
     }

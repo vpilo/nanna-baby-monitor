@@ -1,20 +1,24 @@
 package org.vpilo.babymonitor.camera.data
 
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.github.sarxos.webcam.Webcam
 import com.github.sarxos.webcam.WebcamResolution
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.vpilo.babymonitor.camera.data.ktx.sizes
 import org.vpilo.babymonitor.camera.model.CameraResolution
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.CameraFrame
-import org.vpilo.babymonitor.model.CameraFrameFlow
-import org.vpilo.babymonitor.model.MediaFormats
-import org.vpilo.babymonitor.model.repository.SharedResourceHolder
+import org.vpilo.babymonitor.model.DesktopVideoStream
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import java.awt.Dimension
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
@@ -22,20 +26,25 @@ import kotlin.time.measureTime
 
 internal actual class VideoCaptureDataSource(
     webcamGetter: () -> Webcam,
-) : SharedResourceHolder<CameraFrame>(
-        bufferCapacity = MediaFormats.BufferSizes.MAX_FRAME_BUFFER_SIZE,
-    ) {
-    actual constructor() : this(webcamGetter = { Webcam.getDefault() })
+) {
+    actual constructor() : this({ Webcam.getDefault() })
 
-    actual val frames: CameraFrameFlow = collector.asSharedFlow()
-
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private var videoCaptureJob: Job? = null
-
     private var resolution: CameraResolution = CameraResolution.Medium
-
     private val webcam: Webcam = webcamGetter()
 
-    override fun start() {
+    private val mutableVideoStream = DesktopVideoStream()
+    actual val videoStream: OpaqueVideoStream = mutableVideoStream
+
+    init {
+        mutableVideoStream.isActive
+            .distinctUntilChanged()
+            .onEach { active -> if (active) start() else stop() }
+            .launchIn(coroutineScope)
+    }
+
+    private fun start() {
         if (videoCaptureJob?.isActive == true) {
             Logger.w(TAG) { "Camera is already running, ignoring start request." }
             return
@@ -51,20 +60,25 @@ internal actual class VideoCaptureDataSource(
                 break
             }
         }
-        // Fall back to the default resolution if none of the good ones work.
         if (!webcam.isOpen) {
             webcam.setCustomViewSizes(null)
             check(webcam.open()) { "Failed to open webcam with any resolution." }
         }
 
+        val size = webcam.viewSize
         Logger.d(TAG) {
-            "Camera supports resolutions: ${webcam.viewSizes.map { it.sizes }}, current ${webcam.viewSize.sizes}"
+            "Camera supports resolutions: ${webcam.viewSizes.map { it.sizes }}, current ${size.sizes}"
         }
+
+        with(mutableVideoStream) {
+            setRotation(0)
+            setFrameSize(size.width, size.height)
+        }
+
         videoCaptureJob =
             coroutineScope
-                .launch {
-                    frameLoop()
-                }.apply {
+                .launch { frameLoop() }
+                .apply {
                     invokeOnCompletion { ex ->
                         if (ex == null || ex is CancellationException) {
                             Logger.d(TAG) { "Camera stopped" }
@@ -78,17 +92,15 @@ internal actual class VideoCaptureDataSource(
         Logger.i(TAG) { "Camera started" }
     }
 
-    override fun stop() {
-        runBlocking {
-            videoCaptureJob?.cancelAndJoin()
-        }
+    private fun stop() {
+        runBlocking { videoCaptureJob?.cancelAndJoin() }
         videoCaptureJob = null
     }
 
     actual fun setResolution(resolution: CameraResolution) {
         if (this.resolution == resolution) return
         this.resolution = resolution
-        if (isActiveNow) {
+        if (videoCaptureJob?.isActive == true) {
             Logger.i(TAG) { "Resolution changed to $resolution, restarting capture" }
             stop()
             start()
@@ -106,20 +118,20 @@ internal actual class VideoCaptureDataSource(
                     }
             ).milliseconds
 
-        while (isActiveNow && webcam.isOpen) {
+        while (webcam.isOpen) {
             val frameTime =
                 measureTime {
                     if (!webcam.isImageNew) {
                         delay(5.milliseconds)
-                        continue
+                        return@measureTime
                     }
-                    webcam
-                        .getImage()
-                        ?.let { image -> collector.tryEmit(CameraFrame(image)) }
-                        ?: run {
-                            Logger.w(TAG) { "Failed to capture image" }
-                            delay(100.milliseconds)
-                        }
+                    val image: ImageBitmap? = webcam.getImage()?.toComposeImageBitmap()
+                    if (image == null) {
+                        Logger.w(TAG) { "Failed to capture image" }
+                        delay(100.milliseconds)
+                    } else {
+                        mutableVideoStream.onFrame(image)
+                    }
                 }
 
             val diff = frameTime - maxFrameTime
@@ -130,6 +142,8 @@ internal actual class VideoCaptureDataSource(
     }
 
     private companion object {
+        private val TAG = VideoCaptureDataSource::class
+
         private val highResolutions =
             arrayOf<Dimension>(
                 WebcamResolution.FHD.size,

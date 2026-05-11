@@ -1,7 +1,11 @@
 package org.vpilo.babymonitor.codec
 
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asSkiaBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.bytedeco.ffmpeg.avcodec.AVCodecContext
@@ -23,7 +27,7 @@ import org.bytedeco.ffmpeg.global.avcodec.avcodec_receive_packet
 import org.bytedeco.ffmpeg.global.avcodec.avcodec_send_frame
 import org.bytedeco.ffmpeg.global.avutil.AVERROR_EAGAIN
 import org.bytedeco.ffmpeg.global.avutil.AVERROR_EOF
-import org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_BGR24
+import org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_BGRA
 import org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_YUV420P
 import org.bytedeco.ffmpeg.global.avutil.av_dict_free
 import org.bytedeco.ffmpeg.global.avutil.av_dict_set
@@ -38,63 +42,74 @@ import org.bytedeco.ffmpeg.global.swscale.sws_scale
 import org.bytedeco.ffmpeg.swscale.SwsContext
 import org.bytedeco.javacpp.DoublePointer
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.CameraFrame
-import org.vpilo.babymonitor.model.CameraFrameFlow
+import org.vpilo.babymonitor.model.DesktopVideoStream
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.MutableStreamingVideoFlow
-import java.awt.image.BufferedImage
-import java.awt.image.DataBufferByte
-import java.awt.image.DataBufferInt
+import org.vpilo.babymonitor.model.OpaqueVideoStream
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("LongMethod", "LoopWithTooManyJumpStatements")
 actual class VideoEncoder actual constructor(
-    private val input: CameraFrameFlow,
+    source: OpaqueVideoStream,
     private val output: MutableStreamingVideoFlow,
     coroutineContext: CoroutineContext,
 ) {
     private val coroutineScope = CoroutineScope(coroutineContext)
 
-    private var videoEncodeJob: Job? = null
+    private var encodingJob: Job? = null
+
+    private val videoStream: DesktopVideoStream =
+        checkNotNull(source as? DesktopVideoStream) { "Invalid VideoStream" }
+
+    init {
+        videoStream.frameSize
+            .onEach {
+                if (isActive()) {
+                    Logger.i(TAG) { "Resolution changed to $it" }
+                    stop()
+                    start()
+                }
+            }.launchIn(coroutineScope)
+    }
 
     actual fun start() {
-        if (videoEncodeJob?.isActive == true) {
+        if (isActive()) {
             Logger.w(TAG) { "Video encoder is already running, ignoring start request." }
             return
         }
 
-        videoEncodeJob =
+        encodingJob =
             coroutineScope.launch {
-                var encoderCtx: VideoEncoderContext? = null
+                val frameSize = videoStream.frameSize.value
+                var encoderContext: VideoEncoderContext? = null
                 try {
-                    input.collect { frame ->
+                    videoStream.surface.collect { bitmap ->
                         if (!isActive) return@collect
 
-                        val w = frame.image.width
-                        val h = frame.image.height
-
-                        // (Re)create encoder if resolution changed
-                        if (encoderCtx == null || encoderCtx!!.width != w || encoderCtx!!.height != h) {
-                            encoderCtx?.release()
-                            encoderCtx = VideoEncoderContext.create(w, h)
-                            Logger.d(TAG) { "Video encoder configured for ${w}x$h" }
+                        if (encoderContext == null) {
+                            VideoEncoderContext.create(frameSize.width, frameSize.height).also {
+                                encoderContext = it
+                                Logger.d(TAG) { "Video encoder configured for $frameSize" }
+                            }
                         }
 
-                        encoderCtx.encode(frame) { chunk ->
+                        encoderContext?.encode(bitmap, videoStream.rotation.value) { chunk ->
                             output.tryEmit(chunk)
                         }
                     }
                 } finally {
-                    encoderCtx?.release()
+                    encoderContext?.release()
                 }
             }
     }
 
     actual fun stop() {
-        videoEncodeJob?.cancel()
-        videoEncodeJob = null
+        encodingJob?.cancel()
+        encodingJob = null
     }
+
+    private fun isActive() = encodingJob?.isActive == true
 
     /**
      * Encapsulates all FFmpeg resources for video encoding at a given resolution.
@@ -111,22 +126,21 @@ actual class VideoEncoder actual constructor(
         private var pts = 0L
 
         fun encode(
-            frame: CameraFrame,
+            bitmap: ImageBitmap,
+            rotation: Int,
             emit: (EncodedVideoStreamChunk) -> Unit,
         ) {
-            fillSourceFrame(frame.image)
+            fillSourceFrameFromBitmap(bitmap)
             convertToYuv()
 
             yuvFrame.pts(pts++)
 
-            // Send frame to encoder
             var ret = avcodec_send_frame(codecCtx, yuvFrame)
             if (ret < 0 && ret != AVERROR_EAGAIN()) {
                 Logger.w(TAG) { "avcodec_send_frame error: $ret" }
                 return
             }
 
-            // Receive all available packets
             while (true) {
                 ret = avcodec_receive_packet(codecCtx, packet)
                 if (ret == AVERROR_EAGAIN() || ret == AVERROR_EOF) break
@@ -139,58 +153,26 @@ actual class VideoEncoder actual constructor(
                 packet.data().get(data)
 
                 val isKeyFrame = (packet.flags() and AV_PKT_FLAG_KEY) != 0
-                emit(EncodedVideoStreamChunk(data = data, isKeyFrame = isKeyFrame))
+                emit(
+                    EncodedVideoStreamChunk(
+                        data = data,
+                        isKeyFrame = isKeyFrame,
+                        rotation = rotation,
+                        frameWidth = width,
+                        frameHeight = height,
+                    ),
+                )
 
                 av_packet_unref(packet)
             }
         }
 
-        private fun fillSourceFrame(image: BufferedImage) {
-            val raster = image.raster
-            val dataBuffer = raster.dataBuffer
-
-            when (image.type) {
-                BufferedImage.TYPE_3BYTE_BGR -> {
-                    val pixels = (dataBuffer as DataBufferByte).data
-                    srcFrame.data(0).put(pixels, 0, pixels.size)
-                }
-
-                BufferedImage.TYPE_INT_RGB, BufferedImage.TYPE_INT_ARGB -> {
-                    // INT_RGB / INT_ARGB store 0x(AA)RRGGBB: bits 0-7=B, 8-15=G, 16-23=R.
-                    val intPixels = (dataBuffer as DataBufferInt).data
-                    val bgr = ByteArray(width * height * 3)
-                    for (i in intPixels.indices) {
-                        val px = intPixels[i]
-                        val offset = i * 3
-                        bgr[offset] = (px and 0xFF).toByte() // B
-                        bgr[offset + 1] = ((px shr 8) and 0xFF).toByte() // G
-                        bgr[offset + 2] = ((px shr 16) and 0xFF).toByte() // R
-                    }
-                    srcFrame.data(0).put(bgr, 0, bgr.size)
-                }
-
-                BufferedImage.TYPE_INT_BGR -> {
-                    // INT_BGR stores 0x00BBGGRR: bits 0-7=R, 8-15=G, 16-23=B.
-                    val intPixels = (dataBuffer as DataBufferInt).data
-                    val bgr = ByteArray(width * height * 3)
-                    for (i in intPixels.indices) {
-                        val px = intPixels[i]
-                        val offset = i * 3
-                        bgr[offset] = ((px shr 16) and 0xFF).toByte() // B
-                        bgr[offset + 1] = ((px shr 8) and 0xFF).toByte() // G
-                        bgr[offset + 2] = (px and 0xFF).toByte() // R
-                    }
-                    srcFrame.data(0).put(bgr, 0, bgr.size)
-                }
-
-                else -> {
-                    // Fallback: convert to TYPE_3BYTE_BGR
-                    val converted = BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR)
-                    converted.graphics.drawImage(image, 0, 0, null)
-                    val pixels = (converted.raster.dataBuffer as DataBufferByte).data
-                    srcFrame.data(0).put(pixels, 0, pixels.size)
-                }
-            }
+        private fun fillSourceFrameFromBitmap(bitmap: ImageBitmap) {
+            // Skia bitmaps store pixels in BGRA8888 by default on Desktop.
+            val pixels =
+                bitmap.asSkiaBitmap().readPixels()
+                    ?: error("Failed to read pixels from ImageBitmap")
+            srcFrame.data(0).put(pixels, 0, pixels.size)
         }
 
         private fun convertToYuv() {
@@ -218,7 +200,7 @@ actual class VideoEncoder actual constructor(
                 width: Int,
                 height: Int,
             ): VideoEncoderContext {
-                // Prefer libx264 if available, fall back to libopenh264
+                // Prefer libx264 if available, falling back to libopenh264 if unavailable.
                 val codec =
                     avcodec_find_encoder_by_name("libx264")
                         ?: avcodec_find_encoder_by_name("libopenh264")
@@ -237,11 +219,12 @@ actual class VideoEncoder actual constructor(
                         bit_rate(MediaFormats.Video.BIT_RATE.toLong())
                         gop_size(MediaFormats.Video.FRAME_RATE * MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
                         max_b_frames(0)
-                        // Ensure Annex-B output: clear the GLOBAL_HEADER flag so
-                        // SPS/PPS are emitted inline with the bitstream.
+                        // Ensure Annex-B output: clear the GLOBAL_HEADER flag so SPS/PPS are emitted inline with the bitstream.
                         flags(flags() and AV_CODEC_FLAG_GLOBAL_HEADER.inv())
                     }
 
+                // libopenh264 doesn't support presets/tunes;
+                // use its own low-latency knobs instead.
                 val opts = AVDictionary()
                 when (encoderName) {
                     "libx264" -> {
@@ -250,8 +233,6 @@ actual class VideoEncoder actual constructor(
                     }
 
                     "libopenh264" -> {
-                        // libopenh264 doesn't support presets/tunes;
-                        // use its own low-latency knobs instead.
                         av_dict_set(opts, "rc_mode", "bitrate", 0)
                     }
                 }
@@ -262,7 +243,7 @@ actual class VideoEncoder actual constructor(
 
                 val srcFrame =
                     av_frame_alloc().apply {
-                        format(AV_PIX_FMT_BGR24)
+                        format(AV_PIX_FMT_BGRA)
                         width(width)
                         height(height)
                     }
@@ -280,7 +261,7 @@ actual class VideoEncoder actual constructor(
                     sws_getContext(
                         width,
                         height,
-                        AV_PIX_FMT_BGR24,
+                        AV_PIX_FMT_BGRA,
                         width,
                         height,
                         AV_PIX_FMT_YUV420P,

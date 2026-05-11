@@ -13,7 +13,7 @@ import org.vpilo.babymonitor.settings.model.settings.DeviceName
 class OnboardingScreenViewModel(
     private val appRoleRepository: AppRoleRepository,
     private val settingsRepository: SettingsRepository,
-) : AppViewModel<OnboardingScreenAction, OnboardingScreenState, OnboardingScreenEffect>(initialState = OnboardingScreenState()) {
+) : AppViewModel<Unit, OnboardingScreenState, OnboardingScreenEffect>(initialState = OnboardingScreenState()) {
     override fun SubscriptionScope.onSubscribed() {
         vmScope.launch {
             combine(
