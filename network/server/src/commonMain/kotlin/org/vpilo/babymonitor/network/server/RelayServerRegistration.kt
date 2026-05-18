@@ -43,6 +43,8 @@ internal class RelayServerRegistration(
     private var registrationJob: Job? = null
     private val activeStreamJobs = java.util.concurrent.CopyOnWriteArrayList<Job>()
 
+    private var isEnabled: Boolean = true
+
     fun setRelayHost(host: String) {
         if (relayHost == host) return
         relayHost = host
@@ -55,6 +57,11 @@ internal class RelayServerRegistration(
         restart()
     }
 
+    fun setEnabled(enabled: Boolean) {
+        isEnabled = enabled
+        restart()
+    }
+
     fun stop() {
         _isRegistered.value = false
         registrationJob?.cancel()
@@ -63,9 +70,9 @@ internal class RelayServerRegistration(
         registrationJob = null
     }
 
-    private fun restart() {
+    fun restart() {
         stop()
-        if (relayHost.isEmpty() || deviceName.isEmpty()) return
+        if (!isEnabled || relayHost.isEmpty() || deviceName.isEmpty()) return
         registrationJob = scope.launch { runRegistrationLoop() }
     }
 

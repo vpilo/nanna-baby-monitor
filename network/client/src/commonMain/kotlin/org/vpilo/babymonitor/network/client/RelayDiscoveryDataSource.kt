@@ -9,6 +9,7 @@ import io.ktor.websocket.timeout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,23 +22,44 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
+import kotlin.coroutines.CoroutineContext
 
-internal class RelayDiscoveryDataSource {
+internal class RelayDiscoveryDataSource(
+    coroutineContext: CoroutineContext,
+) {
+    private val scope = CoroutineScope(coroutineContext + SupervisorJob())
+
     private val _serverIds = MutableStateFlow<Set<ServerId>>(emptySet())
     val serverIds: StateFlow<Set<ServerId>> = _serverIds.asStateFlow()
 
     private var relayHost: String = ""
     private var discoveryJob: Job? = null
 
-    fun updateRelayHost(
-        host: String,
-        scope: CoroutineScope,
-    ) {
+    private var isEnabled: Boolean = true
+
+    fun updateRelayHost(host: String) {
         if (relayHost == host) return
         relayHost = host
         discoveryJob?.cancel()
+        discoveryJob = null
         _serverIds.value = emptySet()
-        if (host.isEmpty()) return
+        start()
+    }
+
+    fun setEnabled(enabled: Boolean) {
+        isEnabled = enabled
+        discoveryJob?.cancel()
+        discoveryJob = null
+        if (!enabled) {
+            _serverIds.value = emptySet()
+        } else {
+            start()
+        }
+    }
+
+    private fun start() {
+        if (!isEnabled) return
+        if (relayHost.isEmpty()) return
         discoveryJob = scope.launch { runDiscoveryLoop() }
     }
 

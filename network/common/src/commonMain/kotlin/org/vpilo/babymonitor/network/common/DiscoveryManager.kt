@@ -18,4 +18,6 @@ expect class DiscoveryManager {
     fun setDeviceName(name: String)
 
     fun getDiscoveredServers(): Set<Server>
+
+    fun refresh()
 }

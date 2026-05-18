@@ -7,12 +7,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.repository.ConnectionState
+import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.model.repository.ServerState
@@ -31,6 +34,7 @@ internal class DefaultNetworkClientRepository(
     private val relayDiscoveryDataSource: RelayDiscoveryDataSource,
     private val serverSelectionDataSource: ServerSelectionDataSource,
     networkControlDataSource: NetworkControlDataSource,
+    deviceStateRepository: DeviceStateRepository,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -63,6 +67,12 @@ internal class DefaultNetworkClientRepository(
             onActive = { discoveryManager.startDiscovery() },
             onInactive = { discoveryManager.stopDiscovery() },
         )
+        // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
+        deviceStateRepository.isInternetAvailable
+            .onEach {
+                discoveryManager.refresh()
+                relayDiscoveryDataSource.setEnabled(it)
+            }.launchIn(scope)
     }
 
     override suspend fun connect(serverId: ServerId) {
@@ -119,7 +129,7 @@ internal class DefaultNetworkClientRepository(
 
     override fun setRelayHost(host: String) {
         relayHost = host
-        relayDiscoveryDataSource.updateRelayHost(host, scope)
+        relayDiscoveryDataSource.updateRelayHost(host)
     }
 
     override fun setDeviceName(name: String) {

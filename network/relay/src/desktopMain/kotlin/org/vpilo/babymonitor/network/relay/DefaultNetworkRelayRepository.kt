@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -53,6 +54,7 @@ import kotlin.coroutines.CoroutineContext
 
 class DefaultNetworkRelayRepository(
     private val discoveryManager: DiscoveryManager,
+    deviceStateRepository: DeviceStateRepository,
     coroutineContext: CoroutineContext,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -64,6 +66,13 @@ class DefaultNetworkRelayRepository(
     // Key: "$serverId:$endpoint" e.g. "nursery:/video"
     private val pendingRelays =
         ConcurrentHashMap<String, ConcurrentLinkedDeque<CompletableDeferred<WebSocketServerSession?>>>()
+
+    init {
+        // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
+        deviceStateRepository.isInternetAvailable
+            .onEach { discoveryManager.refresh() }
+            .launchIn(scope)
+    }
 
     fun start() {
         if (server != null) return

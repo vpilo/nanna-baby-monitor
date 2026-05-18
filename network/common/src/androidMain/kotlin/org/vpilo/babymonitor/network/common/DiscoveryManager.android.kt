@@ -201,6 +201,24 @@ actual class DiscoveryManager(
 
     actual fun getDiscoveredServers(): Set<Server> = _discoveredServers.value
 
+    actual fun refresh() {
+        when (_state.value) {
+            DiscoveryManagerState.ServiceRegistered -> {
+                unregisterService()
+                registerService()
+            }
+
+            DiscoveryManagerState.DiscoveringServices -> {
+                stopDiscovery()
+                startDiscovery()
+            }
+
+            DiscoveryManagerState.Idle -> {
+                // Nothing to do.
+            }
+        }
+    }
+
     private fun resolveService(serviceInfo: NsdServiceInfo) {
         scope.launch {
             @Suppress("DEPRECATION")

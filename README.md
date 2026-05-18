@@ -13,6 +13,10 @@
 - Report if audio is unavailable, and enforce video mode
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
 - Add slider setting for noise sensitivity.
+- On server, allow disabling video rotation.
+- Tapping on the Android notification should open the app.
+- Remember panning position on server, and remember it per server on client.
+- Remember and reconnect to last server on client.
 
 # Issues
 
@@ -30,6 +34,7 @@
 - Relay server to allow clients to connect to a server from outside the local network.
 - Filter to cut playback of silence.
 - Systemctl service to re-run relay when closed/crashed.
+- on internet connectivity change, restart discovery and service advertising. On client, server and relay.
 
 # Resources
 
