@@ -45,6 +45,13 @@ val Setting.Companion.ClientEnabledVideo by makeSetting {
     )
 }
 
+val Setting.Companion.ClientLastServerId by makeSetting {
+    Setting.makePrimitive(
+        id = SettingId("client_last_server_id"),
+        default = "",
+    )
+}
+
 val Setting.Companion.RelayHost by makeSetting {
     Setting.makePrimitive(
         id = SettingId("relay_host"),

@@ -1,6 +1,10 @@
 package org.vpilo.babymonitor.app.cameraselection
 
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.vpilo.babymonitor.app.settings.ClientLastServerId
 import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
@@ -25,6 +29,7 @@ class CameraSelectionScreenViewModel(
             .subscribe { netState ->
                 state.copy(connectionState = netState).update()
                 if (netState is ConnectionState.Connected) {
+                    settingsRepository.save(Setting.ClientLastServerId, netState.server.name)
                     CameraSelectionScreenEffect.Connected.sendEffect()
                 }
             }
@@ -35,6 +40,18 @@ class CameraSelectionScreenViewModel(
 
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
             networkClientRepository.setRelayHost(host)
+        }
+
+        vmScope.launch {
+            val lastServerId =
+                combine(
+                    settingsRepository.flowOf(Setting.ClientLastServerId),
+                    networkClientRepository.discoveredServerIdsFlow,
+                ) { lastServerId, serverList ->
+                    if (lastServerId.isBlank()) return@combine null
+                    serverList.firstOrNull { it.name == lastServerId }
+                }.filterNotNull().first()
+            CameraSelectionScreenEffect.ConnectToLastServerId(lastServerId).sendEffect()
         }
     }
 

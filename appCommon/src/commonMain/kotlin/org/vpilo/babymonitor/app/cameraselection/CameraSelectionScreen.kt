@@ -57,7 +57,13 @@ fun CameraSelectionScreen(
     LaunchedEffect(Unit) {
         viewModel.effectsFlow.collect { effect ->
             when (effect) {
-                is CameraSelectionScreenEffect.Connected -> onConnected()
+                is CameraSelectionScreenEffect.Connected -> {
+                    onConnected()
+                }
+
+                is CameraSelectionScreenEffect.ConnectToLastServerId -> {
+                    viewModel.send(CameraSelectionScreenAction.ConnectToServer(effect.serverId))
+                }
             }
         }
     }
