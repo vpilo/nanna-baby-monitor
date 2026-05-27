@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -15,10 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import babymonitor.camera.presentation.generated.resources.Res
 import babymonitor.camera.presentation.generated.resources.server_in_audio_only_mode
 import org.jetbrains.compose.resources.painterResource
@@ -29,6 +34,8 @@ import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.composables.Backdrop
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
+import org.vpilo.babymonitor.presentation.preview.ComposePreviewVideoStream
+import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 import org.vpilo.babymonitor.presentation.resources.capture_audio_only
 import org.vpilo.babymonitor.presentation.resources.Res as ResPresentation
 
@@ -95,16 +102,30 @@ fun PanningVideoFeed(
                     }
                 },
     ) {
-        PanningVideoFeedContent(
-            modifier = Modifier.fillMaxSize(),
-            videoStream = videoStream,
-            originalFrameSize = originalFrameSize,
-            containerSize = containerSize,
-            maxPanningAllowed = maxPanningAllowed,
-            cropScale = cropScale,
-            panOffset = panOffset,
-            rotation = rotation,
-        )
+        if (LocalInspectionMode.current) {
+            require(videoStream is ComposePreviewVideoStream)
+            val frame by videoStream.surface.collectAsState(ImageBitmap(1, 1))
+            Image(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .offset(x = panOffset.x.dp, y = panOffset.y.dp),
+                bitmap = frame,
+                contentScale = ContentScale.Crop,
+                contentDescription = null,
+            )
+        } else {
+            PanningVideoFeedContent(
+                modifier = Modifier.fillMaxSize(),
+                videoStream = videoStream,
+                originalFrameSize = originalFrameSize,
+                containerSize = containerSize,
+                maxPanningAllowed = maxPanningAllowed,
+                cropScale = cropScale,
+                panOffset = panOffset,
+                rotation = rotation,
+            )
+        }
         if (captureMode == CaptureMode.AUDIO_ONLY) {
             Backdrop(modifier = Modifier.align(Alignment.Center)) {
                 Image(
@@ -120,24 +141,12 @@ fun PanningVideoFeed(
     }
 }
 
+@Preview
 @Composable
-expect fun PanningVideoFeedContent(
-    modifier: Modifier = Modifier,
-    videoStream: OpaqueVideoStream,
-    originalFrameSize: IntSize,
-    containerSize: IntSize,
-    maxPanningAllowed: Offset,
-    cropScale: Float,
-    panOffset: Offset,
-    rotation: Int,
-)
-//
-// @Preview
-// @Composable
-// private fun PanningVideoFeedPreview() =
-//    AppPreviewTheme {
-//        PanningVideoFeed(
-//            videoStream = DesktopVideoStream(),
-//            captureMode = CaptureMode.AUDIO_AND_VIDEO,
-//        )
-//    }
+private fun PanningVideoFeedPreview() =
+    AppPreviewTheme {
+        PanningVideoFeed(
+            videoStream = makePreviewVideoStream(),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        )
+    }

@@ -18,7 +18,6 @@
 
 # Issues
 
-- remove nullability for PanningVideoFeed in screens by making a custom version for Previews (from makePlaceholderCameraFrame)
 - AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
 
 # Completed features

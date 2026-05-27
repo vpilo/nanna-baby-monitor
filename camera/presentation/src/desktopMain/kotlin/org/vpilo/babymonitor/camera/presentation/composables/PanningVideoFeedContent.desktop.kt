@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
@@ -21,7 +20,7 @@ import org.vpilo.babymonitor.model.DesktopVideoStream
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 
 @Composable
-actual fun PanningVideoFeedContent(
+internal actual fun PanningVideoFeedContent(
     modifier: Modifier,
     videoStream: OpaqueVideoStream,
     originalFrameSize: IntSize,
@@ -44,8 +43,10 @@ actual fun PanningVideoFeedContent(
         Image(
             modifier =
                 modifier
-                    .sizeIn(maxWidth = (originalFrameSize.width).dp, maxHeight = (originalFrameSize.height).dp)
-                    .offset(x = panOffset.x.dp, y = panOffset.y.dp),
+                    .sizeIn(
+                        maxWidth = originalFrameSize.width.dp,
+                        maxHeight = originalFrameSize.height.dp,
+                    ).offset(x = panOffset.x.dp, y = panOffset.y.dp),
             bitmap = frame,
             contentScale = ContentScale.Crop,
             contentDescription = null,

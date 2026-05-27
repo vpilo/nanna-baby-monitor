@@ -25,6 +25,7 @@ import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
+import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 
 @Composable
 fun ServerHomeScreen(
@@ -61,7 +62,7 @@ private fun ServerHomeContent(
     modifier: Modifier,
     isServerAvailable: Boolean,
     captureMode: CaptureMode,
-    videoStream: OpaqueVideoStream?,
+    videoStream: OpaqueVideoStream,
     onModeSelected: (CaptureMode) -> Unit,
 ) {
     Column(modifier = modifier) {
@@ -85,12 +86,10 @@ private fun ServerHomeContent(
                 captureMode = captureMode,
                 onModeSelected = onModeSelected,
             )
-            videoStream?.let {
-                PanningVideoFeed(
-                    videoStream = it,
-                    captureMode = CaptureMode.AUDIO_AND_VIDEO,
-                )
-            }
+            PanningVideoFeed(
+                videoStream = videoStream,
+                captureMode = CaptureMode.AUDIO_AND_VIDEO,
+            )
         }
     }
 }
@@ -103,7 +102,7 @@ private fun ServerHomeContentPreview() =
             modifier = Modifier,
             isServerAvailable = true,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
-            videoStream = null,
+            videoStream = makePreviewVideoStream(),
             onModeSelected = {},
         )
     }

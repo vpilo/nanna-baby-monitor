@@ -42,6 +42,7 @@ import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.Backdrop
+import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 
 @Composable
 fun ClientHomeScreen(
@@ -179,7 +180,7 @@ private fun ClientHomeScreenPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            videoStream = null,
+            videoStream = makePreviewVideoStream(),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
             isVideoPlaying = true,
@@ -198,7 +199,7 @@ private fun ClientHomeScreenVideoOnlyPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            videoStream = null,
+            videoStream = makePreviewVideoStream(),
             captureMode = CaptureMode.VIDEO_ONLY,
             isAudioPlaying = false,
             isVideoPlaying = true,
@@ -217,7 +218,7 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            videoStream = null,
+            videoStream = makePreviewVideoStream(),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
             isVideoPlaying = true,
@@ -236,7 +237,7 @@ private fun ClientHomeScreenDisconnectedPreview() =
     AppPreviewTheme {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
-            videoStream = null,
+            videoStream = makePreviewVideoStream(),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             isAudioPlaying = false,
             isVideoPlaying = true,

@@ -13,7 +13,7 @@ import org.vpilo.babymonitor.model.AndroidVideoStream
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 
 @Composable
-actual fun PanningVideoFeedContent(
+internal actual fun PanningVideoFeedContent(
     modifier: Modifier,
     videoStream: OpaqueVideoStream,
     originalFrameSize: IntSize,
