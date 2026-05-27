@@ -19,7 +19,6 @@
 # Issues
 
 - remove nullability for PanningVideoFeed in screens by making a custom version for Previews (from makePlaceholderCameraFrame)
-- All DeviceStateRepository values should be `distinctUntilChanged` on both platforms.
 - AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
 
 # Completed features

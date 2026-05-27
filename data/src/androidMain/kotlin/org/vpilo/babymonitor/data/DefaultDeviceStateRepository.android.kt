@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.data
 
 import android.content.Context
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import org.koin.core.component.KoinComponent
@@ -21,7 +22,7 @@ internal actual class DefaultDeviceStateRepository :
                 Logger.d(TAG) { "Battery level changed: $state" }
             }.onCompletion { ex ->
                 ex?.let { Logger.e(TAG) { "Battery level retrieval error: ${ex.prettify()}" } }
-            }
+            }.distinctUntilChanged()
 
     override val signalQuality: Flow<Int> =
         getSignalLevelFlow(context)
@@ -29,7 +30,7 @@ internal actual class DefaultDeviceStateRepository :
                 Logger.d(TAG) { "Signal quality changed: $state" }
             }.onCompletion { ex ->
                 ex?.let { Logger.e(TAG) { "Signal quality retrieval error: ${ex.prettify()}" } }
-            }
+            }.distinctUntilChanged()
 
     override val isInternetAvailable: Flow<Boolean> =
         getIsInternetAvailableFlow(context)
