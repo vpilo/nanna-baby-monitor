@@ -14,7 +14,6 @@
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
 - Add slider setting for noise sensitivity.
 - On server and/or client, allow disabling video rotation.
-- Tapping on the Android notification should open the app.
 
 # Issues
 
@@ -33,6 +32,7 @@
 - Filter to cut playback of silence.
 - Systemctl service to re-run relay when closed/crashed.
 - on internet connectivity change, restart discovery and service advertising. On client, server and relay.
+- Tapping on the Android notification should open the app.
 
 # Resources
 

@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.android.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
@@ -80,7 +81,23 @@ internal class AndroidServiceHost : LifecycleService() {
             .setContentTitle(getString(R.string.service_title))
             .setContentText(getString(textRes))
             .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(createOpenAppPendingIntent())
             .build()
+    }
+
+    private fun createOpenAppPendingIntent(): PendingIntent {
+        val launchIntent =
+            packageManager
+                .getLaunchIntentForPackage(packageName)
+                ?.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP) }
+                ?: Intent()
+
+        return PendingIntent.getActivity(
+            this,
+            0,
+            launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     companion object {
