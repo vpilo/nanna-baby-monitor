@@ -8,7 +8,6 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.network.client.NetworkControlDataSource
 import org.vpilo.babymonitor.network.common.protocol.ServerMessage
-import org.vpilo.babymonitor.network.common.protocol.protocolReceiveVideo
 import org.vpilo.babymonitor.network.common.protocol.receiveServerMessage
 import kotlin.coroutines.cancellation.CancellationException
 

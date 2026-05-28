@@ -32,6 +32,7 @@ actual fun RequestNotificationsPermission(
             ActivityResultContracts.RequestPermission(),
         ) { isGranted -> if (isGranted) onGranted() else onDenied() }
 
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
     LaunchedEffect(Unit) {
         launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }

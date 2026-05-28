@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.network.client.websockets
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify

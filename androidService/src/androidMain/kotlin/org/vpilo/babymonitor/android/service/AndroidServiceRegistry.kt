@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.android.service
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
@@ -43,7 +44,11 @@ object AndroidServiceRegistry : KoinComponent {
             Logger.d(TAG) { "Requesting service start" }
             val context: Context = get()
             val intent = Intent(context, AndroidServiceHost::class.java)
-            context.startForegroundService(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         } else {
             serviceInstance?.let {
                 scope.launch {

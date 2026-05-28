@@ -1,13 +1,11 @@
 package org.vpilo.babymonitor.model
 
 import android.view.Surface
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import org.vpilo.babymonitor.common.Logger
 
 class AndroidClientVideoStream : AndroidVideoStream()
 

@@ -9,6 +9,7 @@ import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import org.vpilo.babymonitor.common.Logger
@@ -20,7 +21,9 @@ import org.vpilo.babymonitor.model.AppRole
 internal class AndroidServiceHost : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannel()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel()
+        }
         Logger.d(TAG) { "Created service" }
         AndroidServiceRegistry.reportServiceStarted(this)
     }
@@ -58,6 +61,7 @@ internal class AndroidServiceHost : LifecycleService() {
             }
         }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
         val serviceChannel =
             NotificationChannel(

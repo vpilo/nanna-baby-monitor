@@ -9,7 +9,6 @@ import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.network.client.NetworkAudioDataSource
 import org.vpilo.babymonitor.network.common.protocol.protocolReceiveAudio
-import org.vpilo.babymonitor.network.common.protocol.protocolReceiveVideo
 import kotlin.coroutines.cancellation.CancellationException
 
 internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket() {

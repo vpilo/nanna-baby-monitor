@@ -49,7 +49,7 @@ sealed interface Setting<T : Any> {
             values = values,
             validateChange = validateChange,
         ).also {
-            require(values.isEmpty() || values.size == E::class.java.enumConstants.size) {
+            require(values.isEmpty() || values.size == E::class.java.enumConstants?.size == true) {
                 "Enum setting $id must have strings for all enum values."
             }
         }

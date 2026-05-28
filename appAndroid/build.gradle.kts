@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.Packaging
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -45,6 +46,13 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+
+        // No need to strip libraries, we only use Android libraries.
+        packaging {
+            jniLibs {
+                excludes.add("lib/**")
+            }
         }
     }
     compileOptions {
