@@ -20,6 +20,7 @@ compose-material = "1.9.0"
 compose-materialIconsExtended = "1.7.3"
 compose-navigation = "2.9.2"
 compose-navigation-event = "1.1.0"
+compose-stability-analyzer = "0.7.5"
 
 androidx-activityCompose = "1.13.0"
 androidx-core = "1.18.0"
@@ -115,6 +116,7 @@ androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 compose = { id = "org.jetbrains.compose", version.ref = "compose" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version.ref = "compose-stability-analyzer" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
