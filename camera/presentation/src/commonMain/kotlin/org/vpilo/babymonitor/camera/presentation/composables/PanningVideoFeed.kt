@@ -1,10 +1,10 @@
 package org.vpilo.babymonitor.camera.presentation.composables
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -16,14 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import babymonitor.camera.presentation.generated.resources.Res
 import babymonitor.camera.presentation.generated.resources.server_in_audio_only_mode
 import org.jetbrains.compose.resources.painterResource
@@ -83,12 +82,13 @@ fun PanningVideoFeed(
             " rotation=$rotation cropScale=$cropScale pan=$panOffset maxPan=$maxPanningAllowed"
     }
 
-    LaunchedEffect(rotation) { panOffset = Offset.Zero }
+    LaunchedEffect(rotation, containerSize) { panOffset = Offset.Zero }
 
     Box(
         modifier =
             modifier
                 .fillMaxSize()
+                .background(Color.Black)
                 .onSizeChanged { containerSize = it }
                 .clipToBounds()
                 .pointerInput(maxPanningAllowed) {
@@ -105,14 +105,13 @@ fun PanningVideoFeed(
         if (LocalInspectionMode.current) {
             require(videoStream is ComposePreviewVideoStream)
             val frame by videoStream.surface.collectAsState(ImageBitmap(1, 1))
-            Image(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .offset(x = panOffset.x.dp, y = panOffset.y.dp),
-                bitmap = frame,
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
+            PannableVideoFrame(
+                modifier = Modifier.fillMaxSize(),
+                frame = frame,
+                originalFrameSize = originalFrameSize,
+                cropScale = cropScale,
+                panOffset = panOffset,
+                rotation = rotation,
             )
         } else {
             PanningVideoFeedContent(
@@ -141,12 +140,42 @@ fun PanningVideoFeed(
     }
 }
 
-@Preview
+@Preview(widthDp = 1080, heightDp = 720)
 @Composable
-private fun PanningVideoFeedPreview() =
+private fun PanningVideoFeedLandscapePreview() =
     AppPreviewTheme {
         PanningVideoFeed(
-            videoStream = makePreviewVideoStream(),
+            videoStream = makePreviewVideoStream(rotation = 90),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        )
+    }
+
+@Preview(widthDp = 1080, heightDp = 720)
+@Composable
+private fun PanningVideoFeedLandscapeFlippedPreview() =
+    AppPreviewTheme {
+        PanningVideoFeed(
+            videoStream = makePreviewVideoStream(rotation = 270),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        )
+    }
+
+@Preview
+@Composable
+private fun PanningVideoFeedPortraitPreview() =
+    AppPreviewTheme {
+        PanningVideoFeed(
+            videoStream = makePreviewVideoStream(rotation = 0),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        )
+    }
+
+@Preview
+@Composable
+private fun PanningVideoFeedPortraitFlippedPreview() =
+    AppPreviewTheme {
+        PanningVideoFeed(
+            videoStream = makePreviewVideoStream(rotation = 180),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
         )
     }

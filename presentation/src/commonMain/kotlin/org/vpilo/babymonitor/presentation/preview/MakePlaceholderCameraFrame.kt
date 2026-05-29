@@ -10,13 +10,14 @@ import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 
-@Suppress("LongMethod")
 fun makePlaceholderCameraFrame(
     width: Int = 1280,
     height: Int = 720,
@@ -30,6 +31,8 @@ fun makePlaceholderCameraFrame(
     val canvas = Canvas(image)
     val palette = if (isDarkMode) DarkPalette else LightPalette
 
+    // Logical drawing space is the upright (display) orientation, so the scene is laid out the same
+    // way a viewer sees it after rotating the frame. The buffer itself stays width x height.
     val shouldRotateCanvas = rotation == 90 || rotation == 270
     val w = if (shouldRotateCanvas) height.toFloat() else width.toFloat()
     val h = if (shouldRotateCanvas) width.toFloat() else height.toFloat()
@@ -38,248 +41,263 @@ fun makePlaceholderCameraFrame(
         density = Density(1f),
         layoutDirection = LayoutDirection.Ltr,
         canvas = canvas,
-        size = Size(w, h),
+        size = Size(width.toFloat(), height.toFloat()),
     ) {
-        rotate(rotation.toFloat(), pivot = Offset(w / 2f, h / 2f)) {
-            val unit = minOf(w, h)
-            val horizon = h * 0.62f
-            val cribLeft = w * 0.12f
-            val cribTop = h * 0.48f
-            val cribWidth = w * 0.46f
-            val cribHeight = h * 0.22f
-            val railStroke = maxOf(unit * 0.010f, 1f)
-            val thinStroke = maxOf(unit * 0.004f, 1f)
-
-            // Back wall / upper room tone
-            drawRect(
-                brush =
-                    Brush.verticalGradient(
-                        colors = listOf(palette.wallTop, palette.wallBottom),
-                        startY = 0f,
-                        endY = horizon,
-                    ),
-                size = Size(w, horizon),
-            )
-
-            // Floor / lower room tone
-            drawRect(
-                brush =
-                    Brush.verticalGradient(
-                        colors = listOf(palette.floorTop, palette.floorBottom),
-                        startY = horizon,
-                        endY = h,
-                    ),
-                topLeft = Offset(0f, horizon),
-                size = Size(w, h - horizon),
-            )
-
-            // Window in the background
-            val windowLeft = w * 0.64f
-            val windowTop = h * 0.12f
-            val windowWidth = w * 0.24f
-            val windowHeight = h * 0.24f
-            val windowPadding = unit * 0.018f
-            val windowRadius = CornerRadius(unit * 0.025f, unit * 0.025f)
-
-            drawRoundRect(
-                color = palette.windowFrame,
-                topLeft = Offset(windowLeft, windowTop),
-                size = Size(windowWidth, windowHeight),
-                cornerRadius = windowRadius,
-            )
-
-            drawRoundRect(
-                brush =
-                    Brush.verticalGradient(
-                        colors = listOf(palette.windowGlowTop, palette.windowGlowBottom),
-                    ),
-                topLeft = Offset(windowLeft + windowPadding, windowTop + windowPadding),
-                size = Size(windowWidth - 2 * windowPadding, windowHeight - 2 * windowPadding),
-                cornerRadius = CornerRadius(unit * 0.018f, unit * 0.018f),
-            )
-
-            // Sun / moon
-            drawCircle(
-                color = palette.windowOrb,
-                radius = unit * 0.035f,
-                center = Offset(windowLeft + windowWidth * 0.72f, windowTop + windowHeight * 0.30f),
-            )
-
-            // Window crossbars
-            drawLine(
-                color = palette.windowFrame.copy(alpha = 0.7f),
-                start = Offset(windowLeft + windowWidth / 2f, windowTop + windowPadding),
-                end = Offset(windowLeft + windowWidth / 2f, windowTop + windowHeight - windowPadding),
-                strokeWidth = thinStroke,
-            )
-            drawLine(
-                color = palette.windowFrame.copy(alpha = 0.7f),
-                start = Offset(windowLeft + windowPadding, windowTop + windowHeight / 2f),
-                end = Offset(windowLeft + windowWidth - windowPadding, windowTop + windowHeight / 2f),
-                strokeWidth = thinStroke,
-            )
-
-            // Soft light cone from window
-            drawRect(
-                brush =
-                    Brush.radialGradient(
-                        colors =
-                            listOf(
-                                palette.lightBloom,
-                                Color.Transparent,
-                            ),
-                        center = Offset(windowLeft + windowWidth * 0.45f, windowTop + windowHeight * 0.65f),
-                        radius = w * 0.42f,
-                    ),
-                size = Size(w, h),
-            )
-
-            // Mattress / blanket mass
-            drawRoundRect(
-                color = palette.mattress,
-                topLeft = Offset(cribLeft + w * 0.03f, cribTop + h * 0.11f),
-                size = Size(cribWidth - w * 0.06f, h * 0.06f),
-                cornerRadius = CornerRadius(unit * 0.018f, unit * 0.018f),
-            )
-
-            // Crib rails
-            drawLine(
-                color = palette.crib,
-                start = Offset(cribLeft, cribTop),
-                end = Offset(cribLeft + cribWidth, cribTop),
-                strokeWidth = railStroke,
-            )
-            drawLine(
-                color = palette.crib,
-                start = Offset(cribLeft, cribTop + cribHeight),
-                end = Offset(cribLeft + cribWidth, cribTop + cribHeight),
-                strokeWidth = railStroke,
-            )
-            drawLine(
-                color = palette.crib,
-                start = Offset(cribLeft, cribTop),
-                end = Offset(cribLeft, cribTop + cribHeight),
-                strokeWidth = railStroke,
-            )
-            drawLine(
-                color = palette.crib,
-                start = Offset(cribLeft + cribWidth, cribTop),
-                end = Offset(cribLeft + cribWidth, cribTop + cribHeight),
-                strokeWidth = railStroke,
-            )
-
-            val barCount = 9
-            repeat(barCount) { index ->
-                val x = cribLeft + (cribWidth / (barCount + 1)) * (index + 1)
-                drawLine(
-                    color = palette.crib.copy(alpha = 0.95f),
-                    start = Offset(x, cribTop + h * 0.015f),
-                    end = Offset(x, cribTop + cribHeight - h * 0.015f),
-                    strokeWidth = thinStroke,
-                )
+        // Bake the inverse rotation around the buffer center so a consumer applying +rotation
+        // recovers the upright scene, centered and filling the buffer.
+        translate(left = width / 2f, top = height / 2f) {
+            rotate(degrees = -rotation.toFloat(), pivot = Offset.Zero) {
+                translate(left = -w / 2f, top = -h / 2f) {
+                    drawPlaceholderScene(w, h, palette)
+                }
             }
-
-            // Hanging mobile
-            val mobileAnchorX = cribLeft + cribWidth * 0.72f
-            val mobileAnchorY = cribTop - h * 0.10f
-            val mobileBarY = cribTop + h * 0.02f
-
-            drawLine(
-                color = palette.mobile,
-                start = Offset(mobileAnchorX, mobileAnchorY),
-                end = Offset(mobileAnchorX, mobileBarY),
-                strokeWidth = thinStroke,
-            )
-            drawLine(
-                color = palette.mobile,
-                start = Offset(mobileAnchorX - w * 0.07f, mobileBarY),
-                end = Offset(mobileAnchorX + w * 0.07f, mobileBarY),
-                strokeWidth = thinStroke,
-            )
-
-            val hangingY = cribTop + h * 0.09f
-            drawLine(
-                color = palette.mobile,
-                start = Offset(mobileAnchorX - w * 0.05f, mobileBarY),
-                end = Offset(mobileAnchorX - w * 0.05f, hangingY),
-                strokeWidth = thinStroke,
-            )
-            drawLine(
-                color = palette.mobile,
-                start = Offset(mobileAnchorX, mobileBarY),
-                end = Offset(mobileAnchorX, hangingY + h * 0.015f),
-                strokeWidth = thinStroke,
-            )
-            drawLine(
-                color = palette.mobile,
-                start = Offset(mobileAnchorX + w * 0.05f, mobileBarY),
-                end = Offset(mobileAnchorX + w * 0.05f, hangingY),
-                strokeWidth = thinStroke,
-            )
-
-            drawCircle(
-                color = palette.mobileAccent1,
-                radius = unit * 0.015f,
-                center = Offset(mobileAnchorX - w * 0.05f, hangingY + unit * 0.01f),
-            )
-            drawCircle(
-                color = palette.mobileAccent2,
-                radius = unit * 0.013f,
-                center = Offset(mobileAnchorX, hangingY + h * 0.025f),
-            )
-            drawCircle(
-                color = palette.mobileAccent3,
-                radius = unit * 0.014f,
-                center = Offset(mobileAnchorX + w * 0.05f, hangingY + unit * 0.01f),
-            )
-
-            // Soft foreground blur blob to make it feel less flat
-            drawRect(
-                brush =
-                    Brush.radialGradient(
-                        colors =
-                            listOf(
-                                palette.foregroundBlur,
-                                Color.Transparent,
-                            ),
-                        center = Offset(w * 0.83f, h * 0.78f),
-                        radius = w * 0.22f,
-                    ),
-                size = Size(w, h),
-            )
-
-            // Very subtle camera scan lines
-            val scanGap = maxOf(h / 90f, 4f)
-            var y = 0f
-            while (y < h) {
-                drawLine(
-                    color = palette.scanLine,
-                    start = Offset(0f, y),
-                    end = Offset(w, y),
-                    strokeWidth = 1f,
-                )
-                y += scanGap
-            }
-
-            // Lens vignette
-            drawRect(
-                brush =
-                    Brush.radialGradient(
-                        colors =
-                            listOf(
-                                Color.Transparent,
-                                Color.Transparent,
-                                palette.vignette,
-                            ),
-                        center = Offset(w / 2f, h / 2f),
-                        radius = maxOf(w, h) * 0.78f,
-                    ),
-                size = Size(w, h),
-            )
         }
     }
 
     return image
+}
+
+@Suppress("LongMethod")
+private fun DrawScope.drawPlaceholderScene(
+    w: Float,
+    h: Float,
+    palette: PlaceholderPalette,
+) {
+    val unit = minOf(w, h)
+    val horizon = h * 0.62f
+    val cribLeft = w * 0.12f
+    val cribTop = h * 0.48f
+    val cribWidth = w * 0.46f
+    val cribHeight = h * 0.22f
+    val railStroke = maxOf(unit * 0.010f, 1f)
+    val thinStroke = maxOf(unit * 0.004f, 1f)
+
+    // Back wall / upper room tone
+    drawRect(
+        brush =
+            Brush.verticalGradient(
+                colors = listOf(palette.wallTop, palette.wallBottom),
+                startY = 0f,
+                endY = horizon,
+            ),
+        size = Size(w, horizon),
+    )
+
+    // Floor / lower room tone
+    drawRect(
+        brush =
+            Brush.verticalGradient(
+                colors = listOf(palette.floorTop, palette.floorBottom),
+                startY = horizon,
+                endY = h,
+            ),
+        topLeft = Offset(0f, horizon),
+        size = Size(w, h - horizon),
+    )
+
+    // Window in the background
+    val windowLeft = w * 0.64f
+    val windowTop = h * 0.12f
+    val windowWidth = w * 0.24f
+    val windowHeight = h * 0.24f
+    val windowPadding = unit * 0.018f
+    val windowRadius = CornerRadius(unit * 0.025f, unit * 0.025f)
+
+    drawRoundRect(
+        color = palette.windowFrame,
+        topLeft = Offset(windowLeft, windowTop),
+        size = Size(windowWidth, windowHeight),
+        cornerRadius = windowRadius,
+    )
+
+    drawRoundRect(
+        brush =
+            Brush.verticalGradient(
+                colors = listOf(palette.windowGlowTop, palette.windowGlowBottom),
+            ),
+        topLeft = Offset(windowLeft + windowPadding, windowTop + windowPadding),
+        size = Size(windowWidth - 2 * windowPadding, windowHeight - 2 * windowPadding),
+        cornerRadius = CornerRadius(unit * 0.018f, unit * 0.018f),
+    )
+
+    // Sun / moon
+    drawCircle(
+        color = palette.windowOrb,
+        radius = unit * 0.035f,
+        center = Offset(windowLeft + windowWidth * 0.72f, windowTop + windowHeight * 0.30f),
+    )
+
+    // Window crossbars
+    drawLine(
+        color = palette.windowFrame.copy(alpha = 0.7f),
+        start = Offset(windowLeft + windowWidth / 2f, windowTop + windowPadding),
+        end = Offset(windowLeft + windowWidth / 2f, windowTop + windowHeight - windowPadding),
+        strokeWidth = thinStroke,
+    )
+    drawLine(
+        color = palette.windowFrame.copy(alpha = 0.7f),
+        start = Offset(windowLeft + windowPadding, windowTop + windowHeight / 2f),
+        end = Offset(windowLeft + windowWidth - windowPadding, windowTop + windowHeight / 2f),
+        strokeWidth = thinStroke,
+    )
+
+    // Soft light cone from window
+    drawRect(
+        brush =
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        palette.lightBloom,
+                        Color.Transparent,
+                    ),
+                center = Offset(windowLeft + windowWidth * 0.45f, windowTop + windowHeight * 0.65f),
+                radius = w * 0.42f,
+            ),
+        size = Size(w, h),
+    )
+
+    // Mattress / blanket mass
+    drawRoundRect(
+        color = palette.mattress,
+        topLeft = Offset(cribLeft + w * 0.03f, cribTop + h * 0.11f),
+        size = Size(cribWidth - w * 0.06f, h * 0.06f),
+        cornerRadius = CornerRadius(unit * 0.018f, unit * 0.018f),
+    )
+
+    // Crib rails
+    drawLine(
+        color = palette.crib,
+        start = Offset(cribLeft, cribTop),
+        end = Offset(cribLeft + cribWidth, cribTop),
+        strokeWidth = railStroke,
+    )
+    drawLine(
+        color = palette.crib,
+        start = Offset(cribLeft, cribTop + cribHeight),
+        end = Offset(cribLeft + cribWidth, cribTop + cribHeight),
+        strokeWidth = railStroke,
+    )
+    drawLine(
+        color = palette.crib,
+        start = Offset(cribLeft, cribTop),
+        end = Offset(cribLeft, cribTop + cribHeight),
+        strokeWidth = railStroke,
+    )
+    drawLine(
+        color = palette.crib,
+        start = Offset(cribLeft + cribWidth, cribTop),
+        end = Offset(cribLeft + cribWidth, cribTop + cribHeight),
+        strokeWidth = railStroke,
+    )
+
+    val barCount = 9
+    repeat(barCount) { index ->
+        val x = cribLeft + (cribWidth / (barCount + 1)) * (index + 1)
+        drawLine(
+            color = palette.crib.copy(alpha = 0.95f),
+            start = Offset(x, cribTop + h * 0.015f),
+            end = Offset(x, cribTop + cribHeight - h * 0.015f),
+            strokeWidth = thinStroke,
+        )
+    }
+
+    // Hanging mobile
+    val mobileAnchorX = cribLeft + cribWidth * 0.72f
+    val mobileAnchorY = cribTop - h * 0.10f
+    val mobileBarY = cribTop + h * 0.02f
+
+    drawLine(
+        color = palette.mobile,
+        start = Offset(mobileAnchorX, mobileAnchorY),
+        end = Offset(mobileAnchorX, mobileBarY),
+        strokeWidth = thinStroke,
+    )
+    drawLine(
+        color = palette.mobile,
+        start = Offset(mobileAnchorX - w * 0.07f, mobileBarY),
+        end = Offset(mobileAnchorX + w * 0.07f, mobileBarY),
+        strokeWidth = thinStroke,
+    )
+
+    val hangingY = cribTop + h * 0.09f
+    drawLine(
+        color = palette.mobile,
+        start = Offset(mobileAnchorX - w * 0.05f, mobileBarY),
+        end = Offset(mobileAnchorX - w * 0.05f, hangingY),
+        strokeWidth = thinStroke,
+    )
+    drawLine(
+        color = palette.mobile,
+        start = Offset(mobileAnchorX, mobileBarY),
+        end = Offset(mobileAnchorX, hangingY + h * 0.015f),
+        strokeWidth = thinStroke,
+    )
+    drawLine(
+        color = palette.mobile,
+        start = Offset(mobileAnchorX + w * 0.05f, mobileBarY),
+        end = Offset(mobileAnchorX + w * 0.05f, hangingY),
+        strokeWidth = thinStroke,
+    )
+
+    drawCircle(
+        color = palette.mobileAccent1,
+        radius = unit * 0.015f,
+        center = Offset(mobileAnchorX - w * 0.05f, hangingY + unit * 0.01f),
+    )
+    drawCircle(
+        color = palette.mobileAccent2,
+        radius = unit * 0.013f,
+        center = Offset(mobileAnchorX, hangingY + h * 0.025f),
+    )
+    drawCircle(
+        color = palette.mobileAccent3,
+        radius = unit * 0.014f,
+        center = Offset(mobileAnchorX + w * 0.05f, hangingY + unit * 0.01f),
+    )
+
+    // Soft foreground blur blob to make it feel less flat
+    drawRect(
+        brush =
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        palette.foregroundBlur,
+                        Color.Transparent,
+                    ),
+                center = Offset(w * 0.83f, h * 0.78f),
+                radius = w * 0.22f,
+            ),
+        size = Size(w, h),
+    )
+
+    // Very subtle camera scan lines
+    val scanGap = maxOf(h / 90f, 4f)
+    var y = 0f
+    while (y < h) {
+        drawLine(
+            color = palette.scanLine,
+            start = Offset(0f, y),
+            end = Offset(w, y),
+            strokeWidth = 1f,
+        )
+        y += scanGap
+    }
+
+    // Lens vignette
+    drawRect(
+        brush =
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        Color.Transparent,
+                        Color.Transparent,
+                        palette.vignette,
+                    ),
+                center = Offset(w / 2f, h / 2f),
+                radius = maxOf(w, h) * 0.78f,
+            ),
+        size = Size(w, h),
+    )
 }
 
 private data class PlaceholderPalette(
