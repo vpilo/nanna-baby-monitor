@@ -217,7 +217,13 @@ internal class CameraGlRenderer(
             return
         }
 
-        GLES20.glViewport(0, 0, surface.width, surface.height)
+        // Query the size live: the consumer (e.g. the TextureView's SurfaceTexture) may resize its
+        // buffer after the EGL surface was created, so a cached size would leave a stale viewport.
+        val size = surface.sizeBuffer
+        EGL14.eglQuerySurface(eglDisplay, surface.eglSurface, EGL14.EGL_WIDTH, size, 0)
+        EGL14.eglQuerySurface(eglDisplay, surface.eglSurface, EGL14.EGL_HEIGHT, size, 1)
+
+        GLES20.glViewport(0, 0, size[0], size[1])
         GLES20.glClearColor(0f, 0f, 0f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
 
@@ -336,15 +342,16 @@ internal class CameraGlRenderer(
         EGL14.eglQuerySurface(eglDisplay, eglSurface, EGL14.EGL_HEIGHT, size, 1)
         Logger.d(TAG) { "Created surface for $name: ${size[0]}x${size[1]}" }
 
-        return ConsumerSurface(name, eglSurface, size[0], size[1])
+        return ConsumerSurface(name, eglSurface)
     }
 
     private class ConsumerSurface(
         val name: String,
         val eglSurface: EGLSurface,
-        val width: Int,
-        val height: Int,
-    )
+    ) {
+        /** Reused across frames by [drawTo] for the live [EGL14.eglQuerySurface] dimensions. */
+        val sizeBuffer = IntArray(2)
+    }
 
     private companion object {
         private val TAG = CameraGlRenderer::class

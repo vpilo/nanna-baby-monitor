@@ -84,6 +84,12 @@ internal actual class VideoCaptureDataSource(
     private val backgroundScope = CoroutineScope(backgroundDispatcher)
 
     init {
+        // Publish the configured frame size up front so the viewfinder surface is created at the
+        // correct dimensions. Creating that surface is what starts the camera (isActive =
+        // surface != null), so the real resolutionInfo size isn't known yet at surface creation,
+        // and the EGL window surface locks to whatever size it is created with.
+        publishConfiguredFrameSize()
+
         backgroundScope.launch {
             mutableVideoStream.isActive.collect { active ->
                 Logger.d(TAG) { "Data source is ${if (active) "starting" else "stopping"}" }
@@ -226,6 +232,7 @@ internal actual class VideoCaptureDataSource(
     actual fun setResolution(resolution: CameraResolution) {
         if (this.resolution == resolution) return
         this.resolution = resolution
+        publishConfiguredFrameSize()
         val provider = cameraProvider
         val context = serviceContext
         val owner = serviceLifecycleOwner
@@ -256,7 +263,9 @@ internal actual class VideoCaptureDataSource(
 
     override fun onServiceStopped() {
         serviceLifecycleOwner?.lifecycleScope?.launch(mainDispatcher) {
-            mutableVideoStream.setFrameSize(0, 0)
+            // Keep the configured frame size published so the viewfinder surface is recreated at
+            // the right size on the next start; the server's size is its configured resolution,
+            // not a streaming-only value.
             mutableVideoStream.setRotation(0)
             cameraProvider?.unbindAll()
             cameraProvider = null
@@ -267,6 +276,11 @@ internal actual class VideoCaptureDataSource(
             serviceContext = null
             serviceLifecycleOwner = null
         }
+    }
+
+    private fun publishConfiguredFrameSize() {
+        val size = resolutionToSize(resolution)
+        mutableVideoStream.setFrameSize(size.width, size.height)
     }
 
     private fun resolutionToSize(resolution: CameraResolution): Size =

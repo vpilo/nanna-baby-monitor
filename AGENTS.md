@@ -5,9 +5,13 @@
 Baby Monitor is a **Kotlin Multiplatform** app (Android + Desktop/JVM) for streaming audio and video between devices. At runtime the app
 assumes one of two roles:
 
-- **Server (Camera):** Captures audio/video, and shows the video on the screen as a viewfinder. If any clients connect, the app encodes the
-  audio and video, and streams them to via WebSockets.
+- **Server (Camera):** Captures audio/video, and shows the video on the screen as a viewfinder. If and only if any clients connect, the app
+  starts encodeing the audio and video, and streams them to the client via WebSockets.
 - **Client (Monitor):** Discovers servers via mDNS, connects, receives encoded streams, decodes, and plays them.
+
+Key features:
+- Video is always shown upright, regardless of device orientation.
+- Server and clients can be Desktop or Android, in any combination.
 
 ## Architecture
 
