@@ -28,19 +28,17 @@ internal actual fun PanningVideoFeedContent(
             if (containerSize == IntSize.Zero || originalFrameSize == IntSize.Zero) {
                 null
             } else {
-                // TextureView passes the buffer through an anisotropic default stretch that
-                // fills the view bounds (buffer-pixel → view-pixel scaled by view/buffer per axis).
-                // To produce a crop-fit display, the matrix must first undo that stretch (back
-                // to buffer-pixel space), then apply the forward display transform:
-                //   M = T(viewCenter+pan) · S(cropScale) · R(rotation) · T(-bufCenter) · S(buf/view)
-                // Compose post-multiplies, so the written order is the reverse of the math.
+                // TextureView stretches the buffer anisotropically to fill the view. The trailing
+                // scale undoes that stretch (back to buffer pixels); the rest is the same
+                // center-anchored crop-fill + rotation + pan the desktop path applies, so the result
+                // is a true-aspect, upright, crop-filled image.
                 Matrix().apply {
                     translate(
                         x = containerSize.width / 2f + panOffset.x,
                         y = containerSize.height / 2f + panOffset.y,
                     )
-                    scale(x = cropScale, y = cropScale)
                     rotateZ(rotation.toFloat())
+                    scale(x = cropScale, y = cropScale)
                     translate(x = -originalFrameSize.width / 2f, y = -originalFrameSize.height / 2f)
                     scale(
                         x = originalFrameSize.width.toFloat() / containerSize.width.toFloat(),

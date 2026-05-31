@@ -165,7 +165,9 @@ actual class VideoDecoder actual constructor(
                             width(w)
                             height(h)
                         }
-                    av_frame_get_buffer(bgrFrame, 0)
+                    // align=1: byte alignment, so each row's linesize is exactly w*3 with no SIMD
+                    // padding, matching BufferedImage's tightly-packed raster for a direct bulk copy.
+                    av_frame_get_buffer(bgrFrame, 1)
 
                     swsCtx = sws_getContext(
                         w,
@@ -196,7 +198,8 @@ actual class VideoDecoder actual constructor(
                     bgrFrame!!.linesize(),
                 )
 
-                // Copy BGR bytes to a BufferedImage
+                // Copy BGR bytes to a BufferedImage. The frame buffer is unpadded (align=1), so the
+                // bulk copy matches the image's w*3 row stride.
                 val image = BufferedImage(w, h, BufferedImage.TYPE_3BYTE_BGR)
                 val destPixels = (image.raster.dataBuffer as DataBufferByte).data
                 bgrFrame!!.data(0).get(destPixels)

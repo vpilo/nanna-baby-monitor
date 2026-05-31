@@ -27,7 +27,6 @@ import babymonitor.camera.presentation.generated.resources.Res
 import babymonitor.camera.presentation.generated.resources.server_in_audio_only_mode
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
@@ -37,8 +36,6 @@ import org.vpilo.babymonitor.presentation.preview.ComposePreviewVideoStream
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 import org.vpilo.babymonitor.presentation.resources.capture_audio_only
 import org.vpilo.babymonitor.presentation.resources.Res as ResPresentation
-
-private const val TAG = "PanningVideoFeed"
 
 @Composable
 fun PanningVideoFeed(
@@ -51,36 +48,10 @@ fun PanningVideoFeed(
     val rotation by videoStream.rotation.collectAsState()
     var panOffset by remember { mutableStateOf(Offset.Zero) }
 
-    val frameSize =
-        remember(originalFrameSize, rotation) {
-            if (rotation == 90 || rotation == 270) IntSize(originalFrameSize.height, originalFrameSize.width) else originalFrameSize
+    val params =
+        remember(containerSize, originalFrameSize, rotation) {
+            ViewfinderParams.compute(containerSize, originalFrameSize, rotation)
         }
-
-    // The container should always be filled, clipping any overflow on the longer axis.
-    val cropScale =
-        remember(containerSize, frameSize) {
-            if (containerSize == IntSize.Zero || frameSize == IntSize.Zero) {
-                1f
-            } else {
-                maxOf(
-                    containerSize.width.toFloat() / frameSize.width.toFloat(),
-                    containerSize.height.toFloat() / frameSize.height.toFloat(),
-                )
-            }
-        }
-
-    val maxPanningAllowed =
-        remember(containerSize, frameSize, cropScale) {
-            Offset(
-                x = ((cropScale * frameSize.width - containerSize.width) / 2f).coerceAtLeast(0f),
-                y = ((cropScale * frameSize.height - containerSize.height) / 2f).coerceAtLeast(0f),
-            )
-        }
-
-    Logger.d(TAG) {
-        "frame=$originalFrameSize container=$containerSize" +
-            " rotation=$rotation cropScale=$cropScale pan=$panOffset maxPan=$maxPanningAllowed"
-    }
 
     LaunchedEffect(rotation, containerSize) { panOffset = Offset.Zero }
 
@@ -91,13 +62,13 @@ fun PanningVideoFeed(
                 .background(Color.Black)
                 .onSizeChanged { containerSize = it }
                 .clipToBounds()
-                .pointerInput(maxPanningAllowed) {
+                .pointerInput(params.maxPan) {
                     detectDragGestures { change, drag ->
                         change.consume()
                         panOffset =
                             Offset(
-                                x = (panOffset.x - drag.x).coerceIn(-maxPanningAllowed.x, maxPanningAllowed.x),
-                                y = (panOffset.y - drag.y).coerceIn(-maxPanningAllowed.y, maxPanningAllowed.y),
+                                x = (panOffset.x - drag.x).coerceIn(-params.maxPan.x, params.maxPan.x),
+                                y = (panOffset.y - drag.y).coerceIn(-params.maxPan.y, params.maxPan.y),
                             )
                     }
                 },
@@ -109,7 +80,7 @@ fun PanningVideoFeed(
                 modifier = Modifier.fillMaxSize(),
                 frame = frame,
                 originalFrameSize = originalFrameSize,
-                cropScale = cropScale,
+                cropScale = params.cropScale,
                 panOffset = panOffset,
                 rotation = rotation,
             )
@@ -119,8 +90,8 @@ fun PanningVideoFeed(
                 videoStream = videoStream,
                 originalFrameSize = originalFrameSize,
                 containerSize = containerSize,
-                maxPanningAllowed = maxPanningAllowed,
-                cropScale = cropScale,
+                maxPanningAllowed = params.maxPan,
+                cropScale = params.cropScale,
                 panOffset = panOffset,
                 rotation = rotation,
             )

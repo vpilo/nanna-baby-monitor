@@ -54,7 +54,7 @@ internal actual class VideoCaptureDataSource(
     @Volatile
     private var renderer: CameraGlRenderer =
         CameraGlRenderer(
-            bridgeSize = resolutionToSize(resolution),
+            bridgeSize = resolution.toSize(),
             onFrameRendered = { mutableVideoStream.signalFrameRendered() },
         )
         get() {
@@ -62,7 +62,7 @@ internal actual class VideoCaptureDataSource(
                 Logger.w(TAG) { "Renderer was released, creating a new one" }
                 field =
                     CameraGlRenderer(
-                        bridgeSize = resolutionToSize(resolution),
+                        bridgeSize = resolution.toSize(),
                         onFrameRendered = { mutableVideoStream.signalFrameRendered() },
                     )
             }
@@ -71,7 +71,7 @@ internal actual class VideoCaptureDataSource(
 
     private val resolutionSelector: ResolutionSelector
         get() {
-            val size = resolutionToSize(resolution)
+            val size = resolution.toSize()
             return ResolutionSelector
                 .Builder()
                 .setResolutionStrategy(
@@ -81,14 +81,14 @@ internal actual class VideoCaptureDataSource(
 
     private var orientationListener: OrientationEventListener? = null
 
+    private var sensorRotationDegrees: Int = DEFAULT_SENSOR_ROTATION_DEGREES
+
     private val backgroundScope = CoroutineScope(backgroundDispatcher)
 
     init {
-        // Publish the configured frame size up front so the viewfinder surface is created at the
-        // correct dimensions. Creating that surface is what starts the camera (isActive =
-        // surface != null), so the real resolutionInfo size isn't known yet at surface creation,
-        // and the EGL window surface locks to whatever size it is created with.
-        publishConfiguredFrameSize()
+        // Publish the configured frame size early, so consumer surfaces are created at the correct dimensions.
+        // This avoids that surfaces are created with an unexpected size (or better: with an unexpected aspect ratio).
+        refreshCurrentFrameSize()
 
         backgroundScope.launch {
             mutableVideoStream.isActive.collect { active ->
@@ -146,10 +146,13 @@ internal actual class VideoCaptureDataSource(
 
         val cameraInfo = cameraProvider.getCameraInfo(cameraSelector)
 
-        // Lock targetRotation so CameraX applies no rotation between sensor and consumer,
-        // keeping the buffer sensor-native landscape regardless of device orientation.
-        // CameraX computes relativeRotation = (sensorMount + targetDegrees) % 360;
-        // we want zero, so targetDegrees = (360 - sensorMount) % 360.
+        // Lock targetRotation so CameraX adds no rotation of its own: device rotation is carried as stream metadata instead, to allow
+        // clients to rotate independently of the stream.
+        // The relative rotation must be zero to keep the image the "right" way up, which CameraX achieves when targetRotation degrees
+        // equal the sensor mount degrees.
+        // Note that the sensor-mount transposition still lives in the buffer, and is handled by sizing the surfaces to the content's
+        // true aspect.
+        sensorRotationDegrees = cameraInfo.sensorRotationDegrees
         val sensorTargetRotation = sensorRotationToSurfaceRotation(cameraInfo.sensorRotationDegrees)
 
         val videoCapture =
@@ -201,11 +204,11 @@ internal actual class VideoCaptureDataSource(
 
         this.videoCapture = videoCapture
 
-        (videoCapture.resolutionInfo?.resolution ?: resolutionToSize(resolution))
-            .let { resolution ->
-                Logger.d(TAG) { "Camera bound with size $resolution" }
-                mutableVideoStream.setFrameSize(resolution.width, resolution.height)
-            }
+        val sensorResolution = videoCapture.resolutionInfo?.resolution ?: resolution.toSize()
+        swapIfLandscape(sensorResolution).let { size ->
+            Logger.d(TAG) { "Camera bound, sensor=$sensorRotationDegrees° sensorResolution=$sensorResolution content=$size" }
+            mutableVideoStream.setFrameSize(size.width, size.height)
+        }
 
         orientationListener?.disable()
         orientationListener =
@@ -232,7 +235,7 @@ internal actual class VideoCaptureDataSource(
     actual fun setResolution(resolution: CameraResolution) {
         if (this.resolution == resolution) return
         this.resolution = resolution
-        publishConfiguredFrameSize()
+        refreshCurrentFrameSize()
         val provider = cameraProvider
         val context = serviceContext
         val owner = serviceLifecycleOwner
@@ -263,9 +266,7 @@ internal actual class VideoCaptureDataSource(
 
     override fun onServiceStopped() {
         serviceLifecycleOwner?.lifecycleScope?.launch(mainDispatcher) {
-            // Keep the configured frame size published so the viewfinder surface is recreated at
-            // the right size on the next start; the server's size is its configured resolution,
-            // not a streaming-only value.
+            // Do not reset the frame size to re-create surfaces already correctly on the next start.
             mutableVideoStream.setRotation(0)
             cameraProvider?.unbindAll()
             cameraProvider = null
@@ -278,13 +279,20 @@ internal actual class VideoCaptureDataSource(
         }
     }
 
-    private fun publishConfiguredFrameSize() {
-        val size = resolutionToSize(resolution)
+    private fun refreshCurrentFrameSize() {
+        val size = swapIfLandscape(resolution.toSize())
         mutableVideoStream.setFrameSize(size.width, size.height)
     }
 
-    private fun resolutionToSize(resolution: CameraResolution): Size =
-        when (resolution) {
+    // CameraX delivers content made upright to the sensor's natural orientation: a 90°/270°-mounted
+    // sensor (the usual case) yields portrait content. The published frame size sizes both the
+    // viewfinder and encoder surfaces, so it must swap the sensor-native dimensions to match the
+    // content's true aspect; otherwise the GL full-quad squeezes it (anamorphic distortion).
+    private fun swapIfLandscape(size: Size): Size =
+        if (sensorRotationDegrees == 90 || sensorRotationDegrees == 270) Size(size.height, size.width) else size
+
+    private fun CameraResolution.toSize(): Size =
+        when (this) {
             CameraResolution.Low -> Size(640, 480)
             CameraResolution.Medium -> Size(1280, 720)
             CameraResolution.High -> Size(1920, 1080)
@@ -292,13 +300,18 @@ internal actual class VideoCaptureDataSource(
 
     private fun sensorRotationToSurfaceRotation(sensorDegrees: Int): Int =
         when (sensorDegrees) {
-            90 -> Surface.ROTATION_270
+            90 -> Surface.ROTATION_90
             180 -> Surface.ROTATION_180
-            270 -> Surface.ROTATION_90
+            270 -> Surface.ROTATION_270
             else -> Surface.ROTATION_0
         }
 
     private companion object {
         private val TAG = VideoCaptureDataSource::class
+
+        // Default rotation assumed for a typical phone back-camera mount.
+        // This is assumed before the camera binds, to align the initial frame size to the most common case, and not need to recreate
+        // the surface.
+        private const val DEFAULT_SENSOR_ROTATION_DEGREES = 90
     }
 }
