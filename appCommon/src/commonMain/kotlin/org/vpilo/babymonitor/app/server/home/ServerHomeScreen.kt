@@ -66,7 +66,7 @@ private fun ServerHomeContent(
     onModeSelected: (CaptureMode) -> Unit,
 ) {
     Column(modifier = modifier) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
             Text(
                 modifier =
                     Modifier

@@ -60,7 +60,6 @@ fun AppDestination(
     ) {
         @OptIn(ExperimentalMaterial3Api::class)
         TopAppBar(
-            modifier = modifier,
             colors =
                 TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -98,9 +97,7 @@ fun AppDestination(
             actions = actions,
         )
         Box(
-            modifier =
-                modifier
-                    .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             content()
         }

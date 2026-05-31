@@ -1,12 +1,9 @@
 package org.vpilo.babymonitor.app.menu
 
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +26,7 @@ import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
+import org.vpilo.babymonitor.presentation.composables.ScrollableBox
 import org.vpilo.babymonitor.settings.presentation.composables.MenuItem
 
 @Composable
@@ -41,12 +39,12 @@ fun MenuScreen(
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
     AppDestination(
+        modifier = modifier,
         title = Res.string.app_title_menu,
         mainAction = AppDestinationMainAction.Back,
         onMainActionClicked = onBackClicked,
     ) {
         MenuScreenContent(
-            modifier = modifier,
             menuItems = {
                 AppMenuContents(
                     currentRole = state.currentRole,
@@ -74,39 +72,30 @@ private fun MenuScreenContent(
     modifier: Modifier = Modifier,
     menuItems: @Composable () -> Unit,
 ) {
-    val scrollState = rememberScrollState()
     Column(
-        modifier =
-            modifier
-                .fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier =
-                modifier
-                    .padding(Theme.Paddings.Small)
-                    .scrollable(scrollState, orientation = Orientation.Vertical)
-                    .weight(.9f),
-            horizontalAlignment = Alignment.Start,
-        ) {
-            menuItems()
+        ScrollableBox(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(Theme.Paddings.Small),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                menuItems()
+            }
         }
-        Column(
-            modifier =
-                modifier
-                    .fillMaxWidth()
-                    .padding(Theme.Paddings.Small)
-                    .weight(.1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(Res.string.app_name),
-                style = MaterialTheme.typography.labelSmall,
-            )
-            Text(
-                text = stringResource(Res.string.app_copyright),
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
+        Text(
+            modifier = Modifier.padding(top = Theme.Paddings.Medium),
+            text = stringResource(Res.string.app_name),
+            style = MaterialTheme.typography.labelSmall,
+        )
+        Text(
+            text = stringResource(Res.string.app_copyright),
+            style = MaterialTheme.typography.labelSmall,
+        )
     }
 }
 

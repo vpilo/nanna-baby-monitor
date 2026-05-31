@@ -42,6 +42,7 @@ fun AppRoleChoiceScreen(
     onRoleChosen: (role: AppRole) -> Unit,
     viewModel: AppRoleChoiceScreenViewModel = koinViewModel(),
 ) {
+    // Keep the VM subscribed.
     viewModel.stateFlow.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel.effectsFlow) {

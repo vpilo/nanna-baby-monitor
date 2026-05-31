@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,8 +54,9 @@ fun CameraSelectionScreen(
     onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
+    val serversList = remember(state) { state.availableServers.toList() }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel.effectsFlow) {
         viewModel.effectsFlow.collect { effect ->
             when (effect) {
                 is CameraSelectionScreenEffect.Connected -> {
@@ -79,7 +81,7 @@ fun CameraSelectionScreen(
                     .fillMaxSize()
                     .padding(Theme.Paddings.Medium),
             connectionState = state.connectionState,
-            servers = state.availableServers,
+            servers = serversList,
             onConnectRequested = { viewModel.send(CameraSelectionScreenAction.ConnectToServer(it)) },
         )
     }
@@ -89,7 +91,7 @@ fun CameraSelectionScreen(
 private fun CameraSelectionScreenContent(
     modifier: Modifier = Modifier,
     connectionState: ConnectionState,
-    servers: Set<ServerId>,
+    servers: List<ServerId>,
     onConnectRequested: (server: ServerId) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
@@ -126,7 +128,7 @@ private fun CameraSelectionScreenContent(
                 }
             }
 
-            items(items = servers.toList()) { server ->
+            items(items = servers, key = { it.name }) { server ->
                 Button(
                     enabled = connectionState !is ConnectionState.Connecting,
                     onClick = { onConnectRequested(server) },
@@ -207,7 +209,7 @@ private fun CameraSelectionScreenPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
             connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet),
-            servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera"), ServerId("Remote Cam", isLocalServer = false)),
+            servers = listOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera"), ServerId("Remote Cam", isLocalServer = false)),
             onConnectRequested = {},
         )
     }
@@ -218,7 +220,7 @@ private fun CameraSelectionScreenConnectingPreview() =
     AppPreviewTheme(modifier = Modifier.fillMaxSize()) {
         CameraSelectionScreenContent(
             connectionState = ConnectionState.Connecting(ServerId("Bedroom Camera")),
-            servers = setOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
+            servers = listOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
             onConnectRequested = {},
         )
     }
@@ -229,7 +231,7 @@ private fun CameraSelectionScreenNoServersPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
             connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.ConnectionFailed),
-            servers = emptySet(),
+            servers = emptyList(),
             onConnectRequested = {},
         )
     }

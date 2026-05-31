@@ -11,12 +11,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -55,14 +55,16 @@ fun ClientHomeScreen(
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
     val videoStream by viewModel.videoStreamFlow.collectAsState(initial = null)
 
-    SideEffect {
+    LifecycleResumeEffect(route) {
         when {
             route.requestDisconnect -> {
                 viewModel.send(ClientHomeScreenAction.Disconnect)
             }
         }
+        onPauseOrDispose { }
     }
-    LaunchedEffect(Unit) {
+
+    LaunchedEffect(viewModel.effectsFlow) {
         viewModel.effectsFlow.collect { effect ->
             when (effect) {
                 is ClientHomeScreenEffect.Disconnected -> onDisconnected()
@@ -87,6 +89,7 @@ fun ClientHomeScreen(
         }
 
     AppDestination(
+        modifier = modifier.fillMaxSize(),
         title = title,
         mainAction = AppDestinationMainAction.Menu,
         onMainActionClicked = {
@@ -94,7 +97,7 @@ fun ClientHomeScreen(
         },
     ) {
         ClientHomeScreenContent(
-            modifier = modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             videoStream = videoStream,
             captureMode = state.captureMode,
             isAudioPlaying = state.isAudioPlaying,

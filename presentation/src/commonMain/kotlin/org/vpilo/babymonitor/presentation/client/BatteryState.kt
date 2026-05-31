@@ -53,7 +53,6 @@ fun BatteryState(
     ) {
         Text(
             text = stringResource(Res.string.client_battery_level_percent, batteryLevel),
-            color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.bodySmall.copy(color = color),
         )
         Image(

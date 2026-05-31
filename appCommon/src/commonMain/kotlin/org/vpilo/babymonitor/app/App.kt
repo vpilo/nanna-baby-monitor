@@ -127,7 +127,9 @@ private fun NavigationRoutes(navController: NavHostController) {
 
             composable<Route.Quit> {
                 val quitApplication = LocalQuitApplication.current
-                quitApplication()
+                LaunchedEffect(Unit) {
+                    quitApplication()
+                }
             }
 
             composable<Route.AppPermissionCheck> {

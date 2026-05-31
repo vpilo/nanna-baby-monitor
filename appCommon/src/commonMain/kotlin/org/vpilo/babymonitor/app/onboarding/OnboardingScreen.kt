@@ -14,9 +14,10 @@ fun OnboardingScreen(
     onSavedRole: (role: AppRole) -> Unit,
     viewModel: OnboardingScreenViewModel = koinViewModel(),
 ) {
+    // Keep the VM subscribed.
     viewModel.stateFlow.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel.effectsFlow) {
         viewModel.effectsFlow.collect { effect ->
             when (effect) {
                 is OnboardingScreenEffect.SavedRole -> onSavedRole(effect.role)
