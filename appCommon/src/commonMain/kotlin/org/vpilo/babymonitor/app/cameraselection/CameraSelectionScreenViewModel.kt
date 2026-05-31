@@ -45,9 +45,14 @@ class CameraSelectionScreenViewModel(
         vmScope.launch {
             val lastServerId =
                 combine(
+                    networkClientRepository.connectionStateFlow,
                     settingsRepository.flowOf(Setting.ClientLastServerId),
                     networkClientRepository.discoveredServerIdsFlow,
-                ) { lastServerId, serverList ->
+                ) { state, lastServerId, serverList ->
+                    // Only reconnect on first startup, when we haven't connected yet.
+                    if (state !is ConnectionState.Disconnected || state.reason != ConnectionState.ErrorReason.NotConnectedYet) {
+                        return@combine null
+                    }
                     if (lastServerId.isBlank()) return@combine null
                     serverList.firstOrNull { it.name == lastServerId }
                 }.filterNotNull().first()
