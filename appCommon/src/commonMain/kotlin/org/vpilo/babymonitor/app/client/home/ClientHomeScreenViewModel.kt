@@ -60,20 +60,22 @@ class ClientHomeScreenViewModel(
         combine(
             audioReceiverRepository.isActive,
             videoReceiverRepository.isActive,
-            networkClientRepository.serverStateFlow,
-        ) { isAudioPlaying, isVideoPlaying, serverState ->
-            Logger.d(TAG) {
-                "Server state changed: $serverState (audio=$isAudioPlaying, video=$isVideoPlaying)"
-            }
+        ) { isAudioPlaying, isVideoPlaying ->
+            state
+                .copy(
+                    isAudioPlaying = isAudioPlaying,
+                    isVideoPlaying = isVideoPlaying,
+                ).update()
+        }.collectLatest()
+
+        networkClientRepository.serverStateFlow.subscribe { serverState ->
             state
                 .copy(
                     captureMode = serverState.captureMode,
                     batteryLevel = serverState.batteryLevel,
                     signalQuality = serverState.signalQuality,
-                    isAudioPlaying = isAudioPlaying,
-                    isVideoPlaying = isVideoPlaying,
                 ).update()
-        }.collectLatest()
+        }
 
         isAudioEnabled.subscribe { isEnabled ->
             Logger.d(TAG) { "Audio playback enabled: $isEnabled" }

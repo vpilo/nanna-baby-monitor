@@ -127,6 +127,12 @@ internal class DefaultNetworkClientRepository(
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
+    override fun reset() {
+        closeAllConnections()
+        foregroundLink.stop()
+        connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet)
+    }
+
     override fun setRelayHost(host: String) {
         relayHost = host
         relayDiscoveryDataSource.updateRelayHost(host)

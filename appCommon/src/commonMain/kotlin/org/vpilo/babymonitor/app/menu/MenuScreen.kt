@@ -56,7 +56,7 @@ fun MenuScreen(
                             }
 
                             else -> {
-                                navController.popBackStack(route = route::class, inclusive = true, saveState = false)
+                                navController.popBackStack(route = route::class, inclusive = false, saveState = false)
                                 navController.navigate(route)
                             }
                         }

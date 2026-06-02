@@ -3,8 +3,11 @@ package org.vpilo.babymonitor.app.onboarding
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent
 import org.vpilo.babymonitor.app.settings.IsFirstRun
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
+import org.vpilo.babymonitor.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
@@ -15,6 +18,14 @@ class OnboardingScreenViewModel(
     private val settingsRepository: SettingsRepository,
 ) : AppViewModel<Unit, OnboardingScreenState, OnboardingScreenEffect>(initialState = OnboardingScreenState()) {
     override fun SubscriptionScope.onSubscribed() {
+        // Ensure that on a new startup the servers are reset, to avoid stale states (eg client's old disconnection state).
+        vmScope.launch {
+            with(KoinJavaComponent.getKoin()) {
+                getOrNull<NetworkServerRepository>()?.stop()
+                getOrNull<NetworkClientRepository>()?.reset()
+            }
+        }
+
         vmScope.launch {
             combine(
                 settingsRepository.flowOf(Setting.IsFirstRun),

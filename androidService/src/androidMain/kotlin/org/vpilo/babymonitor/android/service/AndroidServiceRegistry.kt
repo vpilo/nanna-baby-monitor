@@ -82,6 +82,20 @@ object AndroidServiceRegistry : KoinComponent {
         }
     }
 
+    /**
+     * Use to quit the app.
+     * Stops any started services.
+     */
+    fun shutdown() {
+        Logger.d(TAG) { "Shutdown: stopping ${services.size} services" }
+        synchronized(services) {
+            services.forEach { it.get()?.onServiceStopped() }
+            services.clear()
+        }
+        val context: Context = get()
+        context.stopService(Intent(context, AndroidServiceHost::class.java))
+    }
+
     internal fun reportServiceStarted(service: LifecycleService) {
         serviceInstance = service
 
