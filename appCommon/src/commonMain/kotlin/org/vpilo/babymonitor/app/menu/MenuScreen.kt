@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,14 @@ fun MenuScreen(
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
+    LaunchedEffect(viewModel.effectsFlow) {
+        viewModel.effectsFlow.collect { effect ->
+            when (effect) {
+                is MenuScreenEffect.Disconnected -> onNavigateTo(Route.CameraSelection, Route.CameraSelection)
+            }
+        }
+    }
+
     AppDestination(
         modifier = modifier,
         title = Res.string.app_title_menu,
@@ -50,6 +59,7 @@ fun MenuScreen(
                     showDisconnect = state.isConnected,
                     onNavigateToRoot = onNavigateToRoot,
                     onNavigateTo = onNavigateTo,
+                    onDisconnect = { viewModel.send(MenuScreenAction.Disconnect) },
                 )
             },
         )

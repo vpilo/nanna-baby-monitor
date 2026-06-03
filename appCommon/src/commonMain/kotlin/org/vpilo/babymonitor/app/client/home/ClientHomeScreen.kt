@@ -47,22 +47,12 @@ import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 @Composable
 fun ClientHomeScreen(
     modifier: Modifier = Modifier,
-    route: Route.ClientHome,
     viewModel: ClientHomeScreenViewModel,
     onDisconnected: () -> Unit,
     onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
     val videoStream by viewModel.videoStreamFlow.collectAsState(initial = null)
-
-    LifecycleResumeEffect(route) {
-        when {
-            route.requestDisconnect -> {
-                viewModel.send(ClientHomeScreenAction.Disconnect)
-            }
-        }
-        onPauseOrDispose { }
-    }
 
     LaunchedEffect(viewModel.effectsFlow) {
         viewModel.effectsFlow.collect { effect ->

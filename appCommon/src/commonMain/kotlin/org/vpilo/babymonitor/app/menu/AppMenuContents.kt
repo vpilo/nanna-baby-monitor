@@ -35,15 +35,14 @@ fun AppMenuContents(
     showDisconnect: Boolean,
     onNavigateTo: (Route, popUpTo: Route?) -> Unit,
     onNavigateToRoot: () -> Unit,
+    onDisconnect: () -> Unit,
 ) {
     if (currentRole == AppRole.CLIENT && showDisconnect) {
         MenuItem(
             imageVector = vectorResource(Res.drawable.disconnect),
             title = stringResource(Res.string.menu_disconnect_title),
             description = stringResource(Res.string.menu_disconnect_description),
-            onClick = {
-                onNavigateTo(Route.CameraSelection, Route.CameraSelection)
-            },
+            onClick = onDisconnect,
         )
     }
 

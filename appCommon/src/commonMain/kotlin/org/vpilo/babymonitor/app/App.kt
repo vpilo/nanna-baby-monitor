@@ -8,12 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
@@ -34,12 +34,12 @@ private const val TAG = "App"
 fun App() {
     val navController = rememberNavController()
     LaunchedEffect(navController) {
-        navController.addOnDestinationChangedListener { controller, destination, _ ->
-            val route = destination.route
-            val backStack = controller.currentBackStack.value.joinToString(" -> ") { it.destination.route.toString() }
-
-            Logger.d(TAG) { "Navigated to: $route" }
-            Logger.d(TAG) { "-- Back stack: $backStack" }
+        navController.currentBackStack.collect { backStack ->
+            if (backStack.isEmpty()) return@collect
+            Logger.d(TAG) {
+                fun NavBackStackEntry.name(): String = destination.route?.substringAfterLast('.') ?: "Root"
+                "Navigated to: ${backStack.joinToString(" -> ") { it.name() }}"
+            }
         }
     }
 
@@ -175,7 +175,7 @@ private fun NavGraphBuilder.navigationRoutes(
         CameraSelectionScreen(
             viewModel = koinViewModel(),
             onConnected = {
-                onNavigateTo(Route.ClientHome(), null)
+                onNavigateTo(Route.ClientHome, null)
             },
             onMenuClicked = {
                 onNavigateTo(Route.Menu, null)
@@ -184,9 +184,7 @@ private fun NavGraphBuilder.navigationRoutes(
     }
 
     composable<Route.ClientHome> {
-        val route = it.toRoute<Route.ClientHome>()
         ClientHomeScreen(
-            route = route,
             viewModel = koinViewModel(),
             onDisconnected = {
                 onNavigateTo(Route.CameraSelection, Route.CameraSelection)
