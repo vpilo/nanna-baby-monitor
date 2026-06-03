@@ -13,7 +13,7 @@ sealed class AndroidVideoStream : VideoStream<Surface>() {
 
     fun postSurface(surface: Surface?) {
         if (surface != null) {
-            check(mutableSurface.value == null) { "postSurface(null) called with a surface already attached" }
+            check(mutableSurface.value == null) { "postSurface() called with a surface already attached" }
             mutableSurface.value = surface
             return
         }

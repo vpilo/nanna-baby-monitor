@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.app.cameraselection
 
+import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -13,6 +14,7 @@ import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 
+@Stable
 class CameraSelectionScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,
     private val settingsRepository: SettingsRepository,

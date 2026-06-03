@@ -1,5 +1,8 @@
 package org.vpilo.babymonitor.model.repository
 
+import androidx.compose.runtime.Stable
+
+@Stable
 sealed interface ConnectionState {
     data class Disconnected(
         val reason: ErrorReason,

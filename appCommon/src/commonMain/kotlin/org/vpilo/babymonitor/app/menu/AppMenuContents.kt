@@ -33,7 +33,8 @@ import org.vpilo.babymonitor.settings.presentation.composables.MenuSettingItem
 fun AppMenuContents(
     currentRole: AppRole,
     showDisconnect: Boolean,
-    onNavigateTo: (Route) -> Unit,
+    onNavigateTo: (Route, popUpTo: Route?) -> Unit,
+    onNavigateToRoot: () -> Unit,
 ) {
     if (currentRole == AppRole.CLIENT && showDisconnect) {
         MenuItem(
@@ -41,7 +42,7 @@ fun AppMenuContents(
             title = stringResource(Res.string.menu_disconnect_title),
             description = stringResource(Res.string.menu_disconnect_description),
             onClick = {
-                onNavigateTo(Route.ClientHome(requestDisconnect = true))
+                onNavigateTo(Route.CameraSelection, Route.CameraSelection)
             },
         )
     }
@@ -57,9 +58,7 @@ fun AppMenuContents(
         imageVector = Icons.Default.SwapHoriz,
         title = stringResource(Res.string.menu_change_role_title),
         description = stringResource(Res.string.menu_change_role_description),
-        onClick = {
-            onNavigateTo(Route.AppRoleChooser)
-        },
+        onClick = onNavigateToRoot,
     )
 
     MenuSettingItem(
@@ -82,7 +81,7 @@ fun AppMenuContents(
         imageVector = Icons.AutoMirrored.Filled.ExitToApp,
         title = stringResource(quitLabel),
         onClick = {
-            onNavigateTo(Route.Quit)
+            onNavigateTo(Route.Quit, null)
         },
     )
 }

@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.app.server.home
 
+import androidx.compose.runtime.Stable
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.LastCaptureMode
 import org.vpilo.babymonitor.app.settings.RelayHost
@@ -11,6 +12,7 @@ import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 
+@Stable
 class ServerHomeScreenViewModel(
     private val server: NetworkServerRepository,
     private val settings: SettingsRepository,

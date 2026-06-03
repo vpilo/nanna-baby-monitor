@@ -1,11 +1,13 @@
 package org.vpilo.babymonitor.app.approlechoice
 
+import androidx.compose.runtime.Stable
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreenState
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 
+@Stable
 class AppRoleChoiceScreenViewModel(
     private val appRoleRepository: AppRoleRepository,
 ) : AppViewModel<AppRoleChoiceScreenAction, OnboardingScreenState, AppRoleChoiceScreenEffect>(

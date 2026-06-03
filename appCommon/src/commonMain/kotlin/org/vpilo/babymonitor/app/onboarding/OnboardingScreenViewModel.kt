@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.app.onboarding
 
+import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -13,6 +14,7 @@ import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 
+@Stable
 class OnboardingScreenViewModel(
     private val appRoleRepository: AppRoleRepository,
     private val settingsRepository: SettingsRepository,

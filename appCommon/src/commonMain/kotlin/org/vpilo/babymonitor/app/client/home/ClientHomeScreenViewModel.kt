@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.app.client.home
 
+import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -20,6 +21,7 @@ import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 
+@Stable
 class ClientHomeScreenViewModel(
     private val audioReceiverRepository: StreamingAudioReceiverRepository,
     private val videoReceiverRepository: StreamingVideoReceiverRepository,
