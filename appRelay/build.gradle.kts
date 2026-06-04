@@ -13,6 +13,7 @@ kotlin {
         val desktopMain by getting
 
         desktopMain.dependencies {
+            implementation(project(":common"))
             implementation(project(":network:relay"))
             implementation(libs.koin.core)
             implementation(compose.desktop.currentOs)

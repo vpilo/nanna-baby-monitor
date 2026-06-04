@@ -21,6 +21,7 @@ import babymonitor.appcommon.generated.resources.app_name
 import babymonitor.appcommon.generated.resources.app_title_menu
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.app.navigation.Route
+import org.vpilo.babymonitor.common.BuildInfo
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -93,6 +94,10 @@ private fun MenuScreenContent(
         )
         Text(
             text = stringResource(Res.string.app_copyright),
+            style = MaterialTheme.typography.labelSmall,
+        )
+        Text(
+            text = BuildInfo.VERSION,
             style = MaterialTheme.typography.labelSmall,
         )
     }

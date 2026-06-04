@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.relay
 
 import kotlinx.coroutines.runBlocking
 import org.koin.core.context.startKoin
+import org.vpilo.babymonitor.common.BuildInfo
 import org.vpilo.babymonitor.network.relay.DefaultNetworkRelayRepository
 import org.vpilo.babymonitor.network.relay.di.networkRelayKoinModule
 import kotlin.system.exitProcess
@@ -15,7 +16,8 @@ fun main() {
     val relay = koin.get<DefaultNetworkRelayRepository>()
     relay.start()
 
-    println("Relay running. Write `quit` to stop.")
+    println("Baby Monitor relay version ${BuildInfo.VERSION} running. Write `quit` to stop.")
+
     runBlocking {
         var input: String?
         do {

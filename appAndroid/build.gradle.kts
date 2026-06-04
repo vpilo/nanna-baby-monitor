@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.Packaging
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.vpilo.babymonitor.build.gitVersionProvider
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -30,6 +31,7 @@ android {
             .get()
             .toInt()
 
+    val appVersion = gitVersionProvider().get()
     defaultConfig {
         applicationId = "org.vpilo.babymonitor"
         minSdk =
@@ -40,8 +42,8 @@ android {
             libs.versions.android.targetSdk
                 .get()
                 .toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersion.versionCode
+        versionName = appVersion.versionName
     }
     packaging {
         resources {
