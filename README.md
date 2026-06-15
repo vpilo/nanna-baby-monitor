@@ -2,6 +2,10 @@
 
 # Feature plan
 
+- On relay setting, see if reachable and if authenticated.
+- on server home, show if relay is reachable and if authenticated, and if service is registered + advertising (separately).
+- on client home, show if connected directly or via relay.
+- A 'live' red icon when it is actually streaming.
 - Hide client UI with a tap on the video feed, to see only the video feed.
 - More secure communication channels with clients (monitors) pairing with server (camera).
 - Plugins for raw AV streams to:
@@ -17,6 +21,7 @@
 
 # Issues
 
+- Reconnect screen on client doesn't seem to be working.
 - AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
 
 # Completed features
