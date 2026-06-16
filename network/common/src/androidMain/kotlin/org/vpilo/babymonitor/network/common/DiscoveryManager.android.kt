@@ -7,6 +7,7 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.ext.SdkExtensions
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,55 +52,62 @@ actual class DiscoveryManager(
     private val _state = MutableStateFlow(DiscoveryManagerState.Idle)
     actual val state: Flow<DiscoveryManagerState> = _state.asStateFlow()
 
+    private var runningJob: Job? = null
+
     actual fun registerService() {
         check(deviceName.isNotEmpty()) { "Device name must be set before registering service!" }
         if (_state.value == DiscoveryManagerState.DiscoveringServices) {
             stopDiscovery()
         }
-        scope.launch {
-            val serviceInfo =
-                NsdServiceInfo().apply {
-                    serviceName = deviceName
-                    serviceType = Constants.DISCOVERY_SERVICE_TYPE
-                    port = Constants.DISCOVERY_PORT
-                }
 
-            val listener =
-                object : NsdManager.RegistrationListener {
-                    override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {
-                        Logger.d(TAG) { "Service registered: ${serviceInfo.serviceName}" }
-                        _state.value = DiscoveryManagerState.ServiceRegistered
+        runningJob?.cancel()
+        runningJob =
+            scope.launch {
+                val serviceInfo =
+                    NsdServiceInfo().apply {
+                        serviceName = deviceName
+                        serviceType = Constants.DISCOVERY_SERVICE_TYPE
+                        port = Constants.DISCOVERY_PORT
                     }
 
-                    override fun onRegistrationFailed(
-                        serviceInfo: NsdServiceInfo,
-                        errorCode: Int,
-                    ) {
-                        Logger.e(TAG) { "Service registration failed: errorCode=$errorCode" }
-                        _state.value = DiscoveryManagerState.Idle
-                    }
+                val listener =
+                    object : NsdManager.RegistrationListener {
+                        override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {
+                            Logger.d(TAG) { "Service registered: ${serviceInfo.serviceName}" }
+                            _state.value = DiscoveryManagerState.ServiceRegistered
+                        }
 
-                    override fun onServiceUnregistered(serviceInfo: NsdServiceInfo) {
-                        Logger.d(TAG) { "Service unregistered: ${serviceInfo.serviceName}" }
-                    }
+                        override fun onRegistrationFailed(
+                            serviceInfo: NsdServiceInfo,
+                            errorCode: Int,
+                        ) {
+                            Logger.e(TAG) { "Service registration failed: errorCode=$errorCode" }
+                            _state.value = DiscoveryManagerState.Idle
+                        }
 
-                    override fun onUnregistrationFailed(
-                        serviceInfo: NsdServiceInfo,
-                        errorCode: Int,
-                    ) {
-                        Logger.e(TAG) { "Service unregistration failed: errorCode=$errorCode" }
-                    }
-                }
-            registrationListener = listener
+                        override fun onServiceUnregistered(serviceInfo: NsdServiceInfo) {
+                            Logger.d(TAG) { "Service unregistered: ${serviceInfo.serviceName}" }
+                        }
 
-            Logger.d(TAG) { "Registering service..." }
-            nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, listener)
-        }
+                        override fun onUnregistrationFailed(
+                            serviceInfo: NsdServiceInfo,
+                            errorCode: Int,
+                        ) {
+                            Logger.e(TAG) { "Service unregistration failed: errorCode=$errorCode" }
+                        }
+                    }
+                registrationListener = listener
+
+                Logger.d(TAG) { "Registering service..." }
+                nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, listener)
+            }
     }
 
     actual fun unregisterService() {
         try {
             registrationListener?.let { nsdManager.unregisterService(it) }
+            runningJob?.cancel()
+            runningJob = null
         } catch (ex: IllegalArgumentException) {
             Logger.e(TAG, ex) { "Failed to unregister service" }
         } finally {
@@ -114,72 +122,76 @@ actual class DiscoveryManager(
             unregisterService()
         }
 
-        scope.launch {
-            acquireMulticastLock()
+        runningJob?.cancel()
+        runningJob =
+            scope.launch {
+                acquireMulticastLock()
 
-            val listener =
-                object : NsdManager.DiscoveryListener {
-                    override fun onDiscoveryStarted(serviceType: String) {
-                        Logger.d(TAG) { "Discovery started: $serviceType" }
+                val listener =
+                    object : NsdManager.DiscoveryListener {
+                        override fun onDiscoveryStarted(serviceType: String) {
+                            Logger.d(TAG) { "Discovery started: $serviceType" }
+                        }
+
+                        override fun onServiceFound(serviceInfo: NsdServiceInfo) {
+                            if (serviceInfo.hosts.intersect(localAddresses()).isNotEmpty()) return
+                            Logger.d(TAG) { "Service found: ${serviceInfo.serviceName}" }
+                            resolveService(serviceInfo)
+                        }
+
+                        override fun onServiceLost(serviceInfo: NsdServiceInfo) {
+                            val hosts = serviceInfo.hosts
+                            if (hosts.intersect(localAddresses()).isNotEmpty()) return
+                            Logger.d(TAG) { "Service lost: ${serviceInfo.serviceName} -> $hosts" }
+                            _discoveredServers.value
+                                .firstOrNull { it.matchesAddresses(hosts) }
+                                ?.let { device ->
+                                    _discoveredServers.value -= device
+                                }
+                                ?: run {
+                                    _discoveredServers.value
+                                        .firstOrNull { it.id.name == serviceInfo.serviceName }
+                                        ?.let { device ->
+                                            _discoveredServers.value -= device
+                                        }
+                                }
+                        }
+
+                        override fun onDiscoveryStopped(serviceType: String) {
+                            Logger.d(TAG) { "Discovery stopped: $serviceType" }
+                        }
+
+                        override fun onStartDiscoveryFailed(
+                            serviceType: String,
+                            errorCode: Int,
+                        ) {
+                            Logger.e(TAG) { "Start discovery failed: errorCode=$errorCode" }
+                            releaseMulticastLock()
+                        }
+
+                        override fun onStopDiscoveryFailed(
+                            serviceType: String,
+                            errorCode: Int,
+                        ) {
+                            Logger.e(TAG) { "Stop discovery failed: errorCode=$errorCode" }
+                        }
                     }
+                discoveryListener = listener
 
-                    override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-                        if (serviceInfo.hosts.intersect(localAddresses()).isNotEmpty()) return
-                        Logger.d(TAG) { "Service found: ${serviceInfo.serviceName}" }
-                        resolveService(serviceInfo)
-                    }
-
-                    override fun onServiceLost(serviceInfo: NsdServiceInfo) {
-                        val hosts = serviceInfo.hosts
-                        if (hosts.intersect(localAddresses()).isNotEmpty()) return
-                        Logger.d(TAG) { "Service lost: ${serviceInfo.serviceName} -> $hosts" }
-                        _discoveredServers.value
-                            .firstOrNull { it.matchesAddresses(hosts) }
-                            ?.let { device ->
-                                _discoveredServers.value -= device
-                            }
-                            ?: run {
-                                _discoveredServers.value
-                                    .firstOrNull { it.id.name == serviceInfo.serviceName }
-                                    ?.let { device ->
-                                        _discoveredServers.value -= device
-                                    }
-                            }
-                    }
-
-                    override fun onDiscoveryStopped(serviceType: String) {
-                        Logger.d(TAG) { "Discovery stopped: $serviceType" }
-                    }
-
-                    override fun onStartDiscoveryFailed(
-                        serviceType: String,
-                        errorCode: Int,
-                    ) {
-                        Logger.e(TAG) { "Start discovery failed: errorCode=$errorCode" }
-                        releaseMulticastLock()
-                    }
-
-                    override fun onStopDiscoveryFailed(
-                        serviceType: String,
-                        errorCode: Int,
-                    ) {
-                        Logger.e(TAG) { "Stop discovery failed: errorCode=$errorCode" }
-                    }
-                }
-            discoveryListener = listener
-
-            nsdManager.discoverServices(
-                Constants.DISCOVERY_SERVICE_TYPE,
-                NsdManager.PROTOCOL_DNS_SD,
-                listener,
-            )
-            _state.value = DiscoveryManagerState.DiscoveringServices
-        }
+                nsdManager.discoverServices(
+                    Constants.DISCOVERY_SERVICE_TYPE,
+                    NsdManager.PROTOCOL_DNS_SD,
+                    listener,
+                )
+                _state.value = DiscoveryManagerState.DiscoveringServices
+            }
     }
 
     actual fun stopDiscovery() {
         try {
             discoveryListener?.let { nsdManager.stopServiceDiscovery(it) }
+            runningJob?.cancel()
+            runningJob = null
         } catch (ex: IllegalArgumentException) {
             Logger.e(TAG, ex) { "Failed to stop discovery" }
         } finally {
