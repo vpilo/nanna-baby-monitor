@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.app.menu
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -20,6 +21,7 @@ import org.jetbrains.compose.resources.vectorResource
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.camera.model.settings.CameraResolution
+import org.vpilo.babymonitor.camera.model.settings.LowLightBoost
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.settings.model.PlatformAvailability
 import org.vpilo.babymonitor.settings.model.Setting
@@ -50,6 +52,10 @@ fun AppMenuContents(
         MenuSettingEnumItem(
             setting = Setting.CameraResolution,
             imageVector = vectorResource(Res.drawable.high_quality),
+        )
+        MenuSettingItem(
+            setting = Setting.LowLightBoost,
+            imageVector = Icons.Default.BrightnessMedium,
         )
     }
 

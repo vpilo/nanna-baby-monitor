@@ -1,6 +1,5 @@
 package org.vpilo.babymonitor.camera.data
 
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.github.sarxos.webcam.Webcam
 import com.github.sarxos.webcam.WebcamResolution
@@ -20,7 +19,14 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.DesktopVideoStream
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import java.awt.Dimension
+import java.awt.image.BufferedImage
+import java.awt.image.LookupOp
+import java.awt.image.ShortLookupTable
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
@@ -33,6 +39,11 @@ internal actual class VideoCaptureDataSource(
     private var videoCaptureJob: Job? = null
     private var resolution: CameraResolution = CameraResolution.Medium
     private val webcam: Webcam = webcamGetter()
+    private val brightnessController = AutoBrightnessController()
+    private var frameCounter = 0
+    private var currentGain: Float = 1f
+    private var lutGain: Float = -1f
+    private var lookupOp: LookupOp? = null
 
     private val mutableVideoStream = DesktopVideoStream()
     actual val videoStream: OpaqueVideoStream = mutableVideoStream
@@ -107,6 +118,58 @@ internal actual class VideoCaptureDataSource(
         }
     }
 
+    actual fun setLowLightBoostEnabled(enabled: Boolean) = brightnessController.setEnabled(enabled)
+
+    private fun BufferedImage.applyLowLightBoost(): BufferedImage {
+        if (frameCounter++ % BRIGHTNESS_SAMPLING_INTERVAL == 0) {
+            currentGain = brightnessController.update(measureLuminance(this))
+        }
+        val op = lookupOpFor(currentGain) ?: return this
+        return op.filter(this, null)
+    }
+
+    private fun measureLuminance(image: BufferedImage): Float {
+        val width = image.width
+        val height = image.height
+        if (width == 0 || height == 0) return 1f
+
+        val stepX = max(1, width / BRIGHTNESS_SAMPLE_SIZE)
+        val stepY = max(1, height / BRIGHTNESS_SAMPLE_SIZE)
+
+        var sum = 0.0
+        var count = 0
+        var y = 0
+        while (y < height) {
+            var x = 0
+            while (x < width) {
+                val rgb = image.getRGB(x, y)
+                val r = (rgb shr 16) and 0xFF
+                val g = (rgb shr 8) and 0xFF
+                val b = rgb and 0xFF
+                sum += (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+                count++
+                x += stepX
+            }
+            y += stepY
+        }
+        return if (count == 0) 1f else (sum / count).toFloat()
+    }
+
+    // Build (and cache) a gamma lookup table for out = in^(1/gain). Returns null at unity gain.
+    private fun lookupOpFor(gain: Float): LookupOp? {
+        if (gain <= UNITY_GAIN_EPSILON) return null
+        if (lookupOp == null || abs(gain - lutGain) > GAIN_LUT_EPSILON) {
+            val invGamma = 1.0 / gain
+            val table = ShortArray(256)
+            for (i in 0..255) {
+                table[i] = (255.0 * (i / 255.0).pow(invGamma)).roundToInt().coerceIn(0, 255).toShort()
+            }
+            lookupOp = LookupOp(ShortLookupTable(0, table), null)
+            lutGain = gain
+        }
+        return lookupOp
+    }
+
     private suspend fun frameLoop() {
         val maxFrameTime =
             (
@@ -125,12 +188,16 @@ internal actual class VideoCaptureDataSource(
                         delay(5.milliseconds)
                         return@measureTime
                     }
-                    val image: ImageBitmap? = webcam.getImage()?.toComposeImageBitmap()
-                    if (image == null) {
+                    val captured: BufferedImage? = webcam.getImage()
+                    if (captured == null) {
                         Logger.w(TAG) { "Failed to capture image" }
                         delay(100.milliseconds)
                     } else {
-                        mutableVideoStream.onFrame(image)
+                        mutableVideoStream.onFrame(
+                            captured
+                                .applyLowLightBoost()
+                                .toComposeImageBitmap(),
+                        )
                     }
                 }
 
@@ -143,6 +210,18 @@ internal actual class VideoCaptureDataSource(
 
     private companion object {
         private val TAG = VideoCaptureDataSource::class
+
+        // Sample once every N captured frames.
+        private const val BRIGHTNESS_SAMPLING_INTERVAL = 15
+
+        // Approximate number of samples per axis when estimating luminance.
+        private const val BRIGHTNESS_SAMPLE_SIZE = 48
+
+        // Below this gain, skip the gamma pass entirely (treat as identity).
+        private const val UNITY_GAIN_EPSILON = 1.001f
+
+        // Rebuild the lookup table only when the gain moves by more than this.
+        private const val GAIN_LUT_EPSILON = 0.02f
 
         private val highResolutions =
             arrayOf<Dimension>(

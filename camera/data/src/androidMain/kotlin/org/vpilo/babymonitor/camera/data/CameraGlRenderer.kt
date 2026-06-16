@@ -62,9 +62,21 @@ internal class CameraGlRenderer(
     private var aTexCoordLoc: Int = 0
     private var uSTMatrixLoc: Int = 0
     private var uTextureLoc: Int = 0
+    private var uBrightnessGainLoc: Int = 0
 
     private lateinit var vertexBuffer: FloatBuffer
     private val stMatrix = FloatArray(16)
+
+    private val brightnessController = AutoBrightnessController()
+    private var brightnessGain: Float = 1f
+
+    private var frameCounter = 0
+    private var brightnessSamplingFbo = 0
+    private var brightnessSamplingTexture = 0
+    private val brightnessSamplingPixelBuffer =
+        ByteBuffer
+            .allocateDirect(BRIGHTNESS_SAMPLE_SIZE * BRIGHTNESS_SAMPLE_SIZE * 4)
+            .order(ByteOrder.nativeOrder())
 
     init {
         Logger.d(TAG) { "Initializing with size=$bridgeSize" }
@@ -72,6 +84,7 @@ internal class CameraGlRenderer(
             initializeEgl()
             createProgram()
             createBridgeTexture(bridgeSize)
+            createBrightnessSamplingFbo()
         }
     }
 
@@ -105,6 +118,8 @@ internal class CameraGlRenderer(
             checkFallbackContext()
         }
 
+    fun setLowLightBoostEnabled(enabled: Boolean) = brightnessController.setEnabled(enabled)
+
     // Fall back to the pbuffer context if both consumer surfaces are detached, to continue consuming frames without stalling.
     private fun checkFallbackContext() {
         if (viewfinder == null && encoder == null) {
@@ -122,6 +137,14 @@ internal class CameraGlRenderer(
             encoder = null
             cameraInputSurface.release()
             surfaceTexture.release()
+            if (brightnessSamplingFbo != 0) {
+                GLES20.glDeleteFramebuffers(1, intArrayOf(brightnessSamplingFbo), 0)
+                brightnessSamplingFbo = 0
+            }
+            if (brightnessSamplingTexture != 0) {
+                GLES20.glDeleteTextures(1, intArrayOf(brightnessSamplingTexture), 0)
+                brightnessSamplingTexture = 0
+            }
             if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
                 EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
                 if (pbufferSurface != EGL14.EGL_NO_SURFACE) {
@@ -201,14 +224,76 @@ internal class CameraGlRenderer(
         cameraInputSurface = Surface(surfaceTexture)
     }
 
+    private fun createBrightnessSamplingFbo() {
+        val fbos = IntArray(1)
+        GLES20.glGenFramebuffers(1, fbos, 0)
+        brightnessSamplingFbo = fbos[0]
+
+        val texs = IntArray(1)
+        GLES20.glGenTextures(1, texs, 0)
+        brightnessSamplingTexture = texs[0]
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, brightnessSamplingTexture)
+        GLES20.glTexImage2D(
+            GLES20.GL_TEXTURE_2D,
+            0,
+            GLES20.GL_RGBA,
+            BRIGHTNESS_SAMPLE_SIZE,
+            BRIGHTNESS_SAMPLE_SIZE,
+            0,
+            GLES20.GL_RGBA,
+            GLES20.GL_UNSIGNED_BYTE,
+            null,
+        )
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, brightnessSamplingFbo)
+        GLES20.glFramebufferTexture2D(
+            GLES20.GL_FRAMEBUFFER,
+            GLES20.GL_COLOR_ATTACHMENT0,
+            GLES20.GL_TEXTURE_2D,
+            brightnessSamplingTexture,
+            0,
+        )
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+    }
+
     private fun drawFrame() {
         surfaceTexture.updateTexImage()
         surfaceTexture.getTransformMatrix(stMatrix)
+
+        maybeSampleLuminance()
 
         viewfinder?.let { drawTo(it) }
         encoder?.let { drawTo(it) }
 
         onFrameRendered()
+    }
+
+    private fun drawQuad(gain: Float) {
+        GLES20.glUseProgram(program)
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
+        GLES20.glUniform1i(uTextureLoc, 0)
+        GLES20.glUniform1f(uBrightnessGainLoc, gain)
+
+        GLES20.glUniformMatrix4fv(uSTMatrixLoc, 1, false, stMatrix, 0)
+
+        vertexBuffer.position(0)
+        GLES20.glEnableVertexAttribArray(aPositionLoc)
+        GLES20.glVertexAttribPointer(aPositionLoc, 2, GLES20.GL_FLOAT, false, 4 * 4, vertexBuffer)
+
+        vertexBuffer.position(2)
+        GLES20.glEnableVertexAttribArray(aTexCoordLoc)
+        GLES20.glVertexAttribPointer(aTexCoordLoc, 2, GLES20.GL_FLOAT, false, 4 * 4, vertexBuffer)
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+
+        GLES20.glDisableVertexAttribArray(aPositionLoc)
+        GLES20.glDisableVertexAttribArray(aTexCoordLoc)
     }
 
     private fun drawTo(surface: ConsumerSurface) {
@@ -227,26 +312,7 @@ internal class CameraGlRenderer(
         GLES20.glClearColor(0f, 0f, 0f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
 
-        GLES20.glUseProgram(program)
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
-        GLES20.glUniform1i(uTextureLoc, 0)
-
-        GLES20.glUniformMatrix4fv(uSTMatrixLoc, 1, false, stMatrix, 0)
-
-        vertexBuffer.position(0)
-        GLES20.glEnableVertexAttribArray(aPositionLoc)
-        GLES20.glVertexAttribPointer(aPositionLoc, 2, GLES20.GL_FLOAT, false, 4 * 4, vertexBuffer)
-
-        vertexBuffer.position(2)
-        GLES20.glEnableVertexAttribArray(aTexCoordLoc)
-        GLES20.glVertexAttribPointer(aTexCoordLoc, 2, GLES20.GL_FLOAT, false, 4 * 4, vertexBuffer)
-
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
-
-        GLES20.glDisableVertexAttribArray(aPositionLoc)
-        GLES20.glDisableVertexAttribArray(aTexCoordLoc)
+        drawQuad(brightnessGain)
 
         // Help the encoder sync frames to prevent stutter/jitter.
         if (surface == encoder) {
@@ -256,6 +322,49 @@ internal class CameraGlRenderer(
         if (!EGL14.eglSwapBuffers(eglDisplay, surface.eglSurface)) {
             Logger.w(TAG) { "eglSwapBuffers failed: ${EGL14.eglGetError()}" }
         }
+    }
+
+    // Periodically render the raw bridge texture into a tiny FBO and read it back to estimate
+    // average scene luminance. Runs on the GL thread; failures keep the previous gain.
+    private fun maybeSampleLuminance() {
+        if (frameCounter++ % BRIGHTNESS_SAMPLING_INTERVAL != 0) return
+
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, brightnessSamplingFbo)
+        GLES20.glViewport(0, 0, BRIGHTNESS_SAMPLE_SIZE, BRIGHTNESS_SAMPLE_SIZE)
+        GLES20.glClearColor(0f, 0f, 0f, 1f)
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+
+        drawQuad(gain = 1f)
+
+        brightnessSamplingPixelBuffer.position(0)
+        GLES20.glReadPixels(
+            0,
+            0,
+            BRIGHTNESS_SAMPLE_SIZE,
+            BRIGHTNESS_SAMPLE_SIZE,
+            GLES20.GL_RGBA,
+            GLES20.GL_UNSIGNED_BYTE,
+            brightnessSamplingPixelBuffer,
+        )
+
+        val error = GLES20.glGetError()
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+        if (error != GLES20.GL_NO_ERROR) {
+            Logger.w(TAG) { "Luminance sampling failed: $error" }
+            return
+        }
+
+        brightnessSamplingPixelBuffer.position(0)
+        val count = BRIGHTNESS_SAMPLE_SIZE * BRIGHTNESS_SAMPLE_SIZE
+        var sum = 0.0
+        repeat(count) {
+            val r = brightnessSamplingPixelBuffer.get().toInt() and 0xFF
+            val g = brightnessSamplingPixelBuffer.get().toInt() and 0xFF
+            val b = brightnessSamplingPixelBuffer.get().toInt() and 0xFF
+            brightnessSamplingPixelBuffer.get() // alpha, ignored
+            sum += (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+        }
+        brightnessGain = brightnessController.update((sum / count).toFloat())
     }
 
     private fun createProgram() {
@@ -278,6 +387,7 @@ internal class CameraGlRenderer(
         aTexCoordLoc = GLES20.glGetAttribLocation(program, "aTexCoord")
         uSTMatrixLoc = GLES20.glGetUniformLocation(program, "uSTMatrix")
         uTextureLoc = GLES20.glGetUniformLocation(program, "uTexture")
+        uBrightnessGainLoc = GLES20.glGetUniformLocation(program, "uGain")
 
         // Triangle strip covering the screen in NDC, with matching tex coords.
         // Four vertices, each has a x, y, u, v value.
@@ -364,6 +474,12 @@ internal class CameraGlRenderer(
         // Required for MediaCodec to accept our EGLSurface as a draw target.
         private const val EGL_RECORDABLE_ANDROID = 0x3142
 
+        // Side length of the square FBO used to estimate average scene luminance.
+        private const val BRIGHTNESS_SAMPLE_SIZE = 32
+
+        // Sample once every N rendered frames (~0.5s at 30fps).
+        private const val BRIGHTNESS_SAMPLING_INTERVAL = 15
+
         private const val VERTEX_SHADER_SRC = """
             attribute vec4 aPosition;
             attribute vec2 aTexCoord;
@@ -379,9 +495,11 @@ internal class CameraGlRenderer(
             #extension GL_OES_EGL_image_external : require
             precision mediump float;
             uniform samplerExternalOES uTexture;
+            uniform float uGain;
             varying vec2 vTexCoord;
             void main() {
-                gl_FragColor = texture2D(uTexture, vTexCoord);
+                vec4 color = texture2D(uTexture, vTexCoord);
+                gl_FragColor = vec4(pow(color.rgb, vec3(1.0 / uGain)), color.a);
             }
         """
     }

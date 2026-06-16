@@ -7,4 +7,6 @@ internal expect class VideoCaptureDataSource() {
     val videoStream: OpaqueVideoStream
 
     fun setResolution(resolution: CameraResolution)
+
+    fun setLowLightBoostEnabled(enabled: Boolean)
 }

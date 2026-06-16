@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
 import org.vpilo.babymonitor.camera.model.settings.CameraResolution
+import org.vpilo.babymonitor.camera.model.settings.LowLightBoost
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
@@ -19,9 +20,16 @@ class CameraVideoCaptureRepository(
     override val videoStream: OpaqueVideoStream = dataSource.videoStream
 
     init {
+        val scope = CoroutineScope(coroutineContext)
+
         settingsRepository
             .flowOf(Setting.CameraResolution)
             .onEach { dataSource.setResolution(it) }
-            .launchIn(CoroutineScope(coroutineContext))
+            .launchIn(scope)
+
+        settingsRepository
+            .flowOf(Setting.LowLightBoost)
+            .onEach { dataSource.setLowLightBoostEnabled(it) }
+            .launchIn(scope)
     }
 }

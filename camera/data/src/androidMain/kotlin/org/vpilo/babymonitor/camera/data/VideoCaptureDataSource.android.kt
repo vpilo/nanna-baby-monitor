@@ -48,6 +48,7 @@ internal actual class VideoCaptureDataSource(
     private val mainExecutor = mainDispatcher.asExecutor()
 
     private var resolution: CameraResolution = CameraResolution.Medium
+    private var lowLightBoostEnabled: Boolean = true
 
     private var videoCapture: VideoCapture<EncoderVideoOutput>? = null
 
@@ -65,6 +66,7 @@ internal actual class VideoCaptureDataSource(
                         bridgeSize = resolution.toSize(),
                         onFrameRendered = { mutableVideoStream.signalFrameRendered() },
                     )
+                field.setLowLightBoostEnabled(lowLightBoostEnabled)
             }
             return field
         }
@@ -243,6 +245,11 @@ internal actual class VideoCaptureDataSource(
             Logger.i(TAG) { "Resolution changed to $resolution" }
             owner.lifecycleScope.launch(mainDispatcher) { bind(provider, context, owner) }
         }
+    }
+
+    actual fun setLowLightBoostEnabled(enabled: Boolean) {
+        lowLightBoostEnabled = enabled
+        renderer.setLowLightBoostEnabled(enabled)
     }
 
     override fun onServiceStarted(

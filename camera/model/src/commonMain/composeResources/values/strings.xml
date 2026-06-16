@@ -5,4 +5,6 @@
     <string name="setting_camera_resolution_low">Low (480p, 10fps)</string>
     <string name="setting_camera_resolution_medium">Medium (720p, 20fps)</string>
     <string name="setting_camera_resolution_high">High (1080p, 30fps)</string>
+    <string name="setting_low_light_boost_title">Low-light boost</string>
+    <string name="setting_low_light_boost_description">Automatically brighten the video when the room is dark.</string>
 </resources>
