@@ -104,6 +104,7 @@ actual class DiscoveryManager(
     }
 
     actual fun unregisterService() {
+        Logger.d(TAG) { "Unregistering service..." }
         try {
             registrationListener?.let { nsdManager.unregisterService(it) }
             runningJob?.cancel()
@@ -125,8 +126,6 @@ actual class DiscoveryManager(
         runningJob?.cancel()
         runningJob =
             scope.launch {
-                acquireMulticastLock()
-
                 val listener =
                     object : NsdManager.DiscoveryListener {
                         override fun onDiscoveryStarted(serviceType: String) {
@@ -176,6 +175,11 @@ actual class DiscoveryManager(
                             Logger.e(TAG) { "Stop discovery failed: errorCode=$errorCode" }
                         }
                     }
+
+                acquireMulticastLock()
+                discoveryListener?.let {
+                    nsdManager.stopServiceDiscovery(it)
+                }
                 discoveryListener = listener
 
                 nsdManager.discoverServices(
@@ -214,6 +218,7 @@ actual class DiscoveryManager(
     actual fun getDiscoveredServers(): Set<Server> = _discoveredServers.value
 
     actual fun refresh() {
+        Logger.i(TAG) { "Refreshing discovery from state ${_state.value}" }
         when (_state.value) {
             DiscoveryManagerState.ServiceRegistered -> {
                 unregisterService()

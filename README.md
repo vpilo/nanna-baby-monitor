@@ -2,6 +2,8 @@
 
 # Feature plan
 
+- brightness correction should be done on the client, not the server.
+- client should be able to control silence detection on server.
 - On relay setting, see if reachable and if authenticated.
 - on server home, show if relay is reachable and if authenticated, and if service is registered + advertising (separately).
 - on client home, show if connected directly or via relay.
