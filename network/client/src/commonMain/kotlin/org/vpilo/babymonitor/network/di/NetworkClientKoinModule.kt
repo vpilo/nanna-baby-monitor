@@ -1,10 +1,8 @@
 package org.vpilo.babymonitor.network.di
 
 import org.koin.core.module.Module
-import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
-import org.koin.core.module.dsl.withOptions
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.vpilo.babymonitor.model.repository.IsConnectionAvailableRepository
@@ -20,7 +18,7 @@ import org.vpilo.babymonitor.network.client.NetworkVideoDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.RelayDiscoveryDataSource
 import org.vpilo.babymonitor.network.client.ServerSelectionDataSource
-import org.vpilo.babymonitor.network.common.DiscoveryManager
+import org.vpilo.babymonitor.network.common.di.networkCommonKoinModule
 
 val networkClientKoinModule: Module =
     module {
@@ -41,6 +39,5 @@ val networkClientKoinModule: Module =
         singleOf(::DefaultNetworkClientRepository)
             .bind<NetworkClientRepository>()
 
-        singleOf(::DiscoveryManager)
-            .withOptions { createdAtStart() }
+        includes(networkCommonKoinModule)
     }

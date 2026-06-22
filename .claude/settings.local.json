@@ -11,7 +11,8 @@
       "WebSearch",
       "Skill(superpowers:*)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "WebFetch(domain:android.googlesource.com)"
     ]
   }
 }

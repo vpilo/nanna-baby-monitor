@@ -37,14 +37,16 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_unkno
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
-import org.vpilo.babymonitor.model.repository.ServerId
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.LoadingIcon
+import org.vpilo.babymonitor.presentation.preview.makePreviewServer
 
 @Composable
 fun CameraSelectionScreen(
@@ -54,7 +56,7 @@ fun CameraSelectionScreen(
     onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
-    val serversList = remember(state) { state.availableServers.toList() }
+    val serversList = remember(state) { state.availableServers.filterIsInstance<Device.Server>() }
 
     LaunchedEffect(viewModel.effectsFlow) {
         viewModel.effectsFlow.collect { effect ->
@@ -63,8 +65,8 @@ fun CameraSelectionScreen(
                     onConnected()
                 }
 
-                is CameraSelectionScreenEffect.ConnectToLastServerId -> {
-                    viewModel.send(CameraSelectionScreenAction.ConnectToServer(effect.serverId))
+                is CameraSelectionScreenEffect.ConnectToLastServer -> {
+                    viewModel.send(CameraSelectionScreenAction.ConnectToServer(effect.server))
                 }
             }
         }
@@ -91,8 +93,8 @@ fun CameraSelectionScreen(
 private fun CameraSelectionScreenContent(
     modifier: Modifier = Modifier,
     connectionState: ConnectionState,
-    servers: List<ServerId>,
-    onConnectRequested: (server: ServerId) -> Unit,
+    servers: List<Device.Server>,
+    onConnectRequested: (server: Device.Server) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
 
@@ -133,7 +135,7 @@ private fun CameraSelectionScreenContent(
                     enabled = connectionState !is ConnectionState.Connecting,
                     onClick = { onConnectRequested(server) },
                 ) {
-                    if (!server.isLocalServer) {
+                    if (server is Device.RemoteServer) {
                         Icon(imageVector = Icons.Default.Cloud, contentDescription = null)
                     }
                     Text(
@@ -209,7 +211,12 @@ private fun CameraSelectionScreenPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
             connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet),
-            servers = listOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera"), ServerId("Remote Cam", isLocalServer = false)),
+            servers =
+                listOf(
+                    makePreviewServer("Baby Monitor-1234"),
+                    makePreviewServer("Bedroom Camera"),
+                    makePreviewServer("Remote Cam", isLocal = false),
+                ),
             onConnectRequested = {},
         )
     }
@@ -219,8 +226,12 @@ private fun CameraSelectionScreenPreview() =
 private fun CameraSelectionScreenConnectingPreview() =
     AppPreviewTheme(modifier = Modifier.fillMaxSize()) {
         CameraSelectionScreenContent(
-            connectionState = ConnectionState.Connecting(ServerId("Bedroom Camera")),
-            servers = listOf(ServerId("Baby Monitor-1234"), ServerId("Bedroom Camera")),
+            connectionState = ConnectionState.Connecting(makePreviewServer("Bedroom Camera")),
+            servers =
+                listOf(
+                    makePreviewServer("Baby Monitor-1234"),
+                    makePreviewServer("Remote Cam", isLocal = false),
+                ),
             onConnectRequested = {},
         )
     }

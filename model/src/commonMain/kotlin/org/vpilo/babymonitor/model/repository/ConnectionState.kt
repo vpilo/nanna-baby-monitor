@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.model.repository
 
 import androidx.compose.runtime.Stable
+import org.vpilo.babymonitor.model.Device
 
 @Stable
 sealed interface ConnectionState {
@@ -10,15 +11,15 @@ sealed interface ConnectionState {
     ) : ConnectionState
 
     data class Connecting(
-        val server: ServerId,
+        val server: Device.Server,
     ) : ConnectionState
 
     data class Reconnecting(
-        val server: ServerId,
+        val server: Device.Server,
     ) : ConnectionState
 
     data class Connected(
-        val server: ServerId,
+        val server: Device.Server,
     ) : ConnectionState
 
     enum class ErrorReason {

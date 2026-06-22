@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.RelayHandshake
@@ -39,7 +40,7 @@ internal class RelayServerRegistration(
     val isRegistered: Flow<Boolean> = _isRegistered.asStateFlow()
 
     private var relayHost: String = ""
-    private var deviceName: String = ""
+    private lateinit var server: Device.LocalServer
     private var registrationJob: Job? = null
     private val activeStreamJobs = java.util.concurrent.CopyOnWriteArrayList<Job>()
 
@@ -51,9 +52,9 @@ internal class RelayServerRegistration(
         restart()
     }
 
-    fun setDeviceName(name: String) {
-        if (deviceName == name) return
-        deviceName = name
+    fun identifySelf(server: Device.LocalServer) {
+        if (this::server.isInitialized && this.server == server) return
+        this.server = server
         restart()
     }
 
@@ -72,14 +73,14 @@ internal class RelayServerRegistration(
 
     fun restart() {
         stop()
-        if (!isEnabled || relayHost.isEmpty() || deviceName.isEmpty()) return
+        if (!isEnabled || relayHost.isEmpty() || !this::server.isInitialized) return
         registrationJob = scope.launch { runRegistrationLoop() }
     }
 
     private suspend fun runRegistrationLoop() {
         while (true) {
             try {
-                Logger.d(TAG) { "Connecting to relay at $relayHost as '$deviceName'" }
+                Logger.d(TAG) { "Connecting to relay at $relayHost as $server" }
                 relayHttpClient.wss(
                     method = HttpMethod.Get,
                     host = relayHost,
@@ -90,8 +91,8 @@ internal class RelayServerRegistration(
                     timeout = Constants.WEBSOCKET_TIMEOUT
 
                     RelayHandshake.send(this, secret)
-                    send(Frame.Text(deviceName))
-                    Logger.i(TAG) { "Registered with relay as '$deviceName'" }
+                    send(Frame.Text("${server.idString}#${server.name}"))
+                    Logger.i(TAG) { "Registered with relay as as $server" }
                     _isRegistered.value = true
                     readRelaySignals()
                 }
@@ -136,7 +137,7 @@ internal class RelayServerRegistration(
                         method = HttpMethod.Get,
                         host = relayHost,
                         port = Constants.RELAY_PORT,
-                        path = "$streamPath/${deviceName.encodeURLPathPart()}",
+                        path = "$streamPath/${server.idString.encodeURLPathPart()}",
                     ) {
                         pingInterval = Constants.WEBSOCKET_PING_PERIOD
                         timeout = Constants.WEBSOCKET_TIMEOUT

@@ -16,9 +16,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
-import org.vpilo.babymonitor.network.common.Server
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.InetAddress
@@ -26,7 +26,7 @@ import java.net.ProtocolException
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebSocketConnectionHandler(
-    private val server: Server,
+    private val device: Device,
     private val endpointPath: String,
     private val sessionBlock: suspend DefaultClientWebSocketSession.() -> Unit,
     private val onDisconnected: suspend (exception: Throwable) -> Unit = {},
@@ -39,7 +39,7 @@ internal class WebSocketConnectionHandler(
         if (connectionJob?.isActive == true) {
             return
         }
-        connect(server.addresses)
+        connect(device.addresses)
     }
 
     private fun connect(remainingHosts: Set<InetAddress>) {
@@ -55,7 +55,7 @@ internal class WebSocketConnectionHandler(
     ) {
         var lastException: Exception? = null
 
-        Logger.i(TAG) { "Connecting to $host for $endpointPath (local: ${server.id.isLocalServer})" }
+        Logger.i(TAG) { "Connecting to $host for $endpointPath (device: $device)" }
 
         try {
             startWebSocket(host)
@@ -98,11 +98,11 @@ internal class WebSocketConnectionHandler(
     }
 
     private suspend fun startWebSocket(host: InetAddress) {
-        if (server.id.isLocalServer) {
+        if (device !is Device.RemoteServer) {
             networkClient.webSocket(
                 method = HttpMethod.Get,
                 host = host.hostAddress,
-                port = Constants.WEBSOCKET_PORT,
+                port = Constants.SERVICE_PORT,
                 path = endpointPath,
             ) {
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
@@ -115,7 +115,7 @@ internal class WebSocketConnectionHandler(
                 method = HttpMethod.Get,
                 host = host.hostName,
                 port = Constants.RELAY_PORT,
-                path = "/relay/client$endpointPath/${server.id.name.encodeURLPathPart()}",
+                path = "/relay/client$endpointPath/${device.idString.encodeURLPathPart()}",
             ) {
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT

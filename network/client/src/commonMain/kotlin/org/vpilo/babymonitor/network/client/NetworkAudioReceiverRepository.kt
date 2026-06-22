@@ -45,7 +45,7 @@ internal class NetworkAudioReceiverRepository(
                         if (target == null) return@collect
                         handler =
                             WebSocketConnectionHandler(
-                                server = target,
+                                device = target,
                                 endpointPath = Endpoints.STREAM_AUDIO,
                                 sessionBlock = { audioStreamingClientWebSocket() },
                                 coroutineScope = coroutineScope,

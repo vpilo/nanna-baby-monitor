@@ -5,8 +5,11 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.skip
+import kotlinx.coroutines.flow.take
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.vpilo.babymonitor.common.Logger
@@ -39,6 +42,7 @@ internal actual class DefaultDeviceStateRepository :
     override val isInternetAvailable: Flow<Boolean> =
         getIsInternetAvailableFlow(context)
             .debounce(INTERNET_STATE_DEBOUNCE_TIMEOUT)
+            .drop(1)
             .onEach { state ->
                 Logger.d(TAG) { "Internet availability changed: $state" }
             }.onCompletion { ex ->

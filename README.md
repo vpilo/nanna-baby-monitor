@@ -2,7 +2,9 @@
 
 # Feature plan
 
-- brightness correction should be done on the client, not the server.
+- move discovery out of network repos.
+- brightness correction should be done (or at least controlled) on the client, not the server.
+- cam selection screen should say "will reconnect to device x when it appears" if it's not able to reconnect instantly
 - client should be able to control silence detection on server.
 - On relay setting, see if reachable and if authenticated.
 - on server home, show if relay is reachable and if authenticated, and if service is registered + advertising (separately).

@@ -17,20 +17,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
-import org.vpilo.babymonitor.model.repository.ServerId
+import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import kotlin.coroutines.CoroutineContext
+import kotlin.getValue
 
 internal class RelayDiscoveryDataSource(
     coroutineContext: CoroutineContext,
 ) {
     private val scope = CoroutineScope(coroutineContext + SupervisorJob())
 
-    private val _serverIds = MutableStateFlow<Set<ServerId>>(emptySet())
-    val serverIds: StateFlow<Set<ServerId>> = _serverIds.asStateFlow()
+    private val _devices = MutableStateFlow<Set<Device>>(emptySet())
+    val devices: StateFlow<Set<Device>> = _devices.asStateFlow()
 
     private var relayHost: String = ""
     private var discoveryJob: Job? = null
@@ -42,7 +44,7 @@ internal class RelayDiscoveryDataSource(
         relayHost = host
         discoveryJob?.cancel()
         discoveryJob = null
-        _serverIds.value = emptySet()
+        _devices.value = emptySet()
         start()
     }
 
@@ -51,7 +53,7 @@ internal class RelayDiscoveryDataSource(
         discoveryJob?.cancel()
         discoveryJob = null
         if (!enabled) {
-            _serverIds.value = emptySet()
+            _devices.value = emptySet()
         } else {
             start()
         }
@@ -84,10 +86,10 @@ internal class RelayDiscoveryDataSource(
                                     .readText()
                                     .lines()
                                     .filter { it.isNotEmpty() }
-                                    .map { ServerId(it, isLocalServer = false) }
+                                    .mapNotNull { line -> line.toRemoteServer() }
                                     .toSet()
                             Logger.i(TAG) { "Relay found servers: $ids" }
-                            _serverIds.value = ids
+                            _devices.value = ids
                         }
                     }
                 }
@@ -102,12 +104,24 @@ internal class RelayDiscoveryDataSource(
 
                     else -> {
                         Logger.w(TAG) { "Relay discovery disconnected: ${ex.prettify()}. Retrying." }
-                        _serverIds.value = emptySet()
+                        _devices.value = emptySet()
                         delay(Constants.RECONNECTION_TIMEOUT)
                     }
                 }
             }
         }
+    }
+
+    private fun String.toRemoteServer(): Device.RemoteServer? {
+        if (isBlank()) return null
+        val (rawId, name) = split("#")
+        val id = DeviceId.parseOrNull(rawId) ?: return null
+
+        return Device.RemoteServer(
+            id = id,
+            name = name,
+            relayHost = this@RelayDiscoveryDataSource.relayHost,
+        )
     }
 
     private companion object {

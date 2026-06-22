@@ -16,7 +16,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -27,13 +26,11 @@ import babymonitor.appcommon.generated.resources.app_title_client_home_name
 import babymonitor.appcommon.generated.resources.client_disconnect
 import babymonitor.appcommon.generated.resources.client_reconnecting
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
-import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.SURFACE_ALPHA
 import org.vpilo.babymonitor.presentation.Theme
@@ -42,6 +39,7 @@ import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.Backdrop
+import org.vpilo.babymonitor.presentation.preview.makePreviewServer
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 
 @Composable
@@ -181,7 +179,7 @@ private fun ClientHomeScreenPreview() =
             onToggleVideo = { },
             batteryLevel = 5,
             signalQuality = 3,
-            connectionState = ConnectionState.Connected(ServerId("Test Server")),
+            connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
             onDisconnected = { },
         )
     }
@@ -200,7 +198,7 @@ private fun ClientHomeScreenVideoOnlyPreview() =
             onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = 93,
-            connectionState = ConnectionState.Connected(ServerId("Test Server")),
+            connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
             onDisconnected = { },
         )
     }
@@ -219,7 +217,7 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
             onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
-            connectionState = ConnectionState.Connected(ServerId("Test Server")),
+            connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
             onDisconnected = { },
         )
     }

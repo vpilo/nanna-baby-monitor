@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.network.client
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -8,25 +9,22 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.model.repository.ServerId
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.model.repository.ktx.reactor
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.DiscoveryManager
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
-import org.vpilo.babymonitor.network.common.Server
-import java.net.InetAddress
+import org.vpilo.babymonitor.network.common.discovery.DiscoveryManager
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
@@ -45,13 +43,12 @@ internal class DefaultNetworkClientRepository(
 
     override val serverStateFlow: Flow<ServerState> = networkControlDataSource.serverState
 
-    override val discoveredServerIdsFlow: Flow<Set<ServerId>> =
+    override val discoveredDevicesFlow: Flow<Set<Device>> =
         combine(
-            discoveryManager.discoveredServersFlow.map { set -> set.map { it.id }.toSet() },
-            relayDiscoveryDataSource.serverIds,
-        ) { localIds, relayIds ->
-            val localNames = localIds.map { it.name }.toSet()
-            localIds + relayIds.filter { it.name !in localNames }
+            discoveryManager.discoveredDevicesFlow,
+            relayDiscoveryDataSource.devices,
+        ) { localDevices, relayDevices ->
+            localDevices + relayDevices
         }
 
     private var relayHost: String = ""
@@ -60,13 +57,11 @@ internal class DefaultNetworkClientRepository(
 
     private val foregroundLink = ForegroundServiceLink(AppRole.CLIENT)
 
+    private lateinit var localDevice: Device.Client
+
+    private var discoveryJob: Job? = null
+
     init {
-        // Ensure discovery is active if anyone is using this repository.
-        connectionState.reactor(
-            scope = scope,
-            onActive = { discoveryManager.startDiscovery() },
-            onInactive = { discoveryManager.stopDiscovery() },
-        )
         // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
         deviceStateRepository.isInternetAvailable
             .onEach {
@@ -75,22 +70,20 @@ internal class DefaultNetworkClientRepository(
             }.launchIn(scope)
     }
 
-    override suspend fun connect(serverId: ServerId) {
-        val currentState = connectionState.value
-        val server =
-            if (!serverId.isLocalServer) {
-                Server(serverId, InetAddress.getByAddress(relayHost, ByteArray(4)))
-            } else {
-                discoveryManager.getDiscoveredServers().firstOrNull { it.id.name == serverId.name }
-                    ?: run {
-                        Logger.w(TAG) { "Server ${serverId.name} not found in local servers." }
-                        if (currentState !is ConnectionState.Reconnecting) {
-                            connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)
-                        }
-                        return
-                    }
-            }
+    override fun identifySelf(device: Device.Client) {
+        localDevice = device
+        // Ensure discovery is active if anyone is using this repository.
+        discoveryJob?.cancel()
+        discoveryJob =
+            connectionState.reactor(
+                scope = scope,
+                onActive = { discoveryManager.register(localDevice) },
+                onInactive = { discoveryManager.unregister() },
+            )
+    }
 
+    override suspend fun connect(server: Device.Server) {
+        val currentState = connectionState.value
         if (currentState is ConnectionState.Connecting || currentState is ConnectionState.Connected) {
             return
         }
@@ -98,12 +91,12 @@ internal class DefaultNetworkClientRepository(
         foregroundLink.start()
         closeAllConnections()
 
-        Logger.i(TAG) { "Connecting to server ${serverId.name} (local: ${serverId.isLocalServer})" }
+        Logger.i(TAG) { "Connecting to $server" }
         controlHandler =
             WebSocketConnectionHandler(
-                server = server,
+                device = server,
                 endpointPath = Endpoints.CONTROL,
-                onDisconnected = { onControlConnectionClosed(serverId, it) },
+                onDisconnected = { onControlConnectionClosed(server, it) },
                 sessionBlock = {
                     onControlConnectionOpened(server)
                     controlClientWebSocket()
@@ -111,7 +104,7 @@ internal class DefaultNetworkClientRepository(
                 coroutineScope = scope,
             ).apply { connect() }
 
-        connectionState.value = ConnectionState.Connecting(serverId)
+        connectionState.value = ConnectionState.Connecting(server)
     }
 
     private fun closeAllConnections() {
@@ -138,25 +131,21 @@ internal class DefaultNetworkClientRepository(
         relayDiscoveryDataSource.updateRelayHost(host)
     }
 
-    override fun setDeviceName(name: String) {
-        discoveryManager.setDeviceName(name)
-    }
-
-    private fun onControlConnectionOpened(server: Server) {
+    private fun onControlConnectionOpened(server: Device.Server) {
         serverSelectionDataSource.set(server)
-        connectionState.value = ConnectionState.Connected(server.id)
+        connectionState.value = ConnectionState.Connected(server)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
     private fun onControlConnectionClosed(
-        serverId: ServerId,
+        server: Device.Server,
         exception: Throwable,
     ) {
         Logger.i(TAG) { "Control connection closed: ${exception.prettify()}" }
 
         if (serverSelectionDataSource.server.value == null) return
 
-        connectionState.value = ConnectionState.Reconnecting(serverId)
+        connectionState.value = ConnectionState.Reconnecting(server)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
 
         scope.launch {
@@ -165,7 +154,7 @@ internal class DefaultNetworkClientRepository(
                 if (serverSelectionDataSource.server.value == null) {
                     return@launch
                 }
-                connect(serverId)
+                connect(server)
             } while (connectionState.value is ConnectionState.Reconnecting)
         }
     }

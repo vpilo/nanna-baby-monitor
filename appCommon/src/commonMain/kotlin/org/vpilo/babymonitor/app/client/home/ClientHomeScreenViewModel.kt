@@ -19,15 +19,16 @@ import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
-import org.vpilo.babymonitor.settings.model.settings.DeviceName
+import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 
 @Stable
 class ClientHomeScreenViewModel(
     private val audioReceiverRepository: StreamingAudioReceiverRepository,
     private val videoReceiverRepository: StreamingVideoReceiverRepository,
     private val networkClientRepository: NetworkClientRepository,
-    private val playReceivedAudio: PlayReceivedAudioUseCase,
     private val settingsRepository: SettingsRepository,
+    private val playReceivedAudio: PlayReceivedAudioUseCase,
+    private val getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
 ) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
         initialState = ClientHomeScreenState(),
     ) {
@@ -84,8 +85,8 @@ class ClientHomeScreenViewModel(
             playReceivedAudio.setPlaying(vmScope, isEnabled)
         }
 
-        settingsRepository.flowOf(Setting.DeviceName).subscribe { name ->
-            networkClientRepository.setDeviceName(name)
+        getLocalClientDeviceFlowUseCase().subscribe { device ->
+            networkClientRepository.identifySelf(device)
         }
 
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->

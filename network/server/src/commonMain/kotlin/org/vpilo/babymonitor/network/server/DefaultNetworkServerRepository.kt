@@ -32,14 +32,14 @@ import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.DiscoveryManager
-import org.vpilo.babymonitor.network.common.DiscoveryManagerState
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
+import org.vpilo.babymonitor.network.common.discovery.DiscoveryManager
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
@@ -69,22 +69,27 @@ internal class DefaultNetworkServerRepository(
 
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
 
-    override fun setRelayHost(host: String) {
-        relayRegistration.setRelayHost(host)
+    private lateinit var thisDevice: Device.LocalServer
+
+    override fun identifySelf(device: Device.LocalServer) {
+        thisDevice = device
+        if (discoveryManager.isActive) {
+            discoveryManager.unregister()
+        }
+        discoveryManager.register(device)
+        relayRegistration.identifySelf(device)
     }
 
-    override fun setDeviceName(name: String) {
-        discoveryManager.setDeviceName(name)
-        relayRegistration.setDeviceName(name)
+    override fun setRelayHost(host: String) {
+        relayRegistration.setRelayHost(host)
     }
 
     init {
         combine(
             isServerReady,
-            discoveryManager.state,
             relayRegistration.isRegistered,
-        ) { isServerReady, discoveryState, isRelayReady ->
-            val reportServerAvailable = isServerReady && (discoveryState == DiscoveryManagerState.ServiceRegistered || isRelayReady)
+        ) { isServerReady, isRelayReady ->
+            val reportServerAvailable = isServerReady && (discoveryManager.isActive || isRelayReady)
             state.update { it.copy(isAvailable = reportServerAvailable) }
         }.launchIn(scope)
 
@@ -105,17 +110,16 @@ internal class DefaultNetworkServerRepository(
 
     override suspend fun start() {
         if (server != null) return
+        check(::thisDevice.isInitialized) { "Device must be identified before starting the server" }
 
         foregroundLink.start()
-
-        discoveryManager.registerService()
 
         scope.launch {
             embeddedServer(
                 factory = CIO,
                 module = { serverModule() },
                 host = Constants.SERVICES_LISTEN_ADDRESS,
-                port = Constants.WEBSOCKET_PORT,
+                port = Constants.SERVICE_PORT,
             ).apply {
                 server = this
 
@@ -145,7 +149,7 @@ internal class DefaultNetworkServerRepository(
             relayRegistration.stop()
             activeAudioSessions.closeAll()
             activeVideoSessions.closeAll()
-            discoveryManager.unregisterService()
+            discoveryManager.unregister()
             server?.stop(
                 shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
                 shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,

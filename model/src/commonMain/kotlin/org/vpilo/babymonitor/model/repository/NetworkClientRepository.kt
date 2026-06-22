@@ -1,21 +1,22 @@
 package org.vpilo.babymonitor.model.repository
 
 import kotlinx.coroutines.flow.Flow
+import org.vpilo.babymonitor.model.Device
 
 interface NetworkClientRepository {
     val connectionStateFlow: Flow<ConnectionState>
 
     val serverStateFlow: Flow<ServerState>
 
-    val discoveredServerIdsFlow: Flow<Set<ServerId>>
+    val discoveredDevicesFlow: Flow<Set<Device>>
 
-    suspend fun connect(serverId: ServerId)
+    fun identifySelf(device: Device.Client)
+
+    suspend fun connect(server: Device.Server)
 
     suspend fun disconnect()
 
     fun setRelayHost(host: String)
-
-    fun setDeviceName(name: String)
 
     fun reset()
 }

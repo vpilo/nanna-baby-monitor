@@ -42,4 +42,4 @@ style:
     allowedNames: "(_.*|TAG)"
     ignoreAnnotated: [ 'Preview' ]
   ReturnCount:
-    max: 3
+    active: false

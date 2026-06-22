@@ -3,13 +3,13 @@ package org.vpilo.babymonitor.network.client
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.vpilo.babymonitor.network.common.Server
+import org.vpilo.babymonitor.model.Device
 
 internal class ServerSelectionDataSource {
-    private val collector = MutableStateFlow<Server?>(null)
-    val server: StateFlow<Server?> = collector.asStateFlow()
+    private val collector = MutableStateFlow<Device.Server?>(null)
+    val server: StateFlow<Device.Server?> = collector.asStateFlow()
 
-    fun set(server: Server?) {
+    fun set(server: Device.Server?) {
         collector.value = server
     }
 }

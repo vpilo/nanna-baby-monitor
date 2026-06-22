@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.DiscoveryManager
@@ -45,6 +46,7 @@ import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
 import org.vpilo.babymonitor.network.common.Server
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
+import org.vpilo.babymonitor.network.common.discovery.DiscoveryManager
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
@@ -60,7 +62,7 @@ class DefaultNetworkRelayRepository(
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
     private var server: EmbeddedServer<*, *>? = null
 
-    private val currentServers = MutableStateFlow<Set<Server>>(emptySet())
+    private val currentServers = MutableStateFlow<Set<Device.Server>>(emptySet())
     private val remoteServers = MutableStateFlow<Map<String, WebSocketServerSession>>(emptyMap())
 
     // Key: "$serverId:$endpoint" e.g. "nursery:/video"
@@ -76,10 +78,10 @@ class DefaultNetworkRelayRepository(
 
     fun start() {
         if (server != null) return
-        discoveryManager.discoveredServersFlow
+        discoveryManager.discoveredDevicesFlow
             .onEach { currentServers.value = it }
             .launchIn(scope)
-        discoveryManager.startDiscovery()
+        discoveryManager.register(device)
 
         val keyStore = loadKeyStore()
 
