@@ -125,7 +125,8 @@ internal actual class VideoCaptureDataSource(
             currentGain = brightnessController.update(measureLuminance(this))
         }
         val op = lookupOpFor(currentGain) ?: return this
-        return op.filter(this, null)
+        op.filter(raster, raster)
+        return this
     }
 
     private fun measureLuminance(image: BufferedImage): Float {
