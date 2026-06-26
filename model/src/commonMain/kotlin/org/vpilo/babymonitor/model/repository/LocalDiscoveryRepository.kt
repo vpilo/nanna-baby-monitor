@@ -1,14 +1,10 @@
-package org.vpilo.babymonitor.network.common.discovery
+package org.vpilo.babymonitor.model.repository
 
 import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.model.Device
 
-expect class DiscoveryManager() {
+interface LocalDiscoveryRepository {
     val discoveredDevicesFlow: Flow<Set<Device>>
-
-    val discoveredDevices: Set<Device>
-
-    val isActive: Boolean
 
     fun register(device: Device)
 

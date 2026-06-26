@@ -28,11 +28,11 @@ internal class AndroidDiscoveryListener(
     }
 
     override fun onDiscoveryStarted(serviceType: String) {
-        Logger.d(DiscoveryManager.TAG) { "Discovery started" }
+        Logger.d(DefaultLocalDiscoveryRepository.TAG) { "Discovery started" }
     }
 
     override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-        Logger.d(DiscoveryManager.TAG) { "service announce ${serviceInfo.serviceName}" }
+        Logger.d(DefaultLocalDiscoveryRepository.TAG) { "service announce ${serviceInfo.serviceName}" }
         // NsdManager wants a new listener for every resolution request.
         @Suppress("DEPRECATION")
         nsdManager.resolveService(
@@ -56,44 +56,44 @@ internal class AndroidDiscoveryListener(
         val added = serviceInfo.toDeviceOrNull() ?: return
 
         if (added.addresses.isEmpty()) {
-            Logger.w(DiscoveryManager.TAG) { "Device resolved with no hosts: $added" }
+            Logger.w(DefaultLocalDiscoveryRepository.TAG) { "Device resolved with no hosts: $added" }
             return
         }
 
-        Logger.i(DiscoveryManager.TAG) { "Device found: $device" }
+        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $device" }
         _discoveredDevices.update { devices -> devices + added }
     }
 
     override fun onServiceLost(serviceInfo: NsdServiceInfo) {
         val removed = serviceInfo.toDeviceOrNull() ?: return
 
-        Logger.i(DiscoveryManager.TAG) { "Device lost: $device" }
+        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $device" }
         _discoveredDevices.update { devices -> devices - removed }
     }
 
     override fun onDiscoveryStopped(serviceType: String) {
-        Logger.d(DiscoveryManager.TAG) { "Discovery stopped" }
+        Logger.d(DefaultLocalDiscoveryRepository.TAG) { "Discovery stopped" }
     }
 
     override fun onStartDiscoveryFailed(
         serviceType: String,
         errorCode: Int,
     ) {
-        Logger.e(DiscoveryManager.TAG) { "Start discovery failed: errorCode=$errorCode" }
+        Logger.e(DefaultLocalDiscoveryRepository.TAG) { "Start discovery failed: errorCode=$errorCode" }
     }
 
     override fun onStopDiscoveryFailed(
         serviceType: String,
         errorCode: Int,
     ) {
-        Logger.e(DiscoveryManager.TAG) { "Stop discovery failed: errorCode=$errorCode" }
+        Logger.e(DefaultLocalDiscoveryRepository.TAG) { "Stop discovery failed: errorCode=$errorCode" }
     }
 
     fun onResolveFailed(
         serviceInfo: NsdServiceInfo,
         errorCode: Int,
     ) {
-        Logger.w(DiscoveryManager.TAG) {
+        Logger.w(DefaultLocalDiscoveryRepository.TAG) {
             "Resolve failed for ${serviceInfo.serviceName} (type: ${serviceInfo.serviceType}): errorCode=$errorCode"
         }
     }

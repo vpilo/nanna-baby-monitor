@@ -7,11 +7,9 @@ import org.vpilo.babymonitor.model.Device
 interface NetworkServerRepository {
     val serverStateFlow: Flow<ServerState>
 
-    suspend fun start()
+    suspend fun start(self: Device.LocalServer)
 
     suspend fun stop()
-
-    fun identifySelf(device: Device.LocalServer)
 
     suspend fun setCaptureMode(mode: CaptureMode)
 

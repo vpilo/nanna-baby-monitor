@@ -22,7 +22,7 @@ val Setting.Companion.DeviceName by makeSetting {
         name = Res.string.settings_device_name_title,
         description = Res.string.settings_device_name_description,
         default = "",
-        validateChange = { it.replace(deviceNameFilter, " ").ifBlank { makeDefaultDeviceName() } },
+        validateChange = { it.replace(deviceNameFilter, " ").trim().ifBlank { makeDefaultDeviceName() } },
     )
 }
 
@@ -32,4 +32,4 @@ private suspend fun makeDefaultDeviceName(): String {
     return "$appName $randomId"
 }
 
-private val deviceNameFilter: Regex by lazy { Regex("[\\s\\c ]") }
+private val deviceNameFilter: Regex by lazy { Regex("[\\s\\c ]+") }

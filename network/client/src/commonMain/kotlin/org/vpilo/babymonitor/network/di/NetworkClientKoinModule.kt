@@ -16,14 +16,13 @@ import org.vpilo.babymonitor.network.client.NetworkAudioReceiverRepository
 import org.vpilo.babymonitor.network.client.NetworkControlDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoReceiverRepository
-import org.vpilo.babymonitor.network.client.RelayDiscoveryDataSource
+import org.vpilo.babymonitor.network.client.discovery.DefaultRemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.client.ServerSelectionDataSource
-import org.vpilo.babymonitor.network.common.di.networkCommonKoinModule
 
 val networkClientKoinModule: Module =
     module {
         singleOf(::ServerSelectionDataSource)
-        singleOf(::RelayDiscoveryDataSource)
+        singleOf(::DefaultRemoteDiscoveryRepository)
         singleOf(::NetworkControlDataSource)
         singleOf(::NetworkAudioDataSource)
         singleOf(::NetworkVideoDataSource)
@@ -38,6 +37,4 @@ val networkClientKoinModule: Module =
             .bind<IsConnectionAvailableRepository>()
         singleOf(::DefaultNetworkClientRepository)
             .bind<NetworkClientRepository>()
-
-        includes(networkCommonKoinModule)
     }

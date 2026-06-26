@@ -3,6 +3,7 @@
 # Feature plan
 
 - move discovery out of network repos.
+- when the control connection is closed by the client, video and audio streaming should be terminated explicitly.
 - brightness correction should be done (or at least controlled) on the client, not the server.
 - cam selection screen should say "will reconnect to device x when it appears" if it's not able to reconnect instantly
 - client should be able to control silence detection on server.

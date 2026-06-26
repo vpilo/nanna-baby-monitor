@@ -4,7 +4,7 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.discovery.DiscoveryManager
+import org.vpilo.babymonitor.network.common.discovery.DefaultLocalDiscoveryRepository
 import java.net.InetAddress
 import javax.jmdns.ServiceEvent
 
@@ -13,21 +13,21 @@ internal fun ServiceEvent.toDeviceOrNull(): Device? {
 
     val version = info.getPropertyString(DEVICE_ATTRIBUTE_VERSION) ?: return null
     if (version != DEVICE_ATTRIBUTE_SCHEMA_VERSION) {
-        Logger.w(DiscoveryManager.TAG) {
+        Logger.w(DefaultLocalDiscoveryRepository.TAG) {
             "Device ignored due to version mismatch: I am $DEVICE_ATTRIBUTE_SCHEMA_VERSION, but got $version"
         }
         return null
     }
     val id =
         DeviceId.parseOrNull(info.name) ?: run {
-            Logger.w(DiscoveryManager.TAG) {
+            Logger.w(DefaultLocalDiscoveryRepository.TAG) {
                 "Device ignored due to invalid ID: '${info.name}'"
             }
             return null
         }
     val name =
         info.getPropertyString(DEVICE_ATTRIBUTE_NAME) ?: run {
-            Logger.w(DiscoveryManager.TAG) {
+            Logger.w(DefaultLocalDiscoveryRepository.TAG) {
                 "Device ignored due to missing name for $id"
             }
             return null
@@ -51,7 +51,7 @@ internal fun ServiceEvent.toDeviceOrNull(): Device? {
         }
 
         else -> {
-            Logger.w(DiscoveryManager.TAG) { "Device ignored due to unsupported type '$type'" }
+            Logger.w(DefaultLocalDiscoveryRepository.TAG) { "Device ignored due to unsupported type '$type'" }
             null
         }
     }

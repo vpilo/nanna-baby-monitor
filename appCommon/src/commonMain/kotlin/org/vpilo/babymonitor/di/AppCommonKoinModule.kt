@@ -12,6 +12,7 @@ import org.vpilo.babymonitor.app.menu.MenuScreenViewModel
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreenViewModel
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreenViewModel
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
+import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 import kotlin.coroutines.CoroutineContext
 
 expect val appPlatformModule: Module
@@ -22,6 +23,7 @@ val appSharedKoinModules =
             single<CoroutineContext> { Dispatchers.Default }
 
             factoryOf(::PlayReceivedAudioUseCase)
+            factoryOf(::GetLocalClientDeviceFlowUseCase)
 
             viewModelOf(::OnboardingScreenViewModel)
             viewModelOf(::AppRoleChoiceScreenViewModel)

@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.network.client
+package org.vpilo.babymonitor.network.client.discovery
 
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
@@ -19,41 +19,33 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import kotlin.coroutines.CoroutineContext
-import kotlin.getValue
 
-internal class RelayDiscoveryDataSource(
+internal class DefaultRemoteDiscoveryRepository(
     coroutineContext: CoroutineContext,
-) {
+) : RemoteDiscoveryRepository {
     private val scope = CoroutineScope(coroutineContext + SupervisorJob())
 
-    private val _devices = MutableStateFlow<Set<Device>>(emptySet())
-    val devices: StateFlow<Set<Device>> = _devices.asStateFlow()
+    private val _discoveredDevicesFlow = MutableStateFlow<Set<Device>>(emptySet())
+    override val discoveredDevicesFlow: StateFlow<Set<Device>> = _discoveredDevicesFlow.asStateFlow()
 
     private var relayHost: String = ""
     private var discoveryJob: Job? = null
 
     private var isEnabled: Boolean = true
 
-    fun updateRelayHost(host: String) {
-        if (relayHost == host) return
+    override fun setEnabled(host: String, enabled: Boolean) {
+        isEnabled = enabled
         relayHost = host
         discoveryJob?.cancel()
         discoveryJob = null
-        _devices.value = emptySet()
-        start()
-    }
-
-    fun setEnabled(enabled: Boolean) {
-        isEnabled = enabled
-        discoveryJob?.cancel()
-        discoveryJob = null
         if (!enabled) {
-            _devices.value = emptySet()
+            _discoveredDevicesFlow.value = emptySet()
         } else {
             start()
         }
@@ -89,7 +81,7 @@ internal class RelayDiscoveryDataSource(
                                     .mapNotNull { line -> line.toRemoteServer() }
                                     .toSet()
                             Logger.i(TAG) { "Relay found servers: $ids" }
-                            _devices.value = ids
+                            _discoveredDevicesFlow.value = ids
                         }
                     }
                 }
@@ -104,7 +96,7 @@ internal class RelayDiscoveryDataSource(
 
                     else -> {
                         Logger.w(TAG) { "Relay discovery disconnected: ${ex.prettify()}. Retrying." }
-                        _devices.value = emptySet()
+                        _discoveredDevicesFlow.value = emptySet()
                         delay(Constants.RECONNECTION_TIMEOUT)
                     }
                 }
@@ -120,12 +112,12 @@ internal class RelayDiscoveryDataSource(
         return Device.RemoteServer(
             id = id,
             name = name,
-            relayHost = this@RelayDiscoveryDataSource.relayHost,
+            relayHost = this@DefaultRemoteDiscoveryRepository.relayHost,
         )
     }
 
     private companion object {
-        private val TAG = RelayDiscoveryDataSource::class
+        private val TAG = DefaultRemoteDiscoveryRepository::class
         private val secret by lazy { deriveSharedRelaySecret() }
     }
 }

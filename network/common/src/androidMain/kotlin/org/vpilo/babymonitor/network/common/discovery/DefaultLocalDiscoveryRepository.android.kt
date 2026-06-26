@@ -10,12 +10,13 @@ import kotlinx.coroutines.flow.map
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.discovery.ktx.toAttributes
 
-actual class DiscoveryManager(
+internal actual class DefaultLocalDiscoveryRepository(
     context: Context,
-) {
+) : LocalDiscoveryRepository {
     actual constructor() : this(
         context = KoinPlatform.getKoin().get(),
     )
@@ -35,19 +36,13 @@ actual class DiscoveryManager(
     private var discoveryListener: AndroidDiscoveryListener = AndroidDiscoveryListener(nsdManager = nsdManager)
     private var registrationListener: AndroidRegistrationListener = AndroidRegistrationListener()
 
-    actual val discoveredDevicesFlow: Flow<Set<Device>>
+    actual override val discoveredDevicesFlow: Flow<Set<Device>>
         get() =
             discoveryListener.discoveredDevices
                 .map { it.toSortedSet() }
                 .distinctUntilChanged()
 
-    actual val discoveredDevices: Set<Device>
-        get() = discoveryListener.discoveredDevices.value.toSortedSet()
-
-    actual val isActive: Boolean
-        get() = device != null
-
-    actual fun register(device: Device) {
+    actual override fun register(device: Device) {
         if (this.device == device) {
             return
         }
@@ -75,7 +70,7 @@ actual class DiscoveryManager(
         }
     }
 
-    actual fun unregister() {
+    actual override fun unregister() {
         val device =
             if (this.device == null) {
                 Logger.d(TAG) { "Service was not registered" }
@@ -111,7 +106,7 @@ actual class DiscoveryManager(
         registrationListener = AndroidRegistrationListener()
     }
 
-    actual fun refresh() {
+    actual override fun refresh() {
         val currentDevice = device ?: return
         unregister()
         register(currentDevice)
@@ -138,7 +133,7 @@ actual class DiscoveryManager(
     }
 
     companion object {
-        val TAG = DiscoveryManager::class
+        val TAG = DefaultLocalDiscoveryRepository::class
 
         private fun createServiceInfo(device: Device): NsdServiceInfo =
             NsdServiceInfo().apply {

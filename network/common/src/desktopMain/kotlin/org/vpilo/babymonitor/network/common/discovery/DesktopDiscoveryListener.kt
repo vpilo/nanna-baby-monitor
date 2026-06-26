@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.network.common.discovery
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.any
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.vpilo.babymonitor.common.Logger
@@ -28,11 +27,11 @@ internal class DesktopDiscoveryListener : ServiceListener {
         if (added in _discoveredDevices.value) return
 
         if (added.addresses.isEmpty()) {
-            Logger.w(DiscoveryManager.TAG) { "Device resolved with no hosts: $added" }
+            Logger.w(DefaultLocalDiscoveryRepository.TAG) { "Device resolved with no hosts: $added" }
             return
         }
 
-        Logger.i(DiscoveryManager.TAG) {
+        Logger.i(DefaultLocalDiscoveryRepository.TAG) {
             if (_discoveredDevices.value.any { it.id == added.id }) {
                 "Device updated: $added"
             } else {
@@ -47,7 +46,7 @@ internal class DesktopDiscoveryListener : ServiceListener {
 
         if (removed !in _discoveredDevices.value) return
 
-        Logger.i(DiscoveryManager.TAG) { "Device lost: $removed" }
+        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $removed" }
         _discoveredDevices.update { devices -> devices.filterNot { it.id == removed.id }.toSet() }
     }
 }

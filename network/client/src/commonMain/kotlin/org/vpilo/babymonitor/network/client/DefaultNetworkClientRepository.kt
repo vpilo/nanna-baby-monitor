@@ -1,38 +1,31 @@
 package org.vpilo.babymonitor.network.client
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
-import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.model.repository.ktx.reactor
+import org.vpilo.babymonitor.network.client.discovery.DefaultRemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
-import org.vpilo.babymonitor.network.common.discovery.DiscoveryManager
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
-    private val discoveryManager: DiscoveryManager,
-    private val relayDiscoveryDataSource: RelayDiscoveryDataSource,
+    private val remoteDiscoveryRepository: DefaultRemoteDiscoveryRepository,
     private val serverSelectionDataSource: ServerSelectionDataSource,
     networkControlDataSource: NetworkControlDataSource,
-    deviceStateRepository: DeviceStateRepository,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -43,43 +36,18 @@ internal class DefaultNetworkClientRepository(
 
     override val serverStateFlow: Flow<ServerState> = networkControlDataSource.serverState
 
-    override val discoveredDevicesFlow: Flow<Set<Device>> =
-        combine(
-            discoveryManager.discoveredDevicesFlow,
-            relayDiscoveryDataSource.devices,
-        ) { localDevices, relayDevices ->
-            localDevices + relayDevices
-        }
-
     private var relayHost: String = ""
 
     private var controlHandler: WebSocketConnectionHandler? = null
 
     private val foregroundLink = ForegroundServiceLink(AppRole.CLIENT)
 
-    private lateinit var localDevice: Device.Client
-
-    private var discoveryJob: Job? = null
-
     init {
-        // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
-        deviceStateRepository.isInternetAvailable
-            .onEach {
-                discoveryManager.refresh()
-                relayDiscoveryDataSource.setEnabled(it)
-            }.launchIn(scope)
-    }
-
-    override fun identifySelf(device: Device.Client) {
-        localDevice = device
-        // Ensure discovery is active if anyone is using this repository.
-        discoveryJob?.cancel()
-        discoveryJob =
-            connectionState.reactor(
-                scope = scope,
-                onActive = { discoveryManager.register(localDevice) },
-                onInactive = { discoveryManager.unregister() },
-            )
+        connectionState.reactor(
+            scope = scope,
+            onActive = { remoteDiscoveryRepository.setEnabled(relayHost, true) },
+            onInactive = { remoteDiscoveryRepository.setEnabled(relayHost, false) },
+        )
     }
 
     override suspend fun connect(server: Device.Server) {
@@ -128,7 +96,7 @@ internal class DefaultNetworkClientRepository(
 
     override fun setRelayHost(host: String) {
         relayHost = host
-        relayDiscoveryDataSource.updateRelayHost(host)
+        remoteDiscoveryRepository.setEnabled(host, connectionState.subscriptionCount.value > 0)
     }
 
     private fun onControlConnectionOpened(server: Device.Server) {

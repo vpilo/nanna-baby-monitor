@@ -39,7 +39,6 @@ import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
-import org.vpilo.babymonitor.network.common.discovery.DiscoveryManager
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
@@ -48,7 +47,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkServerRepository(
-    private val discoveryManager: DiscoveryManager,
     private val relayRegistration: RelayServerRegistration,
     deviceStateRepository: DeviceStateRepository,
     private val coroutineContext: CoroutineContext,
@@ -69,17 +67,6 @@ internal class DefaultNetworkServerRepository(
 
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
 
-    private lateinit var thisDevice: Device.LocalServer
-
-    override fun identifySelf(device: Device.LocalServer) {
-        thisDevice = device
-        if (discoveryManager.isActive) {
-            discoveryManager.unregister()
-        }
-        discoveryManager.register(device)
-        relayRegistration.identifySelf(device)
-    }
-
     override fun setRelayHost(host: String) {
         relayRegistration.setRelayHost(host)
     }
@@ -89,7 +76,7 @@ internal class DefaultNetworkServerRepository(
             isServerReady,
             relayRegistration.isRegistered,
         ) { isServerReady, isRelayReady ->
-            val reportServerAvailable = isServerReady && (discoveryManager.isActive || isRelayReady)
+            val reportServerAvailable = isServerReady && isRelayReady
             state.update { it.copy(isAvailable = reportServerAvailable) }
         }.launchIn(scope)
 
@@ -100,19 +87,17 @@ internal class DefaultNetworkServerRepository(
             state.update { it.copy(signalQuality = signalQuality, batteryLevel = batteryLevel) }
         }.launchIn(scope)
 
-        // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
         deviceStateRepository.isInternetAvailable
             .onEach {
-                discoveryManager.refresh()
                 relayRegistration.setEnabled(it)
             }.launchIn(scope)
     }
 
-    override suspend fun start() {
+    override suspend fun start(self: Device.LocalServer) {
         if (server != null) return
-        check(::thisDevice.isInitialized) { "Device must be identified before starting the server" }
 
         foregroundLink.start()
+        relayRegistration.identifySelf(self)
 
         scope.launch {
             embeddedServer(
@@ -149,14 +134,13 @@ internal class DefaultNetworkServerRepository(
             relayRegistration.stop()
             activeAudioSessions.closeAll()
             activeVideoSessions.closeAll()
-            discoveryManager.unregister()
             server?.stop(
                 shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
                 shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
                 timeUnit = TimeUnit.SECONDS,
             )
-            isServerReady.value = false
             server = null
+            isServerReady.value = false
             foregroundLink.stop()
         }
     }

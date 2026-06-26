@@ -8,10 +8,6 @@ interface NetworkClientRepository {
 
     val serverStateFlow: Flow<ServerState>
 
-    val discoveredDevicesFlow: Flow<Set<Device>>
-
-    fun identifySelf(device: Device.Client)
-
     suspend fun connect(server: Device.Server)
 
     suspend fun disconnect()

@@ -8,33 +8,28 @@ import kotlinx.coroutines.flow.map
 import kotlinx.io.IOException
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.discovery.ktx.toAttributes
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
 import kotlin.time.Duration.Companion.milliseconds
 
-actual class DiscoveryManager {
+internal actual class DefaultLocalDiscoveryRepository: LocalDiscoveryRepository {
     private val discoveryService = JmDNS.create()
 
     private val listener = DesktopDiscoveryListener()
 
     private var device: Device? = null
 
-    actual val discoveredDevicesFlow: Flow<Set<Device>> =
+    actual override val discoveredDevicesFlow: Flow<Set<Device>> =
         @OptIn(FlowPreview::class)
         listener.discoveredDevices
             .debounce(DISCOVERY_DEBOUNCE_TIME)
             .map { it.toSortedSet() }
             .distinctUntilChanged()
 
-    actual val discoveredDevices: Set<Device>
-        get() = listener.discoveredDevices.value.toSortedSet()
-
-    actual val isActive: Boolean
-        get() = device != null
-
-    actual fun register(device: Device) {
+    actual override fun register(device: Device) {
         if (this.device == device) {
             return
         }
@@ -65,7 +60,7 @@ actual class DiscoveryManager {
         }
     }
 
-    actual fun unregister() {
+    actual override fun unregister() {
         val device =
             if (this.device == null) {
                 Logger.d(TAG) { "Service was not registered" }
@@ -93,14 +88,14 @@ actual class DiscoveryManager {
         listener.reset()
     }
 
-    actual fun refresh() {
+    actual override fun refresh() {
         val currentDevice = device ?: return
         unregister()
         register(currentDevice)
     }
 
     companion object {
-        val TAG = DiscoveryManager::class
+        val TAG = DefaultLocalDiscoveryRepository::class
 
         // JmDNS requires the ".local." suffix
         private const val DISCOVERY_DESKTOP_SERVICE_TYPE = "_${Constants.DISCOVERY_SERVICE_TYPE}._tcp.local."
