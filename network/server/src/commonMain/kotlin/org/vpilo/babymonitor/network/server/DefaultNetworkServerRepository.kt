@@ -76,8 +76,12 @@ internal class DefaultNetworkServerRepository(
             isServerReady,
             relayRegistration.isRegistered,
         ) { isServerReady, isRelayReady ->
-            val reportServerAvailable = isServerReady && isRelayReady
-            state.update { it.copy(isAvailable = reportServerAvailable) }
+            state.update {
+                it.copy(
+                    isAvailableOnNetwork = isServerReady,
+                    isAvailableOnRelay = isRelayReady,
+                )
+            }
         }.launchIn(scope)
 
         combine(

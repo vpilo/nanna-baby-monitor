@@ -28,8 +28,8 @@ class CameraSelectionScreenViewModel(
     private val deviceStateRepository: DeviceStateRepository,
     private val getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
-    initialState = CameraSelectionScreenState(),
-) {
+        initialState = CameraSelectionScreenState(),
+    ) {
     override fun SubscriptionScope.onSubscribed() {
         discoveryManager.discoveredDevicesFlow
             .subscribe { list ->
@@ -79,20 +79,20 @@ class CameraSelectionScreenViewModel(
     }
 
     private suspend fun waitForLastConnectedServer() {
-            val lastServer: Device.Server =
-                combine(
-                    networkClientRepository.connectionStateFlow,
-                    settingsRepository.flowOf(Setting.ClientLastServerId),
-                    discoveryManager.discoveredDevicesFlow,
-                ) { state, rawLastServerId, serverList ->
-                    val lastServerId = rawLastServerId.toDeviceIdOrNull()
-                    // Only reconnect on first startup, when we haven't connected yet.
-                    if (state !is ConnectionState.Disconnected || state.reason != ConnectionState.ErrorReason.NotConnectedYet) {
-                        return@combine null
-                    }
-                    if (lastServerId == null) return@combine null
-                    serverList.filterIsInstance<Device.Server>().firstOrNull { it.id == lastServerId }
-                }.filterNotNull().first()
-            CameraSelectionScreenEffect.ConnectToLastServer(lastServer).sendEffect()
+        val lastServer: Device.Server =
+            combine(
+                networkClientRepository.connectionStateFlow,
+                settingsRepository.flowOf(Setting.ClientLastServerId),
+                discoveryManager.discoveredDevicesFlow,
+            ) { state, rawLastServerId, serverList ->
+                val lastServerId = rawLastServerId.toDeviceIdOrNull()
+                // Only reconnect on first startup, when we haven't connected yet.
+                if (state !is ConnectionState.Disconnected || state.reason != ConnectionState.ErrorReason.NotConnectedYet) {
+                    return@combine null
+                }
+                if (lastServerId == null) return@combine null
+                serverList.filterIsInstance<Device.Server>().firstOrNull { it.id == lastServerId }
+            }.filterNotNull().first()
+        CameraSelectionScreenEffect.ConnectToLastServer(lastServer).sendEffect()
     }
 }

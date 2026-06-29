@@ -70,7 +70,8 @@ suspend fun WebSocketSession.receiveServerMessage(): ServerMessage {
             val (captureMode, batteryLevel, signalQuality) = payload.split(',')
             ServerMessage.State(
                 ServerState(
-                    isAvailable = true,
+                    isAvailableOnNetwork = true, // Ignored by clients
+                    isAvailableOnRelay = true, // Ignored by clients
                     captureMode = CaptureMode.valueOf(captureMode),
                     batteryLevel = batteryLevel.toIntOrNull() ?: DEVICE_STATE_DATA_UNAVAILABLE,
                     signalQuality = signalQuality.toIntOrNull() ?: DEVICE_STATE_DATA_UNAVAILABLE,

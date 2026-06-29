@@ -54,7 +54,6 @@ class ClientHomeScreenViewModel(
 
     override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.connectionStateFlow.subscribe { netState ->
-            Logger.d(TAG) { "Network state changed: $netState" }
             state.copy(connectionState = netState).update()
         }
 
@@ -79,7 +78,6 @@ class ClientHomeScreenViewModel(
         }
 
         isAudioEnabled.subscribe { isEnabled ->
-            Logger.d(TAG) { "Audio playback enabled: $isEnabled" }
             playReceivedAudio.setPlaying(vmScope, isEnabled)
         }
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->

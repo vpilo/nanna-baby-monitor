@@ -15,7 +15,7 @@ import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
 import kotlin.time.Duration.Companion.milliseconds
 
-internal actual class DefaultLocalDiscoveryRepository: LocalDiscoveryRepository {
+internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository {
     private val discoveryService = JmDNS.create()
 
     private val listener = DesktopDiscoveryListener()

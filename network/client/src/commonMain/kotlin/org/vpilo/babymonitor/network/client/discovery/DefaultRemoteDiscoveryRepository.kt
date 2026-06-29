@@ -39,7 +39,10 @@ internal class DefaultRemoteDiscoveryRepository(
 
     private var isEnabled: Boolean = true
 
-    override fun setEnabled(host: String, enabled: Boolean) {
+    override fun setEnabled(
+        host: String,
+        enabled: Boolean,
+    ) {
         isEnabled = enabled
         relayHost = host
         discoveryJob?.cancel()

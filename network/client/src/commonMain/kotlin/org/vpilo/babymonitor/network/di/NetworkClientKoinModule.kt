@@ -16,8 +16,8 @@ import org.vpilo.babymonitor.network.client.NetworkAudioReceiverRepository
 import org.vpilo.babymonitor.network.client.NetworkControlDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoReceiverRepository
-import org.vpilo.babymonitor.network.client.discovery.DefaultRemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.client.ServerSelectionDataSource
+import org.vpilo.babymonitor.network.client.discovery.DefaultRemoteDiscoveryRepository
 
 val networkClientKoinModule: Module =
     module {
