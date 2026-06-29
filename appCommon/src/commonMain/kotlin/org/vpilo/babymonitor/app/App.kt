@@ -54,7 +54,7 @@ fun App() {
                         onNavigateUp = { navController.navigateUp() },
                         onNavigateTo = { route, popUpToRoute ->
                             navController.navigate(route) {
-                                popUpToRoute?.let { popUpTo(popUpToRoute) { inclusive = true } }
+                                popUpToRoute?.let { popUpTo(popUpToRoute) { inclusive = false } }
                             }
                         },
                         onNavigateToRoot = {

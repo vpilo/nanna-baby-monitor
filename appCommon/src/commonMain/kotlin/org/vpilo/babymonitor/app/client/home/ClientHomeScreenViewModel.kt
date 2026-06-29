@@ -9,7 +9,6 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientEnabledAudio
 import org.vpilo.babymonitor.app.settings.ClientEnabledVideo
 import org.vpilo.babymonitor.app.settings.RelayHost
-import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
@@ -66,7 +65,7 @@ class ClientHomeScreenViewModel(
                     isAudioPlaying = isAudioPlaying,
                     isVideoPlaying = isVideoPlaying,
                 ).update()
-        }.collectLatest()
+        }.subscribe {}
 
         networkClientRepository.serverStateFlow.subscribe { serverState ->
             state
@@ -83,10 +82,6 @@ class ClientHomeScreenViewModel(
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
             networkClientRepository.setRelayHost(host)
         }
-    }
-
-    override suspend fun onUnsubscribed() {
-        networkClientRepository.disconnect()
     }
 
     override fun onAction(action: ClientHomeScreenAction) {

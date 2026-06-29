@@ -68,7 +68,7 @@ abstract class AppViewModel<A, S, E>(
                 }
             }.stateIn(
                 vmScope,
-                SharingStarted.Lazily,
+                SharingStarted.WhileSubscribed(stopTimeoutMillis = 0, replayExpirationMillis = 0),
                 initialState,
             )
     }

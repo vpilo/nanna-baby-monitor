@@ -41,7 +41,7 @@ class ServerHomeScreenViewModel(
             val device = Device.LocalServer(id = id, name = deviceName)
             discoveryManager.register(device)
             device
-        }.collectLatest {
+        }.subscribe {
             if (!state.isAvailable) {
                 server.start(it)
             }

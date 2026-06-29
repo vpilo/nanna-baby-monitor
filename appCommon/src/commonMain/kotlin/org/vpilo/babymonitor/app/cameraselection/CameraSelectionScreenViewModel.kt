@@ -1,11 +1,10 @@
 package org.vpilo.babymonitor.app.cameraselection
 
 import androidx.compose.runtime.Stable
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientLastServerId
 import org.vpilo.babymonitor.app.settings.RelayHost
@@ -30,6 +29,8 @@ class CameraSelectionScreenViewModel(
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
         initialState = CameraSelectionScreenState(),
     ) {
+    private var autoConnectJob: Job? = null
+
     override fun SubscriptionScope.onSubscribed() {
         discoveryManager.discoveredDevicesFlow
             .subscribe { list ->
@@ -38,9 +39,9 @@ class CameraSelectionScreenViewModel(
 
         // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
         deviceStateRepository.isInternetAvailable
-            .onEach {
+            .subscribe {
                 discoveryManager.refresh()
-            }.launchIn(vmScope)
+            }
 
         networkClientRepository.connectionStateFlow
             .subscribe { netState ->
@@ -51,9 +52,10 @@ class CameraSelectionScreenViewModel(
                 }
             }
 
-        vmScope.launch {
-            waitForLastConnectedServer()
-        }
+        autoConnectJob =
+            vmScope.launch {
+                waitForLastConnectedServer()
+            }
 
         getLocalClientDeviceFlowUseCase().subscribe { device ->
             discoveryManager.register(device)
@@ -66,6 +68,8 @@ class CameraSelectionScreenViewModel(
 
     override suspend fun onUnsubscribed() {
         discoveryManager.unregister()
+        autoConnectJob?.cancel()
+        autoConnectJob = null
     }
 
     override fun onAction(action: CameraSelectionScreenAction) {
