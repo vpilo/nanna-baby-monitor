@@ -10,6 +10,7 @@ assumes one of two roles:
 - **Client (Monitor):** Discovers servers via mDNS, connects, receives encoded streams, decodes, and plays them.
 
 Key features:
+
 - Video is always shown upright, regardless of device orientation.
 - Server and clients can be Desktop or Android, in any combination.
 

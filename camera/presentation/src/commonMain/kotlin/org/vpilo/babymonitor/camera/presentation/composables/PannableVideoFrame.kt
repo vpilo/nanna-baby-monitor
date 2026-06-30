@@ -23,14 +23,16 @@ internal fun PannableVideoFrame(
 ) {
     Canvas(modifier = modifier) {
         if (originalFrameSize == IntSize.Zero) return@Canvas
-        withTransform({
-            translate(
-                left = size.width / 2f + panOffset.x,
-                top = size.height / 2f + panOffset.y,
-            )
-            rotate(degrees = rotation.toFloat(), pivot = Offset.Zero)
-            scale(scaleX = cropScale, scaleY = cropScale, pivot = Offset.Zero)
-        }) {
+        withTransform(
+            {
+                translate(
+                    left = size.width / 2f + panOffset.x,
+                    top = size.height / 2f + panOffset.y,
+                )
+                rotate(degrees = rotation.toFloat(), pivot = Offset.Zero)
+                scale(scaleX = cropScale, scaleY = cropScale, pivot = Offset.Zero)
+            },
+        ) {
             drawImage(
                 image = frame,
                 topLeft =

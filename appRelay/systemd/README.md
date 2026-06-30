@@ -31,6 +31,7 @@ To keep it running when you're logged out: `sudo loginctl enable-linger $USER`.
 ## Update
 
 Rebuild, then overwrite the jar and restart:
+
 ```sh
 ./gradlew :appRelay:packageUberJarForCurrentOS
 cp appRelay/build/compose/jars/org.vpilo.babymonitor.relay-*-1.0.0.jar ~/.local/share/babymonitor-relay.jar

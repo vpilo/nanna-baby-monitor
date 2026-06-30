@@ -39,12 +39,12 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
+import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
-import org.vpilo.babymonitor.network.common.discovery.DefaultLocalDiscoveryRepository
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 class DefaultNetworkRelayRepository(
-    private val discoveryManager: DefaultLocalDiscoveryRepository,
+    private val discoveryManager: LocalDiscoveryRepository,
     deviceStateRepository: DeviceStateRepository,
     coroutineContext: CoroutineContext,
 ) {

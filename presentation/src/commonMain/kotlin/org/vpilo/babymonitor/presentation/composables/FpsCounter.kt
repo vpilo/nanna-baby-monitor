@@ -16,9 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.tooling.preview.Preview
 import org.vpilo.babymonitor.model.OpaqueVideoStream
-import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource

@@ -25,7 +25,7 @@
 # Issues
 
 - Reconnect screen on client doesn't seem to be working.
-- DefaultDeviceStateRepository E  Internet availability retrieval error: JobCancellationException: Job was cancelled
+- DefaultDeviceStateRepository E Internet availability retrieval error: JobCancellationException: Job was cancelled
 - AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
 
 # Completed features

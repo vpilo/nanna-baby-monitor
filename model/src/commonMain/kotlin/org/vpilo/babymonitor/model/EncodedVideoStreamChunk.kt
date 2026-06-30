@@ -1,7 +1,5 @@
 package org.vpilo.babymonitor.model
 
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.unit.IntSize
 import kotlinx.serialization.Serializable
 
 /**
