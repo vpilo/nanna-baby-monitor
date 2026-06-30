@@ -14,7 +14,7 @@ internal class NetworkControlDataSource {
     internal fun onServerStateReceived(state: ServerState) {
         collector.value =
             collector.value.copy(
-                isAvailableOnNetwork = state.isAvailableOnNetwork,
+                isAvailableOnLocalNetwork = state.isAvailableOnLocalNetwork,
                 isAvailableOnRelay = state.isAvailableOnRelay,
                 captureMode = state.captureMode,
                 batteryLevel = state.batteryLevel,

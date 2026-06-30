@@ -3,11 +3,15 @@ package org.vpilo.babymonitor.presentation.composables
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.NetworkWifi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.resources.Res
 import org.vpilo.babymonitor.presentation.resources.back
 import org.vpilo.babymonitor.presentation.resources.example
@@ -94,7 +99,14 @@ fun AppDestination(
                     }
                 }
             },
-            actions = actions,
+            actions = {
+                Row(
+                    modifier = Modifier.padding(horizontal = Theme.Paddings.Small),
+                    horizontalArrangement = Arrangement.spacedBy(Theme.Paddings.Small),
+                ) {
+                    actions()
+                }
+            },
         )
         Box(
             modifier = Modifier.fillMaxWidth(),
@@ -127,6 +139,10 @@ private fun AppDestinationMenuPreview() =
             title = Res.string.example,
             mainAction = AppDestinationMainAction.Menu,
             onMainActionClicked = {},
+            actions = {
+                Icon(imageVector = Icons.Default.NetworkWifi, contentDescription = null)
+                Icon(imageVector = Icons.Default.Cloud, contentDescription = null)
+            },
         ) {
             Text(
                 text = "Example content",

@@ -30,7 +30,12 @@ class ServerHomeScreenViewModel(
 
     override fun SubscriptionScope.onSubscribed() {
         server.serverStateFlow.subscribe { serverState ->
-            state.copy(isAvailable = serverState.isAvailable, captureMode = serverState.captureMode).update()
+            state
+                .copy(
+                    isAvailableOnLocalNetwork = serverState.isAvailableOnLocalNetwork,
+                    isAvailableOnRelay = serverState.isAvailableOnRelay,
+                    captureMode = serverState.captureMode,
+                ).update()
         }
 
         combine(
@@ -42,7 +47,7 @@ class ServerHomeScreenViewModel(
             discoveryManager.register(device)
             device
         }.subscribe {
-            if (!state.isAvailable) {
+            if (!state.isAvailableOnLocalNetwork) {
                 server.start(it)
             }
         }
@@ -53,6 +58,7 @@ class ServerHomeScreenViewModel(
         }
         // TODO move to usecase
         settings.flowOf(Setting.RelayHost).subscribe { host ->
+            state.copy(isRelayConfigured = host.isNotBlank()).update()
             server.setRelayHost(host)
         }
     }

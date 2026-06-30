@@ -78,7 +78,7 @@ internal class DefaultNetworkServerRepository(
         ) { isServerReady, isRelayReady ->
             state.update {
                 it.copy(
-                    isAvailableOnNetwork = isServerReady,
+                    isAvailableOnLocalNetwork = isServerReady,
                     isAvailableOnRelay = isRelayReady,
                 )
             }

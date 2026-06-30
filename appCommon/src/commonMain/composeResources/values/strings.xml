@@ -39,6 +39,10 @@
     <string name="server_mode_audio_and_video">Audio and Video</string>
     <string name="server_mode_audio_only">Audio only</string>
     <string name="server_mode_video_only">Video only</string>
+    <string name="server_available_on_local_network">Available on local network</string>
+    <string name="server_available_on_relay">Available on remote relay</string>
+    <string name="server_unavailable_on_local_network">Not available on local network</string>
+    <string name="server_unavailable_on_relay">Not available on remote relay</string>
 
     <string name="client_no_audio">Camera has disabled audio</string>
     <string name="client_no_video">Camera has disabled video</string>

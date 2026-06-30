@@ -2,10 +2,10 @@ package org.vpilo.babymonitor.app.server.home
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -18,6 +18,13 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_server_home
+import babymonitor.appcommon.generated.resources.server_available_on_local_network
+import babymonitor.appcommon.generated.resources.server_network_cloud
+import babymonitor.appcommon.generated.resources.server_network_cloud_alert
+import babymonitor.appcommon.generated.resources.server_network_local
+import babymonitor.appcommon.generated.resources.server_network_local_alert
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.OpaqueVideoStream
@@ -45,11 +52,17 @@ fun ServerHomeScreen(
     AppDestination(
         title = Res.string.app_title_server_home,
         mainAction = AppDestinationMainAction.Menu,
+        actions = {
+            StatusIcons(
+                isAvailableOnLocalNetwork = state.isAvailableOnLocalNetwork,
+                hasRelay = state.isRelayConfigured,
+                isAvailableOnRelay = state.isAvailableOnRelay,
+            )
+        },
         onMainActionClicked = onMenuClicked,
     ) {
         ServerHomeContent(
             modifier = modifier,
-            isServerAvailable = state.isAvailable,
             captureMode = state.captureMode,
             videoStream = viewModel.videoStream,
             onModeSelected = { viewModel.send(ServerHomeScreenAction.CaptureModeSelected(it)) },
@@ -58,39 +71,58 @@ fun ServerHomeScreen(
 }
 
 @Composable
+private fun StatusIcons(
+    isAvailableOnLocalNetwork: Boolean,
+    hasRelay: Boolean,
+    isAvailableOnRelay: Boolean,
+) {
+    Icon(
+        painter =
+            painterResource(
+                if (isAvailableOnLocalNetwork) {
+                    Res.drawable.server_network_local
+                } else {
+                    Res.drawable.server_network_local_alert
+                },
+            ),
+        contentDescription = stringResource(Res.string.server_available_on_local_network),
+    )
+
+    if (!hasRelay) return
+    Icon(
+        painter =
+            painterResource(
+                if (isAvailableOnRelay) {
+                    Res.drawable.server_network_cloud
+                } else {
+                    Res.drawable.server_network_cloud_alert
+                },
+            ),
+        contentDescription = stringResource(Res.string.server_available_on_local_network),
+    )
+}
+
+@Composable
 private fun ServerHomeContent(
     modifier: Modifier,
-    isServerAvailable: Boolean,
     captureMode: CaptureMode,
     videoStream: OpaqueVideoStream,
     onModeSelected: (CaptureMode) -> Unit,
 ) {
-    Column(modifier = modifier) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
-            Text(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopStart)
-                        .padding(start = Theme.Paddings.Tiny)
-                        .zIndex(1f),
-                text = if (isServerAvailable) "Available for connections." else "Server not available!",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isServerAvailable) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.error,
-            )
-            CaptureModeSelector(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(end = Theme.Paddings.Tiny)
-                        .zIndex(2f),
-                captureMode = captureMode,
-                onModeSelected = onModeSelected,
-            )
-            PanningVideoFeed(
-                videoStream = videoStream,
-                captureMode = CaptureMode.AUDIO_AND_VIDEO,
-            )
-        }
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+        CaptureModeSelector(
+            modifier =
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(end = Theme.Paddings.Tiny)
+                    .zIndex(2f),
+            captureMode = captureMode,
+            onModeSelected = onModeSelected,
+        )
+        PanningVideoFeed(
+            videoStream = videoStream,
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        )
     }
 }
 
@@ -100,9 +132,37 @@ private fun ServerHomeContentPreview() =
     AppPreviewTheme {
         ServerHomeContent(
             modifier = Modifier,
-            isServerAvailable = true,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             videoStream = makePreviewVideoStream(),
             onModeSelected = {},
         )
+    }
+
+@Preview
+@Composable
+private fun StatusIconsPreview() =
+    AppPreviewTheme {
+        Column {
+            Row {
+                StatusIcons(
+                    isAvailableOnLocalNetwork = true,
+                    hasRelay = true,
+                    isAvailableOnRelay = true,
+                )
+            }
+            Row {
+                StatusIcons(
+                    isAvailableOnLocalNetwork = false,
+                    hasRelay = true,
+                    isAvailableOnRelay = false,
+                )
+            }
+            Row {
+                StatusIcons(
+                    isAvailableOnLocalNetwork = true,
+                    hasRelay = false,
+                    isAvailableOnRelay = true,
+                )
+            }
+        }
     }
