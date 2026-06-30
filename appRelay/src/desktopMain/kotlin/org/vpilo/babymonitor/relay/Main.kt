@@ -7,7 +7,7 @@ import org.vpilo.babymonitor.network.relay.DefaultNetworkRelayRepository
 import org.vpilo.babymonitor.network.relay.di.networkRelayKoinModule
 import kotlin.system.exitProcess
 
-fun main() {
+private fun babyMonitorMain() {
     val koin =
         startKoin {
             modules(networkRelayKoinModule)
@@ -28,4 +28,16 @@ fun main() {
     relay.stop()
     koin.close()
     exitProcess(0)
+}
+
+fun main(args: Array<String>) {
+    babyMonitorMain()
+}
+
+@Suppress("MemberNameEqualsClassName")
+class Main private constructor() {
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) = babyMonitorMain()
+    }
 }

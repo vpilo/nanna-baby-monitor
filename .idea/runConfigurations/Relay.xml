@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Relay" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.vpilo.babymonitor.relay.Main" />
+    <module name="BabyMonitor.appRelay.desktopMain" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -7,7 +7,7 @@ import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_icon
 import org.jetbrains.compose.resources.painterResource
 
-fun main() {
+private fun babyMonitorMain() {
     initializeKoin()
     application {
         Window(
@@ -19,5 +19,17 @@ fun main() {
                 App()
             }
         }
+    }
+}
+
+fun main(args: Array<String>) {
+    babyMonitorMain()
+}
+
+@Suppress("MemberNameEqualsClassName")
+class Main private constructor() {
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) = babyMonitorMain()
     }
 }
