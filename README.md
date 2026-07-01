@@ -29,6 +29,7 @@
 - AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
 - move relay arg to loading a text file?
 - improve error handling and surfacing issues to the user
+- add versioning to relay communications
 
 # Completed features
 

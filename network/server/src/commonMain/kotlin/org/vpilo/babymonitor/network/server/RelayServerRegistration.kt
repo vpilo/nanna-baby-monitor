@@ -25,6 +25,8 @@ import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
+import org.vpilo.babymonitor.network.common.discovery.ktx.asTransportString
+import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
@@ -79,8 +81,8 @@ internal class RelayServerRegistration(
 
     private suspend fun runRegistrationLoop() {
         while (true) {
-            try {
-                Logger.d(TAG) { "Connecting to relay at $relayHost as $server" }
+            Logger.d(TAG) { "Connecting to relay at $relayHost as $server" }
+            runCatching {
                 relayHttpClient.wss(
                     method = HttpMethod.Get,
                     host = relayHost,
@@ -90,24 +92,22 @@ internal class RelayServerRegistration(
                     pingInterval = Constants.WEBSOCKET_PING_PERIOD
                     timeout = Constants.WEBSOCKET_TIMEOUT
 
-                    RelayHandshake.send(this, secret)
-                    send(Frame.Text("${server.idString}#${server.name}"))
-                    Logger.i(TAG) { "Registered with relay as $server" }
-                    _isRegistered.value = true
-                    readRelaySignals()
+                    runWebSocketCatching(TAG) {
+                        RelayHandshake.send(this, secret)
+                        send(Frame.Text(server.asTransportString(relayHost)))
+                        Logger.i(TAG) { "Registered with relay as $server" }
+                        _isRegistered.value = true
+                        readRelaySignals()
+                    }
                 }
-            } catch (ex: CancellationException) {
-                Logger.d(TAG) { "Relay registration cancelled" }
-                throw ex
-            } catch (
-                @Suppress("TooGenericExceptionCaught") ex: Exception,
-            ) {
-                Logger.w(TAG) { "Relay registration disconnected: ${ex.prettify()}. Retrying." }
-                activeStreamJobs.forEach { it.cancel() }
-                activeStreamJobs.clear()
-                _isRegistered.value = false
-                delay(Constants.RECONNECTION_TIMEOUT)
+            }.onFailure { ex ->
+                if (ex is CancellationException) throw ex
+                Logger.i(TAG) { "Relay disconnected: ${ex.prettify()}. Retrying." }
             }
+            activeStreamJobs.forEach { it.cancel() }
+            activeStreamJobs.clear()
+            _isRegistered.value = false
+            delay(Constants.RECONNECTION_TIMEOUT)
         }
     }
 

@@ -23,6 +23,7 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.discovery.ktx.fromTransportString
+import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import kotlin.coroutines.CoroutineContext
 
@@ -62,8 +63,8 @@ internal class DefaultRemoteDiscoveryRepository(
 
     private suspend fun runDiscoveryLoop() {
         while (true) {
-            try {
-                Logger.d(TAG) { "Relay discovery connection started for $relayHost" }
+            Logger.d(TAG) { "Relay discovery connection started for $relayHost" }
+            runCatching {
                 relayHttpClient.wss(
                     method = HttpMethod.Get,
                     host = relayHost,
@@ -73,37 +74,29 @@ internal class DefaultRemoteDiscoveryRepository(
                     pingInterval = Constants.WEBSOCKET_PING_PERIOD
                     timeout = Constants.WEBSOCKET_TIMEOUT
 
-                    RelayHandshake.send(this, secret)
-                    for (frame in incoming) {
-                        if (frame !is Frame.Text) continue
-                        val servers =
-                            frame
-                                .readText()
-                                .lines()
-                                .filter { it.isNotEmpty() }
-                                .mapNotNull { line -> Device.RemoteServer.fromTransportString(line) }
-                                .filter { it.relayHost == relayHost }
-                                .toSet()
-                        Logger.i(TAG) { "Relay found servers: $servers" }
-                        _discoveredDevicesFlow.value = servers
+                    runWebSocketCatching(TAG) {
+                        RelayHandshake.send(this, secret)
+                        for (frame in incoming) {
+                            if (frame !is Frame.Text) continue
+                            val servers =
+                                frame
+                                    .readText()
+                                    .lines()
+                                    .filter { it.isNotEmpty() }
+                                    .mapNotNull { line -> Device.RemoteServer.fromTransportString(line) }
+                                    .filter { it.relayHost == relayHost }
+                                    .toSet()
+                            Logger.i(TAG) { "Relay found servers: $servers" }
+                            _discoveredDevicesFlow.value = servers
+                        }
                     }
                 }
-            } catch (
-                @Suppress("TooGenericExceptionCaught") ex: Exception,
-            ) {
-                when (ex) {
-                    is CancellationException -> {
-                        Logger.d(TAG) { "Relay discovery connection closed." }
-                        throw ex
-                    }
-
-                    else -> {
-                        Logger.w(TAG) { "Relay discovery disconnected: ${ex.prettify()}. Retrying." }
-                        _discoveredDevicesFlow.value = emptySet()
-                        delay(Constants.RECONNECTION_TIMEOUT)
-                    }
-                }
+            }.onFailure { ex ->
+                if (ex is CancellationException) throw ex
+                Logger.i(TAG) { "Relay discovery connection failed: ${ex.prettify()}. Retrying." }
             }
+            _discoveredDevicesFlow.value = emptySet()
+            delay(Constants.RECONNECTION_TIMEOUT)
         }
     }
 

@@ -13,6 +13,8 @@ internal fun Device.toAttributes(): Map<String, String> =
 
 fun Device.RemoteServer.asTransportString(): String = "$id#$relayHost#$name"
 
+fun Device.LocalServer.asTransportString(relayHost: String): String = "$id#$relayHost#$name"
+
 fun Device.RemoteServer.Companion.fromTransportString(transportString: String): Device.RemoteServer? {
     if (transportString.isBlank()) return null
     val splits = transportString.split("#", limit = 3)

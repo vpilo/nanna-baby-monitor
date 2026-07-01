@@ -56,7 +56,9 @@ sealed class Device(
         id: DeviceId,
         name: String,
         addresses: Set<InetAddress>,
-    ) : Device(id, name, addresses)
+    ) : Device(id, name, addresses) {
+        companion object
+    }
 
     class LocalServer(
         id: DeviceId,

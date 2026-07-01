@@ -44,10 +44,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 
-private class PendingSessionKey(
+private data class PendingSessionKey(
     val serverId: DeviceId,
-    // The presence of `endpoint` allows distinguishing control/audio/video pending sessions.
-    @Suppress("unused")
     val endpoint: String,
 )
 
@@ -111,38 +109,30 @@ class DefaultNetworkRelayRepository {
 
     private fun Route.clientRoutes() {
         webSocket(Endpoints.Relay.CLIENT_DISCOVERY) {
-            Logger.i(TAG) { "Client connected to discovery endpoint" }
             handleDiscovery()
         }
         webSocket("${Endpoints.Relay.CLIENT_CONTROL}/{serverId}") {
-            Logger.i(TAG) { "Monitor '$serverId' connected to control endpoint" }
             handleClientEndpoint(Endpoints.CONTROL)
         }
         webSocket("${Endpoints.Relay.CLIENT_AUDIO}/{serverId}") {
-            Logger.i(TAG) { "Monitor '$serverId' connected to audio stream endpoint" }
             handleClientEndpoint(Endpoints.STREAM_AUDIO)
         }
         webSocket("${Endpoints.Relay.CLIENT_VIDEO}/{serverId}") {
-            Logger.i(TAG) { "Monitor '$serverId' connected to video stream endpoint" }
             handleClientEndpoint(Endpoints.STREAM_VIDEO)
         }
     }
 
     private fun Route.serverRoutes() {
         webSocket(Endpoints.Relay.SERVER_REGISTRATION) {
-            Logger.i(TAG) { "Server connected to server endpoint" }
             handleServerRegistration()
         }
         webSocket("${Endpoints.Relay.SERVER_CONTROL}/{serverId}") {
-            Logger.i(TAG) { "Server '$serverId' connected to control endpoint" }
             handleCameraStreamEndpoint(Endpoints.CONTROL)
         }
         webSocket("${Endpoints.Relay.SERVER_AUDIO}/{serverId}") {
-            Logger.i(TAG) { "Server '$serverId' connected to audio stream endpoint" }
             handleCameraStreamEndpoint(Endpoints.STREAM_AUDIO)
         }
         webSocket("${Endpoints.Relay.SERVER_VIDEO}/{serverId}") {
-            Logger.i(TAG) { "Server '$serverId' connected to video stream endpoint" }
             handleCameraStreamEndpoint(Endpoints.STREAM_VIDEO)
         }
     }
@@ -150,6 +140,7 @@ class DefaultNetworkRelayRepository {
     private suspend fun DefaultWebSocketServerSession.handleDiscovery() {
         setupSession() ?: return
 
+        Logger.i(TAG) { "Client connected to discovery endpoint" }
         remoteServers.collect { set ->
             val servers = set.keys.map { it.asTransportString() }
             send(servers.joinToString("\n"))
@@ -159,6 +150,7 @@ class DefaultNetworkRelayRepository {
     private suspend fun DefaultWebSocketServerSession.handleServerRegistration() {
         setupSession() ?: return
 
+        Logger.i(TAG) { "Server connected to registration endpoint" }
         val registration =
             (incoming.receive() as? Frame.Text)
                 ?.readText()
@@ -203,9 +195,11 @@ class DefaultNetworkRelayRepository {
     private suspend fun DefaultWebSocketServerSession.handleClientEndpoint(endpoint: String) {
         setupSession() ?: return
 
+        Logger.i(TAG) { "Client connected to $endpoint for ${call.parameters["serverId"]}" }
         val id =
             serverId
                 ?: run {
+                    Logger.w(TAG) { "Closing client connection to $endpoint, invalid server id" }
                     close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Missing serverId"))
                     return
                 }
@@ -217,8 +211,8 @@ class DefaultNetworkRelayRepository {
                     session
                 }
                 ?: run {
-                    send(Frame.Text("Server not found: $id"))
-                    close()
+                    Logger.w(TAG) { "Closing client connection to $endpoint, cannot find session" }
+                    close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Server not found: $id"))
                     return
                 }
         rendezvousWithRemoteCamera(id, endpoint, registrationSession)
@@ -229,6 +223,7 @@ class DefaultNetworkRelayRepository {
         endpoint: String,
         registrationSession: WebSocketServerSession,
     ) {
+        Logger.d(TAG) { "Waiting rendezvous for $serverId on $endpoint" }
         val pendingSessionKey = PendingSessionKey(serverId, endpoint)
         val cameraArrived = CompletableDeferred<WebSocketServerSession?>()
         pendingRelays.computeIfAbsent(pendingSessionKey) { ConcurrentLinkedDeque() }.addLast(cameraArrived)
@@ -241,9 +236,10 @@ class DefaultNetworkRelayRepository {
                     cameraArrived.await()
                 }
             if (cameraSession == null) {
-                close(CloseReason(CloseReason.Codes.TRY_AGAIN_LATER, "Camera unavailable"))
+                close(CloseReason(CloseReason.Codes.TRY_AGAIN_LATER, "Server unavailable"))
                 return
             }
+            Logger.d(TAG) { "Proxying $endpoint for $serverId" }
             runProxySession(client = this, server = cameraSession)
         } finally {
             pendingRelays[pendingSessionKey]?.remove(cameraArrived)
@@ -285,9 +281,11 @@ class DefaultNetworkRelayRepository {
     private suspend fun DefaultWebSocketServerSession.handleCameraStreamEndpoint(endpoint: String) {
         setupSession() ?: return
 
+        Logger.i(TAG) { "Server connected to $endpoint for ${call.parameters["serverId"]}" }
         val id =
             serverId
                 ?: run {
+                    Logger.w(TAG) { "Closing server connection to $endpoint, invalid server id" }
                     close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Missing serverId"))
                     return
                 }
@@ -295,7 +293,8 @@ class DefaultNetworkRelayRepository {
         val pendingSessionKey = PendingSessionKey(id, endpoint)
         val deferred = pendingRelays[pendingSessionKey]?.pollFirst()
         if (deferred == null) {
-            close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "No pending client for $serverId/$endpoint"))
+            Logger.w(TAG) { "Closing server connection to $endpoint, no pending clients found for $pendingSessionKey" }
+            close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "No pending clients"))
             return
         }
         deferred.complete(this)
