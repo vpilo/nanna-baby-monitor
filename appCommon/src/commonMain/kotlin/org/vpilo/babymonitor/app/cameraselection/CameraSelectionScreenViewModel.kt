@@ -13,6 +13,7 @@ import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
@@ -23,7 +24,8 @@ import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseC
 class CameraSelectionScreenViewModel(
     private val networkClientRepository: NetworkClientRepository,
     private val settingsRepository: SettingsRepository,
-    private val discoveryManager: LocalDiscoveryRepository,
+    private val localDiscoveryRepository: LocalDiscoveryRepository,
+    private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
     private val deviceStateRepository: DeviceStateRepository,
     private val getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
@@ -32,15 +34,24 @@ class CameraSelectionScreenViewModel(
     private var autoConnectJob: Job? = null
 
     override fun SubscriptionScope.onSubscribed() {
-        discoveryManager.discoveredDevicesFlow
-            .subscribe { list ->
-                state.copy(availableServers = list).update()
-            }
+        combine(
+            remoteDiscoveryRepository.discoveredDevicesFlow,
+            localDiscoveryRepository.discoveredDevicesFlow,
+        ) { remoteDevices, local ->
+            // Filter out remote devices if they are already available in the local network.
+            val remoteOnlyDevices =
+                remoteDevices.filter { remote ->
+                    local.none { remote.id == it.id }
+                }
+            local + remoteOnlyDevices
+        }.subscribe { list ->
+            state.copy(availableServers = list).update()
+        }
 
         // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
         deviceStateRepository.isInternetAvailable
             .subscribe {
-                discoveryManager.refresh()
+                localDiscoveryRepository.refresh()
             }
 
         networkClientRepository.connectionStateFlow
@@ -58,7 +69,7 @@ class CameraSelectionScreenViewModel(
             }
 
         getLocalClientDeviceFlowUseCase().subscribe { device ->
-            discoveryManager.register(device)
+            localDiscoveryRepository.register(device)
         }
 
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
@@ -67,7 +78,7 @@ class CameraSelectionScreenViewModel(
     }
 
     override suspend fun onUnsubscribed() {
-        discoveryManager.unregister()
+        localDiscoveryRepository.unregister()
         autoConnectJob?.cancel()
         autoConnectJob = null
     }
@@ -87,7 +98,7 @@ class CameraSelectionScreenViewModel(
             combine(
                 networkClientRepository.connectionStateFlow,
                 settingsRepository.flowOf(Setting.ClientLastServerId),
-                discoveryManager.discoveredDevicesFlow,
+                localDiscoveryRepository.discoveredDevicesFlow,
             ) { state, rawLastServerId, serverList ->
                 val lastServerId = rawLastServerId.toDeviceIdOrNull()
                 // Only reconnect on first startup, when we haven't connected yet.
