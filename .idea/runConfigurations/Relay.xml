@@ -2,6 +2,7 @@
   <configuration default="false" name="Relay" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="org.vpilo.babymonitor.relay.Main" />
     <module name="BabyMonitor.appRelay.desktopMain" />
+    <option name="PROGRAM_PARAMETERS" value="dummy.host.name" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

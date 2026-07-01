@@ -58,15 +58,17 @@ internal actual class DefaultLocalDiscoveryRepository(
                 nsdManager.registerService(createServiceInfo(device), NsdManager.PROTOCOL_DNS_SD, registrationListener)
             }
 
-            is Device.Client -> {
-                Logger.d(TAG) { "Starting service discovery" }
-                discoveryListener.setDevice(device)
-                nsdManager.discoverServices(
-                    DISCOVERY_ANDROID_SERVICE_TYPE,
-                    NsdManager.PROTOCOL_DNS_SD,
-                    discoveryListener,
-                )
-            }
+            is Device.Client,
+            is Device.Relay,
+                -> {
+                    Logger.d(TAG) { "Starting service discovery" }
+                    discoveryListener.setDevice(device)
+                    nsdManager.discoverServices(
+                        DISCOVERY_ANDROID_SERVICE_TYPE,
+                        NsdManager.PROTOCOL_DNS_SD,
+                        discoveryListener,
+                    )
+                }
         }
     }
 

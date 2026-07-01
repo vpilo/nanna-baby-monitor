@@ -18,11 +18,11 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
+import org.vpilo.babymonitor.network.common.discovery.ktx.fromTransportString
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import kotlin.coroutines.CoroutineContext
 
@@ -75,17 +75,17 @@ internal class DefaultRemoteDiscoveryRepository(
 
                     RelayHandshake.send(this, secret)
                     for (frame in incoming) {
-                        if (frame is Frame.Text) {
-                            val ids =
-                                frame
-                                    .readText()
-                                    .lines()
-                                    .filter { it.isNotEmpty() }
-                                    .mapNotNull { line -> line.toRemoteServer() }
-                                    .toSet()
-                            Logger.i(TAG) { "Relay found servers: $ids" }
-                            _discoveredDevicesFlow.value = ids
-                        }
+                        if (frame !is Frame.Text) continue
+                        val servers =
+                            frame
+                                .readText()
+                                .lines()
+                                .filter { it.isNotEmpty() }
+                                .mapNotNull { line -> Device.RemoteServer.fromTransportString(line) }
+                                .filter { it.relayHost == relayHost }
+                                .toSet()
+                        Logger.i(TAG) { "Relay found servers: $servers" }
+                        _discoveredDevicesFlow.value = servers
                     }
                 }
             } catch (
@@ -105,18 +105,6 @@ internal class DefaultRemoteDiscoveryRepository(
                 }
             }
         }
-    }
-
-    private fun String.toRemoteServer(): Device.RemoteServer? {
-        if (isBlank()) return null
-        val (rawId, name) = split("#")
-        val id = DeviceId.parseOrNull(rawId) ?: return null
-
-        return Device.RemoteServer(
-            id = id,
-            name = name,
-            relayHost = this@DefaultRemoteDiscoveryRepository.relayHost,
-        )
     }
 
     private companion object {

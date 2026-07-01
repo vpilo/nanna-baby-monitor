@@ -14,10 +14,20 @@ kotlin {
 
         desktopMain.dependencies {
             implementation(project(":common"))
-            implementation(project(":network:relay"))
+            implementation(project(":data"))
+            implementation(project(":model"))
+            implementation(project(":network:common"))
+            implementation(project(":settings:data"))
+            implementation(project(":settings:model"))
             implementation(libs.koin.core)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.jvm)
+
+            implementation(libs.bundles.ktor.server)
+            implementation(libs.bundles.ktor.client)
+
+            implementation(libs.ktor.server.netty)
+
         }
     }
 }

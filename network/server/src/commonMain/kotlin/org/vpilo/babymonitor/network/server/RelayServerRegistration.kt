@@ -92,7 +92,7 @@ internal class RelayServerRegistration(
 
                     RelayHandshake.send(this, secret)
                     send(Frame.Text("${server.idString}#${server.name}"))
-                    Logger.i(TAG) { "Registered with relay as as $server" }
+                    Logger.i(TAG) { "Registered with relay as $server" }
                     _isRegistered.value = true
                     readRelaySignals()
                 }

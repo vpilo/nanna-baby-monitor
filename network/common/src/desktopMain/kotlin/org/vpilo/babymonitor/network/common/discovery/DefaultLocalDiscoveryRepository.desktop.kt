@@ -46,10 +46,12 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
                     discoveryService.registerService(createServiceInfo(device))
                 }
 
-                is Device.Client -> {
-                    Logger.d(TAG) { "Discovering services" }
-                    discoveryService.addServiceListener(DISCOVERY_DESKTOP_SERVICE_TYPE, listener)
-                }
+                is Device.Client,
+                is Device.Relay,
+                    -> {
+                        Logger.d(TAG) { "Discovering services" }
+                        discoveryService.addServiceListener(DISCOVERY_DESKTOP_SERVICE_TYPE, listener)
+                    }
 
                 else -> {
                     error("Invalid device type: $device")

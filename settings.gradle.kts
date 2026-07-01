@@ -16,7 +16,6 @@ include(":filters")
 include(":network:common")
 include(":network:client")
 include(":network:server")
-include(":network:relay")
 
 include(":camera:data")
 include(":camera:model")

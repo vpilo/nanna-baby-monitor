@@ -30,8 +30,6 @@ sealed class Device(
             .compareTo(other.name)
             .let { if (it == 0) id.compareTo(other.id) else it }
 
-    fun matchesAddresses(matches: Set<InetAddress>): Boolean = addresses.intersect(matches).isNotEmpty()
-
     override fun hashCode(): Int {
         var result = id.hashCode()
         result = 31 * result + name.hashCode()
@@ -71,11 +69,9 @@ sealed class Device(
     class RemoteServer(
         id: DeviceId,
         name: String,
-        relayHost: String,
-    ) : Server(id, name, setOf(InetAddress.getByAddress(relayHost, EMPTY_ADDRESS))) {
-        private companion object {
-            private val EMPTY_ADDRESS by lazy { ByteArray(4) }
-        }
+        val relayHost: String,
+    ) : Server(id, name, relayHost.toAddressSet()) {
+        companion object
     }
 
     class Client(
@@ -84,5 +80,17 @@ sealed class Device(
         addresses: Set<InetAddress>,
     ) : Device(id, name, addresses) {
         constructor(id: DeviceId, name: String) : this(id, name, emptySet())
+    }
+
+    class Relay(
+        id: DeviceId,
+        name: String,
+        val relayHost: String,
+    ) : Device(id, name, relayHost.toAddressSet())
+
+    private companion object {
+        private val EMPTY_ADDRESS by lazy { ByteArray(4) }
+
+        private fun String.toAddressSet(): Set<InetAddress> = setOf(InetAddress.getByAddress(this, EMPTY_ADDRESS))
     }
 }

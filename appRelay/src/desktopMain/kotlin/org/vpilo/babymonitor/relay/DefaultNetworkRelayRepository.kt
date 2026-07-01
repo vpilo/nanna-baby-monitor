@@ -1,7 +1,5 @@
-package org.vpilo.babymonitor.network.relay
+package org.vpilo.babymonitor.relay
 
-import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.http.HttpMethod
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
@@ -25,62 +23,48 @@ import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import io.ktor.websocket.timeout
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.DeviceStateRepository
-import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
+import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.model.repository.toDeviceId
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
-import org.vpilo.babymonitor.network.common.relayHttpClient
+import org.vpilo.babymonitor.network.common.discovery.ktx.asTransportString
+import org.vpilo.babymonitor.network.common.discovery.ktx.fromTransportString
 import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.CoroutineContext
 
-class DefaultNetworkRelayRepository(
-    private val discoveryManager: LocalDiscoveryRepository,
-    deviceStateRepository: DeviceStateRepository,
-    coroutineContext: CoroutineContext,
-) {
-    private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
+private class PendingSessionKey(
+    val serverId: DeviceId,
+    // The presence of `endpoint` allows distinguishing control/audio/video pending sessions.
+    @Suppress("unused")
+    val endpoint: String,
+)
+
+class DefaultNetworkRelayRepository {
     private var server: EmbeddedServer<*, *>? = null
 
-    private val currentServers = MutableStateFlow<Set<Device.Server>>(emptySet())
-    private val remoteServers = MutableStateFlow<Map<String, WebSocketServerSession>>(emptyMap())
+    private lateinit var device: Device.Relay
 
-    // Key: "$serverId:$endpoint" e.g. "nursery:/video"
+    private val remoteServers = MutableStateFlow<Map<Device.RemoteServer, WebSocketServerSession>>(emptyMap())
+
     private val pendingRelays =
-        ConcurrentHashMap<String, ConcurrentLinkedDeque<CompletableDeferred<WebSocketServerSession?>>>()
+        ConcurrentHashMap<PendingSessionKey, ConcurrentLinkedDeque<CompletableDeferred<WebSocketServerSession?>>>()
 
-    init {
-        // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
-        deviceStateRepository.isInternetAvailable
-            .onEach { discoveryManager.refresh() }
-            .launchIn(scope)
-    }
-
-    fun start() {
+    fun start(device: Device.Relay) {
         if (server != null) return
-        discoveryManager.discoveredDevicesFlow
-            .onEach { currentServers.value = it }
-            .launchIn(scope)
-        discoveryManager.register(device)
 
+        this.device = device
         val keyStore = loadKeyStore()
 
         server =
@@ -105,7 +89,6 @@ class DefaultNetworkRelayRepository(
     }
 
     fun stop() {
-        discoveryManager.stopDiscovery()
         server?.stop(
             shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
             shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeMilliseconds,
@@ -148,7 +131,7 @@ class DefaultNetworkRelayRepository(
     private fun Route.serverRoutes() {
         webSocket(Endpoints.Relay.SERVER_REGISTRATION) {
             Logger.i(TAG) { "Server connected to server endpoint" }
-            handleCameraRegistration()
+            handleServerRegistration()
         }
         webSocket("${Endpoints.Relay.SERVER_CONTROL}/{serverId}") {
             Logger.i(TAG) { "Server '$serverId' connected to control endpoint" }
@@ -167,20 +150,16 @@ class DefaultNetworkRelayRepository(
     private suspend fun DefaultWebSocketServerSession.handleDiscovery() {
         setupSession() ?: return
 
-        combine(currentServers, remoteServers) { local, remote ->
-            val localNames = local.map { it.id.name }.toSet()
-            localNames + remote.keys.filter { it !in localNames }
-        }.distinctUntilChanged()
-            .collect { names ->
-                Logger.i(TAG) { "Server list: $names" }
-                send(names.joinToString("\n"))
-            }
+        remoteServers.collect { set ->
+            val servers = set.keys.map { it.asTransportString() }
+            send(servers.joinToString("\n"))
+        }
     }
 
-    private suspend fun DefaultWebSocketServerSession.handleCameraRegistration() {
+    private suspend fun DefaultWebSocketServerSession.handleServerRegistration() {
         setupSession() ?: return
 
-        val cameraName =
+        val registration =
             (incoming.receive() as? Frame.Text)
                 ?.readText()
                 ?.takeIf { it.isNotBlank() && !it.contains('\n') }
@@ -188,24 +167,35 @@ class DefaultNetworkRelayRepository(
                     close()
                     return
                 }
+        val server = Device.RemoteServer.fromTransportString(registration)
+        if (server == null) {
+            Logger.e(TAG) { "Invalid server registration: '$registration'" }
+            close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Invalid registration"))
+            return
+        }
+        if (server.relayHost != device.relayHost) {
+            Logger.e(TAG) { "Invalid server registration for different relay: $server" }
+            close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Invalid registration for this relay"))
+            return
+        }
 
-        Logger.i(TAG) { "Camera '$cameraName' registered" }
-        remoteServers.update { it + (cameraName to this) }
+        remoteServers.update { it + (server to this) }
+        Logger.i(TAG) { "Registered: $server" }
         try {
-            @Suppress("UnusedPrivateProperty", "ControlFlowWithEmptyBody")
+            @Suppress("UnusedPrivateProperty", "ControlFlowWithEmptyBody", "unused")
             for (ignored in incoming) {
                 // drain to detect disconnect
             }
         } finally {
-            remoteServers.update { it - cameraName }
-            pendingRelays.keys
-                .filter { it.startsWith("$cameraName:") }
-                .forEach { key ->
-                    pendingRelays.remove(key)?.forEach { deferred ->
-                        deferred.complete(null)
-                    }
+            remoteServers.update { it - server }
+            pendingRelays
+                .filter { (key, _) -> key.serverId == server.id }
+                .forEach { (key, _) ->
+                    pendingRelays
+                        .remove(key)
+                        ?.forEach { deferred -> deferred.complete(null) }
                 }
-            Logger.i(TAG) { "Camera '$cameraName' unregistered" }
+            Logger.i(TAG) { "Unregistered: $server" }
         }
     }
 
@@ -216,48 +206,32 @@ class DefaultNetworkRelayRepository(
         val id =
             serverId
                 ?: run {
-                    close()
+                    close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Missing serverId"))
                     return
                 }
 
-        val localAddress =
-            currentServers.value
-                .firstOrNull { it.id.name == id }
-                ?.addresses
-                ?.firstOrNull()
-
-        if (localAddress != null) {
-            relayHttpClient.webSocket(
-                method = HttpMethod.Get,
-                host = localAddress.hostAddress,
-                port = Constants.WEBSOCKET_PORT,
-                path = endpoint,
-            ) {
-                pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                timeout = Constants.WEBSOCKET_TIMEOUT
-
-                runProxySession(client = this@handleClientEndpoint, server = this)
-            }
-        } else {
-            val registrationSession =
-                remoteServers.value[id]
-                    ?: run {
-                        send(Frame.Text("Server not found: $id"))
-                        close()
-                        return
-                    }
-            rendezvousWithRemoteCamera(id, endpoint, registrationSession)
-        }
+        val registrationSession =
+            remoteServers.value
+                .firstNotNullOfOrNull { (server, session) ->
+                    if (server.id != id) return@firstNotNullOfOrNull null
+                    session
+                }
+                ?: run {
+                    send(Frame.Text("Server not found: $id"))
+                    close()
+                    return
+                }
+        rendezvousWithRemoteCamera(id, endpoint, registrationSession)
     }
 
     private suspend fun DefaultWebSocketServerSession.rendezvousWithRemoteCamera(
-        serverId: String,
+        serverId: DeviceId,
         endpoint: String,
         registrationSession: WebSocketServerSession,
     ) {
-        val relayKey = "$serverId:$endpoint"
+        val pendingSessionKey = PendingSessionKey(serverId, endpoint)
         val cameraArrived = CompletableDeferred<WebSocketServerSession?>()
-        pendingRelays.computeIfAbsent(relayKey) { ConcurrentLinkedDeque() }.addLast(cameraArrived)
+        pendingRelays.computeIfAbsent(pendingSessionKey) { ConcurrentLinkedDeque() }.addLast(cameraArrived)
 
         try {
             registrationSession.send(signalFor(endpoint))
@@ -272,7 +246,7 @@ class DefaultNetworkRelayRepository(
             }
             runProxySession(client = this, server = cameraSession)
         } finally {
-            pendingRelays[relayKey]?.remove(cameraArrived)
+            pendingRelays[pendingSessionKey]?.remove(cameraArrived)
         }
     }
 
@@ -311,13 +285,15 @@ class DefaultNetworkRelayRepository(
     private suspend fun DefaultWebSocketServerSession.handleCameraStreamEndpoint(endpoint: String) {
         setupSession() ?: return
 
-        serverId ?: run {
-            close()
-            return
-        }
+        val id =
+            serverId
+                ?: run {
+                    close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Missing serverId"))
+                    return
+                }
 
-        val relayKey = "$serverId:$endpoint"
-        val deferred = pendingRelays[relayKey]?.pollFirst()
+        val pendingSessionKey = PendingSessionKey(id, endpoint)
+        val deferred = pendingRelays[pendingSessionKey]?.pollFirst()
         if (deferred == null) {
             close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "No pending client for $serverId/$endpoint"))
             return
@@ -361,8 +337,10 @@ class DefaultNetworkRelayRepository(
         return Unit
     }
 
-    private val WebSocketServerSession.serverId: String?
-        get() = call.parameters["serverId"]
+    private val WebSocketServerSession.serverId: DeviceId?
+        get() =
+            call.parameters["serverId"]
+                ?.toDeviceId()
 
     private companion object {
         private val TAG = DefaultNetworkRelayRepository::class
