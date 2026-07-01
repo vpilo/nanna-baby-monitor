@@ -27,6 +27,8 @@
 - Reconnect screen on client doesn't seem to be working.
 - DefaultDeviceStateRepository E Internet availability retrieval error: JobCancellationException: Job was cancelled
 - AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
+- move relay arg to loading a text file?
+- improve error handling and surfacing issues to the user
 
 # Completed features
 

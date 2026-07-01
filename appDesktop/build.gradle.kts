@@ -28,7 +28,7 @@ compose.desktop {
 
         val appVersion = gitVersionProvider().get()
         nativeDistributions {
-            targetFormats(TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Deb, TargetFormat.AppImage)
             packageName = "org.vpilo.babymonitor"
             packageVersion = appVersion.versionCore
         }
