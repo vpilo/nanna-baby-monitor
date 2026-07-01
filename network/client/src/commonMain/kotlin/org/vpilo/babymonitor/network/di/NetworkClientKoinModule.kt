@@ -7,6 +7,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.vpilo.babymonitor.model.repository.IsConnectionAvailableRepository
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.DefaultIsConnectionAvailableRepository
@@ -22,7 +23,6 @@ import org.vpilo.babymonitor.network.client.discovery.DefaultRemoteDiscoveryRepo
 val networkClientKoinModule: Module =
     module {
         singleOf(::ServerSelectionDataSource)
-        singleOf(::DefaultRemoteDiscoveryRepository)
         singleOf(::NetworkControlDataSource)
         singleOf(::NetworkAudioDataSource)
         singleOf(::NetworkVideoDataSource)
@@ -37,4 +37,6 @@ val networkClientKoinModule: Module =
             .bind<IsConnectionAvailableRepository>()
         singleOf(::DefaultNetworkClientRepository)
             .bind<NetworkClientRepository>()
+        singleOf(::DefaultRemoteDiscoveryRepository)
+            .bind<RemoteDiscoveryRepository>()
     }
