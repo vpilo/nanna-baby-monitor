@@ -14,8 +14,6 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.ServerState
-import org.vpilo.babymonitor.model.repository.ktx.reactor
-import org.vpilo.babymonitor.network.client.discovery.DefaultRemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -23,7 +21,6 @@ import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
-    private val remoteDiscoveryRepository: DefaultRemoteDiscoveryRepository,
     private val serverSelectionDataSource: ServerSelectionDataSource,
     networkControlDataSource: NetworkControlDataSource,
     coroutineContext: CoroutineContext,
@@ -36,19 +33,9 @@ internal class DefaultNetworkClientRepository(
 
     override val serverStateFlow: Flow<ServerState> = networkControlDataSource.serverState
 
-    private var relayHost: String = ""
-
     private var controlHandler: WebSocketConnectionHandler? = null
 
     private val foregroundLink = ForegroundServiceLink(AppRole.CLIENT)
-
-    init {
-        connectionState.reactor(
-            scope = scope,
-            onActive = { remoteDiscoveryRepository.setEnabled(relayHost, true) },
-            onInactive = { remoteDiscoveryRepository.setEnabled(relayHost, false) },
-        )
-    }
 
     override suspend fun connect(server: Device.Server) {
         val currentState = connectionState.value
@@ -94,11 +81,6 @@ internal class DefaultNetworkClientRepository(
         connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet)
     }
 
-    override fun setRelayHost(host: String) {
-        relayHost = host
-        remoteDiscoveryRepository.setEnabled(host, connectionState.subscriptionCount.value > 0)
-    }
-
     private fun onControlConnectionOpened(server: Device.Server) {
         serverSelectionDataSource.set(server)
         connectionState.value = ConnectionState.Connected(server)
@@ -111,7 +93,15 @@ internal class DefaultNetworkClientRepository(
     ) {
         Logger.i(TAG) { "Control connection closed: ${exception.prettify()}" }
 
-        if (serverSelectionDataSource.server.value == null) return
+        if (connectionState.value is ConnectionState.Disconnected) {
+            return
+        }
+        // Reconnection failure case
+        if (serverSelectionDataSource.server.value == null) {
+            connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)
+            Logger.i(TAG) { "Client state: ${connectionState.value}" }
+            return
+        }
 
         connectionState.value = ConnectionState.Reconnecting(server)
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
@@ -120,6 +110,7 @@ internal class DefaultNetworkClientRepository(
             do {
                 delay(Constants.RECONNECTION_TIMEOUT)
                 if (serverSelectionDataSource.server.value == null) {
+                    Logger.d(TAG) { "Stopped reconnecting" }
                     return@launch
                 }
                 connect(server)

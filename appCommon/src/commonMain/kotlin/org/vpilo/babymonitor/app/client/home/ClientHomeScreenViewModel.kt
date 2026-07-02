@@ -10,7 +10,9 @@ import org.vpilo.babymonitor.app.settings.ClientEnabledAudio
 import org.vpilo.babymonitor.app.settings.ClientEnabledVideo
 import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
+import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
@@ -54,6 +56,10 @@ class ClientHomeScreenViewModel(
     override fun SubscriptionScope.onSubscribed() {
         networkClientRepository.connectionStateFlow.subscribe { netState ->
             state.copy(connectionState = netState).update()
+
+            if (netState is ConnectionState.Disconnected) {
+                ClientHomeScreenEffect.Disconnected.sendEffect()
+            }
         }
 
         combine(
@@ -80,7 +86,13 @@ class ClientHomeScreenViewModel(
             playReceivedAudio.setPlaying(vmScope, isEnabled)
         }
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
-            networkClientRepository.setRelayHost(host)
+            val connection = state.connectionState
+            if (connection !is ConnectionState.Connected) return@subscribe
+            val server = connection.server
+            if (server is Device.RemoteServer && server.relayHost != host) {
+                networkClientRepository.disconnect()
+                ClientHomeScreenEffect.Disconnected.sendEffect()
+            }
         }
     }
 

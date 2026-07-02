@@ -6,8 +6,5 @@ import org.vpilo.babymonitor.model.Device
 interface RemoteDiscoveryRepository {
     val discoveredDevicesFlow: Flow<Set<Device>>
 
-    fun setEnabled(
-        host: String,
-        enabled: Boolean,
-    )
+    fun setRelayHost(host: String = "")
 }

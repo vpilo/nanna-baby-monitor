@@ -2,7 +2,9 @@ package org.vpilo.babymonitor.network.client.discovery
 
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
+import io.ktor.websocket.DefaultWebSocketSession
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
 import io.ktor.websocket.timeout
@@ -37,28 +39,37 @@ internal class DefaultRemoteDiscoveryRepository(
 
     private var relayHost: String = ""
     private var discoveryJob: Job? = null
+    private var session: DefaultWebSocketSession? = null
 
     private var isEnabled: Boolean = true
 
-    override fun setEnabled(
-        host: String,
-        enabled: Boolean,
-    ) {
-        isEnabled = enabled
+    override fun setRelayHost(host: String) {
         relayHost = host
+        _discoveredDevicesFlow.value = emptySet()
+
         discoveryJob?.cancel()
         discoveryJob = null
-        if (!enabled) {
-            _discoveredDevicesFlow.value = emptySet()
-        } else {
+
+        if (relayHost.isNotBlank()) {
             start()
+        } else {
+            scope.launch {
+                session?.close()
+                session = null
+            }
         }
     }
 
     private fun start() {
         if (!isEnabled) return
         if (relayHost.isEmpty()) return
-        discoveryJob = scope.launch { runDiscoveryLoop() }
+
+        discoveryJob =
+            scope.launch {
+                session?.close()
+                session = null
+                runDiscoveryLoop()
+            }
     }
 
     private suspend fun runDiscoveryLoop() {
@@ -74,6 +85,7 @@ internal class DefaultRemoteDiscoveryRepository(
                     pingInterval = Constants.WEBSOCKET_PING_PERIOD
                     timeout = Constants.WEBSOCKET_TIMEOUT
 
+                    session = this
                     runWebSocketCatching(TAG) {
                         RelayHandshake.send(this, secret)
                         for (frame in incoming) {
@@ -86,7 +98,9 @@ internal class DefaultRemoteDiscoveryRepository(
                                     .mapNotNull { line -> Device.RemoteServer.fromTransportString(line) }
                                     .filter { it.relayHost == relayHost }
                                     .toSet()
-                            Logger.i(TAG) { "Relay found servers: $servers" }
+                            if (_discoveredDevicesFlow.value != servers) {
+                                Logger.i(TAG) { "Relay found servers: $servers" }
+                            }
                             _discoveredDevicesFlow.value = servers
                         }
                     }

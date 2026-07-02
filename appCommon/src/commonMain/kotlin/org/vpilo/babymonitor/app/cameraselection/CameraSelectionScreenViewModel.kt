@@ -5,6 +5,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientLastServerId
 import org.vpilo.babymonitor.app.settings.RelayHost
@@ -27,11 +29,25 @@ class CameraSelectionScreenViewModel(
     private val localDiscoveryRepository: LocalDiscoveryRepository,
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
     private val deviceStateRepository: DeviceStateRepository,
-    private val getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
+    getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
         initialState = CameraSelectionScreenState(),
     ) {
+    private var discoveryJob: Job? = null
     private var autoConnectJob: Job? = null
+
+    init {
+        discoveryJob =
+            getLocalClientDeviceFlowUseCase()
+                .onEach { device -> localDiscoveryRepository.register(device) }
+                .launchIn(vmScope)
+    }
+
+    override fun onCleared() {
+        discoveryJob?.cancel()
+        discoveryJob = null
+        localDiscoveryRepository.unregister()
+    }
 
     override fun SubscriptionScope.onSubscribed() {
         combine(
@@ -68,17 +84,13 @@ class CameraSelectionScreenViewModel(
                 waitForLastConnectedServer()
             }
 
-        getLocalClientDeviceFlowUseCase().subscribe { device ->
-            localDiscoveryRepository.register(device)
-        }
-
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
-            networkClientRepository.setRelayHost(host)
+            remoteDiscoveryRepository.setRelayHost(host)
         }
     }
 
     override suspend fun onUnsubscribed() {
-        localDiscoveryRepository.unregister()
+        remoteDiscoveryRepository.setRelayHost()
         autoConnectJob?.cancel()
         autoConnectJob = null
     }

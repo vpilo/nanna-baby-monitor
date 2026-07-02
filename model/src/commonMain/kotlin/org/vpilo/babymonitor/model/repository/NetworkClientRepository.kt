@@ -12,7 +12,5 @@ interface NetworkClientRepository {
 
     suspend fun disconnect()
 
-    fun setRelayHost(host: String)
-
     fun reset()
 }

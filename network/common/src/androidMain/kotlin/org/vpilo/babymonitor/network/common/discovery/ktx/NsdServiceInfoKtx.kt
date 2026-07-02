@@ -57,7 +57,7 @@ internal fun NsdServiceInfo.toDeviceOrNull(): Device? {
             Logger.w(DefaultLocalDiscoveryRepository.TAG) { "Device ignored due to unsupported type '$type'" }
             null
         }
-    }.also { Logger.d("VALERIO") { "Device resolved: $it" } }
+    }
 }
 
 private fun Map<String, ByteArray>.getString(attributeName: String): String? = this[attributeName]?.toString(Charsets.UTF_8)

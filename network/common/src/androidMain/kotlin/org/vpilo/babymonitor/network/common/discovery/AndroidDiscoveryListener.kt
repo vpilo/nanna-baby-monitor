@@ -3,8 +3,6 @@ package org.vpilo.babymonitor.network.common.discovery
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
@@ -12,15 +10,12 @@ import org.vpilo.babymonitor.network.common.discovery.ktx.toDeviceOrNull
 
 internal class AndroidDiscoveryListener(
     private val nsdManager: NsdManager,
+    private val mutableDiscoveredDevicesFlow: MutableStateFlow<Set<Device>>,
 ) : NsdManager.DiscoveryListener {
-    private val _discoveredDevices: MutableStateFlow<Set<Device>> = MutableStateFlow(emptySet())
-    val discoveredDevices: StateFlow<Set<Device>> = _discoveredDevices.asStateFlow()
-
     private var device: Device? = null
 
     fun reset(device: Device? = null) {
         this.device = device
-        _discoveredDevices.value = emptySet()
     }
 
     override fun onDiscoveryStarted(serviceType: String) {
@@ -28,7 +23,6 @@ internal class AndroidDiscoveryListener(
     }
 
     override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-        Logger.d(DefaultLocalDiscoveryRepository.TAG) { "service announce ${serviceInfo.serviceName}" }
         // NsdManager wants a new listener for every resolution request.
         @Suppress("DEPRECATION")
         nsdManager.resolveService(
@@ -58,15 +52,15 @@ internal class AndroidDiscoveryListener(
         }
 
         Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
-        _discoveredDevices.update { devices -> devices + added }
+        mutableDiscoveredDevicesFlow.update { devices -> devices + added }
     }
 
     override fun onServiceLost(serviceInfo: NsdServiceInfo) {
         val removed = serviceInfo.toDeviceOrNull() ?: return
-        if (removed !in _discoveredDevices.value) return
+        if (removed !in mutableDiscoveredDevicesFlow.value) return
 
         Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $removed" }
-        _discoveredDevices.update { devices -> devices - removed }
+        mutableDiscoveredDevicesFlow.update { devices -> devices - removed }
     }
 
     override fun onDiscoveryStopped(serviceType: String) {

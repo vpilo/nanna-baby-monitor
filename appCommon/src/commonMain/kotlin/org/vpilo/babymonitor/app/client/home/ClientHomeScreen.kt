@@ -142,7 +142,7 @@ private fun ClientHomeScreenContent(
             }
         }
 
-        if (connectionState is ConnectionState.Reconnecting) {
+        if (connectionState is ConnectionState.Connecting || connectionState is ConnectionState.Reconnecting) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = SURFACE_ALPHA),

@@ -6,6 +6,7 @@ import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -35,12 +36,18 @@ internal actual class DefaultLocalDiscoveryRepository(
 
     private var multicastLock: WifiManager.MulticastLock? = null
 
-    private var discoveryListener: AndroidDiscoveryListener = AndroidDiscoveryListener(nsdManager = nsdManager)
+    private val mutableDiscoveredDevicesFlow: MutableStateFlow<Set<Device>> = MutableStateFlow(emptySet())
+
+    private var discoveryListener: AndroidDiscoveryListener =
+        AndroidDiscoveryListener(
+            nsdManager = nsdManager,
+            mutableDiscoveredDevicesFlow = mutableDiscoveredDevicesFlow,
+        )
     private var registrationListener: AndroidRegistrationListener = AndroidRegistrationListener()
 
     actual override val discoveredDevicesFlow: Flow<Set<Device>> =
         @OptIn(FlowPreview::class)
-        discoveryListener.discoveredDevices
+        mutableDiscoveredDevicesFlow
             .debounce(LocalDiscoveryRepository.DISCOVERY_DEBOUNCE_TIME)
             .map { it.toSortedSet() }
             .distinctUntilChanged()
@@ -105,9 +112,14 @@ internal actual class DefaultLocalDiscoveryRepository(
         }
         this.device = null
         discoveryListener.reset()
+        mutableDiscoveredDevicesFlow.value = emptySet()
         releaseMulticastLock()
         // It's apparently unreliable to keep using the same listener between sessions, so make a new one every time.
-        discoveryListener = AndroidDiscoveryListener(nsdManager = nsdManager)
+        discoveryListener =
+            AndroidDiscoveryListener(
+                nsdManager = nsdManager,
+                mutableDiscoveredDevicesFlow = mutableDiscoveredDevicesFlow,
+            )
         registrationListener = AndroidRegistrationListener()
     }
 

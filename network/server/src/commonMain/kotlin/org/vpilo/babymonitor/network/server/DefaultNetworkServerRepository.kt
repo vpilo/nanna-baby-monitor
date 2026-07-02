@@ -56,6 +56,7 @@ internal class DefaultNetworkServerRepository(
 
     private val foregroundLink = ForegroundServiceLink(AppRole.SERVER)
 
+    private val activeControlSessions = CopyOnWriteArrayList<WebSocketSession>()
     private val activeAudioSessions = CopyOnWriteArrayList<WebSocketSession>()
     private val activeVideoSessions = CopyOnWriteArrayList<WebSocketSession>()
 
@@ -136,6 +137,7 @@ internal class DefaultNetworkServerRepository(
         withContext(coroutineContext) {
             Logger.i(TAG) { "Requested server stop" }
             relayRegistration.stop()
+            activeControlSessions.closeAll()
             activeAudioSessions.closeAll()
             activeVideoSessions.closeAll()
             server?.stop(
@@ -189,10 +191,12 @@ internal class DefaultNetworkServerRepository(
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
+                activeControlSessions.add(this)
                 try {
                     controlServerWebSocket()
                 } finally {
                     Logger.i(TAG) { "Closed control session" }
+                    activeControlSessions.remove(this)
                 }
             }
             webSocket(Endpoints.STREAM_AUDIO) {

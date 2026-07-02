@@ -21,6 +21,7 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
+import java.net.ConnectException
 import java.net.InetAddress
 import java.net.ProtocolException
 import kotlin.coroutines.cancellation.CancellationException
@@ -90,6 +91,7 @@ internal class WebSocketConnectionHandler(
                     } else {
                         Logger.w(TAG) { "Failed to connect to any of the hosts for $endpointPath" }
                         connectionJob = null
+                        onDisconnected(ConnectException("Connection failure"))
                     }
                 }
             }
