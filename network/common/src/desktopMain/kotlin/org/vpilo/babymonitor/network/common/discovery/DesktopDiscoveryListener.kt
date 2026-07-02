@@ -14,7 +14,10 @@ internal class DesktopDiscoveryListener : ServiceListener {
     private val _discoveredDevices: MutableStateFlow<Set<Device>> = MutableStateFlow(emptySet())
     val discoveredDevices: StateFlow<Set<Device>> = _discoveredDevices.asStateFlow()
 
-    fun reset() {
+    private var device: Device? = null
+
+    fun reset(device: Device? = null) {
+        this.device = device
         _discoveredDevices.value = emptySet()
     }
 
@@ -24,7 +27,7 @@ internal class DesktopDiscoveryListener : ServiceListener {
 
     override fun serviceResolved(event: ServiceEvent) {
         val added = event.toDeviceOrNull() ?: return
-        if (added in _discoveredDevices.value) return
+        if (added.id == device?.id) return
 
         if (added.addresses.isEmpty()) {
             Logger.w(DefaultLocalDiscoveryRepository.TAG) { "Device resolved with no hosts: $added" }
@@ -43,7 +46,6 @@ internal class DesktopDiscoveryListener : ServiceListener {
 
     override fun serviceRemoved(event: ServiceEvent) {
         val removed = event.toDeviceOrNull() ?: return
-
         if (removed !in _discoveredDevices.value) return
 
         Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $removed" }

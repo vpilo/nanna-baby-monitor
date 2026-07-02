@@ -18,12 +18,8 @@ internal class AndroidDiscoveryListener(
 
     private var device: Device? = null
 
-    fun setDevice(device: Device) {
+    fun reset(device: Device? = null) {
         this.device = device
-    }
-
-    fun reset() {
-        device = null
         _discoveredDevices.value = emptySet()
     }
 
@@ -54,20 +50,22 @@ internal class AndroidDiscoveryListener(
 
     fun onServiceResolved(serviceInfo: NsdServiceInfo) {
         val added = serviceInfo.toDeviceOrNull() ?: return
+        if (added.id == device?.id) return
 
         if (added.addresses.isEmpty()) {
             Logger.w(DefaultLocalDiscoveryRepository.TAG) { "Device resolved with no hosts: $added" }
             return
         }
 
-        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $device" }
+        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
         _discoveredDevices.update { devices -> devices + added }
     }
 
     override fun onServiceLost(serviceInfo: NsdServiceInfo) {
         val removed = serviceInfo.toDeviceOrNull() ?: return
+        if (removed !in _discoveredDevices.value) return
 
-        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $device" }
+        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $removed" }
         _discoveredDevices.update { devices -> devices - removed }
     }
 

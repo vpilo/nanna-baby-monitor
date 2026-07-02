@@ -13,7 +13,6 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.discovery.ktx.toAttributes
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
-import kotlin.time.Duration.Companion.milliseconds
 
 internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository {
     private val discoveryService = JmDNS.create()
@@ -25,7 +24,7 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
     actual override val discoveredDevicesFlow: Flow<Set<Device>> =
         @OptIn(FlowPreview::class)
         listener.discoveredDevices
-            .debounce(DISCOVERY_DEBOUNCE_TIME)
+            .debounce(LocalDiscoveryRepository.DISCOVERY_DEBOUNCE_TIME)
             .map { it.toSortedSet() }
             .distinctUntilChanged()
 
@@ -38,6 +37,7 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
             unregister()
         }
         this.device = device
+        listener.reset(device)
 
         try {
             when (device) {
@@ -101,8 +101,6 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
 
         // JmDNS requires the ".local." suffix
         private const val DISCOVERY_DESKTOP_SERVICE_TYPE = "_${Constants.DISCOVERY_SERVICE_TYPE}._tcp.local."
-
-        private val DISCOVERY_DEBOUNCE_TIME = 500.milliseconds
 
         private fun createServiceInfo(device: Device): ServiceInfo =
             ServiceInfo.create(

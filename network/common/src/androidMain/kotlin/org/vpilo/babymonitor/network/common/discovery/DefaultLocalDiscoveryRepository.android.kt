@@ -4,7 +4,9 @@ import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.koin.mp.KoinPlatform
@@ -36,11 +38,12 @@ internal actual class DefaultLocalDiscoveryRepository(
     private var discoveryListener: AndroidDiscoveryListener = AndroidDiscoveryListener(nsdManager = nsdManager)
     private var registrationListener: AndroidRegistrationListener = AndroidRegistrationListener()
 
-    actual override val discoveredDevicesFlow: Flow<Set<Device>>
-        get() =
-            discoveryListener.discoveredDevices
-                .map { it.toSortedSet() }
-                .distinctUntilChanged()
+    actual override val discoveredDevicesFlow: Flow<Set<Device>> =
+        @OptIn(FlowPreview::class)
+        discoveryListener.discoveredDevices
+            .debounce(LocalDiscoveryRepository.DISCOVERY_DEBOUNCE_TIME)
+            .map { it.toSortedSet() }
+            .distinctUntilChanged()
 
     actual override fun register(device: Device) {
         if (this.device == device) {
@@ -62,7 +65,7 @@ internal actual class DefaultLocalDiscoveryRepository(
             is Device.Relay,
                 -> {
                     Logger.d(TAG) { "Starting service discovery" }
-                    discoveryListener.setDevice(device)
+                    discoveryListener.reset(device)
                     nsdManager.discoverServices(
                         DISCOVERY_ANDROID_SERVICE_TYPE,
                         NsdManager.PROTOCOL_DNS_SD,
