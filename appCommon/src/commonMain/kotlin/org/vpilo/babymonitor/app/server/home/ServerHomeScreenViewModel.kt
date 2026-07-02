@@ -2,7 +2,9 @@ package org.vpilo.babymonitor.app.server.home
 
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.vpilo.babymonitor.app.settings.LastCaptureMode
 import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
@@ -38,20 +40,6 @@ class ServerHomeScreenViewModel(
                 ).update()
         }
 
-        combine(
-            settings.flowOf(Setting.DeviceId),
-            settings.flowOf(Setting.DeviceName),
-        ) { rawId, deviceName ->
-            val id = checkNotNull(DeviceId.parseOrNull(rawId)) { "Invalid device ID: $rawId" }
-            val device = Device.LocalServer(id = id, name = deviceName)
-            discoveryManager.register(device)
-            device
-        }.subscribe {
-            if (!state.isAvailableOnLocalNetwork) {
-                server.start(it)
-            }
-        }
-
         settings.flowOf(Setting.LastCaptureMode).subscribe {
             state.copy(captureMode = it).update()
             server.setCaptureMode(it)
@@ -63,9 +51,26 @@ class ServerHomeScreenViewModel(
         }
     }
 
-    override suspend fun onUnsubscribed() {
-        server.stop()
-        discoveryManager.unregister()
+    init {
+        combine(
+            settings.flowOf(Setting.DeviceId),
+            settings.flowOf(Setting.DeviceName),
+        ) { rawId, deviceName ->
+            val id = checkNotNull(DeviceId.parseOrNull(rawId)) { "Invalid device ID: $rawId" }
+            val device = Device.LocalServer(id = id, name = deviceName)
+            discoveryManager.register(device)
+
+            if (!state.isAvailableOnLocalNetwork) {
+                server.start(device)
+            }
+        }.launchIn(vmScope)
+    }
+
+    override fun onCleared() {
+        runBlocking {
+            discoveryManager.unregister()
+            server.stop()
+        }
     }
 
     override fun onAction(action: ServerHomeScreenAction) {
