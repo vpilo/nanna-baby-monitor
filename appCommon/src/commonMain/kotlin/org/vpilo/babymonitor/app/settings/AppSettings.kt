@@ -12,7 +12,7 @@ import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.makeSetting
 
 val Setting.Companion.IsFirstRun by makeSetting {
-    Setting.makePrimitive(
+    Setting.makeBoolean(
         id = SettingId("is_app_first_run"),
         default = true,
     )
@@ -32,28 +32,28 @@ val Setting.Companion.LastCaptureMode by makeSetting {
 }
 
 val Setting.Companion.ClientEnabledAudio by makeSetting {
-    Setting.makePrimitive(
+    Setting.makeBoolean(
         id = SettingId("client_enabled_audio"),
         default = false,
     )
 }
 
 val Setting.Companion.ClientEnabledVideo by makeSetting {
-    Setting.makePrimitive(
+    Setting.makeBoolean(
         id = SettingId("client_enabled_video"),
         default = true,
     )
 }
 
 val Setting.Companion.ClientLastServerId by makeSetting {
-    Setting.makePrimitive(
+    Setting.makeString(
         id = SettingId("client_last_server_id"),
         default = "",
     )
 }
 
 val Setting.Companion.RelayHost by makeSetting {
-    Setting.makePrimitive(
+    Setting.makeString(
         id = SettingId("relay_host"),
         name = Res.string.relay_host_title,
         description = Res.string.relay_host_description,

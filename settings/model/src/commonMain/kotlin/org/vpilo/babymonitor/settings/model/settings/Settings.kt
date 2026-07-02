@@ -10,14 +10,14 @@ import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.makeSetting
 
 val Setting.Companion.DeviceId by makeSetting {
-    Setting.makePrimitive(
+    Setting.makeString(
         id = SettingId("device_id"),
         default = "",
     )
 }
 
 val Setting.Companion.DeviceName by makeSetting {
-    Setting.makePrimitive(
+    Setting.makeString(
         id = SettingId("device_name"),
         name = Res.string.settings_device_name_title,
         description = Res.string.settings_device_name_description,

@@ -79,7 +79,7 @@ fun MenuItem(
         }
     }
     bottomContent?.let {
-        Row(
+        Column(
             modifier =
                 Modifier
                     .padding(

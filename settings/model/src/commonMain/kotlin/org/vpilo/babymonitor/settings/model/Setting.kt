@@ -14,21 +14,57 @@ sealed interface Setting<T : Any> {
     val validateChange: suspend (T) -> T?
 
     companion object {
-        inline fun <reified T : Any> makePrimitive(
+        fun makeString(
             id: SettingId,
             name: StringResource? = null,
             description: StringResource? = null,
             platform: PlatformAvailability = PlatformAvailability.AllPlatforms,
-            default: T,
-            noinline validateChange: suspend (T) -> T? = { it },
+            default: String,
+            validateChange: suspend (String) -> String? = { it },
         ) = PrimitiveSetting(
             id = id,
             name = name,
             description = description,
             platform = platform,
             default = default,
-            type = T::class,
+            type = String::class,
             validateChange = validateChange,
+        )
+
+        fun makeBoolean(
+            id: SettingId,
+            name: StringResource? = null,
+            description: StringResource? = null,
+            platform: PlatformAvailability = PlatformAvailability.AllPlatforms,
+            default: Boolean,
+            validateChange: suspend (Boolean) -> Boolean? = { it },
+        ) = PrimitiveSetting(
+            id = id,
+            name = name,
+            description = description,
+            platform = platform,
+            default = default,
+            type = Boolean::class,
+            validateChange = validateChange,
+        )
+
+        fun makeInt(
+            id: SettingId,
+            name: StringResource? = null,
+            description: StringResource? = null,
+            platform: PlatformAvailability = PlatformAvailability.AllPlatforms,
+            default: Int,
+            limits: IntRange? = null,
+            validateChange: suspend (Int) -> Int? = { it },
+        ) = PrimitiveSetting(
+            id = id,
+            name = name,
+            description = description,
+            platform = platform,
+            default = default,
+            type = Int::class,
+            validateChange = validateChange,
+            limits = limits,
         )
 
         inline fun <reified E : Enum<E>> makeEnum(
@@ -49,7 +85,7 @@ sealed interface Setting<T : Any> {
             values = values,
             validateChange = validateChange,
         ).also {
-            require(values.isEmpty() || values.size == E::class.java.enumConstants?.size == true) {
+            require(values.isEmpty() || values.size == E::class.java.enumConstants?.size) {
                 "Enum setting $id must have strings for all enum values."
             }
         }
@@ -64,7 +100,17 @@ class PrimitiveSetting<T : Any>(
     override val type: KClass<T>,
     override val default: T,
     override val validateChange: suspend (T) -> T? = { it },
+    val limits: IntRange? = null,
 ) : Setting<T> {
+    init {
+        require(limits == null || (type == Int::class && (default as Int) in limits)) {
+            "Default value $default for setting $id is outside of limits $limits"
+        }
+        require(limits == null || limits.first <= limits.last) {
+            "Limits $limits for setting $id are invalid"
+        }
+    }
+
     override fun toString() = "Setting('$id': $type)"
 
     companion object

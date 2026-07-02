@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
+    <string name="setting_int_current_value">Value: %1$s</string>
+    <string name="setting_int_increment">Increment</string>
+    <string name="setting_int_decrement">Decrement</string>
+
     <string name="example" translateable="false">Example string</string>
 
     <string name="example_mode_audio_and_video" translateable="false">example: Audio and Video</string>
