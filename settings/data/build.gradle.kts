@@ -37,7 +37,6 @@ kotlin {
             implementation(libs.androidx.datastore)
             implementation(libs.koin.core)
         }
-        val desktopMain by getting
     }
 
     targets.configureEach {

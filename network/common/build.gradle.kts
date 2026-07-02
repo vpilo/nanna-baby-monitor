@@ -29,8 +29,6 @@ kotlin {
     jvm("desktop")
 
     sourceSets {
-        val desktopMain by getting
-
         commonMain.dependencies {
             implementation(project(":common"))
             implementation(project(":model"))
@@ -41,6 +39,7 @@ kotlin {
             implementation(libs.koin.core)
         }
 
+        val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {
             implementation(libs.jmdns)
         }

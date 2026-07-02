@@ -33,8 +33,6 @@ kotlin {
     jvm("desktop")
 
     sourceSets {
-        val desktopMain by getting
-
         androidMain.dependencies {
             implementation(project(":androidService"))
 

@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
 }
 
-val generateBuildInfo by tasks.registering {
+val generateBuildInfo = tasks.register("generateBuildInfo") {
     description = "Generates a BuildInfo.kt file with versioning information."
 
     val versionInfo = gitVersionProvider()
@@ -51,8 +51,6 @@ kotlin {
     jvm("desktop")
 
     sourceSets {
-        val desktopMain by getting
-
         commonMain {
             kotlin.srcDir(generateBuildInfo)
 
@@ -61,6 +59,7 @@ kotlin {
             }
         }
 
+        val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {
             implementation(libs.slf4j.api)
             implementation(libs.slf4j.simple)

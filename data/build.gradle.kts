@@ -41,7 +41,7 @@ kotlin {
             implementation(libs.compose.resources)
             implementation(libs.koin.core)
         }
-        val desktopMain by getting
+        val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {
             implementation(libs.oshi)
         }

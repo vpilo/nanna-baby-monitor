@@ -13,8 +13,7 @@ kotlin {
     jvm("desktop")
 
     sourceSets {
-        val desktopMain by getting
-
+        val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {
             implementation(project(":appCommon"))
             implementation(compose.desktop.currentOs)

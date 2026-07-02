@@ -28,8 +28,6 @@ kotlin {
     jvm("desktop")
 
     sourceSets {
-        val desktopMain by getting
-
         androidMain.dependencies {
             implementation(libs.koin.android)
         }
@@ -55,10 +53,9 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.koin.core)
-
-            implementation(libs.bundles.coil)
         }
 
+        val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
         }

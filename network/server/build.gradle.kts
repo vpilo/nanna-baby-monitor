@@ -25,8 +25,6 @@ kotlin {
     jvm("desktop")
 
     sourceSets {
-        val desktopMain by getting
-
         commonMain.dependencies {
             implementation(project(":common"))
             implementation(project(":model"))

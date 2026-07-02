@@ -29,7 +29,6 @@ kotlin {
             implementation(project(":common"))
             implementation(project(":model"))
         }
-        val desktopMain by getting
     }
 
     compilerOptions {
