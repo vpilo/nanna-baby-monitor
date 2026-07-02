@@ -13,6 +13,7 @@ object MediaFormats {
         const val FRAME_DURATION_MS = 20 // Milliseconds per frame
 
         const val NOISE_DURATION_MS = 2_000 // Audio time window to consider for noise detection.
+        const val MIN_NOISE_SENSITIVITY_LEVEL = 1
         const val MAX_NOISE_SENSITIVITY_LEVEL = 5
         const val DEFAULT_NOISE_SENSITIVITY_LEVEL = 3
     }

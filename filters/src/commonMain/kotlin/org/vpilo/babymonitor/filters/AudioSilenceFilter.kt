@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.filters
 
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AudioFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
 import kotlin.math.pow
@@ -21,6 +22,7 @@ class AudioSilenceFilter(
         set(value) {
             field = clamp(value)
             threshold = computeThreshold(field)
+            Logger.d(TAG) { "Set sensitivity level to $field" }
         }
 
     private var threshold: Double = computeThreshold(this.sensitivityLevel)
@@ -73,6 +75,8 @@ class AudioSilenceFilter(
     }
 
     private companion object {
+        private val TAG = AudioSilenceFilter::class
+
         private const val BYTES_PER_SAMPLE = MediaFormats.Audio.SAMPLE_SIZE_BITS / 8
 
         private const val UNSIGNED_MIDPOINT: Int = 1 shl (MediaFormats.Audio.SAMPLE_SIZE_BITS - 1)
@@ -86,7 +90,8 @@ class AudioSilenceFilter(
                 ((1L shl MediaFormats.Audio.SAMPLE_SIZE_BITS) - 1L).toDouble() / 2.0
             }
 
-        private fun clamp(level: Int): Int = level.coerceIn(0, MediaFormats.Audio.MAX_NOISE_SENSITIVITY_LEVEL)
+        private fun clamp(level: Int): Int =
+            level.coerceIn(MediaFormats.Audio.MIN_NOISE_SENSITIVITY_LEVEL, MediaFormats.Audio.MAX_NOISE_SENSITIVITY_LEVEL)
 
         // Levels map linearly from -20 dBFS (level 0) to -60 dBFS (max level). Step size depends on max sensitivity.
         private fun computeThreshold(level: Int): Double {

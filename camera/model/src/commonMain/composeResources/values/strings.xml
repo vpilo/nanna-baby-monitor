@@ -7,4 +7,6 @@
     <string name="setting_camera_resolution_high">High (1080p, 30fps)</string>
     <string name="setting_low_light_boost_title">Low-light boost</string>
     <string name="setting_low_light_boost_description">Automatically brighten the video when the room is dark.</string>
+    <string name="setting_silence_detection_threshold_title">Silence detection threshold</string>
+    <string name="setting_silence_detection_threshold_description">Level of noise to still consider as silence. 1 will be</string>
 </resources>

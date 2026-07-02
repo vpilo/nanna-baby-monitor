@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.NoiseAware
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.camera.model.settings.CameraResolution
 import org.vpilo.babymonitor.camera.model.settings.LowLightBoost
+import org.vpilo.babymonitor.camera.model.settings.SilenceDetectionThreshold
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.settings.model.PlatformAvailability
 import org.vpilo.babymonitor.settings.model.Setting
@@ -57,14 +59,11 @@ fun AppMenuContents(
             setting = Setting.LowLightBoost,
             imageVector = Icons.Default.BrightnessMedium,
         )
+        MenuSettingItem(
+            setting = Setting.SilenceDetectionThreshold,
+            imageVector = Icons.Default.NoiseAware,
+        )
     }
-
-    MenuItem(
-        imageVector = Icons.Default.SwapHoriz,
-        title = stringResource(Res.string.menu_change_role_title),
-        description = stringResource(Res.string.menu_change_role_description),
-        onClick = onNavigateToRoot,
-    )
 
     MenuSettingItem(
         setting = Setting.DeviceName,
@@ -74,6 +73,13 @@ fun AppMenuContents(
     MenuSettingItem(
         setting = Setting.RelayHost,
         imageVector = Icons.Default.Cloud,
+    )
+
+    MenuItem(
+        imageVector = Icons.Default.SwapHoriz,
+        title = stringResource(Res.string.menu_change_role_title),
+        description = stringResource(Res.string.menu_change_role_description),
+        onClick = onNavigateToRoot,
     )
 
     val quitLabel =

@@ -5,7 +5,6 @@
 - when the control connection is closed by the client, video and audio streaming should be terminated explicitly.
 - brightness correction should be done (or at least controlled) on the client, not the server.
 - cam selection screen should say "will reconnect to device x when it appears" if it's not able to reconnect instantly
-- client should be able to control silence detection on server.
 - On relay setting, see if reachable and if authenticated.
 - on client home, show if connected directly or via relay.
 - A 'live' red icon when it is actually streaming.
@@ -19,7 +18,6 @@
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
-- Add slider setting for noise sensitivity.
 - On server and/or client, allow disabling video rotation.
 
 # Issues
@@ -45,6 +43,7 @@
 - Systemctl service to re-run relay when closed/crashed.
 - on internet connectivity change, restart discovery and service advertising. On client, server and relay.
 - Tapping on the Android notification should open the app.
+- Add slider setting for noise sensitivity.
 
 # Resources
 
