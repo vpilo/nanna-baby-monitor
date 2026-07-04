@@ -17,11 +17,11 @@ internal fun getBatteryLevelFlow(context: Context): Flow<Int> =
             val batteryStatus: Intent? = context.registerReceiver(null, filter)
             if (batteryStatus == null) {
                 emit(DEVICE_STATE_DATA_UNAVAILABLE)
-                return@flow
-            }
-            val level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, DEVICE_STATE_DATA_UNAVAILABLE)
+            } else {
+                val level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, DEVICE_STATE_DATA_UNAVAILABLE)
 
-            emit(level.coerceIn(0, 100))
+                emit(level.coerceIn(0, 100))
+            }
             delay(DEVICE_STATE_UPDATE_INTERVAL)
         }
     }
