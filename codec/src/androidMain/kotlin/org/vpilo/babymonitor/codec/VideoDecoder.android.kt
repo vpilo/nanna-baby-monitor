@@ -86,7 +86,10 @@ actual class VideoDecoder actual constructor(
                 codec?.let { decodeFrame(it, chunk) }
             }
         } finally {
-            codec?.let { releaseCodec(it) }
+            codec?.let {
+                releaseCodec(it)
+                Logger.d(TAG) { "Video decoder stopped" }
+            }
         }
     }
 

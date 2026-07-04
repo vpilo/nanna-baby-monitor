@@ -23,6 +23,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import babymonitor.camera.presentation.generated.resources.Res
 import babymonitor.camera.presentation.generated.resources.server_in_audio_only_mode
 import org.jetbrains.compose.resources.painterResource
@@ -55,6 +57,9 @@ fun PanningVideoFeed(
 
     LaunchedEffect(rotation, containerSize) { panOffset = Offset.Zero }
 
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val isFeedActive = lifecycleState.isAtLeast(minLifecycleStateForVideoFeed)
+
     Box(
         modifier =
             modifier
@@ -84,7 +89,7 @@ fun PanningVideoFeed(
                 panOffset = panOffset,
                 rotation = rotation,
             )
-        } else {
+        } else if (isFeedActive) {
             PanningVideoFeedContent(
                 modifier = Modifier.fillMaxSize(),
                 videoStream = videoStream,
