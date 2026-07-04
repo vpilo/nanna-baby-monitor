@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.camera.presentation.composables
 import androidx.compose.foundation.AndroidEmbeddedExternalSurface
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -56,16 +55,8 @@ internal actual fun PanningVideoFeedContent(
         transform = transform,
     ) {
         onSurface { surface, _, _ ->
-            androidVideoStream.postSurface(surface)
-            surface.onDestroyed {
-                androidVideoStream.postSurface(null)
-            }
-        }
-    }
-
-    DisposableEffect(androidVideoStream) {
-        onDispose {
-            androidVideoStream.postSurface(null)
+            androidVideoStream.attachSurface(surface)
+            surface.onDestroyed { androidVideoStream.detachSurface(surface) }
         }
     }
 }

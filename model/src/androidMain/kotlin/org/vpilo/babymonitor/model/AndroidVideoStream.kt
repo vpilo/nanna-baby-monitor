@@ -11,12 +11,22 @@ sealed class AndroidVideoStream : VideoStream<Surface>() {
     override val surface: Flow<Surface?> = mutableSurface.asStateFlow()
     override val isActive: Flow<Boolean> = mutableSurface.map { it != null }
 
-    fun postSurface(surface: Surface?) {
-        if (surface != null) {
-            check(mutableSurface.value == null) { "postSurface() called with a surface already attached" }
-            mutableSurface.value = surface
-            return
-        }
-        mutableSurface.value = null
+    /**
+     * Registers [surface] as the current output, replacing any previously attached surface.
+     *
+     * Overlapping surface lifecycles are expected: a new [android.view.TextureView] can produce its
+     * surface before the outgoing one is destroyed (e.g. during a navigation transition), because
+     * this stream is a long-lived singleton shared across surface producers.
+     */
+    fun attachSurface(surface: Surface) {
+        mutableSurface.value = surface
+    }
+
+    /**
+     * Detaches [surface] only if it is still the current one, so a stale destroy from a torn-down
+     * producer cannot clobber a newer surface that already replaced it.
+     */
+    fun detachSurface(surface: Surface) {
+        mutableSurface.compareAndSet(surface, null)
     }
 }
