@@ -6,15 +6,21 @@ A systemd user service runs the relay in background on Linux easily, restarting 
 
 1. Build the uber jar (works on any architecture):
    ```sh
+   rm -f appRelay/build/compose/jars/*
    ./gradlew :appRelay:packageUberJarForCurrentOS
    ```
-2. Drop the two files into place:
+2. Copy the two files into place:
    ```sh
    mkdir -p ~/.local/share ~/.config/systemd/user
-   cp appRelay/build/compose/jars/org.vpilo.babymonitor.relay-*-1.0.0.jar ~/.local/share/babymonitor-relay.jar
+   cp appRelay/build/compose/jars/org.vpilo.babymonitor.relay-*.jar ~/.local/share/babymonitor-relay.jar
    cp appRelay/systemd/babymonitor-relay.service ~/.config/systemd/user/
    ```
-3. Enable and start:
+3. Edit the service file to set your own host name:
+   ```sh
+    RELAY_HOST='some.host.name' # edit this
+   sed -i -re "s/<my-host-name>/$RELAY_HOST/" babymonitor-relay.service
+    ```
+4. Enable and start:
    ```sh
    systemctl --user daemon-reload
    systemctl --user enable --now babymonitor-relay
@@ -30,10 +36,16 @@ To keep it running when you're logged out: `sudo loginctl enable-linger $USER`.
 
 ## Update
 
-Rebuild, then overwrite the jar and restart:
+To update, rebuild:
 
 ```sh
+rm -f appRelay/build/compose/jars/*
 ./gradlew :appRelay:packageUberJarForCurrentOS
-cp appRelay/build/compose/jars/org.vpilo.babymonitor.relay-*-1.0.0.jar ~/.local/share/babymonitor-relay.jar
-systemctl --user restart babymonitor-relay
 ```
+Then overwrite the jar and restart:
+```sh
+systemctl --user stop babymonitor-relay
+cp appRelay/build/compose/jars/org.vpilo.babymonitor.relay-*.jar ~/.local/share/babymonitor-relay.jar
+systemctl --user start babymonitor-relay
+```
+Note that using 'systemctl restart' doesn't work well when replacing the original jar. Stop, copy and start the service instead.

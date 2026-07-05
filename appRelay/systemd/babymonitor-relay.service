@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/env java -jar %h/.local/share/babymonitor-relay.jar
+ExecStart=/usr/bin/env java -jar %h/.local/share/babymonitor-relay.jar <my-host-name>
 Restart=on-failure
 RestartSec=5
 

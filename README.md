@@ -19,7 +19,6 @@
 
 # Issues
 
-- move relay arg to loading a text file?
 - improve error handling and surfacing issues to the user
 - add versioning to relay communications
 
