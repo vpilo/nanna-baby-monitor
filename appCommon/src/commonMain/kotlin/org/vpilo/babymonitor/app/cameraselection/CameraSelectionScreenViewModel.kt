@@ -92,6 +92,10 @@ class CameraSelectionScreenViewModel(
 
                     else -> {}
                 }
+
+                if (netState is ConnectionState.Disconnected && netState.reason == ConnectionState.ErrorReason.ClientQuit) {
+                    settingsRepository.save(Setting.ClientLastServerId, "")
+                }
             }
 
         autoConnectJob =
