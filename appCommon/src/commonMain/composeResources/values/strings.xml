@@ -27,6 +27,9 @@
     <string name="menu_quit_desktop">Quit</string>
     <string name="menu_quit_android">Close app</string>
 
+    <string name="camera_selection_server_type_local">Camera on this network</string>
+    <string name="camera_selection_server_type_relay">Camera on a different network</string>
+
     <string name="client_connection_chooser_choose">Choose a recording camera app to connect to.</string>
     <string name="client_connection_chooser_connecting">Connecting to %1$s…</string>
     <string name="client_connection_chooser_reconnecting">Reconnecting to %1$s…</string>

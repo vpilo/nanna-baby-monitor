@@ -1,6 +1,5 @@
 package org.vpilo.babymonitor.presentation.composables
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
@@ -20,7 +19,6 @@ import org.vpilo.babymonitor.presentation.resources.network_local_alert
 import org.vpilo.babymonitor.presentation.resources.network_unavailable_on_local_network
 import org.vpilo.babymonitor.presentation.resources.network_unavailable_on_relay
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ConnectionStatusIcons(
     modifier: Modifier = Modifier,
@@ -35,10 +33,9 @@ fun ConnectionStatusIcons(
             } else {
                 painterResource(Res.drawable.network_local_alert) to stringResource(Res.string.network_unavailable_on_local_network)
             }
-        Icon(
-            painter = localNetworkIcon,
-            contentDescription = localNetworkLabel,
-        )
+        Tooltip(text = localNetworkLabel) {
+            Icon(painter = localNetworkIcon, contentDescription = null)
+        }
 
         if (!hasRelay) return
         val (relayIcon, relayLabel) =
@@ -47,10 +44,9 @@ fun ConnectionStatusIcons(
             } else {
                 painterResource(Res.drawable.network_cloud_alert) to stringResource(Res.string.network_unavailable_on_relay)
             }
-        Icon(
-            painter = relayIcon,
-            contentDescription = relayLabel,
-        )
+        Tooltip(text = relayLabel) {
+            Icon(painter = relayIcon, contentDescription = null)
+        }
     }
 }
 

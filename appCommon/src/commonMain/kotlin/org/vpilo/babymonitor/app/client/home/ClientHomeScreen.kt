@@ -115,7 +115,7 @@ private fun ClientHomeScreenContent(
     onDisconnected: () -> Unit,
 ) {
     Box(modifier = modifier) {
-        videoStream?.let { PanningVideoFeed(videoStream = it, captureMode = captureMode) }
+        PanningVideoFeed(videoStream = videoStream, captureMode = captureMode)
         Row {
             VideoFeedControlButton(
                 modifier = Modifier.padding(Theme.Paddings.Tiny),

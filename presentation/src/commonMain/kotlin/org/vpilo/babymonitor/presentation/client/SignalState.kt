@@ -11,6 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.resources.Res
 import org.vpilo.babymonitor.presentation.resources.client_signal_quality
 import org.vpilo.babymonitor.presentation.resources.signal_1
@@ -38,12 +39,14 @@ fun SignalState(
             else -> return
         }
 
-    Image(
-        modifier = modifier,
-        painter = painterResource(drawable),
-        contentDescription = stringResource(Res.string.client_signal_quality),
-        colorFilter = ColorFilter.tint(color = color),
-    )
+    Tooltip(text = stringResource(Res.string.client_signal_quality)) {
+        Image(
+            modifier = modifier,
+            painter = painterResource(drawable),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(color = color),
+        )
+    }
 }
 
 @Preview

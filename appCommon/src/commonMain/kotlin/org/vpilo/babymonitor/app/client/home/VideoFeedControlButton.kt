@@ -16,6 +16,7 @@ import babymonitor.appcommon.generated.resources.video_stopped
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 
 @Composable
 fun VideoFeedControlButton(
@@ -24,22 +25,24 @@ fun VideoFeedControlButton(
     isPlaying: Boolean,
     onToggle: () -> Unit,
 ) {
-    Button(
-        modifier = modifier,
-        enabled = canPlay,
-        onClick = onToggle,
-        contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
-    ) {
-        val (icon, label) =
-            when {
-                !canPlay -> Res.drawable.video_disabled to Res.string.client_no_video
-                isPlaying -> Res.drawable.video_playing to Res.string.client_pause_video
-                else -> Res.drawable.video_stopped to Res.string.client_play_video
-            }
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = stringResource(label),
-        )
+    val (icon, label) =
+        when {
+            !canPlay -> Res.drawable.video_disabled to Res.string.client_no_video
+            isPlaying -> Res.drawable.video_playing to Res.string.client_pause_video
+            else -> Res.drawable.video_stopped to Res.string.client_play_video
+        }
+    Tooltip(text = stringResource(label)) {
+        Button(
+            modifier = modifier,
+            enabled = canPlay,
+            onClick = onToggle,
+            contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+            )
+        }
     }
 }
 

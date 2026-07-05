@@ -16,6 +16,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.resources.capture_audio_and_video
 import org.vpilo.babymonitor.presentation.resources.capture_audio_only
 import org.vpilo.babymonitor.presentation.resources.capture_video_only
@@ -47,10 +48,12 @@ internal fun CaptureModeSelector(
                                 Res.string.server_mode_audio_only to ResPresentation.drawable.capture_audio_only
                             }
                         }
-                    Icon(
-                        painter = painterResource(icon),
-                        contentDescription = stringResource(label),
-                    )
+                    Tooltip(text = stringResource(label)) {
+                        Icon(
+                            painter = painterResource(icon),
+                            contentDescription = null,
+                        )
+                    }
                 },
                 shape =
                     SegmentedButtonDefaults.itemShape(

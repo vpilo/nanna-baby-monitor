@@ -16,6 +16,7 @@ import babymonitor.appcommon.generated.resources.client_play_audio
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 
 @Composable
 fun AudioFeedControlButton(
@@ -24,22 +25,24 @@ fun AudioFeedControlButton(
     isPlaying: Boolean,
     onToggle: () -> Unit,
 ) {
-    Button(
-        modifier = modifier,
-        enabled = canPlay,
-        onClick = onToggle,
-        contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
-    ) {
-        val (icon, label) =
-            when {
-                !canPlay -> Res.drawable.audio_disabled to Res.string.client_no_audio
-                isPlaying -> Res.drawable.audio_playing to Res.string.client_pause_audio
-                else -> Res.drawable.audio_stopped to Res.string.client_play_audio
-            }
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = stringResource(label),
-        )
+    val (icon, label) =
+        when {
+            !canPlay -> Res.drawable.audio_disabled to Res.string.client_no_audio
+            isPlaying -> Res.drawable.audio_playing to Res.string.client_pause_audio
+            else -> Res.drawable.audio_stopped to Res.string.client_play_audio
+        }
+    Tooltip(text = stringResource(label)) {
+        Button(
+            modifier = modifier,
+            enabled = canPlay,
+            onClick = onToggle,
+            contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+            )
+        }
     }
 }
 

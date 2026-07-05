@@ -25,6 +25,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_connect
+import babymonitor.appcommon.generated.resources.camera_selection_server_type_local
+import babymonitor.appcommon.generated.resources.camera_selection_server_type_relay
 import babymonitor.appcommon.generated.resources.client_connection_chooser_choose
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connecting
@@ -47,6 +49,7 @@ import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.ConnectionStatusIcons
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.LoadingIcon
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.preview.makePreviewServer
 import org.vpilo.babymonitor.presentation.snackbar.LocalSnackbarController
 
@@ -152,20 +155,32 @@ private fun CameraSelectionScreenContent(
             }
 
             items(items = servers, key = { it.name }) { server ->
-                Button(
-                    enabled = connectionState !is ConnectionState.Connecting,
-                    onClick = { onConnectRequested(server) },
+                val isRemote = server is Device.RemoteServer
+                Tooltip(
+                    text =
+                        stringResource(
+                            if (isRemote) {
+                                Res.string.camera_selection_server_type_relay
+                            } else {
+                                Res.string.camera_selection_server_type_local
+                            },
+                        ),
                 ) {
-                    if (server is Device.RemoteServer) {
-                        Icon(imageVector = Icons.Default.Cloud, contentDescription = null)
-                    }
-                    Text(
-                        modifier = Modifier.padding(Theme.Paddings.Small),
-                        text = server.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    if ((connectionState as? ConnectionState.Connecting)?.server == server) {
-                        LoadingIcon()
+                    Button(
+                        enabled = connectionState !is ConnectionState.Connecting,
+                        onClick = { onConnectRequested(server) },
+                    ) {
+                        if (isRemote) {
+                            Icon(imageVector = Icons.Default.Cloud, contentDescription = null)
+                        }
+                        Text(
+                            modifier = Modifier.padding(Theme.Paddings.Small),
+                            text = server.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        if ((connectionState as? ConnectionState.Connecting)?.server == server) {
+                            LoadingIcon()
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.size(Theme.Paddings.Tiny))

@@ -34,6 +34,7 @@ import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.composables.Backdrop
 import org.vpilo.babymonitor.presentation.composables.FpsCounter
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.preview.ComposePreviewVideoStream
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 import org.vpilo.babymonitor.presentation.resources.capture_audio_only
@@ -43,8 +44,27 @@ import org.vpilo.babymonitor.presentation.resources.Res as ResPresentation
 fun PanningVideoFeed(
     modifier: Modifier = Modifier,
     captureMode: CaptureMode,
-    videoStream: OpaqueVideoStream,
+    videoStream: OpaqueVideoStream?,
 ) {
+    if (captureMode == CaptureMode.AUDIO_ONLY || videoStream == null) {
+        Box(
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+        ) {
+            Backdrop(modifier = Modifier.align(Alignment.Center)) {
+                Tooltip(text = stringResource(Res.string.server_in_audio_only_mode)) {
+                    Image(
+                        painter = painterResource(ResPresentation.drawable.capture_audio_only),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+        return
+    }
+
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     val originalFrameSize by videoStream.frameSize.collectAsState()
     val rotation by videoStream.rotation.collectAsState()
@@ -101,14 +121,6 @@ fun PanningVideoFeed(
                 rotation = rotation,
             )
         }
-        if (captureMode == CaptureMode.AUDIO_ONLY) {
-            Backdrop(modifier = Modifier.align(Alignment.Center)) {
-                Image(
-                    painter = painterResource(ResPresentation.drawable.capture_audio_only),
-                    contentDescription = stringResource(Res.string.server_in_audio_only_mode),
-                )
-            }
-        }
         FpsCounter(
             modifier = Modifier.align(Alignment.BottomEnd),
             videoStream = videoStream,
@@ -153,5 +165,15 @@ private fun PanningVideoFeedPortraitFlippedPreview() =
         PanningVideoFeed(
             videoStream = makePreviewVideoStream(rotation = 180),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
+        )
+    }
+
+@Preview
+@Composable
+private fun PanningVideoFeedNoVideoPreview() =
+    AppPreviewTheme {
+        PanningVideoFeed(
+            videoStream = makePreviewVideoStream(rotation = 0),
+            captureMode = CaptureMode.AUDIO_ONLY,
         )
     }

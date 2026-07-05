@@ -84,17 +84,21 @@ fun AppDestination(
                         }
 
                         AppDestinationMainAction.Back -> {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(Res.string.back),
-                            )
+                            Tooltip(text = stringResource(Res.string.back)) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = null,
+                                )
+                            }
                         }
 
                         AppDestinationMainAction.Menu -> {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = stringResource(Res.string.menu),
-                            )
+                            Tooltip(text = stringResource(Res.string.menu)) {
+                                Icon(
+                                    imageVector = Icons.Filled.Menu,
+                                    contentDescription = null,
+                                )
+                            }
                         }
                     }
                 }

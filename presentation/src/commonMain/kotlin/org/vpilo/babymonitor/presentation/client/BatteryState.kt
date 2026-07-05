@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.resources.Res
 import org.vpilo.babymonitor.presentation.resources.battery_1
 import org.vpilo.babymonitor.presentation.resources.battery_2
@@ -47,19 +48,20 @@ fun BatteryState(
             else -> return
         }
 
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(Res.string.client_battery_level_percent, batteryLevel),
-            style = MaterialTheme.typography.bodySmall.copy(color = color),
-        )
-        Image(
-            painter = painterResource(drawable),
-            contentDescription = stringResource(Res.string.client_battery_level),
-            colorFilter = ColorFilter.tint(color = color),
-        )
+    Tooltip(modifier = modifier, text = stringResource(Res.string.client_battery_level)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.client_battery_level_percent, batteryLevel),
+                style = MaterialTheme.typography.bodySmall.copy(color = color),
+            )
+            Image(
+                painter = painterResource(drawable),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(color = color),
+            )
+        }
     }
 }
 
