@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.app.client.home
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -83,15 +82,25 @@ fun ClientHomeScreen(
         onMainActionClicked = {
             onMenuClicked()
         },
+        actions = {
+            VideoFeedControlButton(
+                modifier = Modifier.padding(Theme.Paddings.Tiny),
+                canPlay = state.captureMode != CaptureMode.AUDIO_ONLY,
+                isPlaying = state.isVideoPlaying,
+                onToggle = { viewModel.send(ClientHomeScreenAction.ToggleVideo) },
+            )
+            AudioFeedControlButton(
+                modifier = Modifier.padding(Theme.Paddings.Tiny),
+                canPlay = state.captureMode != CaptureMode.VIDEO_ONLY,
+                isPlaying = state.isAudioPlaying,
+                onToggle = { viewModel.send(ClientHomeScreenAction.ToggleAudio) },
+            )
+        },
     ) {
         ClientHomeScreenContent(
             modifier = Modifier.fillMaxSize(),
             videoStream = videoStream,
             captureMode = state.captureMode,
-            isAudioPlaying = state.isAudioPlaying,
-            isVideoPlaying = state.isVideoPlaying,
-            onToggleAudio = { viewModel.send(ClientHomeScreenAction.ToggleAudio) },
-            onToggleVideo = { viewModel.send(ClientHomeScreenAction.ToggleVideo) },
             batteryLevel = state.batteryLevel,
             signalQuality = state.signalQuality,
             connectionState = state.connectionState,
@@ -105,10 +114,6 @@ private fun ClientHomeScreenContent(
     modifier: Modifier = Modifier,
     videoStream: OpaqueVideoStream?,
     captureMode: CaptureMode,
-    isAudioPlaying: Boolean,
-    isVideoPlaying: Boolean,
-    onToggleAudio: () -> Unit,
-    onToggleVideo: () -> Unit,
     batteryLevel: Int,
     signalQuality: Int,
     connectionState: ConnectionState,
@@ -116,20 +121,6 @@ private fun ClientHomeScreenContent(
 ) {
     Box(modifier = modifier) {
         PanningVideoFeed(videoStream = videoStream, captureMode = captureMode)
-        Row {
-            VideoFeedControlButton(
-                modifier = Modifier.padding(Theme.Paddings.Tiny),
-                canPlay = captureMode != CaptureMode.AUDIO_ONLY,
-                isPlaying = isVideoPlaying,
-                onToggle = onToggleVideo,
-            )
-            AudioFeedControlButton(
-                modifier = Modifier.padding(Theme.Paddings.Tiny),
-                canPlay = captureMode != CaptureMode.VIDEO_ONLY,
-                isPlaying = isAudioPlaying,
-                onToggle = onToggleAudio,
-            )
-        }
         if (batteryLevel != DEVICE_STATE_DATA_UNAVAILABLE || signalQuality != DEVICE_STATE_DATA_UNAVAILABLE) {
             Backdrop(
                 modifier =
@@ -173,10 +164,6 @@ private fun ClientHomeScreenPreview() =
             modifier = Modifier.fillMaxSize(),
             videoStream = makePreviewVideoStream(),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
-            isAudioPlaying = false,
-            isVideoPlaying = true,
-            onToggleAudio = { },
-            onToggleVideo = { },
             batteryLevel = 5,
             signalQuality = 3,
             connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
@@ -192,10 +179,6 @@ private fun ClientHomeScreenVideoOnlyPreview() =
             modifier = Modifier.fillMaxSize(),
             videoStream = makePreviewVideoStream(),
             captureMode = CaptureMode.VIDEO_ONLY,
-            isAudioPlaying = false,
-            isVideoPlaying = true,
-            onToggleAudio = { },
-            onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = 93,
             connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
@@ -211,10 +194,6 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
             modifier = Modifier.fillMaxSize(),
             videoStream = makePreviewVideoStream(),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
-            isAudioPlaying = false,
-            isVideoPlaying = true,
-            onToggleAudio = { },
-            onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
             connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
@@ -230,10 +209,6 @@ private fun ClientHomeScreenDisconnectedPreview() =
             modifier = Modifier.fillMaxSize(),
             videoStream = makePreviewVideoStream(),
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
-            isAudioPlaying = false,
-            isVideoPlaying = true,
-            onToggleAudio = { },
-            onToggleVideo = { },
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
             connectionState = ConnectionState.Disconnected(reason = ConnectionState.ErrorReason.ClientQuit),

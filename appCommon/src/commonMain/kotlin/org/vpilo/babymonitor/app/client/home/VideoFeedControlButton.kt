@@ -1,8 +1,7 @@
 package org.vpilo.babymonitor.app.client.home
 
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,11 +31,10 @@ fun VideoFeedControlButton(
             else -> Res.drawable.video_stopped to Res.string.client_play_video
         }
     Tooltip(text = stringResource(label)) {
-        Button(
+        IconButton(
             modifier = modifier,
             enabled = canPlay,
             onClick = onToggle,
-            contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
         ) {
             Icon(
                 painter = painterResource(icon),
