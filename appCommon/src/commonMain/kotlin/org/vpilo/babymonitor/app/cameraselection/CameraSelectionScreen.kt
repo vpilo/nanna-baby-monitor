@@ -21,21 +21,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_connect
 import babymonitor.appcommon.generated.resources.client_connection_chooser_choose
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
-import babymonitor.appcommon.generated.resources.client_connection_chooser_connected
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connecting
 import babymonitor.appcommon.generated.resources.client_connection_chooser_no_servers_found
+import babymonitor.appcommon.generated.resources.client_connection_chooser_reconnecting
 import babymonitor.appcommon.generated.resources.client_connection_chooser_server_not_found
 import babymonitor.appcommon.generated.resources.client_connection_chooser_server_quit
 import babymonitor.appcommon.generated.resources.client_connection_chooser_unknown_error
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
@@ -47,6 +48,7 @@ import org.vpilo.babymonitor.presentation.composables.ConnectionStatusIcons
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.LoadingIcon
 import org.vpilo.babymonitor.presentation.preview.makePreviewServer
+import org.vpilo.babymonitor.presentation.snackbar.LocalSnackbarController
 
 @Composable
 fun CameraSelectionScreen(
@@ -57,6 +59,7 @@ fun CameraSelectionScreen(
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
     val serversList = remember(state) { state.availableServers.filterIsInstance<Device.Server>() }
+    val snackbarController = LocalSnackbarController.current
 
     LaunchedEffect(viewModel.effectsFlow) {
         viewModel.effectsFlow.collect { effect ->
@@ -67,6 +70,14 @@ fun CameraSelectionScreen(
 
                 is CameraSelectionScreenEffect.ConnectToLastServer -> {
                     viewModel.send(CameraSelectionScreenAction.ConnectToServer(effect.server))
+                }
+
+                is CameraSelectionScreenEffect.AnnounceConnectionEvent -> {
+                    val message =
+                        getConnectionStateMessage(effect.state, state.lastConnectedDevice)
+                            ?: return@collect
+                    Logger.d("CameraSelectionScreen") { "Showing snackbar.." }
+                    snackbarController.show(message = message)
                 }
             }
         }
@@ -106,7 +117,10 @@ private fun CameraSelectionScreenContent(
     val lazyListState = rememberLazyListState()
 
     Column(modifier = modifier) {
-        InfoLabel(connectionState)
+        Text(
+            text = stringResource(Res.string.client_connection_chooser_choose),
+            style = MaterialTheme.typography.bodyMedium,
+        )
         Spacer(modifier = Modifier.size(Theme.Paddings.Medium))
 
         (connectionState as? ConnectionState.Disconnected)
@@ -160,38 +174,42 @@ private fun CameraSelectionScreenContent(
     }
 }
 
-@Composable
-private fun InfoLabel(connectionState: ConnectionState) {
+private suspend fun getConnectionStateMessage(
+    connectionState: ConnectionState,
+    lastDevice: Device?,
+): String? {
     val label: StringResource
-    var argument: String? = null
-    var labelColor: Color = MaterialTheme.colorScheme.onBackground
+    var deviceName: String? = lastDevice?.name
 
     when (connectionState) {
         is ConnectionState.Connecting,
-        is ConnectionState.Reconnecting,
             -> {
                 label = Res.string.client_connection_chooser_connecting
+                deviceName = connectionState.server.name
+            }
+
+        is ConnectionState.Reconnecting,
+            -> {
+                label = Res.string.client_connection_chooser_reconnecting
+                deviceName = connectionState.server.name
             }
 
         is ConnectionState.Connected -> {
-            label = Res.string.client_connection_chooser_connected
-            argument = connectionState.server.name
+            return null
         }
 
         is ConnectionState.Disconnected -> {
             when (connectionState.reason) {
                 ConnectionState.ErrorReason.NotConnectedYet -> {
-                    label = Res.string.client_connection_chooser_choose
+                    return null
                 }
 
                 ConnectionState.ErrorReason.ServerNotFound -> {
                     label = Res.string.client_connection_chooser_server_not_found
-                    labelColor = MaterialTheme.colorScheme.error
                 }
 
                 ConnectionState.ErrorReason.ServerQuit -> {
                     label = Res.string.client_connection_chooser_server_quit
-                    labelColor = MaterialTheme.colorScheme.error
                 }
 
                 ConnectionState.ErrorReason.ClientQuit -> {
@@ -200,16 +218,11 @@ private fun InfoLabel(connectionState: ConnectionState) {
 
                 else -> {
                     label = Res.string.client_connection_chooser_unknown_error
-                    labelColor = MaterialTheme.colorScheme.error
                 }
             }
         }
     }
-    Text(
-        text = argument?.let { stringResource(label, argument) } ?: stringResource(label),
-        style = MaterialTheme.typography.bodyMedium,
-        color = labelColor,
-    )
+    return deviceName?.let { getString(label, deviceName) } ?: getString(label)
 }
 
 @Preview

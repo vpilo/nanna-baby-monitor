@@ -27,6 +27,7 @@ import org.vpilo.babymonitor.camera.presentation.permissioncheck.CameraPermissio
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.AppTheme
+import org.vpilo.babymonitor.presentation.snackbar.SnackbarContainer
 
 private const val TAG = "App"
 
@@ -83,7 +84,9 @@ private fun MainContainer(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top,
     ) {
-        content()
+        SnackbarContainer {
+            content()
+        }
     }
 }
 

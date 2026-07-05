@@ -36,6 +36,8 @@ class CameraSelectionScreenViewModel(
     private var discoveryJob: Job? = null
     private var autoConnectJob: Job? = null
 
+    private var lastAnnouncedEvent: ConnectionState? = null
+
     init {
         discoveryJob =
             getLocalClientDeviceFlowUseCase()
@@ -73,9 +75,22 @@ class CameraSelectionScreenViewModel(
         networkClientRepository.connectionStateFlow
             .subscribe { netState ->
                 state.copy(connectionState = netState).update()
-                if (netState is ConnectionState.Connected) {
-                    settingsRepository.save(Setting.ClientLastServerId, netState.server.id.toString())
-                    CameraSelectionScreenEffect.Connected.sendEffect()
+                when (netState) {
+                    is ConnectionState.Disconnected,
+                    is ConnectionState.Connecting,
+                        -> {
+                            if (lastAnnouncedEvent != netState) {
+                                lastAnnouncedEvent = netState
+                                CameraSelectionScreenEffect.AnnounceConnectionEvent(netState).sendEffect()
+                            }
+                        }
+
+                    is ConnectionState.Connected -> {
+                        settingsRepository.save(Setting.ClientLastServerId, netState.server.id.toString())
+                        CameraSelectionScreenEffect.Connected.sendEffect()
+                    }
+
+                    else -> {}
                 }
             }
 
@@ -86,6 +101,14 @@ class CameraSelectionScreenViewModel(
 
         settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
             remoteDiscoveryRepository.setRelayHost(host)
+            state.copy(isRelayConfigured = host.isNotBlank()).update()
+        }
+
+        localDiscoveryRepository.isRegisteredFlow.subscribe { isRegistered ->
+            state.copy(isAvailableOnLocalNetwork = isRegistered).update()
+        }
+        remoteDiscoveryRepository.isRegisteredFlow.subscribe { isRegistered ->
+            state.copy(isAvailableOnRelay = isRegistered).update()
         }
     }
 
