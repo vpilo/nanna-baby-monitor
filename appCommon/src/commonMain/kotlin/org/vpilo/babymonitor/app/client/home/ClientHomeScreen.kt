@@ -4,7 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,11 +25,13 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_home
 import babymonitor.appcommon.generated.resources.app_title_client_home_name
+import babymonitor.appcommon.generated.resources.camera_selection_server_type_relay
 import babymonitor.appcommon.generated.resources.client_disconnect
 import babymonitor.appcommon.generated.resources.client_reconnecting
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
@@ -38,6 +43,7 @@ import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.Backdrop
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.preview.makePreviewServer
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 
@@ -66,14 +72,17 @@ fun ClientHomeScreen(
         onBackCompleted = { onMenuClicked() },
     )
 
-    val title =
-        with(state.connectionState) {
-            if (this is ConnectionState.Connected) {
-                stringResource(Res.string.app_title_client_home_name, server.name)
-            } else {
-                stringResource(Res.string.app_title_client_home)
-            }
+    val isRemoteServer: Boolean
+    val title: String
+    with(state.connectionState) {
+        if (this is ConnectionState.Connected) {
+            isRemoteServer = server is Device.RemoteServer
+            title = stringResource(Res.string.app_title_client_home_name, server.name)
+        } else {
+            isRemoteServer = false
+            title = stringResource(Res.string.app_title_client_home)
         }
+    }
 
     AppDestination(
         modifier = modifier.fillMaxSize(),
@@ -105,6 +114,7 @@ fun ClientHomeScreen(
             signalQuality = state.signalQuality,
             connectionState = state.connectionState,
             onDisconnected = onDisconnected,
+            isRemoteServer = isRemoteServer,
         )
     }
 }
@@ -118,6 +128,7 @@ private fun ClientHomeScreenContent(
     signalQuality: Int,
     connectionState: ConnectionState,
     onDisconnected: () -> Unit,
+    isRemoteServer: Boolean,
 ) {
     Box(modifier = modifier) {
         PanningVideoFeed(videoStream = videoStream, captureMode = captureMode)
@@ -128,8 +139,17 @@ private fun ClientHomeScreenContent(
                         .align(Alignment.TopEnd)
                         .padding(Theme.Paddings.Tiny),
             ) {
-                BatteryState(batteryLevel = batteryLevel)
-                SignalState(signalQuality = signalQuality)
+                BatteryState(modifier = Modifier.padding(start = Theme.Paddings.Tiny), batteryLevel = batteryLevel)
+                SignalState(modifier = Modifier.padding(start = Theme.Paddings.Tiny), signalQuality = signalQuality)
+                if (isRemoteServer) {
+                    Tooltip(text = stringResource(Res.string.camera_selection_server_type_relay)) {
+                        Icon(
+                            modifier = Modifier.padding(start = Theme.Paddings.Tiny),
+                            imageVector = Icons.Default.Cloud,
+                            contentDescription = null,
+                        )
+                    }
+                }
             }
         }
 
@@ -168,6 +188,7 @@ private fun ClientHomeScreenPreview() =
             signalQuality = 3,
             connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
             onDisconnected = { },
+            isRemoteServer = false,
         )
     }
 
@@ -183,6 +204,7 @@ private fun ClientHomeScreenVideoOnlyPreview() =
             signalQuality = 93,
             connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
             onDisconnected = { },
+            isRemoteServer = true,
         )
     }
 
@@ -198,6 +220,7 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
             connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
             onDisconnected = { },
+            isRemoteServer = false,
         )
     }
 
@@ -213,5 +236,6 @@ private fun ClientHomeScreenDisconnectedPreview() =
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
             connectionState = ConnectionState.Disconnected(reason = ConnectionState.ErrorReason.ClientQuit),
             onDisconnected = { },
+            isRemoteServer = false,
         )
     }

@@ -2,28 +2,23 @@
 
 # Feature plan
 
-- when the control connection is closed by the client, video and audio streaming should be terminated explicitly.
-- brightness correction should be done (or at least controlled) on the client, not the server.
-- cam selection screen should say "will reconnect to device x when it appears" if it's not able to reconnect instantly
-- On relay setting, see if reachable and if authenticated.
-- on client home, show if connected directly or via relay.
+## Will have
 - A 'live' red icon when it is actually streaming.
-- Hide client UI with a tap on the video feed, to see only the video feed.
-- More secure communication channels with clients (monitors) pairing with server (camera).
-- Plugins for raw AV streams to:
-    - reduce noise
-    - detect no movement
-- Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start
-  streaming audio.
+- Secure communication channels with clients (monitors) pairing with server (camera).
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
+
+## Nice to have someday
+- Hide client UI with a tap on the video feed, to see only the video feed.
 - On server and/or client, allow disabling video rotation.
+- brightness correction should be done (or at least controlled) on the client, not the server.
+- On relay setting, see if reachable and if authenticated.
+- Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start
+  streaming audio.
 
 # Issues
 
-- Reconnect screen on client doesn't seem to be working.
-- DefaultDeviceStateRepository E Internet availability retrieval error: JobCancellationException: Job was cancelled
 - AudioAttributes.USAGE_MEDIA -> USAGE_VOICE_COMMUNICATION ?
 - move relay arg to loading a text file?
 - improve error handling and surfacing issues to the user
@@ -44,6 +39,7 @@
 - on internet connectivity change, restart discovery and service advertising. On client, server and relay.
 - Tapping on the Android notification should open the app.
 - Add slider setting for noise sensitivity.
+- on client home, show if connected directly or via relay.
 
 # Resources
 
