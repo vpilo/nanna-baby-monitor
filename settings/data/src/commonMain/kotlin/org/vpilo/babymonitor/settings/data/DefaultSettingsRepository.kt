@@ -121,6 +121,7 @@ class DefaultSettingsRepository(
                         entries
                     }
                 entries.forEach { (setting, value) ->
+                    Logger.d(TAG) { "Delayed save of '${setting.id}' to $value" }
                     @Suppress("UNCHECKED_CAST")
                     save(setting as Setting<Any>, value)
                 }

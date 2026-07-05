@@ -6,14 +6,18 @@ import androidx.compose.ui.window.application
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_icon
 import org.jetbrains.compose.resources.painterResource
+import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 
 private fun babyMonitorMain() {
-    initializeKoin()
+    val koin = initializeKoin()
+    val settingsRepository = koin.get<SettingsRepository>()
+
     application {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Baby Monitor",
             icon = painterResource(Res.drawable.app_icon),
+            state = rememberPersistedWindowState(settingsRepository),
         ) {
             CompositionLocalProvider(LocalQuitApplication provides ::exitApplication) {
                 App()
@@ -22,6 +26,7 @@ private fun babyMonitorMain() {
     }
 }
 
+@Suppress("unused")
 fun main(args: Array<String>) {
     babyMonitorMain()
 }

@@ -41,8 +41,6 @@
 
 # Resources
 
-app updates: https://github.com/pavi2410/kmp-app-updater
-window tricks for compose desktop: https://dev.to/coltonidle/compose-for-desktop-window-tricks-55mf
 ui writing tips: https://proandroiddev.com/10-jetpack-compose-ui-tricks-you-probably-dont-know-d3dd63b617c9
 may try out https://github.com/kinsleykajiva/jopus to replace ffmpeg&mediacodec for audio streaming
 

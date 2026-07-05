@@ -16,6 +16,10 @@ kotlin {
         val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {
             implementation(project(":appCommon"))
+            implementation(project(":common"))
+            implementation(project(":model"))
+            implementation(project(":settings:model"))
+            implementation(libs.koin.core)
             implementation(compose.desktop.currentOs)
         }
     }
