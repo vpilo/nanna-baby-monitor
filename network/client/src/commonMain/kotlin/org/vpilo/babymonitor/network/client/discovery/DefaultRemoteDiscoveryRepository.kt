@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +37,9 @@ internal class DefaultRemoteDiscoveryRepository(
 
     private val _discoveredDevicesFlow = MutableStateFlow<Set<Device>>(emptySet())
     override val discoveredDevicesFlow: StateFlow<Set<Device>> = _discoveredDevicesFlow.asStateFlow()
+
+    private val mutableIsRegisteredFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val isRegisteredFlow: Flow<Boolean> = mutableIsRegisteredFlow.asStateFlow()
 
     private var relayHost: String = ""
     private var discoveryJob: Job? = null
@@ -68,6 +72,7 @@ internal class DefaultRemoteDiscoveryRepository(
             scope.launch {
                 session?.close()
                 session = null
+                mutableIsRegisteredFlow.value = false
                 runDiscoveryLoop()
             }
     }
@@ -86,6 +91,7 @@ internal class DefaultRemoteDiscoveryRepository(
                     timeout = Constants.WEBSOCKET_TIMEOUT
 
                     session = this
+                    mutableIsRegisteredFlow.value = true
                     runWebSocketCatching(TAG) {
                         RelayHandshake.send(this, secret)
                         for (frame in incoming) {
@@ -109,6 +115,7 @@ internal class DefaultRemoteDiscoveryRepository(
                 if (ex is CancellationException) throw ex
                 Logger.i(TAG) { "Relay discovery connection failed: ${ex.prettify()}. Retrying." }
             }
+            mutableIsRegisteredFlow.value = false
             _discoveredDevicesFlow.value = emptySet()
             delay(Constants.RECONNECTION_TIMEOUT)
         }

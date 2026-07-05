@@ -43,6 +43,7 @@ import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
+import org.vpilo.babymonitor.presentation.composables.ConnectionStatusIcons
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.LoadingIcon
 import org.vpilo.babymonitor.presentation.preview.makePreviewServer
@@ -75,6 +76,13 @@ fun CameraSelectionScreen(
         title = Res.string.app_title_client_connect,
         mainAction = AppDestinationMainAction.Menu,
         onMainActionClicked = onMenuClicked,
+        actions = {
+            ConnectionStatusIcons(
+                hasRelay = state.isRelayConfigured,
+                isOnLocalNetwork = state.isAvailableOnLocalNetwork,
+                isOnRelay = state.isAvailableOnRelay,
+            )
+        },
     ) {
         CameraSelectionScreenContent(
             modifier =

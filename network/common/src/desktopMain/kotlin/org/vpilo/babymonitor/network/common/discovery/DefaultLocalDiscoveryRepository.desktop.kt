@@ -2,6 +2,8 @@ package org.vpilo.babymonitor.network.common.discovery
 
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -28,6 +30,9 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
             .map { it.toSortedSet() }
             .distinctUntilChanged()
 
+    private val mutableIsRegisteredFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    actual override val isRegisteredFlow: Flow<Boolean> = mutableIsRegisteredFlow.asStateFlow()
+
     actual override fun register(device: Device) {
         if (this.device == device) {
             return
@@ -38,6 +43,7 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
         }
         this.device = device
         listener.reset(device)
+        mutableIsRegisteredFlow.value = true
 
         try {
             when (device) {
@@ -88,6 +94,7 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
         }
         this.device = null
         listener.reset()
+        mutableIsRegisteredFlow.value = false
     }
 
     actual override fun refresh() {

@@ -7,5 +7,10 @@
     <string name="client_signal_quality">Signal quality</string>
     <string name="client_battery_level_percent">%1$d%</string>
 
+    <string name="network_available_on_local_network">Available on local network</string>
+    <string name="network_available_on_relay">Available on remote relay</string>
+    <string name="network_unavailable_on_local_network">Not available on local network</string>
+    <string name="network_unavailable_on_relay">Not available on remote relay</string>
+
     <string name="example" translatable="false">Example</string>
 </resources>

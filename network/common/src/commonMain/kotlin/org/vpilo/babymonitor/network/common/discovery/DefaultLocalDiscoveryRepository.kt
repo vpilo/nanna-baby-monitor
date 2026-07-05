@@ -7,6 +7,8 @@ import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 internal expect class DefaultLocalDiscoveryRepository() : LocalDiscoveryRepository {
     override val discoveredDevicesFlow: Flow<Set<Device>>
 
+    override val isRegisteredFlow: Flow<Boolean>
+
     override fun register(device: Device)
 
     override fun unregister()

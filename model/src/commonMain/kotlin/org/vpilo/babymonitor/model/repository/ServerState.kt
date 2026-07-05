@@ -3,7 +3,9 @@ package org.vpilo.babymonitor.model.repository
 import org.vpilo.babymonitor.model.CaptureMode
 
 data class ServerState(
+    // Unused in client network repository.
     val isAvailableOnLocalNetwork: Boolean = false,
+    // Unused in client network repository.
     val isAvailableOnRelay: Boolean = false,
     val captureMode: CaptureMode = CaptureMode.AUDIO_AND_VIDEO,
     val batteryLevel: Int = 100,

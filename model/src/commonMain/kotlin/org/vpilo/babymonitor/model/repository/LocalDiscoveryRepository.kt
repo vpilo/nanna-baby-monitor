@@ -7,6 +7,8 @@ import kotlin.time.Duration.Companion.milliseconds
 interface LocalDiscoveryRepository {
     val discoveredDevicesFlow: Flow<Set<Device>>
 
+    val isRegisteredFlow: Flow<Boolean>
+
     fun register(device: Device)
 
     fun unregister()

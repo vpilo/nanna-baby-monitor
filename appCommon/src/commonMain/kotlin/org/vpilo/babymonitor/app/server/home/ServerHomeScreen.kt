@@ -1,11 +1,8 @@
 package org.vpilo.babymonitor.app.server.home
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -18,13 +15,6 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_server_home
-import babymonitor.appcommon.generated.resources.server_available_on_local_network
-import babymonitor.appcommon.generated.resources.server_network_cloud
-import babymonitor.appcommon.generated.resources.server_network_cloud_alert
-import babymonitor.appcommon.generated.resources.server_network_local
-import babymonitor.appcommon.generated.resources.server_network_local_alert
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.OpaqueVideoStream
@@ -32,6 +22,7 @@ import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
+import org.vpilo.babymonitor.presentation.composables.ConnectionStatusIcons
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 
 @Composable
@@ -53,10 +44,10 @@ fun ServerHomeScreen(
         title = Res.string.app_title_server_home,
         mainAction = AppDestinationMainAction.Menu,
         actions = {
-            StatusIcons(
-                isAvailableOnLocalNetwork = state.isAvailableOnLocalNetwork,
+            ConnectionStatusIcons(
                 hasRelay = state.isRelayConfigured,
-                isAvailableOnRelay = state.isAvailableOnRelay,
+                isOnLocalNetwork = state.isAvailableOnLocalNetwork,
+                isOnRelay = state.isAvailableOnRelay,
             )
         },
         onMainActionClicked = onMenuClicked,
@@ -68,38 +59,6 @@ fun ServerHomeScreen(
             onModeSelected = { viewModel.send(ServerHomeScreenAction.CaptureModeSelected(it)) },
         )
     }
-}
-
-@Composable
-private fun StatusIcons(
-    isAvailableOnLocalNetwork: Boolean,
-    hasRelay: Boolean,
-    isAvailableOnRelay: Boolean,
-) {
-    Icon(
-        painter =
-            painterResource(
-                if (isAvailableOnLocalNetwork) {
-                    Res.drawable.server_network_local
-                } else {
-                    Res.drawable.server_network_local_alert
-                },
-            ),
-        contentDescription = stringResource(Res.string.server_available_on_local_network),
-    )
-
-    if (!hasRelay) return
-    Icon(
-        painter =
-            painterResource(
-                if (isAvailableOnRelay) {
-                    Res.drawable.server_network_cloud
-                } else {
-                    Res.drawable.server_network_cloud_alert
-                },
-            ),
-        contentDescription = stringResource(Res.string.server_available_on_local_network),
-    )
 }
 
 @Composable
@@ -136,33 +95,4 @@ private fun ServerHomeContentPreview() =
             videoStream = makePreviewVideoStream(),
             onModeSelected = {},
         )
-    }
-
-@Preview
-@Composable
-private fun StatusIconsPreview() =
-    AppPreviewTheme {
-        Column {
-            Row {
-                StatusIcons(
-                    isAvailableOnLocalNetwork = true,
-                    hasRelay = true,
-                    isAvailableOnRelay = true,
-                )
-            }
-            Row {
-                StatusIcons(
-                    isAvailableOnLocalNetwork = false,
-                    hasRelay = true,
-                    isAvailableOnRelay = false,
-                )
-            }
-            Row {
-                StatusIcons(
-                    isAvailableOnLocalNetwork = true,
-                    hasRelay = false,
-                    isAvailableOnRelay = true,
-                )
-            }
-        }
     }
