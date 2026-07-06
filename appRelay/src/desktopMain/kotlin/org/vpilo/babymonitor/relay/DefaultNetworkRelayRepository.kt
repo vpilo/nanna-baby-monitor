@@ -34,12 +34,9 @@ import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceId
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
-import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.discovery.ktx.asTransportString
 import org.vpilo.babymonitor.network.common.discovery.ktx.fromTransportString
-import java.security.KeyStore
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
@@ -63,18 +60,13 @@ class DefaultNetworkRelayRepository {
         if (server != null) return
 
         this.device = device
-        val keyStore = loadKeyStore()
 
         server =
             embeddedServer(
                 factory = Netty,
                 configure = {
-                    val getPassword = { KEYSTORE_PASSWORD.toCharArray() }
                     sslConnector(
-                        keyStore = keyStore,
-                        keyAlias = KEYSTORE_ALIAS,
-                        keyStorePassword = getPassword,
-                        privateKeyPassword = getPassword,
+                        // TODO authentication
                     ) {
                         host = Constants.SERVICES_LISTEN_ADDRESS
                         port = Constants.RELAY_PORT
@@ -305,18 +297,6 @@ class DefaultNetworkRelayRepository {
         }
     }
 
-    private fun loadKeyStore(): KeyStore {
-        val stream =
-            checkNotNull(
-                DefaultNetworkRelayRepository::class.java.classLoader.getResourceAsStream(KEYSTORE_RESOURCE),
-            ) { "relay.p12 not found in resources" }
-        return stream.use { s ->
-            KeyStore.getInstance("PKCS12").apply {
-                load(s, KEYSTORE_PASSWORD.toCharArray())
-            }
-        }
-    }
-
     private fun signalFor(endpoint: String): String =
         when (endpoint) {
             Endpoints.CONTROL -> RelaySignals.CONTROL
@@ -327,10 +307,7 @@ class DefaultNetworkRelayRepository {
 
     // The nullable Unit is only to allow single-line early returns on failure.
     private suspend fun DefaultWebSocketServerSession.setupSession(): Unit? {
-        if (!RelayHandshake.await(this, SHARED_SECRET)) {
-            close()
-            return null
-        }
+        // TODO authentication
         pingInterval = Constants.WEBSOCKET_PING_PERIOD
         timeout = Constants.WEBSOCKET_TIMEOUT
         return Unit
@@ -343,10 +320,5 @@ class DefaultNetworkRelayRepository {
 
     private companion object {
         private val TAG = DefaultNetworkRelayRepository::class
-        private const val KEYSTORE_RESOURCE = "relay.p12"
-        private const val KEYSTORE_PASSWORD = "babymonitor"
-        private const val KEYSTORE_ALIAS = "relay"
-
-        private val SHARED_SECRET: ByteArray by lazy { deriveSharedRelaySecret() }
     }
 }

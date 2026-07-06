@@ -23,8 +23,6 @@ import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.RelayHandshake
-import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.discovery.ktx.fromTransportString
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.common.relayHttpClient
@@ -93,7 +91,7 @@ internal class DefaultRemoteDiscoveryRepository(
                     session = this
                     mutableIsRegisteredFlow.value = true
                     runWebSocketCatching(TAG) {
-                        RelayHandshake.send(this, secret)
+                        // TODO authentication
                         for (frame in incoming) {
                             if (frame !is Frame.Text) continue
                             val servers =
@@ -123,6 +121,5 @@ internal class DefaultRemoteDiscoveryRepository(
 
     private companion object {
         private val TAG = DefaultRemoteDiscoveryRepository::class
-        private val secret by lazy { deriveSharedRelaySecret() }
     }
 }

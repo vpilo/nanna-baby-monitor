@@ -22,9 +22,7 @@ import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.network.common.RelayHandshake
 import org.vpilo.babymonitor.network.common.RelaySignals
-import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.discovery.ktx.asTransportString
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.common.relayHttpClient
@@ -93,7 +91,7 @@ internal class RelayServerRegistration(
                     timeout = Constants.WEBSOCKET_TIMEOUT
 
                     runWebSocketCatching(TAG) {
-                        RelayHandshake.send(this, secret)
+                        // TODO authentication
                         send(Frame.Text(server.asTransportString(relayHost)))
                         Logger.i(TAG) { "Registered with relay as $server" }
                         _isRegistered.value = true
@@ -142,7 +140,7 @@ internal class RelayServerRegistration(
                         pingInterval = Constants.WEBSOCKET_PING_PERIOD
                         timeout = Constants.WEBSOCKET_TIMEOUT
 
-                        RelayHandshake.send(this, secret)
+                        // TODO authentication
                         when (endpoint) {
                             Endpoints.CONTROL -> controlServerWebSocket()
                             Endpoints.STREAM_AUDIO -> audioStreamingServerWebSocket()
@@ -163,6 +161,5 @@ internal class RelayServerRegistration(
 
     private companion object {
         private val TAG = RelayServerRegistration::class
-        private val secret by lazy { deriveSharedRelaySecret() }
     }
 }

@@ -12,7 +12,7 @@ val relayHttpClient: HttpClient by lazy {
         }
         engine {
             https {
-                trustManager = RelayTrustManager()
+                trustManager = // TODO authentication
             }
         }
     }

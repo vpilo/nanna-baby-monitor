@@ -18,7 +18,11 @@ object Constants {
     val WEBSOCKET_TIMEOUT: Duration = 10.seconds
     val WEBSOCKET_CONNECTION_ATTEMPT_DELAY: Duration = 100.milliseconds
 
+    // TODO still useful?
     val RELAY_HANDSHAKE_TIMEOUT: Duration = 2.seconds
+
+    // TODO still useful?
     val RELAY_RENDEZVOUS_TIMEOUT: Duration = 15.seconds
+
     val SERVER_STOP_GRACE_PERIOD: Duration = 5.seconds
 }

@@ -18,8 +18,6 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.RelayHandshake
-import org.vpilo.babymonitor.network.common.deriveSharedRelaySecret
 import org.vpilo.babymonitor.network.common.relayHttpClient
 import java.net.ConnectException
 import java.net.InetAddress
@@ -122,7 +120,7 @@ internal class WebSocketConnectionHandler(
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
-                RelayHandshake.send(this, secret)
+                // TODO authentication
                 sessionBlock()
             }
         }
@@ -137,6 +135,5 @@ internal class WebSocketConnectionHandler(
 
     private companion object {
         private val TAG = WebSocketConnectionHandler::class
-        private val secret by lazy { deriveSharedRelaySecret() }
     }
 }
