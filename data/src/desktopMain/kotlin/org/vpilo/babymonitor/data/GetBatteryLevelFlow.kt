@@ -19,7 +19,6 @@ internal fun getBatteryLevelFlow(): Flow<Int> =
             } else {
                 val remainingCapacity = (powerSources[0].remainingCapacityPercent * 100).toInt()
                 if (remainingCapacity < 0) {
-                    Logger.w(TAG) { "Invalid battery level: $remainingCapacity%" }
                     emit(DEVICE_STATE_DATA_UNAVAILABLE)
                 } else {
                     emit(remainingCapacity)

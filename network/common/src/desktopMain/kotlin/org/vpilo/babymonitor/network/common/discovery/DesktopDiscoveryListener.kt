@@ -34,12 +34,8 @@ internal class DesktopDiscoveryListener : ServiceListener {
             return
         }
 
-        Logger.i(DefaultLocalDiscoveryRepository.TAG) {
-            if (_discoveredDevices.value.any { it.id == added.id }) {
-                "Device updated: $added"
-            } else {
-                "Device found: $added"
-            }
+        if (_discoveredDevices.value.none { it.id == added.id }) {
+            Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
         }
         _discoveredDevices.update { devices -> devices.filterNot { it.id == added.id }.plus(added).toSet() }
     }

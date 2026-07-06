@@ -22,29 +22,31 @@ internal actual class DefaultDeviceStateRepository :
 
     override val batteryLevel: Flow<Int> =
         getBatteryLevelFlow(context)
-            .onEach { state ->
-                Logger.d(TAG) { "Battery level changed: $state" }
-            }.onCompletion { ex ->
+            .onCompletion { ex ->
                 ex?.let { Logger.e(TAG) { "Battery level retrieval error: ${ex.prettify()}" } }
             }.distinctUntilChanged()
+            .onEach { state ->
+                Logger.d(TAG) { "Battery level changed: $state" }
+            }
 
     override val signalQuality: Flow<Int> =
         getSignalLevelFlow(context)
-            .onEach { state ->
-                Logger.d(TAG) { "Signal quality changed: $state" }
-            }.onCompletion { ex ->
+            .onCompletion { ex ->
                 ex?.let { Logger.e(TAG) { "Signal quality retrieval error: ${ex.prettify()}" } }
             }.distinctUntilChanged()
+            .onEach { state ->
+                Logger.d(TAG) { "Signal quality changed: $state" }
+            }
 
     @OptIn(FlowPreview::class)
     override val isInternetAvailable: Flow<Boolean> =
         getIsInternetAvailableFlow(context)
             .debounce(INTERNET_STATE_DEBOUNCE_TIMEOUT)
             .drop(1)
-            .onEach { state ->
-                Logger.d(TAG) { "Internet availability changed: $state" }
-            }.onCompletion { ex ->
+            .onCompletion { ex ->
                 ex?.let { Logger.e(TAG) { "Internet availability retrieval error: ${ex.prettify()}" } }
+            }.onEach { state ->
+                Logger.d(TAG) { "Internet availability changed: $state" }
             }
 
     private companion object {
