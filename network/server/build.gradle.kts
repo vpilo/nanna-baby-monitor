@@ -31,6 +31,7 @@ kotlin {
             implementation(project(":camera:model"))
             implementation(project(":codec"))
             implementation(project(":network:common"))
+            implementation(project(":settings:model"))
 
             implementation(libs.bundles.ktor.server)
             implementation(libs.bundles.ktor.client)

@@ -14,4 +14,10 @@ interface NetworkServerRepository {
     suspend fun setCaptureMode(mode: CaptureMode)
 
     fun setRelayHost(host: String)
+
+    val pairingState: Flow<PairingWindowState>
+
+    fun startPairingWindow()
+
+    fun cancelPairingWindow()
 }

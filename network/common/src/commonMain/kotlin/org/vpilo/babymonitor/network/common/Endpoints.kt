@@ -4,6 +4,7 @@ object Endpoints {
     const val CONTROL = "/control"
     const val STREAM_AUDIO = "/audio"
     const val STREAM_VIDEO = "/video"
+    const val PAIR = "/pair"
 
     object Relay {
         const val CLIENT_DISCOVERY = "/relay/discovery"

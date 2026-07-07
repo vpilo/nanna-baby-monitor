@@ -36,11 +36,14 @@ import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
+import org.vpilo.babymonitor.model.repository.PairingWindowState
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
+import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
+import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
@@ -50,14 +53,16 @@ import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkServerRepository(
     private val relayRegistration: RelayServerRegistration,
+    private val pairingCoordinator: PairingCoordinator,
     deviceStateRepository: DeviceStateRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
     private var isServerReady = MutableStateFlow(false)
 
-    // Kept for Task 9's /pair route, which exposes this identity's fingerprint to pairing clients.
+    // The /pair route needs this identity's fingerprint to bind it into the pairing transcript.
     private var serverIdentity: ServerIdentity? = null
+    private var self: Device.LocalServer? = null
 
     private val foregroundLink = ForegroundServiceLink(AppRole.SERVER)
 
@@ -75,6 +80,16 @@ internal class DefaultNetworkServerRepository(
 
     override fun setRelayHost(host: String) {
         relayRegistration.setRelayHost(host)
+    }
+
+    override val pairingState: Flow<PairingWindowState> = pairingCoordinator.state
+
+    override fun startPairingWindow() {
+        pairingCoordinator.startPairingWindow(checkNotNull(self) { "Server not started" })
+    }
+
+    override fun cancelPairingWindow() {
+        pairingCoordinator.cancelPairingWindow()
     }
 
     init {
@@ -104,6 +119,7 @@ internal class DefaultNetworkServerRepository(
     }
 
     override suspend fun start(self: Device.LocalServer) {
+        this.self = self
         if (server != null) return
 
         foregroundLink.start()
@@ -247,6 +263,14 @@ internal class DefaultNetworkServerRepository(
                 } finally {
                     Logger.i(TAG) { "Closed video session" }
                     activeVideoSessions.remove(this)
+                }
+            }
+            webSocket(Endpoints.PAIR) {
+                pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                timeout = Constants.WEBSOCKET_TIMEOUT
+
+                runWebSocketCatching(TAG) {
+                    pairingCoordinator.handlePairingSession(this, checkNotNull(serverIdentity) { "Server identity not loaded" })
                 }
             }
         }
