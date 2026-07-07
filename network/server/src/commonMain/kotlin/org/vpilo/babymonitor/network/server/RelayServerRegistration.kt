@@ -140,11 +140,10 @@ internal class RelayServerRegistration(
                         pingInterval = Constants.WEBSOCKET_PING_PERIOD
                         timeout = Constants.WEBSOCKET_TIMEOUT
 
-                        // TODO authentication
                         when (endpoint) {
-                            Endpoints.CONTROL -> controlServerWebSocket()
-                            Endpoints.STREAM_AUDIO -> audioStreamingServerWebSocket()
-                            Endpoints.STREAM_VIDEO -> videoStreamingServerWebSocket()
+                            Endpoints.CONTROL -> controlServerWebSocket(serverDeviceId = server.id)
+                            Endpoints.STREAM_AUDIO -> audioStreamingServerWebSocket(serverDeviceId = server.id)
+                            Endpoints.STREAM_VIDEO -> videoStreamingServerWebSocket(serverDeviceId = server.id)
                         }
                     }
                 } catch (ex: CancellationException) {

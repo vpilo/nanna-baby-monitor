@@ -59,7 +59,7 @@ internal class NetworkVideoReceiverRepository(
                             WebSocketConnectionHandler(
                                 device = target,
                                 endpointPath = Endpoints.STREAM_VIDEO,
-                                sessionBlock = { videoStreamingClientWebSocket() },
+                                sessionBlock = { videoStreamingClientWebSocket(serverDeviceId = target.id) },
                                 pairingRepository = pairingRepository,
                                 coroutineScope = coroutineScope,
                                 onDisconnected = {

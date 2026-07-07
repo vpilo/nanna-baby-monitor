@@ -62,7 +62,7 @@ internal class DefaultNetworkClientRepository(
                 onDisconnected = { onControlConnectionClosed(server, it) },
                 sessionBlock = {
                     onControlConnectionOpened(server)
-                    controlClientWebSocket()
+                    controlClientWebSocket(serverDeviceId = server.id)
                 },
                 pairingRepository = pairingRepository,
                 coroutineScope = scope,

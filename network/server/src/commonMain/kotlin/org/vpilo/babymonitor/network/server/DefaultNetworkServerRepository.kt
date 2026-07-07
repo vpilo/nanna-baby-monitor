@@ -227,7 +227,7 @@ internal class DefaultNetworkServerRepository(
 
                 activeControlSessions.add(this)
                 try {
-                    controlServerWebSocket()
+                    controlServerWebSocket(serverDeviceId = checkNotNull(self).id)
                 } finally {
                     Logger.i(TAG) { "Closed control session" }
                     activeControlSessions.remove(this)
@@ -243,7 +243,7 @@ internal class DefaultNetworkServerRepository(
                 }
                 activeAudioSessions.add(this)
                 try {
-                    audioStreamingServerWebSocket()
+                    audioStreamingServerWebSocket(serverDeviceId = checkNotNull(self).id)
                 } finally {
                     Logger.i(TAG) { "Closed audio session" }
                     activeAudioSessions.remove(this)
@@ -259,7 +259,7 @@ internal class DefaultNetworkServerRepository(
                 }
                 activeVideoSessions.add(this)
                 try {
-                    videoStreamingServerWebSocket()
+                    videoStreamingServerWebSocket(serverDeviceId = checkNotNull(self).id)
                 } finally {
                     Logger.i(TAG) { "Closed video session" }
                     activeVideoSessions.remove(this)

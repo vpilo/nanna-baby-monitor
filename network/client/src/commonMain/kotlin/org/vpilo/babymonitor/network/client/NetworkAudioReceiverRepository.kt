@@ -49,7 +49,7 @@ internal class NetworkAudioReceiverRepository(
                             WebSocketConnectionHandler(
                                 device = target,
                                 endpointPath = Endpoints.STREAM_AUDIO,
-                                sessionBlock = { audioStreamingClientWebSocket() },
+                                sessionBlock = { audioStreamingClientWebSocket(serverDeviceId = target.id) },
                                 pairingRepository = pairingRepository,
                                 coroutineScope = coroutineScope,
                                 onDisconnected = {

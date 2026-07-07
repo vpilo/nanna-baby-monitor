@@ -5,20 +5,26 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
+import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.protocolSendAudio
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.server.session.serverSessionHandshake
+import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 
-internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket() =
+internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket(serverDeviceId: DeviceId) =
     coroutineScope {
         val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
+        val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
+        val cipher = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.AUDIO) ?: return@coroutineScope
 
         val senderJob =
             launch {
                 runWebSocketCatching(TAG) {
                     repository.chunks
                         .collect {
-                            protocolSendAudio(it)
+                            protocolSendAudio(it, cipher)
                         }
                 }
             }
