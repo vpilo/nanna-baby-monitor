@@ -1,8 +1,10 @@
 package org.vpilo.babymonitor.network.client
 
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSocketException
-import io.ktor.client.plugins.websocket.webSocket
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.http.encodeURLPathPart
@@ -19,16 +21,19 @@ import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.relayHttpClient
+import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.ProtocolException
 import kotlin.coroutines.cancellation.CancellationException
+import io.ktor.client.plugins.websocket.pingInterval as clientPingInterval
 
 internal class WebSocketConnectionHandler(
     private val device: Device,
     private val endpointPath: String,
     private val sessionBlock: suspend DefaultClientWebSocketSession.() -> Unit,
     private val onDisconnected: suspend (exception: Throwable) -> Unit = {},
+    private val pairingRepository: PairingRepository,
     private val coroutineScope: CoroutineScope,
 ) {
     private var connectionJob: Job? = null
@@ -99,16 +104,28 @@ internal class WebSocketConnectionHandler(
 
     private suspend fun startWebSocket(host: InetAddress) {
         if (device !is Device.RemoteServer) {
-            networkClient.webSocket(
-                method = HttpMethod.Get,
-                host = host.hostAddress,
-                port = Constants.SERVICE_PORT,
-                path = endpointPath,
-            ) {
-                pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                timeout = Constants.WEBSOCKET_TIMEOUT
+            val expectedFingerprint =
+                pairingRepository.findServer(device.id)?.certFingerprint
+                    ?: error("Not paired with $device — refusing to connect")
+            val pinnedClient =
+                HttpClient(CIO) {
+                    install(WebSockets) { clientPingInterval = Constants.WEBSOCKET_PING_PERIOD }
+                    engine { https { trustManager = PinnedTrustManager(expectedFingerprint) } }
+                }
+            try {
+                pinnedClient.wss(
+                    method = HttpMethod.Get,
+                    host = host.hostAddress,
+                    port = Constants.SERVICE_PORT,
+                    path = endpointPath,
+                ) {
+                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
+                    timeout = Constants.WEBSOCKET_TIMEOUT
 
-                sessionBlock()
+                    sessionBlock()
+                }
+            } finally {
+                pinnedClient.close()
             }
         } else {
             relayHttpClient.wss(
@@ -120,7 +137,6 @@ internal class WebSocketConnectionHandler(
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
-                // TODO authentication
                 sessionBlock()
             }
         }

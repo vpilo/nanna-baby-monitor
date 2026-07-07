@@ -21,6 +21,7 @@ import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
+import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 import kotlin.coroutines.CoroutineContext
 
@@ -28,6 +29,7 @@ internal class DefaultNetworkClientRepository(
     private val serverSelectionDataSource: ServerSelectionDataSource,
     networkControlDataSource: NetworkControlDataSource,
     private val pairingConnector: ClientPairingConnector,
+    private val pairingRepository: PairingRepository,
     private val getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
@@ -62,6 +64,7 @@ internal class DefaultNetworkClientRepository(
                     onControlConnectionOpened(server)
                     controlClientWebSocket()
                 },
+                pairingRepository = pairingRepository,
                 coroutineScope = scope,
             ).apply { connect() }
 
