@@ -11,6 +11,7 @@ import org.vpilo.babymonitor.app.client.home.ClientHomeScreenViewModel
 import org.vpilo.babymonitor.app.menu.MenuScreenViewModel
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreenViewModel
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreenViewModel
+import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreenViewModel
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 import kotlin.coroutines.CoroutineContext
@@ -28,6 +29,7 @@ val appSharedKoinModules =
             viewModelOf(::OnboardingScreenViewModel)
             viewModelOf(::AppRoleChoiceScreenViewModel)
             viewModelOf(::ServerHomeScreenViewModel)
+            viewModelOf(::ServerPairingScreenViewModel)
             viewModelOf(::CameraSelectionScreenViewModel)
             viewModelOf(::ClientHomeScreenViewModel)
             viewModelOf(::MenuScreenViewModel)

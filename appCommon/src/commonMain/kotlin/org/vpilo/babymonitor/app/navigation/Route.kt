@@ -32,4 +32,7 @@ sealed interface Route {
 
     @Serializable
     data object ServerHome : Route
+
+    @Serializable
+    data object ServerPairing : Route
 }

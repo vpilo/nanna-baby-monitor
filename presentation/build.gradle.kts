@@ -50,6 +50,8 @@ kotlin {
 
             implementation(libs.compose.navigation)
 
+            implementation(libs.qrose)
+
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.koin.core)

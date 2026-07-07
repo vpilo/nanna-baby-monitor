@@ -3,6 +3,10 @@ package org.vpilo.babymonitor.app.server.home
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -15,6 +19,8 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_server_home
+import babymonitor.appcommon.generated.resources.app_title_server_pairing
+import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.OpaqueVideoStream
@@ -23,6 +29,7 @@ import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.ConnectionStatusIcons
+import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 
 @Composable
@@ -30,6 +37,7 @@ fun ServerHomeScreen(
     modifier: Modifier = Modifier,
     viewModel: ServerHomeScreenViewModel,
     onMenuClicked: () -> Unit,
+    onPairClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
@@ -44,6 +52,11 @@ fun ServerHomeScreen(
         title = Res.string.app_title_server_home,
         mainAction = AppDestinationMainAction.Menu,
         actions = {
+            Tooltip(text = stringResource(Res.string.app_title_server_pairing)) {
+                IconButton(onClick = onPairClicked) {
+                    Icon(imageVector = Icons.Default.QrCode, contentDescription = null)
+                }
+            }
             ConnectionStatusIcons(
                 hasRelay = state.isRelayConfigured,
                 isOnLocalNetwork = state.isAvailableOnLocalNetwork,
