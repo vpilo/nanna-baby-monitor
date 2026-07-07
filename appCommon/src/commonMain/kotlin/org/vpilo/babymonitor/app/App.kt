@@ -23,6 +23,7 @@ import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
 import org.vpilo.babymonitor.app.permissioncheck.AppPermissionCheckScreen
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreen
+import org.vpilo.babymonitor.app.server.paireddevices.PairedDevicesScreen
 import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.CameraPermissionCheckScreen
 import org.vpilo.babymonitor.common.Logger
@@ -180,6 +181,13 @@ private fun NavGraphBuilder.navigationRoutes(
 
     composable<Route.ServerPairing> {
         ServerPairingScreen(
+            viewModel = koinViewModel(),
+            onBackClicked = onNavigateUp,
+        )
+    }
+
+    composable<Route.PairedDevices> {
+        PairedDevicesScreen(
             viewModel = koinViewModel(),
             onBackClicked = onNavigateUp,
         )

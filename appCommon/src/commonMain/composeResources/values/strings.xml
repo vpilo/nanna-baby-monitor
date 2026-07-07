@@ -63,4 +63,10 @@
     <string name="pairing_failed_lockout">Too many wrong attempts. Pairing cancelled.</string>
     <string name="pairing_failed_expired">Pairing window expired.</string>
     <string name="pairing_retry">Try again</string>
+
+    <string name="app_title_paired_devices">Paired devices</string>
+    <string name="paired_devices_empty">No devices paired yet.</string>
+    <string name="paired_devices_revoke">Revoke</string>
+    <string name="menu_paired_devices_title">Paired devices</string>
+    <string name="menu_paired_devices_description">View and revoke devices paired with this camera</string>
 </resources>

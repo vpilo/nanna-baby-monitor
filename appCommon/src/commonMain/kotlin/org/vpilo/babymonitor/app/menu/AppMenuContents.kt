@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.NoiseAware
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -15,6 +16,8 @@ import babymonitor.appcommon.generated.resources.menu_change_role_description
 import babymonitor.appcommon.generated.resources.menu_change_role_title
 import babymonitor.appcommon.generated.resources.menu_disconnect_description
 import babymonitor.appcommon.generated.resources.menu_disconnect_title
+import babymonitor.appcommon.generated.resources.menu_paired_devices_description
+import babymonitor.appcommon.generated.resources.menu_paired_devices_title
 import babymonitor.appcommon.generated.resources.menu_quit_android
 import babymonitor.appcommon.generated.resources.menu_quit_desktop
 import org.jetbrains.compose.resources.stringResource
@@ -62,6 +65,12 @@ fun AppMenuContents(
         MenuSettingItem(
             setting = Setting.SilenceDetectionThreshold,
             imageVector = Icons.Default.NoiseAware,
+        )
+        MenuItem(
+            imageVector = Icons.Default.Devices,
+            title = stringResource(Res.string.menu_paired_devices_title),
+            description = stringResource(Res.string.menu_paired_devices_description),
+            onClick = { onNavigateTo(Route.PairedDevices, null) },
         )
     }
 

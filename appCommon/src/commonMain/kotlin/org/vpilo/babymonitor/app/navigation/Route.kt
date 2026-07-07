@@ -35,4 +35,7 @@ sealed interface Route {
 
     @Serializable
     data object ServerPairing : Route
+
+    @Serializable
+    data object PairedDevices : Route
 }
