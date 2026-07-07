@@ -37,6 +37,9 @@ kotlin {
             implementation(libs.bundles.ktor.client)
 
             implementation(libs.koin.core)
+
+            implementation(libs.cryptography.core)
+            implementation(libs.cryptography.provider.jdk)
         }
 
         val desktopMain = getByName("desktopMain")
@@ -47,5 +50,20 @@ kotlin {
         androidMain.dependencies {
             implementation(project(":androidService"))
         }
+
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+        }
+
+        val desktopTest = getByName("desktopTest")
+        desktopTest.dependencies {
+            implementation(libs.junit)
+            implementation(libs.junit.platform)
+        }
     }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }

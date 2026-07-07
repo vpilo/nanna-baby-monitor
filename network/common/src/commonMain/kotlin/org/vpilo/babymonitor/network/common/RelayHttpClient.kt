@@ -10,10 +10,5 @@ val relayHttpClient: HttpClient by lazy {
         install(WebSockets) {
             pingInterval = Constants.WEBSOCKET_PING_PERIOD
         }
-        engine {
-            https {
-                trustManager = // TODO authentication
-            }
-        }
     }
 }
