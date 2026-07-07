@@ -8,4 +8,5 @@
 
     <string name="pairing_pin_label">PIN</string>
     <string name="pairing_pin_submit">Pair</string>
+    <string name="pairing_qr_wrong_device">Scanned code is for a different device</string>
 </resources>

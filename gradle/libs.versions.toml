@@ -27,6 +27,7 @@ androidx-datastore = "1.2.1"
 jetbrains-lifecycle = "2.11.0"
 
 androidx-camera = "1.6.1"
+mlkit-barcode-scanning = "17.3.0"
 guava = "33.6.0-android"
 webcam-capture = "0.3.12"
 javacpp = "1.5.13"
@@ -71,6 +72,8 @@ androidx-camera-core = { group = "androidx.camera", name = "camera-core", versio
 androidx-camera-impl = { group = "androidx.camera", name = "camera-camera2", version.ref = "androidx-camera" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "androidx-camera" }
 androidx-camera-video = { group = "androidx.camera", name = "camera-video", version.ref = "androidx-camera" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "androidx-camera" }
+mlkit-barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode-scanning" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version.ref = "webcam-capture" }
 javacpp = { group = "org.bytedeco", name = "javacpp", version.ref = "javacpp" }

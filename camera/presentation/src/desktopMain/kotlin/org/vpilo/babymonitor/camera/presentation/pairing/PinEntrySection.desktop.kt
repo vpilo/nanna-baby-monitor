@@ -43,6 +43,6 @@ actual fun PinEntrySection(
     }
 }
 
-// Duplicated from network:common:crypto's PAIRING_PIN_LENGTH since camera:presentation doesn't depend on that
-// module yet; Task 17's Android actual will need it for QR decoding, at which point this can be shared.
+// Manual-entry length only; the Android actual trusts the QR-decoded PIN string as-is and has no
+// equivalent constant to share this with.
 private const val PIN_LENGTH = 6
