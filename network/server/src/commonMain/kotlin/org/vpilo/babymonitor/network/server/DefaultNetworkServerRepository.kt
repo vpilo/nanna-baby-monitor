@@ -8,6 +8,7 @@ import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.engine.sslConnector
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
@@ -39,6 +40,7 @@ import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
+import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
@@ -53,6 +55,9 @@ internal class DefaultNetworkServerRepository(
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
     private var isServerReady = MutableStateFlow(false)
+
+    // Kept for Task 9's /pair route, which exposes this identity's fingerprint to pairing clients.
+    private var serverIdentity: ServerIdentity? = null
 
     private val foregroundLink = ForegroundServiceLink(AppRole.SERVER)
 
@@ -104,12 +109,25 @@ internal class DefaultNetworkServerRepository(
         foregroundLink.start()
         relayRegistration.identifySelf(self)
 
+        val identity = ServerIdentity.loadOrCreate()
+        serverIdentity = identity
+        val keyStoreConfig = identity.toKeyStoreConfig()
+
         scope.launch {
             embeddedServer(
                 factory = CIO,
+                configure = {
+                    sslConnector(
+                        keyStore = keyStoreConfig.keyStore,
+                        keyAlias = keyStoreConfig.keyAlias,
+                        keyStorePassword = { keyStoreConfig.keyStorePassword },
+                        privateKeyPassword = { keyStoreConfig.privateKeyPassword },
+                    ) {
+                        host = Constants.SERVICES_LISTEN_ADDRESS
+                        port = Constants.SERVICE_PORT
+                    }
+                },
                 module = { serverModule() },
-                host = Constants.SERVICES_LISTEN_ADDRESS,
-                port = Constants.SERVICE_PORT,
             ).apply {
                 server = this
 

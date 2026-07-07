@@ -37,6 +37,11 @@ kotlin {
 
             implementation(libs.koin.core)
         }
+
+        val desktopMain = getByName("desktopMain")
+        desktopMain.dependencies {
+            implementation(libs.ktor.network.tls.certificates)
+        }
     }
 
     compilerOptions {
