@@ -58,8 +58,9 @@ selection is the same-Wi-Fi gate.
 - Open a `/pair` WSS endpoint on `SERVICE_PORT` (normal TLS).
 - Start a bounded **pairing window** (~3 min) with **attempt lockout** (5 wrong PINs
   → abort, PIN invalidated).
-- Display a QR encoding `bm1|<deviceId>|<PIN>|<hostHint>` plus the PIN as text (for
-  desktop clients that read it off the screen).
+- Display a QR encoding `bm|<pairingProtocolVersion>|<deviceId>|<PIN>|<hostHint>` plus the 
+  PIN as text (for desktop clients that read it off the screen).
+- In this iteration, the protocol version is `1`.
 
 **Client:**
 - From the discovered-server list, select the target server (fixes `deviceId` + address).

@@ -1,4 +1,7 @@
 {
+  "worktree": {
+    "baseRef": "head"
+  },
   "permissions": {
     "allow": [
       "Bash(./gradlew :appDesktop:desktopJar :appAndroid:assembleDebug)",
@@ -12,7 +15,13 @@
       "Skill(superpowers:*)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "WebFetch(domain:android.googlesource.com)"
+      "WebFetch(domain:android.googlesource.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:whyoleg.github.io)",
+      "Read(//home/vale/.claude/plugins/cache/claude-plugins-official/superpowers/6.1.1/skills/subagent-driven-development/scripts/**)",
+      "Bash(git -C /home/vale/projects/babym branch --show-current)",
+      "Bash(git -C /home/vale/projects/babym status --short)",
+      "Bash(git -C /home/vale/projects/babym log --oneline -5)"
     ]
   }
 }
