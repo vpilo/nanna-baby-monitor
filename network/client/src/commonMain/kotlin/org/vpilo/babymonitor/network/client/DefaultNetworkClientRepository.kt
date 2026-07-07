@@ -6,6 +6,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
@@ -13,16 +14,21 @@ import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.model.repository.PairingOutcome
 import org.vpilo.babymonitor.model.repository.ServerState
+import org.vpilo.babymonitor.network.client.pairing.ClientPairingConnector
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
+import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
     private val serverSelectionDataSource: ServerSelectionDataSource,
     networkControlDataSource: NetworkControlDataSource,
+    private val pairingConnector: ClientPairingConnector,
+    private val getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -60,6 +66,14 @@ internal class DefaultNetworkClientRepository(
             ).apply { connect() }
 
         connectionState.value = ConnectionState.Connecting(server)
+    }
+
+    override suspend fun pairWith(
+        server: Device.Server,
+        pin: String,
+    ): PairingOutcome {
+        val clientDevice = getLocalClientDeviceFlowUseCase().first()
+        return pairingConnector.pairWith(server, clientDevice, pin)
     }
 
     private fun closeAllConnections() {

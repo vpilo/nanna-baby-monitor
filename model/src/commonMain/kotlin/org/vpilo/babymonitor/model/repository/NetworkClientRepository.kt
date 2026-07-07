@@ -10,6 +10,11 @@ interface NetworkClientRepository {
 
     suspend fun connect(server: Device.Server)
 
+    suspend fun pairWith(
+        server: Device.Server,
+        pin: String,
+    ): PairingOutcome
+
     suspend fun disconnect()
 
     fun reset()

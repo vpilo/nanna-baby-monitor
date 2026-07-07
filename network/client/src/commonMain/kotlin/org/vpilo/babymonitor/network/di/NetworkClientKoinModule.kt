@@ -19,6 +19,7 @@ import org.vpilo.babymonitor.network.client.NetworkVideoDataSource
 import org.vpilo.babymonitor.network.client.NetworkVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.ServerSelectionDataSource
 import org.vpilo.babymonitor.network.client.discovery.DefaultRemoteDiscoveryRepository
+import org.vpilo.babymonitor.network.client.pairing.ClientPairingConnector
 
 val networkClientKoinModule: Module =
     module {
@@ -26,6 +27,7 @@ val networkClientKoinModule: Module =
         singleOf(::NetworkControlDataSource)
         singleOf(::NetworkAudioDataSource)
         singleOf(::NetworkVideoDataSource)
+        singleOf(::ClientPairingConnector)
 
         // SharedResourceHolder repositories must be singletons to maintain their state.
         singleOf(::NetworkAudioReceiverRepository)
