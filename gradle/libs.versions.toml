@@ -10,7 +10,7 @@ slf4j = "2.0.18"
 #noinspection UnusedVersionCatalogEntry
 android-compileSdk = "37"
 #noinspection UnusedVersionCatalogEntry
-android-minSdk = "24"
+android-minSdk = "26"
 #noinspection UnusedVersionCatalogEntry
 android-targetSdk = "37"
 

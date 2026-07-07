@@ -47,6 +47,10 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Multiple ktor-server-netty transitive Netty jars each ship their own copy; irrelevant at runtime.
+            excludes += "/META-INF/INDEX.LIST"
+            // Every Netty artifact ships an identical copy for diagnostics; any one of them is fine to keep.
+            pickFirsts += "/META-INF/io.netty.versions.properties"
         }
         // No need to strip libraries, we only use Android libraries.
         packaging {

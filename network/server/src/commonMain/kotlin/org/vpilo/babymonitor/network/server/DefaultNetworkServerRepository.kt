@@ -5,10 +5,10 @@ import io.ktor.server.application.ApplicationEnvironment
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.ServerReady
 import io.ktor.server.application.install
-import io.ktor.server.cio.CIO
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
+import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
@@ -115,7 +115,7 @@ internal class DefaultNetworkServerRepository(
 
         scope.launch {
             embeddedServer(
-                factory = CIO,
+                factory = Netty,
                 configure = {
                     sslConnector(
                         keyStore = keyStoreConfig.keyStore,
