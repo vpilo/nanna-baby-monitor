@@ -19,6 +19,7 @@ import org.vpilo.babymonitor.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.settings.model.Setting
+import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 
@@ -29,6 +30,7 @@ class CameraSelectionScreenViewModel(
     private val localDiscoveryRepository: LocalDiscoveryRepository,
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
     private val deviceStateRepository: DeviceStateRepository,
+    private val pairingRepository: PairingRepository,
     getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
         initialState = CameraSelectionScreenState(),
@@ -126,7 +128,11 @@ class CameraSelectionScreenViewModel(
         when (action) {
             is CameraSelectionScreenAction.ConnectToServer -> {
                 vmScope.launch {
-                    networkClientRepository.connect(action.server)
+                    if (pairingRepository.findServer(action.server.id) != null) {
+                        networkClientRepository.connect(action.server)
+                    } else {
+                        CameraSelectionScreenEffect.RequirePairing(action.server).sendEffect()
+                    }
                 }
             }
         }

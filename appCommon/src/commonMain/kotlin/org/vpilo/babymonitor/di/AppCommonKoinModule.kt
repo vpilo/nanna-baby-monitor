@@ -3,11 +3,13 @@ package org.vpilo.babymonitor.di
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreenViewModel
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreenViewModel
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreenViewModel
+import org.vpilo.babymonitor.app.clientpairing.ClientPairingScreenViewModel
 import org.vpilo.babymonitor.app.menu.MenuScreenViewModel
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreenViewModel
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreenViewModel
@@ -33,6 +35,13 @@ val appSharedKoinModules =
             viewModelOf(::ServerPairingScreenViewModel)
             viewModelOf(::PairedDevicesScreenViewModel)
             viewModelOf(::CameraSelectionScreenViewModel)
+            viewModel { params ->
+                ClientPairingScreenViewModel(
+                    deviceId = params.get(),
+                    networkClientRepository = get(),
+                    localDiscoveryRepository = get(),
+                )
+            }
             viewModelOf(::ClientHomeScreenViewModel)
             viewModelOf(::MenuScreenViewModel)
         },

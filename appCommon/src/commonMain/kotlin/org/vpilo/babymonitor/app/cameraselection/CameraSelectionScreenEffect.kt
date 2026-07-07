@@ -13,4 +13,8 @@ sealed interface CameraSelectionScreenEffect {
     class AnnounceConnectionEvent(
         val state: ConnectionState,
     ) : CameraSelectionScreenEffect
+
+    data class RequirePairing(
+        val server: Device.Server,
+    ) : CameraSelectionScreenEffect
 }

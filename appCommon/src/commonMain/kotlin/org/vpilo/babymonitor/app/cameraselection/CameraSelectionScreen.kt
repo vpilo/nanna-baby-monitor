@@ -58,6 +58,7 @@ fun CameraSelectionScreen(
     modifier: Modifier = Modifier,
     viewModel: CameraSelectionScreenViewModel,
     onConnected: () -> Unit,
+    onRequirePairing: (deviceId: String) -> Unit,
     onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
@@ -81,6 +82,10 @@ fun CameraSelectionScreen(
                             ?: return@collect
                     Logger.d("CameraSelectionScreen") { "Showing snackbar.." }
                     snackbarController.show(message = message)
+                }
+
+                is CameraSelectionScreenEffect.RequirePairing -> {
+                    onRequirePairing(effect.server.id.toString())
                 }
             }
         }

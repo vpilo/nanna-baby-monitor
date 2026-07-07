@@ -14,10 +14,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreen
+import org.vpilo.babymonitor.app.clientpairing.ClientPairingScreen
 import org.vpilo.babymonitor.app.menu.MenuScreen
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
@@ -199,9 +202,21 @@ private fun NavGraphBuilder.navigationRoutes(
             onConnected = {
                 onNavigateTo(Route.ClientHome, null)
             },
+            onRequirePairing = { deviceId ->
+                onNavigateTo(Route.ClientPairing(deviceId), null)
+            },
             onMenuClicked = {
                 onNavigateTo(Route.Menu, null)
             },
+        )
+    }
+
+    composable<Route.ClientPairing> { backStackEntry ->
+        val args = backStackEntry.toRoute<Route.ClientPairing>()
+        ClientPairingScreen(
+            viewModel = koinViewModel(parameters = { parametersOf(args.deviceId) }),
+            onPaired = { onNavigateTo(Route.CameraSelection, Route.ClientPairing(args.deviceId)) },
+            onBackClicked = onNavigateUp,
         )
     }
 

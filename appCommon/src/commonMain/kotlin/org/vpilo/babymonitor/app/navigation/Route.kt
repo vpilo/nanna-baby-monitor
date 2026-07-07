@@ -38,4 +38,9 @@ sealed interface Route {
 
     @Serializable
     data object PairedDevices : Route
+
+    @Serializable
+    data class ClientPairing(
+        val deviceId: String,
+    ) : Route
 }
