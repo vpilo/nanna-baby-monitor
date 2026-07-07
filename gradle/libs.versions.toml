@@ -101,6 +101,7 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor"
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 ktor-server-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-websockets = { module = "io.ktor:ktor-websockets", version.ref = "ktor" }
+ktor-network-tls-certificates = { module = "io.ktor:ktor-network-tls-certificates", version.ref = "ktor" }
 jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
 oshi = { module = "com.github.oshi:oshi-core-java11", version.ref = "oshi" }
 
