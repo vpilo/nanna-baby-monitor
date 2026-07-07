@@ -5,7 +5,6 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.common.crypto.SessionFrameCipher
 import org.vpilo.babymonitor.network.common.crypto.asServerCipher
 import org.vpilo.babymonitor.network.common.crypto.computeServerHandshakeProof
 import org.vpilo.babymonitor.network.common.crypto.deriveSessionKeys
@@ -22,7 +21,7 @@ suspend fun WebSocketSession.serverSessionHandshake(
     serverDeviceId: DeviceId,
     pairingRepository: PairingRepository,
     streamType: StreamType,
-): SessionFrameCipher? {
+): ServerSessionHandshakeResult? {
     val request =
         receiveSessionHandshakeRequestOrNull() ?: run {
             close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Malformed session handshake"))
@@ -48,7 +47,7 @@ suspend fun WebSocketSession.serverSessionHandshake(
 
     val keys = deriveSessionKeys(sharedSecret, request.salt, serverSalt)
     val associatedData = serverDeviceId.toByteArray() + byteArrayOf(streamType.tag)
-    return keys.asServerCipher(associatedData)
+    return ServerSessionHandshakeResult(keys.asServerCipher(associatedData), request.clientId)
 }
 
 private const val TAG = "ServerSessionHandshake"

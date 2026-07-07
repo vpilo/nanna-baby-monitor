@@ -11,42 +11,51 @@ import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.protocolSendVideo
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.server.session.ActiveSessionRegistry
 import org.vpilo.babymonitor.network.server.session.serverSessionHandshake
 import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 
-internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket(serverDeviceId: DeviceId) =
-    coroutineScope {
-        val repository = KoinPlatform.getKoin().get<StreamingVideoSenderRepository>()
-        val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
+internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket(serverDeviceId: DeviceId) {
+    val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
 
-        Logger.d(TAG) { "WebSocket opened" }
+    Logger.d(TAG) { "WebSocket opened" }
 
-        val cipher = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.VIDEO) ?: return@coroutineScope
+    val handshake = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.VIDEO) ?: return
 
-        val senderJob =
-            launch {
-                runWebSocketCatching(TAG) {
-                    repository.chunks
-                        .dropWhile {
-                            val drop = !it.isKeyFrame
-                            if (drop) Logger.d(TAG) { "Dropping non-keyframe chunk while waiting for first keyframe" }
-                            drop
-                        }.collect {
-                            protocolSendVideo(it, cipher)
-                        }
+    val sessionRegistry = KoinPlatform.getKoin().get<ActiveSessionRegistry>()
+    sessionRegistry.register(handshake.clientId, this)
+    try {
+        coroutineScope {
+            val repository = KoinPlatform.getKoin().get<StreamingVideoSenderRepository>()
+
+            val senderJob =
+                launch {
+                    runWebSocketCatching(TAG) {
+                        repository.chunks
+                            .dropWhile {
+                                val drop = !it.isKeyFrame
+                                if (drop) Logger.d(TAG) { "Dropping non-keyframe chunk while waiting for first keyframe" }
+                                drop
+                            }.collect {
+                                protocolSendVideo(it, handshake.cipher)
+                            }
+                    }
                 }
-            }
 
-        // Drain incoming only to detect session closure.
-        val readerJob =
-            launch {
-                for (frame in incoming) {
-                    Logger.w(TAG) { "Unexpected frame from client: $frame" }
+            // Drain incoming only to detect session closure.
+            val readerJob =
+                launch {
+                    for (frame in incoming) {
+                        Logger.w(TAG) { "Unexpected frame from client: $frame" }
+                    }
                 }
-            }
 
-        senderJob.invokeOnCompletion { readerJob.cancel() }
-        readerJob.invokeOnCompletion { senderJob.cancel() }
+            senderJob.invokeOnCompletion { readerJob.cancel() }
+            readerJob.invokeOnCompletion { senderJob.cancel() }
+        }
+    } finally {
+        sessionRegistry.unregister(handshake.clientId, this)
     }
+}
 
 private const val TAG = "NetworkServer-Video"

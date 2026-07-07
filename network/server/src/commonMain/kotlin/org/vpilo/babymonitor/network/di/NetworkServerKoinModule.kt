@@ -12,11 +12,13 @@ import org.vpilo.babymonitor.network.server.NetworkAudioSenderRepository
 import org.vpilo.babymonitor.network.server.NetworkVideoSenderRepository
 import org.vpilo.babymonitor.network.server.RelayServerRegistration
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
+import org.vpilo.babymonitor.network.server.session.ActiveSessionRegistry
 
 val networkServerKoinModule: Module =
     module {
         singleOf(::RelayServerRegistration)
         singleOf(::PairingCoordinator)
+        singleOf(::ActiveSessionRegistry)
 
         // SharedResourceHolder repositories must be singletons to maintain their state.
         singleOf(::NetworkAudioSenderRepository)

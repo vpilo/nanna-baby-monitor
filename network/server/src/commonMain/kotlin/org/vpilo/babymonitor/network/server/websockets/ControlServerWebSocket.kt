@@ -10,34 +10,43 @@ import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.common.protocol.sendServerMessage
+import org.vpilo.babymonitor.network.server.session.ActiveSessionRegistry
 import org.vpilo.babymonitor.network.server.session.serverSessionHandshake
 import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 
-internal suspend fun DefaultWebSocketSession.controlServerWebSocket(serverDeviceId: DeviceId) =
-    coroutineScope {
-        val repository = KoinPlatform.getKoin().get<NetworkServerRepository>()
-        val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
-        val cipher = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.CONTROL) ?: return@coroutineScope
+internal suspend fun DefaultWebSocketSession.controlServerWebSocket(serverDeviceId: DeviceId) {
+    val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
+    val handshake = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.CONTROL) ?: return
 
-        val senderJob =
-            launch {
-                runWebSocketCatching(TAG) {
-                    repository.serverStateFlow.collect { state ->
-                        sendServerMessage(state, cipher)
+    val sessionRegistry = KoinPlatform.getKoin().get<ActiveSessionRegistry>()
+    sessionRegistry.register(handshake.clientId, this)
+    try {
+        coroutineScope {
+            val repository = KoinPlatform.getKoin().get<NetworkServerRepository>()
+
+            val senderJob =
+                launch {
+                    runWebSocketCatching(TAG) {
+                        repository.serverStateFlow.collect { state ->
+                            sendServerMessage(state, handshake.cipher)
+                        }
                     }
                 }
-            }
 
-        // Drain incoming only to detect session closure.
-        val readerJob =
-            launch {
-                for (frame in incoming) {
-                    Logger.w(TAG) { "Unexpected frame from client: $frame" }
+            // Drain incoming only to detect session closure.
+            val readerJob =
+                launch {
+                    for (frame in incoming) {
+                        Logger.w(TAG) { "Unexpected frame from client: $frame" }
+                    }
                 }
-            }
 
-        senderJob.invokeOnCompletion { readerJob.cancel() }
-        readerJob.invokeOnCompletion { senderJob.cancel() }
+            senderJob.invokeOnCompletion { readerJob.cancel() }
+            readerJob.invokeOnCompletion { senderJob.cancel() }
+        }
+    } finally {
+        sessionRegistry.unregister(handshake.clientId, this)
     }
+}
 
 private const val TAG = "NetworkServer-Control"

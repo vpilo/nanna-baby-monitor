@@ -10,35 +10,44 @@ import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.protocolSendAudio
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.server.session.ActiveSessionRegistry
 import org.vpilo.babymonitor.network.server.session.serverSessionHandshake
 import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 
-internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket(serverDeviceId: DeviceId) =
-    coroutineScope {
-        val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
-        val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
-        val cipher = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.AUDIO) ?: return@coroutineScope
+internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket(serverDeviceId: DeviceId) {
+    val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
+    val handshake = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.AUDIO) ?: return
 
-        val senderJob =
-            launch {
-                runWebSocketCatching(TAG) {
-                    repository.chunks
-                        .collect {
-                            protocolSendAudio(it, cipher)
-                        }
+    val sessionRegistry = KoinPlatform.getKoin().get<ActiveSessionRegistry>()
+    sessionRegistry.register(handshake.clientId, this)
+    try {
+        coroutineScope {
+            val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
+
+            val senderJob =
+                launch {
+                    runWebSocketCatching(TAG) {
+                        repository.chunks
+                            .collect {
+                                protocolSendAudio(it, handshake.cipher)
+                            }
+                    }
                 }
-            }
 
-        // Drain incoming only to detect session closure.
-        val readerJob =
-            launch {
-                for (frame in incoming) {
-                    Logger.w(TAG) { "Unexpected frame from client: $frame" }
+            // Drain incoming only to detect session closure.
+            val readerJob =
+                launch {
+                    for (frame in incoming) {
+                        Logger.w(TAG) { "Unexpected frame from client: $frame" }
+                    }
                 }
-            }
 
-        senderJob.invokeOnCompletion { readerJob.cancel() }
-        readerJob.invokeOnCompletion { senderJob.cancel() }
+            senderJob.invokeOnCompletion { readerJob.cancel() }
+            readerJob.invokeOnCompletion { senderJob.cancel() }
+        }
+    } finally {
+        sessionRegistry.unregister(handshake.clientId, this)
     }
+}
 
 private const val TAG = "NetworkServer-Audio"
