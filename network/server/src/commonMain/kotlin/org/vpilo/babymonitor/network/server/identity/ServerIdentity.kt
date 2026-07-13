@@ -4,13 +4,36 @@ import org.vpilo.babymonitor.network.common.crypto.sha256Fingerprint
 import java.security.KeyStore
 import java.security.cert.X509Certificate
 
-/** What the server engine needs to install TLS: a [KeyStore] holding the identity, plus how to unlock it. */
-class KeyStoreConfig(
+/**
+ * Key store configuration required by the server engine to install TLS.
+ *
+ * Only one password is used for both key store and private key for simplicity.
+ */
+data class KeyStoreConfig(
     val keyStore: KeyStore,
     val keyAlias: String,
-    val keyStorePassword: CharArray,
-    val privateKeyPassword: CharArray,
-)
+    val password: CharArray,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as KeyStoreConfig
+
+        if (keyStore != other.keyStore) return false
+        if (keyAlias != other.keyAlias) return false
+        if (!password.contentEquals(other.password)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = keyStore.hashCode()
+        result = 31 * result + keyAlias.hashCode()
+        result = 31 * result + password.contentHashCode()
+        return result
+    }
+}
 
 /**
  * The server's persistent, per-install self-signed TLS identity. Loaded (or generated on first launch)

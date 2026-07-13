@@ -19,8 +19,7 @@ actual class ServerIdentity private constructor(
         KeyStoreConfig(
             keyStore = keyStore,
             keyAlias = KEY_ALIAS,
-            keyStorePassword = password.toCharArray(),
-            privateKeyPassword = password.toCharArray(),
+            password = password.toCharArray(),
         )
 
     actual companion object {

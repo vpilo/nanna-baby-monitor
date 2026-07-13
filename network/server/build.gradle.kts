@@ -44,6 +44,11 @@ kotlin {
         desktopMain.dependencies {
             implementation(libs.ktor.network.tls.certificates)
         }
+
+        val androidMain = getByName("androidMain")
+        androidMain.dependencies {
+            implementation(libs.ktor.network.tls.certificates)
+        }
     }
 
     compilerOptions {

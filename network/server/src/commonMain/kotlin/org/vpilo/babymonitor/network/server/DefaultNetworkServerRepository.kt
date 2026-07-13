@@ -134,17 +134,17 @@ internal class DefaultNetworkServerRepository(
 
         val identity = ServerIdentity.loadOrCreate()
         serverIdentity = identity
-        val keyStoreConfig = identity.toKeyStoreConfig()
 
         scope.launch {
             embeddedServer(
                 factory = Netty,
                 configure = {
+                    val keyStoreConfig = identity.toKeyStoreConfig()
                     sslConnector(
                         keyStore = keyStoreConfig.keyStore,
                         keyAlias = keyStoreConfig.keyAlias,
-                        keyStorePassword = { keyStoreConfig.keyStorePassword },
-                        privateKeyPassword = { keyStoreConfig.privateKeyPassword },
+                        keyStorePassword = { keyStoreConfig.password },
+                        privateKeyPassword = { keyStoreConfig.password },
                     ) {
                         host = Constants.SERVICES_LISTEN_ADDRESS
                         port = Constants.SERVICE_PORT
