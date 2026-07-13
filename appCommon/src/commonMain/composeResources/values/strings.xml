@@ -62,6 +62,7 @@
     <string name="pairing_succeeded">Paired with %1$s</string>
     <string name="pairing_failed_lockout">Too many wrong attempts. Pairing cancelled.</string>
     <string name="pairing_failed_expired">Pairing window expired.</string>
+    <string name="pairing_progress">Pairing...</string>
     <string name="pairing_retry">Try again</string>
 
     <string name="app_title_paired_devices">Paired devices</string>
@@ -76,5 +77,8 @@
     <string name="client_pairing_failed_server_not_on_network">Server not on this network</string>
     <string name="client_pairing_failed_mitm_suspected">Could not verify the server\'s identity — pairing aborted</string>
     <string name="client_pairing_failed_connection_failed">Connection failed, try again</string>
+    <string name="client_pairing_qr_wrong_device">Scanned code is for a different device</string>
+    <string name="client_pairing_pin_label">PIN</string>
+    <string name="client_pairing_pin_submit">Pair</string>
     <string name="menu_paired_devices_description">View and revoke devices paired with this camera</string>
 </resources>

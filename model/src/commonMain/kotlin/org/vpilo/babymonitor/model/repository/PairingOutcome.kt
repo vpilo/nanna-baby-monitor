@@ -14,4 +14,5 @@ enum class PairingFailureCause {
     SERVER_NOT_ON_NETWORK,
     MITM_SUSPECTED,
     CONNECTION_FAILED,
+    WRONG_DEVICE,
 }

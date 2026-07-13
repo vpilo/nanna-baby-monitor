@@ -5,8 +5,4 @@
     <string name="permissions_needed">The app needs the Camera and Microphone permission to continue.</string>
 
     <string name="server_in_audio_only_mode">Camera is only recording audio</string>
-
-    <string name="pairing_pin_label">PIN</string>
-    <string name="pairing_pin_submit">Pair</string>
-    <string name="pairing_qr_wrong_device">Scanned code is for a different device</string>
 </resources>

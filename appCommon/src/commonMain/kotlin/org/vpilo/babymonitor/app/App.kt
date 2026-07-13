@@ -20,7 +20,7 @@ import org.koin.core.parameter.parametersOf
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreen
-import org.vpilo.babymonitor.app.clientpairing.ClientPairingScreen
+import org.vpilo.babymonitor.app.client.pairing.ClientPairingScreen
 import org.vpilo.babymonitor.app.menu.MenuScreen
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen

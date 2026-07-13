@@ -9,7 +9,7 @@ import org.koin.dsl.module
 import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreenViewModel
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreenViewModel
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreenViewModel
-import org.vpilo.babymonitor.app.clientpairing.ClientPairingScreenViewModel
+import org.vpilo.babymonitor.app.client.pairing.ClientPairingScreenViewModel
 import org.vpilo.babymonitor.app.menu.MenuScreenViewModel
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreenViewModel
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreenViewModel

@@ -1,10 +1,11 @@
-package org.vpilo.babymonitor.app.clientpairing
+package org.vpilo.babymonitor.app.client.pairing
 
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.model.repository.PairingFailureCause
 import org.vpilo.babymonitor.model.repository.PairingOutcome
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
@@ -27,12 +28,23 @@ class ClientPairingScreenViewModel(
 
     override fun onAction(action: ClientPairingScreenAction) {
         when (action) {
-            is ClientPairingScreenAction.SubmitPin -> submitPin(action.pin)
+            is ClientPairingScreenAction.SubmitPin -> submitPin(action.pin, action.device)
         }
     }
 
-    private fun submitPin(pin: String) {
+    private fun submitPin(
+        pin: String,
+        device: String?,
+    ) {
         val server = state.server ?: return
+
+        device
+            ?.takeIf { server.name != device }
+            ?.let {
+                state.copy(outcome = PairingOutcome.Failure(PairingFailureCause.WRONG_DEVICE)).update()
+                return
+            }
+
         vmScope.launch {
             state.copy(isPairing = true, outcome = null).update()
             val outcome = networkClientRepository.pairWith(server, pin)
