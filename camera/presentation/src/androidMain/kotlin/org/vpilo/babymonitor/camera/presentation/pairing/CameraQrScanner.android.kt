@@ -1,27 +1,59 @@
 package org.vpilo.babymonitor.camera.presentation.pairing
 
+import androidx.camera.compose.CameraXViewfinder
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import org.vpilo.babymonitor.network.common.crypto.decodePairingQrPayloadOrNull
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 actual fun CameraQrScanner(
     modifier: Modifier,
-    onPinEntered: (pin: String, deviceId: String) -> Unit,
+    viewModel: CameraQrScannerViewModel,
+    onQrRead: (qr: String) -> Unit,
+    onError: () -> Unit,
 ) {
-    // Guards against onPinEntered firing more than once: ImageAnalysis keeps delivering frames
-    // while a previous frame's async MLKit decode is still in flight, so several frames can
-    // decode the same valid QR before the caller reacts and unmounts this composable.
-    var hasSubmittedPin by remember { mutableStateOf(false) }
+    @Suppress("UnusedVariable", "UnusedPrivateProperty", "unused")
+    val state by viewModel.stateFlow.collectAsStateWithLifecycle()
+    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(lifecycleOwner) {
+        viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.effectsFlow.collect { effect ->
+            when (effect) {
+                is CameraQrScannerEffect.QrScanned -> {
+                    onQrRead(effect.qr)
+                }
+
+                is CameraQrScannerEffect.CameraError -> {
+                    onError()
+                }
+            }
+        }
+    }
+
+    surfaceRequest?.let { request ->
+        CameraXViewfinder(
+            surfaceRequest = request,
+            modifier = modifier,
+        )
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
-        if (hasSubmittedPin) return@Box
+//        if (hasSubmittedPin) return@Box
         // VALERIO next commit
 //        ScannerWithPermissions(
 //            types = listOf(CodeType.QR),

@@ -28,6 +28,7 @@ import babymonitor.appcommon.generated.resources.client_pairing_qr_wrong_device
 import babymonitor.appcommon.generated.resources.client_pairing_server_not_on_network
 import babymonitor.appcommon.generated.resources.pairing_progress
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScanner
 import org.vpilo.babymonitor.model.repository.PairingFailureCause
 import org.vpilo.babymonitor.model.repository.PairingOutcome
@@ -80,8 +81,12 @@ fun ClientPairingScreen(
         ) {
             CameraQrScanner(
                 modifier = Modifier.border(1.dp, color = Color.Red),
-                onPinEntered = { pin, device ->
-                    viewModel.send(ClientPairingScreenAction.SubmitPin(pin, device))
+                viewModel = koinViewModel(),
+                onQrRead = { qrContent ->
+                    viewModel.send(ClientPairingScreenAction.SubmitPin(qrContent, null))
+                },
+                onError = {
+                    // VALERIO what to report?
                 },
             )
             PinEntry(

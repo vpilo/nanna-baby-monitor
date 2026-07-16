@@ -49,14 +49,18 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.koin.core)
+            implementation(libs.zxing)
         }
         androidMain.dependencies {
             implementation(libs.androidx.camera.compose)
-            implementation(libs.mlkit.barcode.scanning)
             implementation(libs.androidx.camera.core)
             implementation(libs.androidx.camera.lifecycle)
-            implementation(libs.androidx.camera.view)
             implementation(project(":network:common"))
+        }
+        val desktopMain = getByName("desktopMain")
+        desktopMain.dependencies {
+            implementation(libs.webcam.capture)
+            implementation(libs.zxing.jvm)
         }
     }
 }

@@ -4,7 +4,6 @@ kotlinx-coroutines = "1.11.0"
 kotlin-serialization = "1.11.0"
 agp = "9.3.0"
 koin = "4.2.2"
-qrose = "1.1.2"
 slf4j = "2.0.18"
 
 #noinspection UnusedVersionCatalogEntry
@@ -27,12 +26,14 @@ androidx-datastore = "1.2.1"
 jetbrains-lifecycle = "2.11.0"
 
 androidx-camera = "1.6.1"
-mlkit-barcode-scanning = "17.3.0"
 guava = "33.6.0-android"
 webcam-capture = "0.3.12"
 javacpp = "1.5.13"
 ffmpeg = "8.0.1-1.5.13"
+
 cryptography = "0.6.0"
+qrose = "1.1.2"
+zxing = "3.5.4"
 
 ktor = "3.5.1"
 jmdns = "3.6.3"
@@ -73,7 +74,6 @@ androidx-camera-impl = { group = "androidx.camera", name = "camera-camera2", ver
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "androidx-camera" }
 androidx-camera-video = { group = "androidx.camera", name = "camera-video", version.ref = "androidx-camera" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "androidx-camera" }
-mlkit-barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode-scanning" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version.ref = "webcam-capture" }
 javacpp = { group = "org.bytedeco", name = "javacpp", version.ref = "javacpp" }
@@ -93,6 +93,8 @@ koin-composeViewmodel = { module = "io.insert-koin:koin-compose-viewmodel", vers
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography" }
 cryptography-provider-jdk = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk", version.ref = "cryptography" }
 qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "qrose" }
+zxing = { module = "com.google.zxing:core", version.ref = "zxing" }
+zxing-jvm = { module = "com.google.zxing:javase", version.ref = "zxing" }
 
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }

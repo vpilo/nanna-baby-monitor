@@ -9,5 +9,7 @@ import androidx.compose.ui.Modifier
 @Composable
 expect fun CameraQrScanner(
     modifier: Modifier,
-    onPinEntered: (pin: String, deviceId: String) -> Unit,
+    viewModel: CameraQrScannerViewModel,
+    onQrRead: (qr: String) -> Unit,
+    onError: () -> Unit,
 )
