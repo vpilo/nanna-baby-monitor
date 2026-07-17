@@ -10,7 +10,7 @@
     <string name="app_title_menu">Menu</string>
 
     <string name="navigation_title_app_permissions">App permissions</string>
-    <string name="app_permissions_needed">The app needs the Notification permission to continue.</string>
+    <string name="app_permissions_needed">The app needs permission to continue: it posts notifications showing that the app is running, and may need confirmation to be able to discover other apps on the local network.</string>
 
     <string name="app_role_choice_icon_description">App icon</string>
     <string name="app_role_choice_presentation_title">Welcome to Baby Monitor!</string>
@@ -54,5 +54,5 @@
     <string name="client_reconnecting">Disconnected. Reconnecting…</string>
 
     <string name="relay_host_title">Remote relay hostname</string>
-    <string name="relay_host_description">DDNS hostname for remote access (e.g. myhome.dyndns.com)</string>
+    <string name="relay_host_description">DDNS hostname for remote access (e.g. myhome.duckdns.org)</string>
 </resources>

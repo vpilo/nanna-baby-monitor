@@ -15,8 +15,10 @@ import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_permissions_needed
 import babymonitor.appcommon.generated.resources.navigation_title_app_permissions
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.app.RequestNotificationsPermission
-import org.vpilo.babymonitor.app.hasNotificationsPermission
+import org.vpilo.babymonitor.app.permissions.RequestLocalNetworkPermission
+import org.vpilo.babymonitor.app.permissions.RequestNotificationsPermission
+import org.vpilo.babymonitor.app.permissions.hasLocalNetworkPermission
+import org.vpilo.babymonitor.app.permissions.hasNotificationsPermission
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
@@ -31,11 +33,18 @@ fun AppPermissionCheckScreen(
         mainAction = AppDestinationMainAction.None,
         onMainActionClicked = {},
     ) {
-        val deniedPermissions = remember { mutableIntStateOf(1) }
+        val deniedPermissions = remember { mutableIntStateOf(2) }
 
         when {
             !hasNotificationsPermission() -> {
                 RequestNotificationsPermission(
+                    onGranted = { deniedPermissions.intValue-- },
+                    onDenied = {},
+                )
+            }
+
+            !hasLocalNetworkPermission() -> {
+                RequestLocalNetworkPermission(
                     onGranted = { deniedPermissions.intValue-- },
                     onDenied = {},
                 )

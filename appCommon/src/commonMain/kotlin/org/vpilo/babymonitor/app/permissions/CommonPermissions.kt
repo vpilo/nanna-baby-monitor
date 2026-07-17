@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app
+package org.vpilo.babymonitor.app.permissions
 
 import androidx.compose.runtime.Composable
 

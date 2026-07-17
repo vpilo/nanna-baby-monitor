@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.app
+package org.vpilo.babymonitor.app.permissions
 
 import android.Manifest
 import android.content.pm.PackageManager

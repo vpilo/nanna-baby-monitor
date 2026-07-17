@@ -53,6 +53,7 @@ kotlin {
             implementation(project(":network:common"))
             implementation(project(":network:client"))
             implementation(project(":network:server"))
+            implementation(project(":network:presentation"))
             implementation(project(":settings:data"))
             implementation(project(":settings:model"))
             implementation(project(":settings:presentation"))
