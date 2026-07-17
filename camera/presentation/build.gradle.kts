@@ -63,4 +63,8 @@ kotlin {
             implementation(libs.zxing.jvm)
         }
     }
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
 }

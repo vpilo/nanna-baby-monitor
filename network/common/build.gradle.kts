@@ -20,6 +20,8 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
+
+        withHostTest {}
     }
 
     compilerOptions {
@@ -52,7 +54,7 @@ kotlin {
         }
 
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
 
