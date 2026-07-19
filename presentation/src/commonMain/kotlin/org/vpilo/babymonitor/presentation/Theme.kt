@@ -22,5 +22,6 @@ object Theme {
 
     object Borders {
         val Thin: Dp = 1.dp
+        val Rounded: Dp = 16.dp
     }
 }

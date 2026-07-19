@@ -8,7 +8,7 @@ import io.ktor.http.HttpMethod
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.PairingFailureCause
-import org.vpilo.babymonitor.model.repository.PairingOutcome
+import org.vpilo.babymonitor.model.repository.PairingState
 import org.vpilo.babymonitor.network.client.PinnedTrustManager
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -41,8 +41,8 @@ internal class ClientPairingConnector(
         server: Device.Server,
         clientDevice: Device.Client,
         pin: String,
-    ): PairingOutcome {
-        val host = server.addresses.firstOrNull() ?: return PairingOutcome.Failure(PairingFailureCause.SERVER_NOT_ON_NETWORK)
+    ): PairingState {
+        val host = server.addresses.firstOrNull() ?: return PairingState.Failure(PairingFailureCause.SERVER_NOT_ON_NETWORK)
         val trustManager = PinnedTrustManager(expectedFingerprint = null)
         val client =
             HttpClient(CIO) {
@@ -51,7 +51,7 @@ internal class ClientPairingConnector(
             }
 
         return try {
-            var outcome: PairingOutcome = PairingOutcome.Failure(PairingFailureCause.CONNECTION_FAILED)
+            var outcome: PairingState = PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
             client.wss(
                 method = HttpMethod.Get,
                 host = host.hostAddress,
@@ -64,7 +64,7 @@ internal class ClientPairingConnector(
                 val serverPublicKey = receiveBase64FrameOrNull()
                 val certificate = trustManager.capturedCertificate
                 if (serverPublicKey == null || certificate == null) {
-                    outcome = PairingOutcome.Failure(PairingFailureCause.CONNECTION_FAILED)
+                    outcome = PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
                     return@wss
                 }
 
@@ -78,11 +78,11 @@ internal class ClientPairingConnector(
                         }
 
                         is PairingResult.Failure -> {
-                            PairingOutcome.Failure(PairingFailureCause.WRONG_PIN)
+                            PairingState.Failure(PairingFailureCause.WRONG_PIN)
                         }
 
                         null -> {
-                            PairingOutcome.Failure(PairingFailureCause.CONNECTION_FAILED)
+                            PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
                         }
                     }
             }
@@ -91,7 +91,7 @@ internal class ClientPairingConnector(
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
             Logger.w(TAG) { "Pairing with $server failed: $ex" }
-            PairingOutcome.Failure(PairingFailureCause.CONNECTION_FAILED)
+            PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
         } finally {
             client.close()
         }
@@ -112,9 +112,9 @@ internal class ClientPairingConnector(
         serverPublicKey: ByteArray,
         server: Device.Server,
         certificate: X509Certificate,
-    ): PairingOutcome {
+    ): PairingState {
         if (!verifyServerConfirmation(pin, transcript, result.serverConfirmation)) {
-            return PairingOutcome.Failure(PairingFailureCause.MITM_SUSPECTED)
+            return PairingState.Failure(PairingFailureCause.MITM_SUSPECTED)
         }
         val sharedSecret = deriveSharedSecretS(clientKeyPair.deriveSharedSecret(serverPublicKey))
         pairingRepository.pairServer(
@@ -126,7 +126,7 @@ internal class ClientPairingConnector(
             ),
         )
         Logger.i(TAG) { "Paired with server $server" }
-        return PairingOutcome.Success
+        return PairingState.Success
     }
 
     private companion object {

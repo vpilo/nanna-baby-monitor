@@ -3,12 +3,15 @@ package org.vpilo.babymonitor.app.client.pairing
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.PairingFailureCause
-import org.vpilo.babymonitor.model.repository.PairingOutcome
+import org.vpilo.babymonitor.model.repository.PairingState
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.common.crypto.PAIRING_PIN_LENGTH
+import org.vpilo.babymonitor.network.common.crypto.decodePairingQrPayloadOrNull
 
 @Stable
 class ClientPairingScreenViewModel(
@@ -18,38 +21,65 @@ class ClientPairingScreenViewModel(
 ) : AppViewModel<ClientPairingScreenAction, ClientPairingScreenState, ClientPairingScreenEffect>(
         initialState = ClientPairingScreenState(),
     ) {
+    val pairingPinLength: Int = PAIRING_PIN_LENGTH
+
     override fun SubscriptionScope.onSubscribed() {
         localDiscoveryRepository.discoveredDevicesFlow.subscribe { devices ->
             val targetId = deviceId.toDeviceIdOrNull()
             val server = devices.filterIsInstance<Device.Server>().firstOrNull { it.id == targetId }
+            if (server == null || server !is Device.LocalServer) {
+                ClientPairingScreenEffect.ServerUnavailable.sendEffect()
+                return@subscribe
+            }
             state.copy(server = server).update()
         }
     }
 
     override fun onAction(action: ClientPairingScreenAction) {
         when (action) {
-            is ClientPairingScreenAction.SubmitPin -> submitPin(action.pin, action.device)
+            is ClientPairingScreenAction.SubmitPin -> {
+                attemptPairing(action.pin)
+            }
+
+            is ClientPairingScreenAction.SubmitQr -> {
+                val server = state.server
+                server ?: run {
+                    ClientPairingScreenEffect.ServerUnavailable.sendEffect()
+                    return
+                }
+
+                validateQr(server.id, action.qr)
+            }
         }
     }
 
-    private fun submitPin(
-        pin: String,
-        device: String?,
+    private fun validateQr(
+        server: DeviceId,
+        qrContent: String,
     ) {
+        val qrPayload =
+            qrContent.decodePairingQrPayloadOrNull()
+                ?: run {
+                    state.copy(pairingState = PairingState.Failure(PairingFailureCause.INVALID_QR)).update()
+                    return
+                }
+
+        if (qrPayload.deviceId != server) {
+            state.copy(pairingState = PairingState.Failure(PairingFailureCause.WRONG_DEVICE)).update()
+            return
+        }
+
+        attemptPairing(qrPayload.pin)
+    }
+
+    private fun attemptPairing(pin: String) {
         val server = state.server ?: return
 
-        device
-            ?.takeIf { server.name != device }
-            ?.let {
-                state.copy(outcome = PairingOutcome.Failure(PairingFailureCause.WRONG_DEVICE)).update()
-                return
-            }
-
         vmScope.launch {
-            state.copy(isPairing = true, outcome = null).update()
+            state.copy(pairingState = PairingState.InProgress).update()
             val outcome = networkClientRepository.pairWith(server, pin)
-            state.copy(isPairing = false, outcome = outcome).update()
-            if (outcome is PairingOutcome.Success) {
+            state.copy(pairingState = outcome).update()
+            if (outcome is PairingState.Success) {
                 ClientPairingScreenEffect.Paired.sendEffect()
             }
         }

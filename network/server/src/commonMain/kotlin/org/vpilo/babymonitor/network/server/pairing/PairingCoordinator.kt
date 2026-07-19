@@ -49,16 +49,17 @@ class PairingCoordinator(
     private val _state = MutableStateFlow<PairingWindowState>(PairingWindowState.Idle)
     val state: StateFlow<PairingWindowState> = _state.asStateFlow()
 
-    @Volatile private var activeWindow: ActiveWindow? = null
+    @Volatile
+    private var activeWindow: ActiveWindow? = null
 
     fun startPairingWindow(self: Device.LocalServer) {
         val pin = generatePairingPin()
-        val hostHint =
-            self.addresses
-                .firstOrNull()
-                ?.hostAddress
-                .orEmpty()
-        val qrText = PairingQrPayload(PAIRING_PROTOCOL_VERSION, self.id, pin, hostHint).encodeToQrText()
+        val qrText =
+            PairingQrPayload(
+                protocolVersion = PAIRING_PROTOCOL_VERSION,
+                deviceId = self.id,
+                pin = pin,
+            ).encodeToQrText()
         activeWindow = ActiveWindow(pin = pin, remainingAttempts = MAX_PIN_ATTEMPTS)
         _state.value = PairingWindowState.Active(pin, qrText)
 

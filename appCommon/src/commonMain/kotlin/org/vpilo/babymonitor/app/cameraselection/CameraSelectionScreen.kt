@@ -38,7 +38,6 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_unkno
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
@@ -80,7 +79,6 @@ fun CameraSelectionScreen(
                     val message =
                         getConnectionStateMessage(effect.state, state.lastConnectedDevice)
                             ?: return@collect
-                    Logger.d("CameraSelectionScreen") { "Showing snackbar.." }
                     snackbarController.show(message = message)
                 }
 

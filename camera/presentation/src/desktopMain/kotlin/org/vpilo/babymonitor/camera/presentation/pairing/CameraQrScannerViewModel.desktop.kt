@@ -9,10 +9,12 @@ import com.google.zxing.BinaryBitmap
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import java.awt.Dimension
@@ -21,7 +23,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
 @Stable
-actual class CameraQrScannerViewModel(
+actual class CameraQrScannerViewModel internal constructor(
     webcamGetter: () -> Webcam,
 ) : AppViewModel<Unit, Unit, CameraQrScannerEffect>(initialState = Unit) {
     actual constructor() : this({ Webcam.getDefault() })
@@ -31,11 +33,23 @@ actual class CameraQrScannerViewModel(
 
     private val qrReader = QrReader()
 
+    private var cameraJob: Job? = null
+
     override fun SubscriptionScope.onSubscribed() {
         qrReader.scannedDataFlow.subscribe {
             it ?: return@subscribe
             CameraQrScannerEffect.QrScanned(it).sendEffect()
         }
+
+        cameraJob?.cancel()
+        cameraJob =
+            vmScope.launch {
+                bindToCamera()
+            }
+    }
+
+    override suspend fun onUnsubscribed() {
+        close()
     }
 
     private val webcam: Webcam = webcamGetter()
@@ -48,13 +62,13 @@ actual class CameraQrScannerViewModel(
             WebcamResolution.XGA.size,
         )
 
-    suspend fun bindToCamera() {
+    private suspend fun bindToCamera() {
         @Suppress("SpreadOperator")
         webcam.setCustomViewSizes(*mediumResolutions)
         for (size in mediumResolutions) {
             webcam.setViewSize(size)
             if (webcam.open()) {
-                Logger.d(TAG) { "Camera opened with $size" }
+                Logger.d(TAG) { "Camera started with ${size.width}x${size.height} resolution" }
                 break
             }
         }
@@ -65,10 +79,10 @@ actual class CameraQrScannerViewModel(
                 Logger.w(TAG) { "Failed to open webcam with any resolution." }
                 CameraQrScannerEffect.CameraError.sendEffect()
                 return
+            } else {
+                Logger.d(TAG) { "Camera started with default resolution" }
             }
         }
-
-        Logger.i(TAG) { "Camera started" }
 
         try {
             frameLoop()
@@ -81,8 +95,7 @@ actual class CameraQrScannerViewModel(
             Logger.w(TAG, ex) { "Camera failed!" }
             CameraQrScannerEffect.CameraError.sendEffect()
         } finally {
-            webcam.close()
-            _frames.value = null
+            close()
         }
     }
 
@@ -115,5 +128,17 @@ actual class CameraQrScannerViewModel(
                 Logger.w(TAG) { "Frame capture/analysis took too long: $frameTime" }
             }
         }
+    }
+
+    private fun close() {
+        webcam
+            .close()
+            .also {
+                Logger.w(TAG) { "Camera closed: $it" }
+            }
+        _frames.value = null
+
+        cameraJob?.cancel()
+        cameraJob = null
     }
 }

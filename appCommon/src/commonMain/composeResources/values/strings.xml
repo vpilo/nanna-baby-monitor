@@ -71,14 +71,16 @@
     <string name="menu_paired_devices_title">Paired devices</string>
 
     <string name="app_title_client_pairing">Pair with %1$s</string>
-    <string name="client_pairing_server_not_on_network">Server not on this network</string>
+    <string name="client_pairing_camera_or_pin">Scan the QR code on "%1$s" or enter the PIN it is showing.</string>
+    <string name="client_pairing_server_not_on_network">Server not found on this network</string>
+    <string name="client_pairing_failed_invalid_qr">Invalid QR code</string>
     <string name="client_pairing_failed_wrong_pin">Wrong PIN, try again</string>
-    <string name="client_pairing_failed_no_active_window">No pairing in progress on that device</string>
+    <string name="client_pairing_failed_no_active_window">Pairing is not in progress on that device</string>
     <string name="client_pairing_failed_server_not_on_network">Server not on this network</string>
     <string name="client_pairing_failed_mitm_suspected">Could not verify the server\'s identity — pairing aborted</string>
     <string name="client_pairing_failed_connection_failed">Connection failed, try again</string>
     <string name="client_pairing_qr_wrong_device">Scanned code is for a different device</string>
     <string name="client_pairing_pin_label">PIN</string>
-    <string name="client_pairing_pin_submit">Pair</string>
+    <string name="client_pairing_camera_failure">Camera unavailable, unable to scan QRs</string>
     <string name="menu_paired_devices_description">View and revoke devices paired with this camera</string>
 </resources>
