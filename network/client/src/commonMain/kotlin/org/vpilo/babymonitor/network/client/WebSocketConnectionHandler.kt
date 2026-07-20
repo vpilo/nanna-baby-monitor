@@ -110,10 +110,15 @@ internal class WebSocketConnectionHandler(
             val pinnedClient =
                 HttpClient(CIO) {
                     install(WebSockets) { clientPingInterval = Constants.WEBSOCKET_PING_PERIOD }
-                    engine { https { trustManager = PinnedTrustManager(expectedFingerprint) } }
+                    engine {
+                        https {
+                            trustManager = PinnedTrustManager(expectedFingerprint)
+                            serverName = Constants.TLS_SERVER_NAME
+                        }
+                    }
                 }
-            try {
-                pinnedClient.wss(
+            pinnedClient.use {
+                it.wss(
                     method = HttpMethod.Get,
                     host = host.hostAddress,
                     port = Constants.SERVICE_PORT,
@@ -124,8 +129,6 @@ internal class WebSocketConnectionHandler(
 
                     sessionBlock()
                 }
-            } finally {
-                pinnedClient.close()
             }
         } else {
             relayHttpClient.wss(

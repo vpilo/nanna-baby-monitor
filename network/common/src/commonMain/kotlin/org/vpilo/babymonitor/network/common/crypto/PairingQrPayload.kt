@@ -16,9 +16,9 @@ data class PairingQrPayload(
     val protocolVersion: Int,
     val deviceId: DeviceId,
     val pin: String,
-)
-
-fun PairingQrPayload.encodeToQrText(): String = listOf(QR_PAYLOAD_PREFIX, protocolVersion, deviceId, pin).joinToString(QR_PAYLOAD_SEPARATOR)
+) {
+    fun asPayloadString(): String = listOf(QR_PAYLOAD_PREFIX, protocolVersion, deviceId, pin).joinToString(QR_PAYLOAD_SEPARATOR)
+}
 
 fun String.decodePairingQrPayloadOrNull(): PairingQrPayload? {
     val parts = split(QR_PAYLOAD_SEPARATOR, limit = QR_PAYLOAD_FIELD_COUNT)

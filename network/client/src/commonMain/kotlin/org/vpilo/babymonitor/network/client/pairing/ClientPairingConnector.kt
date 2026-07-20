@@ -26,6 +26,7 @@ import org.vpilo.babymonitor.network.common.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.common.protocol.sendPairingHello
 import org.vpilo.babymonitor.settings.model.repository.PairedServer
 import org.vpilo.babymonitor.settings.model.repository.PairingRepository
+import java.net.InetAddress
 import java.security.cert.X509Certificate
 import kotlin.io.encoding.Base64
 
@@ -42,17 +43,45 @@ internal class ClientPairingConnector(
         clientDevice: Device.Client,
         pin: String,
     ): PairingState {
-        val host = server.addresses.firstOrNull() ?: return PairingState.Failure(PairingFailureCause.SERVER_NOT_ON_NETWORK)
         val trustManager = PinnedTrustManager(expectedFingerprint = null)
-        val client =
+        val httpClient =
             HttpClient(CIO) {
                 install(WebSockets)
-                engine { https { this.trustManager = trustManager } }
+                engine {
+                    https {
+                        this.trustManager = trustManager
+                        serverName = Constants.TLS_SERVER_NAME
+                    }
+                }
             }
 
+        if (server.addresses.isEmpty()) {
+            Logger.w(TAG) { "Server $server has no addresses" }
+            return PairingState.Failure(PairingFailureCause.SERVER_NOT_ON_NETWORK)
+        }
+
+        httpClient.use { http ->
+            server.addresses.forEach { address ->
+                val outcome = http.pairWithHost(address, trustManager, server, clientDevice, pin)
+                if (outcome != GENERIC_FAILURE) {
+                    return outcome
+                }
+            }
+        }
+        return GENERIC_FAILURE
+    }
+
+    private suspend fun HttpClient.pairWithHost(
+        host: InetAddress,
+        trustManager: PinnedTrustManager,
+        server: Device.Server,
+        clientDevice: Device.Client,
+        pin: String,
+    ): PairingState {
+        Logger.w(TAG) { "Connecting to $host to pair" }
         return try {
-            var outcome: PairingState = PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
-            client.wss(
+            var outcome: PairingState = GENERIC_FAILURE
+            wss(
                 method = HttpMethod.Get,
                 host = host.hostAddress,
                 port = Constants.SERVICE_PORT,
@@ -64,7 +93,7 @@ internal class ClientPairingConnector(
                 val serverPublicKey = receiveBase64FrameOrNull()
                 val certificate = trustManager.capturedCertificate
                 if (serverPublicKey == null || certificate == null) {
-                    outcome = PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
+                    outcome = GENERIC_FAILURE
                     return@wss
                 }
 
@@ -82,7 +111,7 @@ internal class ClientPairingConnector(
                         }
 
                         null -> {
-                            PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
+                            GENERIC_FAILURE
                         }
                     }
             }
@@ -90,10 +119,8 @@ internal class ClientPairingConnector(
         } catch (
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
-            Logger.w(TAG) { "Pairing with $server failed: $ex" }
-            PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
-        } finally {
-            client.close()
+            Logger.w(TAG) { "Pairing with $server via $host (${host.hostAddress}) failed: $ex" }
+            GENERIC_FAILURE
         }
     }
 
@@ -130,6 +157,8 @@ internal class ClientPairingConnector(
     }
 
     private companion object {
+        private val GENERIC_FAILURE = PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
+
         private val TAG = ClientPairingConnector::class
     }
 }

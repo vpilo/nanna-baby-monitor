@@ -139,6 +139,8 @@ internal class DefaultNetworkServerRepository(
             embeddedServer(
                 factory = Netty,
                 configure = {
+                    // Disabling this also disables ALPN, which seems to be buggy in ktor.
+                    enableHttp2 = false
                     val keyStoreConfig = identity.toKeyStoreConfig()
                     sslConnector(
                         keyStore = keyStoreConfig.keyStore,

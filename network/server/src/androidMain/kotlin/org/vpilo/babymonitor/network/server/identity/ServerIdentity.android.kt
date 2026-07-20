@@ -5,6 +5,7 @@ import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.network.tls.certificates.saveToFile
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.network.common.Constants
 import java.io.File
 import java.security.KeyStore
 import java.security.SecureRandom
@@ -47,7 +48,7 @@ actual class ServerIdentity private constructor(
                 buildKeyStore {
                     certificate(KEY_ALIAS) {
                         this.password = password
-                        domains = listOf("localhost", "0.0.0.0")
+                        domains = listOf(Constants.TLS_SERVER_NAME, Constants.SERVICES_LISTEN_ADDRESS)
                         keySizeInBits = 2048
                         daysValid = CERTIFICATE_VALIDITY_DAYS
                     }

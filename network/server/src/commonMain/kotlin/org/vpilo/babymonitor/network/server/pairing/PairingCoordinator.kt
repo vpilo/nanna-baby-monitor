@@ -19,7 +19,6 @@ import org.vpilo.babymonitor.network.common.crypto.PairingQrPayload
 import org.vpilo.babymonitor.network.common.crypto.buildPairingTranscript
 import org.vpilo.babymonitor.network.common.crypto.computeServerConfirmation
 import org.vpilo.babymonitor.network.common.crypto.deriveSharedSecretS
-import org.vpilo.babymonitor.network.common.crypto.encodeToQrText
 import org.vpilo.babymonitor.network.common.crypto.generateEcdhKeyPair
 import org.vpilo.babymonitor.network.common.crypto.generatePairingPin
 import org.vpilo.babymonitor.network.common.crypto.verifyClientConfirmation
@@ -59,7 +58,7 @@ class PairingCoordinator(
                 protocolVersion = PAIRING_PROTOCOL_VERSION,
                 deviceId = self.id,
                 pin = pin,
-            ).encodeToQrText()
+            ).asPayloadString()
         activeWindow = ActiveWindow(pin = pin, remainingAttempts = MAX_PIN_ATTEMPTS)
         _state.value = PairingWindowState.Active(pin, qrText)
 

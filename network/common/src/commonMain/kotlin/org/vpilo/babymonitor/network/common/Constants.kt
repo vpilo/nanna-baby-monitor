@@ -13,6 +13,8 @@ object Constants {
 
     const val SERVICES_LISTEN_ADDRESS: String = "0.0.0.0"
 
+    const val TLS_SERVER_NAME = "BabyMonitorDevice"
+
     val RECONNECTION_TIMEOUT: Duration = 3.seconds
     val WEBSOCKET_PING_PERIOD: Duration = 30.seconds
     val WEBSOCKET_TIMEOUT: Duration = 10.seconds
