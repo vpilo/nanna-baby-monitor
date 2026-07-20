@@ -25,9 +25,9 @@ class ClientPairingScreenViewModel(
 
     override fun SubscriptionScope.onSubscribed() {
         localDiscoveryRepository.discoveredDevicesFlow.subscribe { devices ->
-            val targetId = deviceId.toDeviceIdOrNull()
-            val server = devices.filterIsInstance<Device.Server>().firstOrNull { it.id == targetId }
-            if (server == null || server !is Device.LocalServer) {
+            val deviceId = deviceId.toDeviceIdOrNull()
+            val server = devices.filterIsInstance<Device.Server>().firstOrNull { it.id == deviceId }
+            if (deviceId == null || server == null || server !is Device.LocalServer) {
                 ClientPairingScreenEffect.ServerUnavailable.sendEffect()
                 return@subscribe
             }

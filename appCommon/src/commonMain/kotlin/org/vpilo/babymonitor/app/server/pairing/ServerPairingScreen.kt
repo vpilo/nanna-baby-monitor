@@ -9,6 +9,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ import babymonitor.appcommon.generated.resources.pairing_failed_expired
 import babymonitor.appcommon.generated.resources.pairing_failed_lockout
 import babymonitor.appcommon.generated.resources.pairing_retry
 import babymonitor.appcommon.generated.resources.pairing_succeeded
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.model.repository.ServerPairingFailureReason
 import org.vpilo.babymonitor.model.repository.ServerPairingState
@@ -30,6 +32,7 @@ import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.QrCodeImage
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun ServerPairingScreen(
@@ -38,6 +41,13 @@ fun ServerPairingScreen(
     onBackClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.pairingState) {
+        if (state.pairingState is ServerPairingState.Succeeded) {
+            delay(2.seconds)
+            onBackClicked()
+        }
+    }
 
     AppDestination(
         modifier = modifier,

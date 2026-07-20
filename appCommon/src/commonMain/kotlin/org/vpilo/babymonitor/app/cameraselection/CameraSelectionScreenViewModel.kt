@@ -25,6 +25,7 @@ import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseC
 
 @Stable
 class CameraSelectionScreenViewModel(
+    private val deviceId: String? = null,
     private val networkClientRepository: NetworkClientRepository,
     private val settingsRepository: SettingsRepository,
     private val localDiscoveryRepository: LocalDiscoveryRepository,
@@ -115,6 +116,19 @@ class CameraSelectionScreenViewModel(
         }
         remoteDiscoveryRepository.isRegisteredFlow.subscribe { isRegistered ->
             state.copy(isAvailableOnRelay = isRegistered).update()
+        }
+
+        vmScope.launch {
+            if (deviceId != null) {
+                val deviceId = deviceId.toDeviceIdOrNull() ?: return@launch
+                val server =
+                    localDiscoveryRepository.discoveredDevicesFlow
+                        .first { it.isNotEmpty() }
+                        .filterIsInstance<Device.Server>()
+                        .firstOrNull { it.id == deviceId }
+                        ?: return@launch
+                CameraSelectionScreenEffect.ConnectToLastServer(server).sendEffect()
+            }
         }
     }
 

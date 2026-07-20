@@ -42,7 +42,7 @@ fun MenuScreen(
     LaunchedEffect(viewModel.effectsFlow) {
         viewModel.effectsFlow.collect { effect ->
             when (effect) {
-                is MenuScreenEffect.Disconnected -> onNavigateTo(Route.CameraSelection, Route.CameraSelection)
+                is MenuScreenEffect.Disconnected -> onNavigateTo(Route.CameraSelection(), Route.CameraSelection())
             }
         }
     }

@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.app.navigation
 
 import kotlinx.serialization.Serializable
+import org.vpilo.babymonitor.model.repository.DeviceId
 
 sealed interface Route {
     @Serializable
@@ -25,7 +26,10 @@ sealed interface Route {
     data object CameraPermissionCheck : Route
 
     @Serializable
-    data object CameraSelection : Route
+    data class CameraSelection(
+        // When given, this device will be connected to.
+        val deviceId: String? = null,
+    ) : Route
 
     @Serializable
     data object ClientHome : Route

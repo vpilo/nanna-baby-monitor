@@ -34,7 +34,22 @@ val appSharedKoinModules =
             viewModelOf(::ServerHomeScreenViewModel)
             viewModelOf(::ServerPairingScreenViewModel)
             viewModelOf(::PairedDevicesScreenViewModel)
-            viewModelOf(::CameraSelectionScreenViewModel)
+            viewModelOf(::ClientHomeScreenViewModel)
+            viewModelOf(::MenuScreenViewModel)
+
+            viewModel { params ->
+                CameraSelectionScreenViewModel(
+                    deviceId = params.getOrNull(),
+                    networkClientRepository = get(),
+                    settingsRepository = get(),
+                    localDiscoveryRepository = get(),
+                    remoteDiscoveryRepository = get(),
+                    deviceStateRepository = get(),
+                    pairingRepository = get(),
+                    getLocalClientDeviceFlowUseCase = get(),
+                )
+            }
+
             viewModel { params ->
                 ClientPairingScreenViewModel(
                     deviceId = params.get(),
@@ -42,8 +57,6 @@ val appSharedKoinModules =
                     localDiscoveryRepository = get(),
                 )
             }
-            viewModelOf(::ClientHomeScreenViewModel)
-            viewModelOf(::MenuScreenViewModel)
         },
         appPlatformModule,
     )

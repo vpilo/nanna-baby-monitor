@@ -31,6 +31,8 @@ import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.CameraPermissionCheckScreen
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
+import org.vpilo.babymonitor.model.repository.toDeviceId
+import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.snackbar.SnackbarContainer
 
@@ -110,7 +112,7 @@ private fun NavGraphBuilder.navigationRoutes(
                     }
 
                     AppRole.CLIENT -> {
-                        onNavigateTo(Route.CameraSelection, Route.Onboarding)
+                        onNavigateTo(Route.CameraSelection(), Route.Onboarding)
                     }
 
                     AppRole.UNDECIDED -> {
@@ -128,7 +130,7 @@ private fun NavGraphBuilder.navigationRoutes(
                 onNavigateTo(
                     when (role) {
                         AppRole.SERVER -> Route.CameraPermissionCheck
-                        AppRole.CLIENT -> Route.CameraSelection
+                        AppRole.CLIENT -> Route.CameraSelection()
                         AppRole.UNDECIDED -> error("UNDECIDED role should not be selectable")
                     },
                     null,
@@ -196,9 +198,10 @@ private fun NavGraphBuilder.navigationRoutes(
         )
     }
 
-    composable<Route.CameraSelection> {
+    composable<Route.CameraSelection> { backStackEntry ->
+        val args = backStackEntry.toRoute<Route.CameraSelection>()
         CameraSelectionScreen(
-            viewModel = koinViewModel(),
+            viewModel = koinViewModel(parameters = { parametersOf(args.deviceId) }),
             onConnected = {
                 onNavigateTo(Route.ClientHome, null)
             },
@@ -215,7 +218,7 @@ private fun NavGraphBuilder.navigationRoutes(
         val args = backStackEntry.toRoute<Route.ClientPairing>()
         ClientPairingScreen(
             viewModel = koinViewModel(parameters = { parametersOf(args.deviceId) }),
-            onPaired = { onNavigateTo(Route.CameraSelection, Route.ClientPairing(args.deviceId)) },
+            onPaired = { onNavigateTo(Route.CameraSelection(args.deviceId), Route.ClientPairing(args.deviceId)) },
             onBackClicked = onNavigateUp,
         )
     }
@@ -224,7 +227,7 @@ private fun NavGraphBuilder.navigationRoutes(
         ClientHomeScreen(
             viewModel = koinViewModel(),
             onDisconnected = {
-                onNavigateTo(Route.CameraSelection, Route.CameraSelection)
+                onNavigateTo(Route.CameraSelection(), Route.CameraSelection())
             },
             onMenuClicked = {
                 onNavigateTo(Route.Menu, null)
