@@ -59,24 +59,26 @@ internal actual class VideoCaptureDataSource(
 
     private var videoCapture: VideoCapture<EncoderVideoOutput>? = null
 
-    @Volatile
+    private val rendererLock = Any()
     private var renderer: CameraGlRenderer =
         CameraGlRenderer(
             bridgeSize = resolution.toSize(),
             onFrameRendered = { mutableVideoStream.signalFrameRendered() },
         )
-        get() {
-            if (field.isReleased()) {
-                Logger.w(TAG) { "Renderer was released, creating a new one" }
-                field =
-                    CameraGlRenderer(
-                        bridgeSize = resolution.toSize(),
-                        onFrameRendered = { mutableVideoStream.signalFrameRendered() },
-                    )
-                field.setLowLightBoostEnabled(lowLightBoostEnabled)
+        get() =
+            // Multiple collectors on any thread can call this; once a renderer is released only one must be made.
+            synchronized(rendererLock) {
+                if (field.isReleased()) {
+                    Logger.w(TAG) { "Renderer was released, creating a new one" }
+                    field =
+                        CameraGlRenderer(
+                            bridgeSize = resolution.toSize(),
+                            onFrameRendered = { mutableVideoStream.signalFrameRendered() },
+                        )
+                    field.setLowLightBoostEnabled(lowLightBoostEnabled)
+                }
+                field
             }
-            return field
-        }
 
     private val resolutionSelector: ResolutionSelector
         get() {

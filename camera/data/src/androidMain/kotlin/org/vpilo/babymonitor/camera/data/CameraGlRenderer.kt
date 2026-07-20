@@ -127,10 +127,10 @@ internal class CameraGlRenderer(
         }
     }
 
-    suspend fun release() =
+    suspend fun release() {
+        isReleased = true
+        Logger.d(TAG) { "Releasing" }
         withContext(glDispatcher) {
-            isReleased = true
-            Logger.d(TAG) { "Releasing" }
             viewfinder?.let { EGL14.eglDestroySurface(eglDisplay, it.eglSurface) }
             encoder?.let { EGL14.eglDestroySurface(eglDisplay, it.eglSurface) }
             viewfinder = null
@@ -158,6 +158,7 @@ internal class CameraGlRenderer(
             }
             handlerThread.quitSafely()
         }
+    }
 
     fun isReleased(): Boolean = isReleased
 
