@@ -36,6 +36,7 @@ kotlin {
             implementation(project(":settings:model"))
             implementation(project(":filters"))
 
+            implementation(libs.compose.ui)
             implementation(libs.koin.core)
         }
         androidMain.dependencies {
@@ -49,7 +50,6 @@ kotlin {
         }
         val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {
-            implementation(libs.compose.ui)
             implementation(libs.webcam.capture)
         }
     }

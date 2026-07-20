@@ -7,8 +7,11 @@ import android.util.Size
 import android.view.OrientationEventListener
 import android.view.Surface
 import androidx.annotation.MainThread
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.SessionConfig
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -19,6 +22,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.android.service.AndroidService
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
@@ -29,6 +33,7 @@ import org.vpilo.babymonitor.model.AndroidServerVideoStream
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.seconds
 
 internal actual class VideoCaptureDataSource(
     private val mainDispatcher: CoroutineDispatcher,
@@ -42,6 +47,8 @@ internal actual class VideoCaptureDataSource(
     override val role: AppRole = AppRole.SERVER
 
     private var cameraProvider: ProcessCameraProvider? = null
+    private var camera: Camera? = null
+
     private var serviceContext: Context? = null
     private var serviceLifecycleOwner: LifecycleOwner? = null
 
@@ -194,15 +201,17 @@ internal actual class VideoCaptureDataSource(
                 frameRateRange = fpsRange,
             )
 
-        try {
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, sessionConfig)
-        } catch (
-            @Suppress("TooGenericExceptionCaught") ex: Exception,
-        ) {
-            Logger.e(TAG) { "Failed to bind camera: ${ex.prettify()}" }
-            return
-        }
+        camera = null
+        camera =
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, sessionConfig)
+            } catch (
+                @Suppress("TooGenericExceptionCaught") ex: Exception,
+            ) {
+                Logger.e(TAG) { "Failed to bind camera: ${ex.prettify()}" }
+                return
+            }
 
         this.videoCapture = videoCapture
 
@@ -232,6 +241,11 @@ internal actual class VideoCaptureDataSource(
                     mutableVideoStream.setRotation(rotation)
                 }
             }
+
+        backgroundScope.launch {
+            delay(AUTOFOCUS_DELAY)
+            requestAutofocus()
+        }
     }
 
     actual fun setResolution(resolution: CameraResolution) {
@@ -275,6 +289,7 @@ internal actual class VideoCaptureDataSource(
         serviceLifecycleOwner?.lifecycleScope?.launch(mainDispatcher) {
             // Do not reset the frame size to re-create surfaces already correctly on the next start.
             mutableVideoStream.setRotation(0)
+            camera = null
             cameraProvider?.unbindAll()
             cameraProvider = null
             videoCapture = null
@@ -289,6 +304,20 @@ internal actual class VideoCaptureDataSource(
     private fun refreshCurrentFrameSize() {
         val size = swapIfLandscape(resolution.toSize())
         mutableVideoStream.setFrameSize(size.width, size.height)
+    }
+
+    private fun requestAutofocus() {
+        val camera = camera ?: return
+
+        Logger.d(TAG) { "Auto-focus started" }
+        val size = mutableVideoStream.frameSize.value
+        val meteringPointFactory = SurfaceOrientedMeteringPointFactory(size.width.toFloat(), size.height.toFloat())
+
+        val meteringAction = FocusMeteringAction.Builder(meteringPointFactory.createPoint(.5f, .5f)).build()
+        camera.cameraControl
+            .startFocusAndMetering(meteringAction)
+            .get()
+            .also { Logger.d(TAG) { "Auto-focus ${ if (it.isFocusSuccessful) "succeeded" else "failed" }" } }
     }
 
     // CameraX delivers content made upright to the sensor's natural orientation: a 90°/270°-mounted
@@ -320,5 +349,7 @@ internal actual class VideoCaptureDataSource(
         // This is assumed before the camera binds, to align the initial frame size to the most common case, and not need to recreate
         // the surface.
         private const val DEFAULT_SENSOR_ROTATION_DEGREES = 90
+
+        private val AUTOFOCUS_DELAY = 4.seconds
     }
 }

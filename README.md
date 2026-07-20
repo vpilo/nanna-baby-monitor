@@ -19,6 +19,8 @@
 
 # Issues
 
+- OnBackInvokedCallback is not enabled for the application. Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+- android: on gl renderer release() wait until draw is done. easier to repro with high camera resolution.
 - improve error handling and surfacing issues to the user
 - add versioning to relay communications
 
