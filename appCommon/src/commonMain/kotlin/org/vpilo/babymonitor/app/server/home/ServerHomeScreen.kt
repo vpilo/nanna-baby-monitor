@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +21,8 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_server_home
 import babymonitor.appcommon.generated.resources.app_title_server_pairing
+import babymonitor.appcommon.generated.resources.pair
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
@@ -49,12 +52,12 @@ fun ServerHomeScreen(
     )
 
     AppDestination(
-        title = Res.string.app_title_server_home,
+        title = stringResource(Res.string.app_title_server_home, state.name),
         mainAction = AppDestinationMainAction.Menu,
         actions = {
             Tooltip(text = stringResource(Res.string.app_title_server_pairing)) {
                 IconButton(onClick = onPairClicked) {
-                    Icon(imageVector = Icons.Default.QrCode, contentDescription = null)
+                    Icon(painter = painterResource(Res.drawable.pair), contentDescription = null)
                 }
             }
             ConnectionStatusIcons(

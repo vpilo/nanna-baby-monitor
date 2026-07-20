@@ -2,9 +2,9 @@ package org.vpilo.babymonitor.presentation.composables
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -20,33 +20,30 @@ import org.vpilo.babymonitor.presentation.resources.network_unavailable_on_local
 import org.vpilo.babymonitor.presentation.resources.network_unavailable_on_relay
 
 @Composable
-fun ConnectionStatusIcons(
-    modifier: Modifier = Modifier,
+fun RowScope.ConnectionStatusIcons(
     hasRelay: Boolean,
     isOnLocalNetwork: Boolean,
     isOnRelay: Boolean,
 ) {
-    Row(modifier = modifier) {
-        val (localNetworkIcon, localNetworkLabel) =
-            if (isOnLocalNetwork) {
-                painterResource(Res.drawable.network_local) to stringResource(Res.string.network_available_on_local_network)
-            } else {
-                painterResource(Res.drawable.network_local_alert) to stringResource(Res.string.network_unavailable_on_local_network)
-            }
-        Tooltip(text = localNetworkLabel) {
-            Icon(painter = localNetworkIcon, contentDescription = null)
+    val (localNetworkIcon, localNetworkLabel) =
+        if (isOnLocalNetwork) {
+            painterResource(Res.drawable.network_local) to stringResource(Res.string.network_available_on_local_network)
+        } else {
+            painterResource(Res.drawable.network_local_alert) to stringResource(Res.string.network_unavailable_on_local_network)
         }
+    Tooltip(text = localNetworkLabel) {
+        Icon(painter = localNetworkIcon, contentDescription = null)
+    }
 
-        if (!hasRelay) return
-        val (relayIcon, relayLabel) =
-            if (isOnRelay) {
-                painterResource(Res.drawable.network_cloud) to stringResource(Res.string.network_available_on_relay)
-            } else {
-                painterResource(Res.drawable.network_cloud_alert) to stringResource(Res.string.network_unavailable_on_relay)
-            }
-        Tooltip(text = relayLabel) {
-            Icon(painter = relayIcon, contentDescription = null)
+    if (!hasRelay) return
+    val (relayIcon, relayLabel) =
+        if (isOnRelay) {
+            painterResource(Res.drawable.network_cloud) to stringResource(Res.string.network_available_on_relay)
+        } else {
+            painterResource(Res.drawable.network_cloud_alert) to stringResource(Res.string.network_unavailable_on_relay)
         }
+    Tooltip(text = relayLabel) {
+        Icon(painter = relayIcon, contentDescription = null)
     }
 }
 

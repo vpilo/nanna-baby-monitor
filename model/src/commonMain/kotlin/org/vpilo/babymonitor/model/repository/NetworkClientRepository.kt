@@ -13,7 +13,7 @@ interface NetworkClientRepository {
     suspend fun pairWith(
         server: Device.Server,
         pin: String,
-    ): PairingState
+    ): ClientPairingState
 
     suspend fun disconnect()
 

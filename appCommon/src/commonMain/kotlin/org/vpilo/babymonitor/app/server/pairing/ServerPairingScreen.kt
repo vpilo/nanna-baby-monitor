@@ -1,9 +1,9 @@
 package org.vpilo.babymonitor.app.server.pairing
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -23,8 +23,8 @@ import babymonitor.appcommon.generated.resources.pairing_failed_lockout
 import babymonitor.appcommon.generated.resources.pairing_retry
 import babymonitor.appcommon.generated.resources.pairing_succeeded
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.model.repository.PairingFailureReason
-import org.vpilo.babymonitor.model.repository.PairingWindowState
+import org.vpilo.babymonitor.model.repository.ServerPairingFailureReason
+import org.vpilo.babymonitor.model.repository.ServerPairingState
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -41,10 +41,10 @@ fun ServerPairingScreen(
 
     AppDestination(
         modifier = modifier,
-        title = Res.string.app_title_server_pairing,
+        title = stringResource(Res.string.app_title_server_pairing, state.serverName),
         onMainActionClicked = onBackClicked,
     ) {
-        ServerPairingContent(
+        ServerPairingView(
             modifier = Modifier.fillMaxSize(),
             pairingState = state.pairingState,
             onRetry = { viewModel.send(ServerPairingScreenAction.Retry) },
@@ -53,53 +53,49 @@ fun ServerPairingScreen(
 }
 
 @Composable
-private fun ServerPairingContent(
-    modifier: Modifier,
-    pairingState: PairingWindowState,
-    onRetry: () -> Unit,
+private fun ServerPairingView(
+    modifier: Modifier = Modifier,
+    pairingState: ServerPairingState,
+    onRetry: () -> Unit = {},
 ) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+    Column(
+        modifier =
+            modifier
+                .padding(Theme.Paddings.Medium),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Medium),
+    ) {
         when (pairingState) {
-            PairingWindowState.Idle -> {
+            ServerPairingState.Idle -> {
                 LoadingBox()
             }
 
-            is PairingWindowState.Active -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Medium),
-                ) {
-                    QrCodeImage(data = pairingState.qrText, modifier = Modifier.size(240.dp))
-                    Text(text = stringResource(Res.string.pairing_enter_pin), style = MaterialTheme.typography.bodyMedium)
-                    Text(text = pairingState.pin, style = MaterialTheme.typography.displaySmall)
-                }
+            is ServerPairingState.Active -> {
+                QrCodeImage(data = pairingState.qrText, modifier = Modifier.size(240.dp))
+                Text(text = stringResource(Res.string.pairing_enter_pin), style = MaterialTheme.typography.bodyMedium)
+                Text(text = pairingState.pin, style = MaterialTheme.typography.displaySmall)
             }
 
-            is PairingWindowState.Succeeded -> {
+            is ServerPairingState.Succeeded -> {
                 Text(
                     text = stringResource(Res.string.pairing_succeeded, pairingState.clientName),
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
 
-            is PairingWindowState.Failed -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Medium),
-                ) {
-                    Text(
-                        text =
-                            stringResource(
-                                when (pairingState.reason) {
-                                    PairingFailureReason.WRONG_PIN_LOCKOUT -> Res.string.pairing_failed_lockout
-                                    PairingFailureReason.WINDOW_EXPIRED -> Res.string.pairing_failed_expired
-                                },
-                            ),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Button(onClick = onRetry) {
-                        Text(text = stringResource(Res.string.pairing_retry))
-                    }
+            is ServerPairingState.Failed -> {
+                Text(
+                    text =
+                        stringResource(
+                            when (pairingState.reason) {
+                                ServerPairingFailureReason.WRONG_PIN_LOCKOUT -> Res.string.pairing_failed_lockout
+                                ServerPairingFailureReason.WINDOW_EXPIRED -> Res.string.pairing_failed_expired
+                            },
+                        ),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Button(onClick = onRetry) {
+                    Text(text = stringResource(Res.string.pairing_retry))
                 }
             }
         }
@@ -108,15 +104,31 @@ private fun ServerPairingContent(
 
 @Preview
 @Composable
-private fun ServerPairingContentActivePreview() =
+private fun ServerPairingViewIdlePreview() =
     AppPreviewTheme {
-        ServerPairingContent(
-            modifier = Modifier.fillMaxSize(),
+        ServerPairingView(
+            pairingState = ServerPairingState.Idle,
+        )
+    }
+
+@Preview
+@Composable
+private fun ServerPairingViewActivePreview() =
+    AppPreviewTheme {
+        ServerPairingView(
             pairingState =
-                PairingWindowState.Active(
+                ServerPairingState.Active(
                     pin = "AB23CD",
                     qrText = "bm|1|00000000-0000-0000-0000-000000000000|AB23CD|192.168.1.1",
                 ),
-            onRetry = {},
+        )
+    }
+
+@Preview
+@Composable
+private fun ServerPairingViewFailedPreview() =
+    AppPreviewTheme {
+        ServerPairingView(
+            pairingState = ServerPairingState.Failed(reason = ServerPairingFailureReason.WINDOW_EXPIRED),
         )
     }

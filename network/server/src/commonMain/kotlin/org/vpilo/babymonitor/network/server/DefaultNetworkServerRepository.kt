@@ -37,7 +37,7 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.NetworkServerRepository
-import org.vpilo.babymonitor.model.repository.PairingWindowState
+import org.vpilo.babymonitor.model.repository.ServerPairingState
 import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -85,7 +85,7 @@ internal class DefaultNetworkServerRepository(
         relayRegistration.setRelayHost(host)
     }
 
-    override val pairingState: Flow<PairingWindowState> = pairingCoordinator.state
+    override val pairingState: Flow<ServerPairingState> = pairingCoordinator.state
 
     override fun startPairingWindow() {
         pairingCoordinator.startPairingWindow(checkNotNull(self) { "Server not started" })

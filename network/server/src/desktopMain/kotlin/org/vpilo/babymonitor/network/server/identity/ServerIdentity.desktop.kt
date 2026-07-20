@@ -43,7 +43,7 @@ actual class ServerIdentity private constructor(
                 buildKeyStore {
                     certificate(KEY_ALIAS) {
                         this.password = password
-                        domains = listOf(Constants.TLS_SERVER_NAME, "0.0.0.0")
+                        domains = listOf(Constants.TLS_SERVER_NAME, Constants.SERVICES_LISTEN_ADDRESS)
                         keySizeInBits = 2048
                         daysValid = CERTIFICATE_VALIDITY_DAYS
                     }

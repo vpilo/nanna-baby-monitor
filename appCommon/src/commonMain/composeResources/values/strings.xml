@@ -3,7 +3,7 @@
     <string name="app_name">Baby monitor</string>
     <string name="app_copyright">© 2026 Valerio Pilo</string>
 
-    <string name="app_title_server_home">Camera</string>
+    <string name="app_title_server_home">Camera: %1$s</string>
     <string name="app_title_client_connect">Connect to a camera</string>
     <string name="app_title_client_home">Monitor</string>
     <string name="app_title_client_home_name">%1$s</string>
@@ -56,12 +56,12 @@
     <string name="relay_host_title">Remote relay hostname</string>
     <string name="relay_host_description">DDNS hostname for remote access (e.g. myhome.duckdns.org)</string>
 
-    <string name="app_title_server_pairing">Pair a device</string>
+    <string name="app_title_server_pairing">Pair a device to %1$s</string>
     <string name="pairing_waiting_for_window">Preparing…</string>
-    <string name="pairing_enter_pin">Enter this PIN on the other device, or scan the code:</string>
+    <string name="pairing_enter_pin">Scan the QR code on the other device, or enter this code:</string>
     <string name="pairing_succeeded">Paired with %1$s</string>
-    <string name="pairing_failed_lockout">Too many wrong attempts. Pairing cancelled.</string>
-    <string name="pairing_failed_expired">Pairing window expired.</string>
+    <string name="pairing_failed_lockout">Too many wrong attempts. Pairing has been canceled.</string>
+    <string name="pairing_failed_expired">The pairing time window has expired.</string>
     <string name="pairing_progress">Pairing...</string>
     <string name="pairing_retry">Try again</string>
 

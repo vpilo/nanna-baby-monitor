@@ -7,4 +7,5 @@ data class ServerHomeScreenState(
     val isAvailableOnRelay: Boolean = false,
     val isRelayConfigured: Boolean = false,
     val captureMode: CaptureMode = CaptureMode.AUDIO_AND_VIDEO,
+    val name: String = "Server",
 )

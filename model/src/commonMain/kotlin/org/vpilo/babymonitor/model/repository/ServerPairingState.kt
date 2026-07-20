@@ -1,23 +1,23 @@
 package org.vpilo.babymonitor.model.repository
 
-sealed interface PairingWindowState {
-    data object Idle : PairingWindowState
+sealed interface ServerPairingState {
+    data object Idle : ServerPairingState
 
     data class Active(
         val pin: String,
         val qrText: String,
-    ) : PairingWindowState
+    ) : ServerPairingState
 
     data class Succeeded(
         val clientName: String,
-    ) : PairingWindowState
+    ) : ServerPairingState
 
     data class Failed(
-        val reason: PairingFailureReason,
-    ) : PairingWindowState
+        val reason: ServerPairingFailureReason,
+    ) : ServerPairingState
 }
 
-enum class PairingFailureReason {
+enum class ServerPairingFailureReason {
     WRONG_PIN_LOCKOUT,
     WINDOW_EXPIRED,
 }

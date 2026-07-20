@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NetworkWifi
+import androidx.compose.material.icons.filled.Preview
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -107,6 +108,7 @@ fun AppDestination(
                 Row(
                     modifier = Modifier.padding(horizontal = Theme.Paddings.Small),
                     horizontalArrangement = Arrangement.spacedBy(Theme.Paddings.Small),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     actions()
                 }
@@ -144,6 +146,9 @@ private fun AppDestinationMenuPreview() =
             mainAction = AppDestinationMainAction.Menu,
             onMainActionClicked = {},
             actions = {
+                IconButton(onClick = {}) {
+                    Icon(imageVector = Icons.Filled.Preview, contentDescription = null)
+                }
                 Icon(imageVector = Icons.Default.NetworkWifi, contentDescription = null)
                 Icon(imageVector = Icons.Default.Cloud, contentDescription = null)
             },

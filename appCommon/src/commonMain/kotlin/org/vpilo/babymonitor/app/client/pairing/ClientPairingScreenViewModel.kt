@@ -3,11 +3,11 @@ package org.vpilo.babymonitor.app.client.pairing
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.ClientPairingFailureCause
+import org.vpilo.babymonitor.model.repository.ClientPairingState
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.model.repository.PairingFailureCause
-import org.vpilo.babymonitor.model.repository.PairingState
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.common.crypto.PAIRING_PIN_LENGTH
@@ -60,12 +60,12 @@ class ClientPairingScreenViewModel(
         val qrPayload =
             qrContent.decodePairingQrPayloadOrNull()
                 ?: run {
-                    state.copy(pairingState = PairingState.Failure(PairingFailureCause.INVALID_QR)).update()
+                    state.copy(pairingState = ClientPairingState.Failure(ClientPairingFailureCause.INVALID_QR)).update()
                     return
                 }
 
         if (qrPayload.deviceId != server) {
-            state.copy(pairingState = PairingState.Failure(PairingFailureCause.WRONG_DEVICE)).update()
+            state.copy(pairingState = ClientPairingState.Failure(ClientPairingFailureCause.WRONG_DEVICE)).update()
             return
         }
 
@@ -76,10 +76,10 @@ class ClientPairingScreenViewModel(
         val server = state.server ?: return
 
         vmScope.launch {
-            state.copy(pairingState = PairingState.InProgress).update()
+            state.copy(pairingState = ClientPairingState.InProgress).update()
             val outcome = networkClientRepository.pairWith(server, pin)
             state.copy(pairingState = outcome).update()
-            if (outcome is PairingState.Success) {
+            if (outcome is ClientPairingState.Success) {
                 ClientPairingScreenEffect.Paired.sendEffect()
             }
         }

@@ -63,6 +63,8 @@ class ServerHomeScreenViewModel(
             if (!state.isAvailableOnLocalNetwork) {
                 server.start(device)
             }
+
+            state.copy(name = deviceName).update()
         }.launchIn(vmScope)
     }
 

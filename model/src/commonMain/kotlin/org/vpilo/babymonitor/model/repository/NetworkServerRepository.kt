@@ -15,7 +15,7 @@ interface NetworkServerRepository {
 
     fun setRelayHost(host: String)
 
-    val pairingState: Flow<PairingWindowState>
+    val pairingState: Flow<ServerPairingState>
 
     fun startPairingWindow()
 

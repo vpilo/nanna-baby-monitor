@@ -41,8 +41,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScanner
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScannerViewModel
-import org.vpilo.babymonitor.model.repository.PairingFailureCause
-import org.vpilo.babymonitor.model.repository.PairingState
+import org.vpilo.babymonitor.model.repository.ClientPairingFailureCause
+import org.vpilo.babymonitor.model.repository.ClientPairingState
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -102,7 +102,7 @@ fun ClientPairingScreen(
 private fun ClientPairingView(
     modifier: Modifier = Modifier,
     serverName: String,
-    pairingState: PairingState,
+    pairingState: ClientPairingState,
     isCameraAvailable: Boolean = true,
     pairingPinLength: Int = 3,
     onQrRead: (qrContent: String) -> Unit = {},
@@ -132,19 +132,19 @@ private fun ClientPairingView(
 
         val statusStringResource =
             when (pairingState) {
-                is PairingState.InProgress -> {
+                is ClientPairingState.InProgress -> {
                     Res.string.pairing_progress
                 }
 
-                is PairingState.Failure -> {
+                is ClientPairingState.Failure -> {
                     when (pairingState.reason) {
-                        PairingFailureCause.INVALID_QR -> Res.string.client_pairing_failed_invalid_qr
-                        PairingFailureCause.WRONG_PIN -> Res.string.client_pairing_failed_wrong_pin
-                        PairingFailureCause.NO_ACTIVE_PAIRING_WINDOW -> Res.string.client_pairing_failed_no_active_window
-                        PairingFailureCause.SERVER_NOT_ON_NETWORK -> Res.string.client_pairing_failed_server_not_on_network
-                        PairingFailureCause.MITM_SUSPECTED -> Res.string.client_pairing_failed_mitm_suspected
-                        PairingFailureCause.CONNECTION_FAILED -> Res.string.client_pairing_failed_connection_failed
-                        PairingFailureCause.WRONG_DEVICE -> Res.string.client_pairing_qr_wrong_device
+                        ClientPairingFailureCause.INVALID_QR -> Res.string.client_pairing_failed_invalid_qr
+                        ClientPairingFailureCause.WRONG_PIN -> Res.string.client_pairing_failed_wrong_pin
+                        ClientPairingFailureCause.NO_ACTIVE_PAIRING_WINDOW -> Res.string.client_pairing_failed_no_active_window
+                        ClientPairingFailureCause.SERVER_NOT_ON_NETWORK -> Res.string.client_pairing_failed_server_not_on_network
+                        ClientPairingFailureCause.MITM_SUSPECTED -> Res.string.client_pairing_failed_mitm_suspected
+                        ClientPairingFailureCause.CONNECTION_FAILED -> Res.string.client_pairing_failed_connection_failed
+                        ClientPairingFailureCause.WRONG_DEVICE -> Res.string.client_pairing_qr_wrong_device
                     }
                 }
 
@@ -155,7 +155,7 @@ private fun ClientPairingView(
         Text(
             modifier = Modifier.padding(bottom = Theme.Paddings.Medium),
             text = statusStringResource?.let { stringResource(it) }.orEmpty(),
-            color = if (pairingState is PairingState.Failure) MaterialTheme.colorScheme.error else Color.Unspecified,
+            color = if (pairingState is ClientPairingState.Failure) MaterialTheme.colorScheme.error else Color.Unspecified,
             style = MaterialTheme.typography.bodyLarge,
         )
 
@@ -202,7 +202,7 @@ private fun ClientPairingViewNormalPreview() {
         },
     ) {
         ClientPairingView(
-            pairingState = PairingState.Waiting,
+            pairingState = ClientPairingState.Waiting,
             serverName = "Baby room",
             pairingPinLength = 3,
         )
@@ -218,7 +218,7 @@ private fun ClientPairingViewErrorPreview() {
         },
     ) {
         ClientPairingView(
-            pairingState = PairingState.Failure(PairingFailureCause.NO_ACTIVE_PAIRING_WINDOW),
+            pairingState = ClientPairingState.Failure(ClientPairingFailureCause.NO_ACTIVE_PAIRING_WINDOW),
             serverName = "Baby room",
             pairingPinLength = 3,
         )
@@ -234,7 +234,7 @@ private fun ClientPairingViewNoCameraPreview() {
         },
     ) {
         ClientPairingView(
-            pairingState = PairingState.Failure(PairingFailureCause.WRONG_PIN),
+            pairingState = ClientPairingState.Failure(ClientPairingFailureCause.WRONG_PIN),
             serverName = "Baby room",
             isCameraAvailable = false,
             pairingPinLength = 3,
@@ -251,7 +251,7 @@ private fun ClientPairingViewPairingPreview() {
         },
     ) {
         ClientPairingView(
-            pairingState = PairingState.InProgress,
+            pairingState = ClientPairingState.InProgress,
             serverName = "Baby room",
             pairingPinLength = 3,
         )

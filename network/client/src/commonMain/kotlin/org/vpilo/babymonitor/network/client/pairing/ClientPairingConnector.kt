@@ -7,8 +7,8 @@ import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.PairingFailureCause
-import org.vpilo.babymonitor.model.repository.PairingState
+import org.vpilo.babymonitor.model.repository.ClientPairingFailureCause
+import org.vpilo.babymonitor.model.repository.ClientPairingState
 import org.vpilo.babymonitor.network.client.PinnedTrustManager
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -42,7 +42,7 @@ internal class ClientPairingConnector(
         server: Device.Server,
         clientDevice: Device.Client,
         pin: String,
-    ): PairingState {
+    ): ClientPairingState {
         val trustManager = PinnedTrustManager(expectedFingerprint = null)
         val httpClient =
             HttpClient(CIO) {
@@ -57,7 +57,7 @@ internal class ClientPairingConnector(
 
         if (server.addresses.isEmpty()) {
             Logger.w(TAG) { "Server $server has no addresses" }
-            return PairingState.Failure(PairingFailureCause.SERVER_NOT_ON_NETWORK)
+            return ClientPairingState.Failure(ClientPairingFailureCause.SERVER_NOT_ON_NETWORK)
         }
 
         httpClient.use { http ->
@@ -77,10 +77,10 @@ internal class ClientPairingConnector(
         server: Device.Server,
         clientDevice: Device.Client,
         pin: String,
-    ): PairingState {
+    ): ClientPairingState {
         Logger.w(TAG) { "Connecting to $host to pair" }
         return try {
-            var outcome: PairingState = GENERIC_FAILURE
+            var outcome: ClientPairingState = GENERIC_FAILURE
             wss(
                 method = HttpMethod.Get,
                 host = host.hostAddress,
@@ -107,7 +107,7 @@ internal class ClientPairingConnector(
                         }
 
                         is PairingResult.Failure -> {
-                            PairingState.Failure(PairingFailureCause.WRONG_PIN)
+                            ClientPairingState.Failure(ClientPairingFailureCause.WRONG_PIN)
                         }
 
                         null -> {
@@ -128,7 +128,7 @@ internal class ClientPairingConnector(
      * Verifies the server's confirmation `Ms` against the client's own transcript before trusting anything the
      * server said. A mismatch here — unlike a wrong PIN, which the server itself detects and reports via
      * [PairingResult.Failure] — means a party other than the expected server produced this response: the TLS
-     * connection didn't terminate where the client thinks it did. Reported as [PairingFailureCause.MITM_SUSPECTED],
+     * connection didn't terminate where the client thinks it did. Reported as [ClientPairingFailureCause.MITM_SUSPECTED],
      * and the pairing is *not* persisted.
      */
     private suspend fun handleServerConfirmation(
@@ -139,9 +139,9 @@ internal class ClientPairingConnector(
         serverPublicKey: ByteArray,
         server: Device.Server,
         certificate: X509Certificate,
-    ): PairingState {
+    ): ClientPairingState {
         if (!verifyServerConfirmation(pin, transcript, result.serverConfirmation)) {
-            return PairingState.Failure(PairingFailureCause.MITM_SUSPECTED)
+            return ClientPairingState.Failure(ClientPairingFailureCause.MITM_SUSPECTED)
         }
         val sharedSecret = deriveSharedSecretS(clientKeyPair.deriveSharedSecret(serverPublicKey))
         pairingRepository.pairServer(
@@ -153,11 +153,11 @@ internal class ClientPairingConnector(
             ),
         )
         Logger.i(TAG) { "Paired with server $server" }
-        return PairingState.Success
+        return ClientPairingState.Success
     }
 
     private companion object {
-        private val GENERIC_FAILURE = PairingState.Failure(PairingFailureCause.CONNECTION_FAILED)
+        private val GENERIC_FAILURE = ClientPairingState.Failure(ClientPairingFailureCause.CONNECTION_FAILED)
 
         private val TAG = ClientPairingConnector::class
     }

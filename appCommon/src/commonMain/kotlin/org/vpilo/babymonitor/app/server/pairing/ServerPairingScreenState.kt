@@ -1,7 +1,8 @@
 package org.vpilo.babymonitor.app.server.pairing
 
-import org.vpilo.babymonitor.model.repository.PairingWindowState
+import org.vpilo.babymonitor.model.repository.ServerPairingState
 
 data class ServerPairingScreenState(
-    val pairingState: PairingWindowState = PairingWindowState.Idle,
+    val serverName: String = "Server",
+    val pairingState: ServerPairingState = ServerPairingState.Idle,
 )

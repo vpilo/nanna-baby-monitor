@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.PairingFailureReason
-import org.vpilo.babymonitor.model.repository.PairingWindowState
+import org.vpilo.babymonitor.model.repository.ServerPairingFailureReason
+import org.vpilo.babymonitor.model.repository.ServerPairingState
 import org.vpilo.babymonitor.network.common.crypto.PAIRING_PROTOCOL_VERSION
 import org.vpilo.babymonitor.network.common.crypto.PairingQrPayload
 import org.vpilo.babymonitor.network.common.crypto.buildPairingTranscript
@@ -45,8 +45,8 @@ class PairingCoordinator(
 ) {
     private val scope = CoroutineScope(coroutineContext + SupervisorJob())
 
-    private val _state = MutableStateFlow<PairingWindowState>(PairingWindowState.Idle)
-    val state: StateFlow<PairingWindowState> = _state.asStateFlow()
+    private val _state = MutableStateFlow<ServerPairingState>(ServerPairingState.Idle)
+    val state: StateFlow<ServerPairingState> = _state.asStateFlow()
 
     @Volatile
     private var activeWindow: ActiveWindow? = null
@@ -60,20 +60,20 @@ class PairingCoordinator(
                 pin = pin,
             ).asPayloadString()
         activeWindow = ActiveWindow(pin = pin, remainingAttempts = MAX_PIN_ATTEMPTS)
-        _state.value = PairingWindowState.Active(pin, qrText)
+        _state.value = ServerPairingState.Active(pin, qrText)
 
         scope.launch {
             delay(PAIRING_WINDOW_DURATION)
             if (activeWindow?.pin == pin) {
                 activeWindow = null
-                _state.value = PairingWindowState.Failed(PairingFailureReason.WINDOW_EXPIRED)
+                _state.value = ServerPairingState.Failed(ServerPairingFailureReason.WINDOW_EXPIRED)
             }
         }
     }
 
     fun cancelPairingWindow() {
         activeWindow = null
-        _state.value = PairingWindowState.Idle
+        _state.value = ServerPairingState.Idle
     }
 
     /** Runs the server side of the ECDH+PIN exchange over an already-open, TLS-terminated `/pair` session. */
@@ -123,7 +123,7 @@ class PairingCoordinator(
             ),
         )
         activeWindow = null
-        _state.value = PairingWindowState.Succeeded(hello.clientName)
+        _state.value = ServerPairingState.Succeeded(hello.clientName)
         Logger.i(TAG) { "Paired with client ${hello.clientId} (${hello.clientName})" }
     }
 
@@ -132,7 +132,7 @@ class PairingCoordinator(
         Logger.w(TAG) { "Wrong PIN attempt, ${window.remainingAttempts} remaining" }
         if (window.remainingAttempts <= 0) {
             activeWindow = null
-            _state.value = PairingWindowState.Failed(PairingFailureReason.WRONG_PIN_LOCKOUT)
+            _state.value = ServerPairingState.Failed(ServerPairingFailureReason.WRONG_PIN_LOCKOUT)
         }
     }
 
@@ -143,7 +143,7 @@ class PairingCoordinator(
 
     private companion object {
         private val TAG = PairingCoordinator::class
-        private val PAIRING_WINDOW_DURATION = 3.minutes
+        private val PAIRING_WINDOW_DURATION = 2.minutes
         private const val MAX_PIN_ATTEMPTS = 5
     }
 }
