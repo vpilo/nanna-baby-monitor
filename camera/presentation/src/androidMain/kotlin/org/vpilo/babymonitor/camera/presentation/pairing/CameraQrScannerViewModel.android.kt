@@ -15,16 +15,24 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.asExecutor
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import java.util.concurrent.Executor
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 
 @Stable
-actual class CameraQrScannerViewModel actual constructor() : AppViewModel<Unit, Unit, CameraQrScannerEffect>(initialState = Unit) {
+actual class CameraQrScannerViewModel actual constructor(
+    private val coroutineContext: CoroutineContext,
+) : AppViewModel<Unit, Unit, CameraQrScannerEffect>(initialState = Unit) {
     private val qrReader = QrReader()
 
     override fun SubscriptionScope.onSubscribed() {
@@ -107,7 +115,7 @@ actual class CameraQrScannerViewModel actual constructor() : AppViewModel<Unit, 
         Logger.d(TAG) { "BINDING" }
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
-        analysisUseCase.setAnalyzer(ContextCompat.getMainExecutor(appContext), analyzer)
+        analysisUseCase.setAnalyzer(coroutineContext.asExecutor(), analyzer)
 
         processCameraProvider.bindToLifecycle(
             lifecycleOwner,

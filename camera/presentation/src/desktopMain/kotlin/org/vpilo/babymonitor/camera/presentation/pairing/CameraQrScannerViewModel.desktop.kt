@@ -9,6 +9,7 @@ import com.google.zxing.BinaryBitmap
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,14 +20,23 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import java.awt.Dimension
 import java.awt.image.BufferedImage
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
 @Stable
 actual class CameraQrScannerViewModel internal constructor(
+    coroutineContext: CoroutineContext,
     webcamGetter: () -> Webcam,
 ) : AppViewModel<Unit, Unit, CameraQrScannerEffect>(initialState = Unit) {
-    actual constructor() : this({ Webcam.getDefault() })
+    actual constructor(
+        coroutineContext: CoroutineContext,
+    ) : this(
+        coroutineContext,
+        { Webcam.getDefault() },
+    )
+
+    private val scope = CoroutineScope(coroutineContext)
 
     private val _frames = MutableStateFlow<ImageBitmap?>(null)
     val frames: StateFlow<ImageBitmap?> = _frames.asStateFlow()
@@ -43,7 +53,7 @@ actual class CameraQrScannerViewModel internal constructor(
 
         cameraJob?.cancel()
         cameraJob =
-            vmScope.launch {
+            scope.launch {
                 bindToCamera()
             }
     }
