@@ -5,14 +5,19 @@ import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.client_pairing_pin_label
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.settings.model.Platform
+import org.vpilo.babymonitor.settings.model.getCurrentPlatform
 
 @Composable
 fun PinEntry(
@@ -22,9 +27,13 @@ fun PinEntry(
     onPinEntered: (pin: String) -> Unit,
 ) {
     var pin by remember(pinResetKey) { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
 
     OutlinedTextField(
-        modifier = modifier.requiredHeight(IntrinsicSize.Min),
+        modifier =
+            modifier
+                .requiredHeight(IntrinsicSize.Min)
+                .focusRequester(focusRequester),
         value = pin,
         onValueChange = {
             pin = it.uppercase().take(pairingPinLength)
@@ -34,4 +43,9 @@ fun PinEntry(
         },
         label = { Text(stringResource(Res.string.client_pairing_pin_label)) },
     )
+
+    // On Android, keep the keyboard closed
+    if (getCurrentPlatform() == Platform.Desktop) {
+        SideEffect { focusRequester.requestFocus() }
+    }
 }

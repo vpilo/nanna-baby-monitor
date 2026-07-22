@@ -31,8 +31,6 @@ import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.CameraPermissionCheckScreen
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
-import org.vpilo.babymonitor.model.repository.toDeviceId
-import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.snackbar.SnackbarContainer
 
@@ -63,6 +61,11 @@ fun App() {
                         onNavigateTo = { route, popUpToRoute ->
                             navController.navigate(route) {
                                 popUpToRoute?.let { popUpTo(popUpToRoute) { inclusive = false } }
+                            }
+                        },
+                        onNavigateUpTo = { route ->
+                            navController.navigate(route) {
+                                popUpTo(route) { inclusive = true }
                             }
                         },
                         onNavigateToRoot = {
@@ -101,6 +104,7 @@ private fun MainContainer(
 private fun NavGraphBuilder.navigationRoutes(
     onNavigateTo: (route: Route, popUpTo: Route?) -> Unit = { _, _ -> },
     onNavigateUp: () -> Unit = {},
+    onNavigateUpTo: (route: Route) -> Unit = { _ -> },
     onNavigateToRoot: () -> Unit = {},
 ) {
     composable<Route.Onboarding> {
@@ -227,7 +231,7 @@ private fun NavGraphBuilder.navigationRoutes(
         ClientHomeScreen(
             viewModel = koinViewModel(),
             onDisconnected = {
-                onNavigateTo(Route.CameraSelection(), Route.CameraSelection())
+                onNavigateUpTo(Route.CameraSelection())
             },
             onMenuClicked = {
                 onNavigateTo(Route.Menu, null)

@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.app.cameraselection
 
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientLastServerId
 import org.vpilo.babymonitor.app.settings.RelayHost
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
@@ -51,7 +53,6 @@ class CameraSelectionScreenViewModel(
     override fun onCleared() {
         discoveryJob?.cancel()
         discoveryJob = null
-        localDiscoveryRepository.unregister()
     }
 
     override fun SubscriptionScope.onSubscribed() {
@@ -96,8 +97,20 @@ class CameraSelectionScreenViewModel(
                     else -> {}
                 }
 
-                if (netState is ConnectionState.Disconnected && netState.reason == ConnectionState.ErrorReason.ClientQuit) {
-                    settingsRepository.save(Setting.ClientLastServerId, "")
+                if (netState is ConnectionState.Disconnected) {
+                    when (netState.reason) {
+                        ConnectionState.ErrorReason.ClientQuit,
+                        ConnectionState.ErrorReason.PairingRevoked,
+                        ConnectionState.ErrorReason.ServerNotFound,
+                            -> {
+                                Logger.d(TAG) { "Stopping auto-reconnection" }
+                                settingsRepository.save(Setting.ClientLastServerId, "")
+                            }
+
+                        else -> {
+                            // Keep trying to reconnect.
+                        }
+                    }
                 }
             }
 
@@ -153,20 +166,22 @@ class CameraSelectionScreenViewModel(
     }
 
     private suspend fun waitForLastConnectedServer() {
-        val lastServer: Device.Server =
-            combine(
-                networkClientRepository.connectionStateFlow,
-                settingsRepository.flowOf(Setting.ClientLastServerId),
-                localDiscoveryRepository.discoveredDevicesFlow,
-            ) { state, rawLastServerId, serverList ->
-                val lastServerId = rawLastServerId.toDeviceIdOrNull()
+        settingsRepository
+            .flowOf(Setting.ClientLastServerId)
+            .collectLatest { rawLastServerId ->
+                val lastServerId = rawLastServerId.toDeviceIdOrNull() ?: return@collectLatest
+
+                val serverList = localDiscoveryRepository.discoveredDevicesFlow.first { it.isNotEmpty() }
+                val state = state.connectionState
+
                 // Only reconnect on first startup, when we haven't connected yet.
                 if (state !is ConnectionState.Disconnected || state.reason != ConnectionState.ErrorReason.NotConnectedYet) {
-                    return@combine null
+                    return@collectLatest
                 }
-                if (lastServerId == null) return@combine null
-                serverList.filterIsInstance<Device.Server>().firstOrNull { it.id == lastServerId }
-            }.filterNotNull().first()
-        CameraSelectionScreenEffect.ConnectToServer(lastServer).sendEffect()
+                val lastServer =
+                    serverList.filterIsInstance<Device.Server>().firstOrNull { it.id == lastServerId }
+                        ?: return@collectLatest
+                CameraSelectionScreenEffect.ConnectToServer(lastServer).sendEffect()
+            }
     }
 }

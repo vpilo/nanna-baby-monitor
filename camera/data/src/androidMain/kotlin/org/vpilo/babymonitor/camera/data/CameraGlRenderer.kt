@@ -262,6 +262,10 @@ internal class CameraGlRenderer(
     }
 
     private fun drawFrame() {
+        if (surfaceTexture.isReleased) {
+            return
+        }
+
         surfaceTexture.updateTexImage()
         surfaceTexture.getTransformMatrix(stMatrix)
 

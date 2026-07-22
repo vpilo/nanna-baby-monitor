@@ -316,10 +316,19 @@ internal actual class VideoCaptureDataSource(
         val meteringPointFactory = SurfaceOrientedMeteringPointFactory(size.width.toFloat(), size.height.toFloat())
 
         val meteringAction = FocusMeteringAction.Builder(meteringPointFactory.createPoint(.5f, .5f)).build()
-        camera.cameraControl
-            .startFocusAndMetering(meteringAction)
-            .get()
-            .also { Logger.d(TAG) { "Auto-focus ${ if (it.isFocusSuccessful) "succeeded" else "failed" }" } }
+
+        val result =
+            runCatching {
+                camera.cameraControl
+                    .startFocusAndMetering(meteringAction)
+                    .get()
+                    .isFocusSuccessful
+            }
+        if (result.isSuccess && result.getOrNull() == true) {
+            Logger.d(TAG) { "Auto-focus succeeded" }
+        } else {
+            Logger.w(TAG) { "Auto-focus failed: ${result.exceptionOrNull()?.prettify()}" }
+        }
     }
 
     // CameraX delivers content made upright to the sensor's natural orientation: a 90°/270°-mounted
