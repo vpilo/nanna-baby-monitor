@@ -10,8 +10,8 @@ class PairingHandshakeTest {
     @Test
     fun bothSidesAgreeOnSWhenPinMatches() =
         runTest {
-            val client = generateEcdhKeyPair()
-            val server = generateEcdhKeyPair()
+            val client = EcdhKeyPair.create()
+            val server = EcdhKeyPair.create()
             val pin = "AB23CD"
             val fingerprint = "deadbeef".repeat(8)
 
@@ -31,8 +31,8 @@ class PairingHandshakeTest {
     @Test
     fun confirmationFailsWithWrongPin() =
         runTest {
-            val client = generateEcdhKeyPair()
-            val server = generateEcdhKeyPair()
+            val client = EcdhKeyPair.create()
+            val server = EcdhKeyPair.create()
             val transcript = buildPairingTranscript(client.publicKeyEncoded, server.publicKeyEncoded, "fingerprint")
 
             val mc = computeClientConfirmation("AB23CD", transcript)
@@ -43,8 +43,8 @@ class PairingHandshakeTest {
     @Test
     fun confirmationFailsWhenCertFingerprintDiffers_simulatingMitm() =
         runTest {
-            val client = generateEcdhKeyPair()
-            val server = generateEcdhKeyPair()
+            val client = EcdhKeyPair.create()
+            val server = EcdhKeyPair.create()
             val pin = "AB23CD"
 
             val transcriptSeenByClient = buildPairingTranscript(client.publicKeyEncoded, server.publicKeyEncoded, "real-fingerprint")

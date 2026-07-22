@@ -14,17 +14,16 @@ import org.vpilo.babymonitor.network.common.crypto.EcdhKeyPair
 import org.vpilo.babymonitor.network.common.crypto.buildPairingTranscript
 import org.vpilo.babymonitor.network.common.crypto.computeClientConfirmation
 import org.vpilo.babymonitor.network.common.crypto.deriveSharedSecretS
-import org.vpilo.babymonitor.network.common.crypto.generateEcdhKeyPair
 import org.vpilo.babymonitor.network.common.crypto.sha256Fingerprint
 import org.vpilo.babymonitor.network.common.crypto.verifyServerConfirmation
-import org.vpilo.babymonitor.network.common.protocol.PairingResult
+import org.vpilo.babymonitor.network.common.pairing.PairingResult
 import org.vpilo.babymonitor.network.common.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.common.protocol.receivePairingResultOrNull
 import org.vpilo.babymonitor.network.common.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.common.protocol.sendPairingHello
 import org.vpilo.babymonitor.network.model.ClientPairingFailureCause
 import org.vpilo.babymonitor.network.model.ClientPairingState
-import org.vpilo.babymonitor.network.model.repository.PairedServer
+import org.vpilo.babymonitor.network.model.PairedServer
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import java.net.InetAddress
 import java.security.cert.X509Certificate
@@ -87,7 +86,7 @@ internal class ClientPairingConnector(
                 port = Constants.SERVICE_PORT,
                 path = Endpoints.PAIR,
             ) {
-                val clientKeyPair = generateEcdhKeyPair()
+                val clientKeyPair = EcdhKeyPair.create()
                 sendPairingHello(clientDevice.id, clientDevice.name, clientKeyPair.publicKeyEncoded)
 
                 val serverPublicKey = receiveBase64FrameOrNull()

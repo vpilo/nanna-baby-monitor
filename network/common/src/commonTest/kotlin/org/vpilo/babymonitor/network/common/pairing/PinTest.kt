@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.network.common.crypto
+package org.vpilo.babymonitor.network.common.pairing
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.network.common.crypto
+package org.vpilo.babymonitor.network.common.crypto.internal
 
 import kotlinx.coroutines.test.runTest
 import kotlin.random.Random

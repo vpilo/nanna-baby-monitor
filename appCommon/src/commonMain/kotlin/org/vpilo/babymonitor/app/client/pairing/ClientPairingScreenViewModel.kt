@@ -6,8 +6,8 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
-import org.vpilo.babymonitor.network.common.crypto.PAIRING_PIN_LENGTH
-import org.vpilo.babymonitor.network.common.crypto.decodePairingQrPayloadOrNull
+import org.vpilo.babymonitor.network.common.pairing.PAIRING_PIN_LENGTH
+import org.vpilo.babymonitor.network.common.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.model.ClientPairingFailureCause
 import org.vpilo.babymonitor.network.model.ClientPairingState
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
@@ -58,7 +58,7 @@ class ClientPairingScreenViewModel(
         qrContent: String,
     ) {
         val qrPayload =
-            qrContent.decodePairingQrPayloadOrNull()
+            PairingQrPayload.fromPayloadStringOrNull(qrContent)
                 ?: run {
                     state.copy(pairingState = ClientPairingState.Failure(ClientPairingFailureCause.INVALID_QR)).update()
                     return

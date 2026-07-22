@@ -1,10 +1,8 @@
 package org.vpilo.babymonitor.network.common.crypto
 
-import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.EC
 import dev.whyoleg.cryptography.algorithms.ECDH
-
-private val cryptographyProvider = CryptographyProvider.Default
+import org.vpilo.babymonitor.network.common.crypto.internal.cryptographyProvider
 
 /**
  * An ephemeral ECDH P-256 key pair. [publicKeyEncoded] is safe to send over the wire (e.g. in a pairing
@@ -22,10 +20,12 @@ class EcdhKeyPair internal constructor(
                 .decodeFromByteArray(EC.PublicKey.Format.RAW.Uncompressed, peerPublicKeyEncoded)
         return privateKey.sharedSecretGenerator().generateSharedSecretToByteArray(peerPublicKey)
     }
-}
 
-suspend fun generateEcdhKeyPair(): EcdhKeyPair {
-    val keyPair = cryptographyProvider.get(ECDH).keyPairGenerator(EC.Curve.P256).generateKey()
-    val publicKeyEncoded = keyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW.Uncompressed)
-    return EcdhKeyPair(publicKeyEncoded, keyPair.privateKey)
+    companion object {
+        suspend fun create(): EcdhKeyPair {
+            val keyPair = cryptographyProvider.get(ECDH).keyPairGenerator(EC.Curve.P256).generateKey()
+            val publicKeyEncoded = keyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW.Uncompressed)
+            return EcdhKeyPair(publicKeyEncoded, keyPair.privateKey)
+        }
+    }
 }

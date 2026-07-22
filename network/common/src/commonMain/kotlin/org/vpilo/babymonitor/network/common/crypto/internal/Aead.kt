@@ -1,14 +1,13 @@
-package org.vpilo.babymonitor.network.common.crypto
+package org.vpilo.babymonitor.network.common.crypto.internal
 
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.DelicateCryptographyApi
 import dev.whyoleg.cryptography.algorithms.AES
+import org.jetbrains.annotations.VisibleForTesting
 
-const val AES_256_GCM_KEY_SIZE_BYTES = 32
-const val AES_GCM_NONCE_SIZE_BYTES = 12
-const val AES_GCM_TAG_SIZE_BYTES = 16
-
-private val cryptographyProvider = CryptographyProvider.Default
+@VisibleForTesting
+internal const val AES_256_GCM_KEY_SIZE_BYTES = 32
+internal const val AES_GCM_NONCE_SIZE_BYTES = 12
 
 /**
  * Seals [plaintext] with AES-256-GCM under [key], using the caller-supplied [nonce] (never randomly
@@ -16,7 +15,7 @@ private val cryptographyProvider = CryptographyProvider.Default
  * Output is `ciphertext || 16-byte tag`, with no nonce prepended.
  */
 @OptIn(DelicateCryptographyApi::class)
-suspend fun sealAes256Gcm(
+internal suspend fun sealAes256Gcm(
     key: ByteArray,
     nonce: ByteArray,
     plaintext: ByteArray,
@@ -33,7 +32,7 @@ suspend fun sealAes256Gcm(
  * (tampered frame, wrong key, or mismatched associated data) — callers must treat any thrown exception as "drop the connection".
  */
 @OptIn(DelicateCryptographyApi::class)
-suspend fun openAes256Gcm(
+internal suspend fun openAes256Gcm(
     key: ByteArray,
     nonce: ByteArray,
     ciphertext: ByteArray,

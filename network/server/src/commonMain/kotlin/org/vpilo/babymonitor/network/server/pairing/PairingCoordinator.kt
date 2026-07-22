@@ -12,22 +12,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.network.common.crypto.PAIRING_PROTOCOL_VERSION
-import org.vpilo.babymonitor.network.common.crypto.PairingQrPayload
+import org.vpilo.babymonitor.network.common.crypto.EcdhKeyPair
 import org.vpilo.babymonitor.network.common.crypto.buildPairingTranscript
 import org.vpilo.babymonitor.network.common.crypto.computeServerConfirmation
 import org.vpilo.babymonitor.network.common.crypto.deriveSharedSecretS
-import org.vpilo.babymonitor.network.common.crypto.generateEcdhKeyPair
-import org.vpilo.babymonitor.network.common.crypto.generatePairingPin
 import org.vpilo.babymonitor.network.common.crypto.verifyClientConfirmation
-import org.vpilo.babymonitor.network.common.protocol.PairingResult
+import org.vpilo.babymonitor.network.common.pairing.PairingQrPayload
+import org.vpilo.babymonitor.network.common.pairing.PairingResult
+import org.vpilo.babymonitor.network.common.pairing.generatePairingPin
 import org.vpilo.babymonitor.network.common.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.common.protocol.receivePairingHelloOrNull
 import org.vpilo.babymonitor.network.common.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.common.protocol.sendPairingResult
+import org.vpilo.babymonitor.network.model.PairedClient
 import org.vpilo.babymonitor.network.model.ServerPairingFailureReason
 import org.vpilo.babymonitor.network.model.ServerPairingState
-import org.vpilo.babymonitor.network.model.repository.PairedClient
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.identity.fingerprint
@@ -55,7 +54,6 @@ class PairingCoordinator(
         val pin = generatePairingPin()
         val qrText =
             PairingQrPayload(
-                protocolVersion = PAIRING_PROTOCOL_VERSION,
                 deviceId = self.id,
                 pin = pin,
             ).asPayloadString()
@@ -93,7 +91,7 @@ class PairingCoordinator(
                 return
             }
 
-        val serverKeyPair = generateEcdhKeyPair()
+        val serverKeyPair = EcdhKeyPair.create()
         session.sendBase64Frame(serverKeyPair.publicKeyEncoded)
 
         val transcript = buildPairingTranscript(hello.publicKey, serverKeyPair.publicKeyEncoded, serverIdentity.fingerprint)

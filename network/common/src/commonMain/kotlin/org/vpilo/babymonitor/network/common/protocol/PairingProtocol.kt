@@ -5,13 +5,9 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
+import org.vpilo.babymonitor.network.common.pairing.PairingHello
+import org.vpilo.babymonitor.network.common.pairing.PairingResult
 import kotlin.io.encoding.Base64
-
-data class PairingHello(
-    val clientId: DeviceId,
-    val clientName: String,
-    val publicKey: ByteArray,
-)
 
 suspend fun WebSocketSession.sendPairingHello(
     clientId: DeviceId,
@@ -35,27 +31,6 @@ suspend fun WebSocketSession.receiveBase64FrameOrNull(): ByteArray? {
     val frame = incoming.receive()
     if (frame !is Frame.Text) return null
     return runCatching { Base64.decode(frame.readText()) }.getOrNull()
-}
-
-sealed interface PairingResult {
-    data class Success(
-        val serverConfirmation: ByteArray,
-    ) : PairingResult {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as Success
-
-            return serverConfirmation.contentEquals(other.serverConfirmation)
-        }
-
-        override fun hashCode(): Int = serverConfirmation.contentHashCode()
-    }
-
-    data class Failure(
-        val reason: String,
-    ) : PairingResult
 }
 
 suspend fun WebSocketSession.sendPairingResult(result: PairingResult) {

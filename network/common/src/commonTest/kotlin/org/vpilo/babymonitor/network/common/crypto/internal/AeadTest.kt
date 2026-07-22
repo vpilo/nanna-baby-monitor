@@ -1,5 +1,6 @@
-package org.vpilo.babymonitor.network.common.crypto
+package org.vpilo.babymonitor.network.common.crypto.internal
 
+import kotlinx.coroutines.test.runTest
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -9,7 +10,7 @@ import kotlin.test.assertFalse
 class AeadTest {
     @Test
     fun sealThenOpenRoundTrips() =
-        kotlinx.coroutines.test.runTest {
+        runTest {
             val key = Random.nextBytes(AES_256_GCM_KEY_SIZE_BYTES)
             val nonce = Random.nextBytes(AES_GCM_NONCE_SIZE_BYTES)
             val plaintext = "hello baby monitor".encodeToByteArray()
@@ -24,7 +25,7 @@ class AeadTest {
 
     @Test
     fun tamperedCiphertextFailsToOpen() =
-        kotlinx.coroutines.test.runTest {
+        runTest {
             val key = Random.nextBytes(AES_256_GCM_KEY_SIZE_BYTES)
             val nonce = Random.nextBytes(AES_GCM_NONCE_SIZE_BYTES)
             val aad = "device-42".encodeToByteArray()
@@ -38,10 +39,16 @@ class AeadTest {
 
     @Test
     fun mismatchedAssociatedDataFailsToOpen() =
-        kotlinx.coroutines.test.runTest {
+        runTest {
             val key = Random.nextBytes(AES_256_GCM_KEY_SIZE_BYTES)
             val nonce = Random.nextBytes(AES_GCM_NONCE_SIZE_BYTES)
-            val sealed = sealAes256Gcm(key, nonce, "payload".encodeToByteArray(), "aad-a".encodeToByteArray())
+            val sealed =
+                sealAes256Gcm(
+                    key,
+                    nonce,
+                    "payload".encodeToByteArray(),
+                    "aad-a".encodeToByteArray(),
+                )
 
             assertFailsWith<Throwable> {
                 openAes256Gcm(key, nonce, sealed, "aad-b".encodeToByteArray())

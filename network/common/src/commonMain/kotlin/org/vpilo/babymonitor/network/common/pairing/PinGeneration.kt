@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.network.common.crypto
+package org.vpilo.babymonitor.network.common.pairing
 
 import java.security.SecureRandom
 

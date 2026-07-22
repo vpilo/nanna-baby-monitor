@@ -1,12 +1,9 @@
-package org.vpilo.babymonitor.network.common.crypto
+package org.vpilo.babymonitor.network.common.crypto.internal
 
-import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.HMAC
 import dev.whyoleg.cryptography.algorithms.SHA256
 
-private val cryptographyProvider = CryptographyProvider.Default
-
-suspend fun hmacSha256(
+internal suspend fun hmacSha256(
     key: ByteArray,
     data: ByteArray,
 ): ByteArray {
@@ -18,7 +15,7 @@ suspend fun hmacSha256(
  * Returns `false` on any mismatch (wrong key, tampered data, or truncated tag) instead of throwing —
  * a failed proof is an expected outcome (wrong PIN, revoked pairing), not an error.
  */
-suspend fun verifyHmacSha256(
+internal suspend fun verifyHmacSha256(
     key: ByteArray,
     data: ByteArray,
     expectedTag: ByteArray,
