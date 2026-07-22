@@ -23,8 +23,6 @@ class PairedDevicesScreenViewModel(
             is PairedDevicesScreenAction.Revoke -> {
                 vmScope.launch {
                     val clientId = action.clientId.toDeviceId()
-                    // Revoke the trust record first so a concurrent reconnect racing this session-close can't
-                    // slip through and re-authenticate before its live sessions are cut off.
                     pairingRepository.revokeClient(clientId)
                     networkServerRepository.closeSessionsForClient(clientId)
                 }

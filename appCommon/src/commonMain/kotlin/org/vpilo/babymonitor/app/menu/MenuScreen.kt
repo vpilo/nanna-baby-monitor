@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.app.menu
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -70,7 +71,7 @@ fun MenuScreen(
 @Composable
 private fun MenuScreenContent(
     modifier: Modifier = Modifier,
-    menuItems: @Composable () -> Unit,
+    menuItems: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
         modifier = modifier.fillMaxSize(),

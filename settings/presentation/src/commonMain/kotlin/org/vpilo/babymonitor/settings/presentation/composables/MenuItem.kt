@@ -35,12 +35,13 @@ fun MenuItem(
     bottomContent: (@Composable () -> Unit)? = null,
     onClick: () -> Unit = { },
 ) {
-    Column {
+    Column(
+        modifier =
+            modifier
+                .clickable(onClick = onClick)
+                .padding(vertical = Theme.Paddings.Small),
+    ) {
         Row(
-            modifier =
-                modifier
-                    .padding(top = Theme.Paddings.Small)
-                    .clickable(onClick = onClick),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (imageVector != null) {
@@ -77,19 +78,20 @@ fun MenuItem(
                 }
             }
         }
-    }
-    bottomContent?.let {
-        Column(
-            modifier =
-                Modifier
-                    .padding(
-                        top = Theme.Paddings.Tiny,
-                        start = Theme.Sizes.IconSmall + Theme.Paddings.Small,
-                        bottom = Theme.Paddings.Small,
-                    ),
-        ) {
-            it()
-        }
+        bottomContent
+            ?.let {
+                Column(
+                    modifier =
+                        Modifier
+                            .padding(
+                                top = Theme.Paddings.Tiny,
+                                start = Theme.Sizes.IconSmall + Theme.Paddings.Small,
+                                bottom = Theme.Paddings.Medium,
+                            ),
+                ) {
+                    it()
+                }
+            }
     }
 }
 
