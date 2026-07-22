@@ -1,18 +1,19 @@
-package org.vpilo.babymonitor.network.server.session
+package org.vpilo.babymonitor.network.server.pairing
 
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.network.model.repository.ActiveSessionsRepository
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * Tracks which [WebSocketSession]s are currently authenticated as which [DeviceId], so a revoked
- * client's already-active sessions can be cut off immediately instead of only at their next reconnect.
+ * Tracks which [WebSocketSession]s are currently authenticated as which [DeviceId], so an unpaired device's active sessions can be
+ * cut off immediately.
  */
-internal class ActiveSessionRegistry {
+internal class DefaultActiveSessionsRepository : ActiveSessionsRepository {
     private val sessionsByClient = ConcurrentHashMap<DeviceId, CopyOnWriteArrayList<WebSocketSession>>()
 
     fun register(
@@ -39,7 +40,7 @@ internal class ActiveSessionRegistry {
         }
     }
 
-    suspend fun closeSessionsForClient(clientId: DeviceId) {
+    override suspend fun closeSessions(clientId: DeviceId) {
         val sessions = sessionsByClient.remove(clientId) ?: return
         sessions.forEach { session ->
             // One dead/already-closing session throwing must not stop the rest of this client's sessions from
@@ -52,6 +53,6 @@ internal class ActiveSessionRegistry {
     }
 
     private companion object {
-        private val TAG = ActiveSessionRegistry::class
+        private val TAG = DefaultActiveSessionsRepository::class
     }
 }

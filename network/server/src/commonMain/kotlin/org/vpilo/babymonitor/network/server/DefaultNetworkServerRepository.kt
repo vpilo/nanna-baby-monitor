@@ -34,7 +34,6 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -45,7 +44,6 @@ import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
-import org.vpilo.babymonitor.network.server.session.ActiveSessionRegistry
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
@@ -56,7 +54,6 @@ import kotlin.coroutines.CoroutineContext
 internal class DefaultNetworkServerRepository(
     private val relayRegistration: RelayServerRegistration,
     private val pairingCoordinator: PairingCoordinator,
-    private val activeSessionRegistry: ActiveSessionRegistry,
     deviceStateRepository: DeviceStateRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
@@ -93,10 +90,6 @@ internal class DefaultNetworkServerRepository(
 
     override fun cancelPairingWindow() {
         pairingCoordinator.cancelPairingWindow()
-    }
-
-    override suspend fun closeSessionsForClient(clientId: DeviceId) {
-        activeSessionRegistry.closeSessionsForClient(clientId)
     }
 
     init {

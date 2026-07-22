@@ -10,15 +10,16 @@ import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.protocolSendAudio
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.model.repository.ActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
-import org.vpilo.babymonitor.network.server.session.ActiveSessionRegistry
+import org.vpilo.babymonitor.network.server.pairing.DefaultActiveSessionsRepository
 import org.vpilo.babymonitor.network.server.session.serverSessionHandshake
 
 internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket(serverDeviceId: DeviceId) {
     val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
     val handshake = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.AUDIO) ?: return
 
-    val sessionRegistry = KoinPlatform.getKoin().get<ActiveSessionRegistry>()
+    val sessionRegistry = KoinPlatform.getKoin().get<ActiveSessionsRepository>() as DefaultActiveSessionsRepository
     sessionRegistry.register(handshake.clientId, this)
     try {
         coroutineScope {

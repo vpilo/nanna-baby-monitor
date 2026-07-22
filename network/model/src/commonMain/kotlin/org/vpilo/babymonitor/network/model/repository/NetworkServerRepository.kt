@@ -23,7 +23,4 @@ interface NetworkServerRepository {
     fun startPairingWindow()
 
     fun cancelPairingWindow()
-
-    /** Immediately terminates any live control/audio/video sessions authenticated as [clientId]. */
-    suspend fun closeSessionsForClient(clientId: DeviceId)
 }

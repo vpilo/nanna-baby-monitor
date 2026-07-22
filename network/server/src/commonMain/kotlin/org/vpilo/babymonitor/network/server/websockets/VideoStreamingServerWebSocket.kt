@@ -11,8 +11,9 @@ import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.protocolSendVideo
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.model.repository.ActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
-import org.vpilo.babymonitor.network.server.session.ActiveSessionRegistry
+import org.vpilo.babymonitor.network.server.pairing.DefaultActiveSessionsRepository
 import org.vpilo.babymonitor.network.server.session.serverSessionHandshake
 
 internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket(serverDeviceId: DeviceId) {
@@ -22,7 +23,7 @@ internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket(serve
 
     val handshake = serverSessionHandshake(serverDeviceId, pairingRepository, StreamType.VIDEO) ?: return
 
-    val sessionRegistry = KoinPlatform.getKoin().get<ActiveSessionRegistry>()
+    val sessionRegistry = KoinPlatform.getKoin().get<ActiveSessionsRepository>() as DefaultActiveSessionsRepository
     sessionRegistry.register(handshake.clientId, this)
     try {
         coroutineScope {
