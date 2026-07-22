@@ -6,10 +6,9 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
-import org.vpilo.babymonitor.network.common.pairing.PAIRING_PIN_LENGTH
 import org.vpilo.babymonitor.network.common.pairing.PairingQrPayload
-import org.vpilo.babymonitor.network.model.ClientPairingFailureCause
-import org.vpilo.babymonitor.network.model.ClientPairingState
+import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
+import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 
@@ -21,8 +20,6 @@ class ClientPairingScreenViewModel(
 ) : AppViewModel<ClientPairingScreenAction, ClientPairingScreenState, ClientPairingScreenEffect>(
         initialState = ClientPairingScreenState(),
     ) {
-    val pairingPinLength: Int = PAIRING_PIN_LENGTH
-
     override fun SubscriptionScope.onSubscribed() {
         localDiscoveryRepository.discoveredDevicesFlow.subscribe { devices ->
             val deviceId = deviceId.toDeviceIdOrNull()

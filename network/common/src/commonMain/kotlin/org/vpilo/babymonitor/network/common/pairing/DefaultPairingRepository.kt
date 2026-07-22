@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.model.PairedClient
-import org.vpilo.babymonitor.network.model.PairedServer
+import org.vpilo.babymonitor.network.model.pairing.PairedClient
+import org.vpilo.babymonitor.network.model.pairing.PairedServer
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository

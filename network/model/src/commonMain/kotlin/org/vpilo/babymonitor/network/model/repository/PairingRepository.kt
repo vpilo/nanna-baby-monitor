@@ -2,8 +2,8 @@ package org.vpilo.babymonitor.network.model.repository
 
 import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.model.PairedClient
-import org.vpilo.babymonitor.network.model.PairedServer
+import org.vpilo.babymonitor.network.model.pairing.PairedClient
+import org.vpilo.babymonitor.network.model.pairing.PairedServer
 
 interface PairingRepository {
     val pairedServers: Flow<List<PairedServer>>

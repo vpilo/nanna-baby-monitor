@@ -33,6 +33,17 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.kotlinx.serialization)
         }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
+
+        val desktopTest = getByName("desktopTest")
+        desktopTest.dependencies {
+            implementation(libs.junit)
+            implementation(libs.junit.platform)
+        }
     }
 
     compilerOptions {

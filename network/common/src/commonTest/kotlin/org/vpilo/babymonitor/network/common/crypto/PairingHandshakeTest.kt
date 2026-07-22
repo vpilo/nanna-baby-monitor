@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.network.common.crypto
 
 import kotlinx.coroutines.test.runTest
+import org.vpilo.babymonitor.network.model.pairing.Pin
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -12,7 +13,7 @@ class PairingHandshakeTest {
         runTest {
             val client = EcdhKeyPair.create()
             val server = EcdhKeyPair.create()
-            val pin = "AB23CD"
+            val pin = Pin.generate()
             val fingerprint = "deadbeef".repeat(8)
 
             val clientSecret = deriveSharedSecretS(client.deriveSharedSecret(server.publicKeyEncoded))
@@ -35,9 +36,9 @@ class PairingHandshakeTest {
             val server = EcdhKeyPair.create()
             val transcript = buildPairingTranscript(client.publicKeyEncoded, server.publicKeyEncoded, "fingerprint")
 
-            val mc = computeClientConfirmation("AB23CD", transcript)
+            val mc = computeClientConfirmation(checkNotNull(Pin.fromStringOrNull("AB23CD")), transcript)
 
-            assertFalse(verifyClientConfirmation("WRONG1", transcript, mc))
+            assertFalse(verifyClientConfirmation(checkNotNull(Pin.fromStringOrNull("EF45GH")), transcript, mc))
         }
 
     @Test
@@ -45,7 +46,7 @@ class PairingHandshakeTest {
         runTest {
             val client = EcdhKeyPair.create()
             val server = EcdhKeyPair.create()
-            val pin = "AB23CD"
+            val pin = Pin.generate()
 
             val transcriptSeenByClient = buildPairingTranscript(client.publicKeyEncoded, server.publicKeyEncoded, "real-fingerprint")
             val transcriptSeenByServer = buildPairingTranscript(client.publicKeyEncoded, server.publicKeyEncoded, "mitm-fingerprint")

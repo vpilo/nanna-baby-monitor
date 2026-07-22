@@ -21,9 +21,9 @@ import org.vpilo.babymonitor.network.common.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.common.protocol.receivePairingResultOrNull
 import org.vpilo.babymonitor.network.common.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.common.protocol.sendPairingHello
-import org.vpilo.babymonitor.network.model.ClientPairingFailureCause
-import org.vpilo.babymonitor.network.model.ClientPairingState
-import org.vpilo.babymonitor.network.model.PairedServer
+import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
+import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
+import org.vpilo.babymonitor.network.model.pairing.PairedServer
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import java.net.InetAddress
 import java.security.cert.X509Certificate

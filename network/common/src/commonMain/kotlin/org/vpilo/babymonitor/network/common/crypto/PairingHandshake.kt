@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.network.common.crypto
 import org.vpilo.babymonitor.network.common.crypto.internal.hkdfSha256
 import org.vpilo.babymonitor.network.common.crypto.internal.hmacSha256
 import org.vpilo.babymonitor.network.common.crypto.internal.verifyHmacSha256
+import org.vpilo.babymonitor.network.model.pairing.Pin
 
 private const val PAIRING_SECRET_SIZE_BYTES = 32
 private val CLIENT_CONFIRMATION_LABEL = "c".encodeToByteArray()
@@ -26,9 +27,9 @@ fun buildPairingTranscript(
 ): ByteArray = clientPublicKey + serverPublicKey + serverCertFingerprint.encodeToByteArray()
 
 /** `KDF(PIN)` — the PIN is low-entropy, so this exists purely to get a fixed-size HMAC key, not to slow down brute force. */
-private suspend fun pinToMacKey(pin: String): ByteArray =
+private suspend fun pinToMacKey(pin: Pin): ByteArray =
     hkdfSha256(
-        pin.encodeToByteArray(),
+        pin.toString().encodeToByteArray(),
         salt = null,
         info = "babymonitor-pin".encodeToByteArray(),
         outputSizeBytes = 32,
@@ -36,24 +37,24 @@ private suspend fun pinToMacKey(pin: String): ByteArray =
 
 /** `Mc = HMAC(KDF(PIN), "c" ‖ T)`. */
 suspend fun computeClientConfirmation(
-    pin: String,
+    pin: Pin,
     transcript: ByteArray,
 ): ByteArray = hmacSha256(pinToMacKey(pin), CLIENT_CONFIRMATION_LABEL + transcript)
 
 suspend fun verifyClientConfirmation(
-    pin: String,
+    pin: Pin,
     transcript: ByteArray,
     mc: ByteArray,
 ): Boolean = verifyHmacSha256(pinToMacKey(pin), CLIENT_CONFIRMATION_LABEL + transcript, mc)
 
 /** `Ms = HMAC(KDF(PIN), "s" ‖ T)`. */
 suspend fun computeServerConfirmation(
-    pin: String,
+    pin: Pin,
     transcript: ByteArray,
 ): ByteArray = hmacSha256(pinToMacKey(pin), SERVER_CONFIRMATION_LABEL + transcript)
 
 suspend fun verifyServerConfirmation(
-    pin: String,
+    pin: Pin,
     transcript: ByteArray,
     ms: ByteArray,
 ): Boolean = verifyHmacSha256(pinToMacKey(pin), SERVER_CONFIRMATION_LABEL + transcript, ms)

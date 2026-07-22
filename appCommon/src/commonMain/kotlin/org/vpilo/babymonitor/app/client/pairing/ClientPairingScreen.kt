@@ -41,8 +41,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScanner
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScannerViewModel
-import org.vpilo.babymonitor.network.model.ClientPairingFailureCause
-import org.vpilo.babymonitor.network.model.ClientPairingState
+import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
+import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -84,7 +84,6 @@ fun ClientPairingScreen(
             serverName = state.server?.name.orEmpty(),
             pairingState = state.pairingState,
             isCameraAvailable = isCameraAvailable,
-            pairingPinLength = viewModel.pairingPinLength,
             onQrRead = { qrContent ->
                 viewModel.send(ClientPairingScreenAction.SubmitQr(qrContent))
             },
@@ -104,7 +103,6 @@ private fun ClientPairingView(
     serverName: String,
     pairingState: ClientPairingState,
     isCameraAvailable: Boolean = true,
-    pairingPinLength: Int = 3,
     onQrRead: (qrContent: String) -> Unit = {},
     onPinEntered: (pin: String) -> Unit = {},
     onCameraError: () -> Unit = {},
@@ -125,7 +123,6 @@ private fun ClientPairingView(
             modifier =
                 Modifier
                     .padding(Theme.Paddings.Medium),
-            pairingPinLength = pairingPinLength,
             onPinEntered = onPinEntered,
             pinResetKey = pairingState,
         )
@@ -204,7 +201,6 @@ private fun ClientPairingViewNormalPreview() {
         ClientPairingView(
             pairingState = ClientPairingState.Waiting,
             serverName = "Baby room",
-            pairingPinLength = 3,
         )
     }
 }
@@ -220,7 +216,6 @@ private fun ClientPairingViewErrorPreview() {
         ClientPairingView(
             pairingState = ClientPairingState.Failure(ClientPairingFailureCause.NO_ACTIVE_PAIRING_WINDOW),
             serverName = "Baby room",
-            pairingPinLength = 3,
         )
     }
 }
@@ -237,7 +232,6 @@ private fun ClientPairingViewNoCameraPreview() {
             pairingState = ClientPairingState.Failure(ClientPairingFailureCause.WRONG_PIN),
             serverName = "Baby room",
             isCameraAvailable = false,
-            pairingPinLength = 3,
         )
     }
 }
@@ -253,7 +247,6 @@ private fun ClientPairingViewPairingPreview() {
         ClientPairingView(
             pairingState = ClientPairingState.InProgress,
             serverName = "Baby room",
-            pairingPinLength = 3,
         )
     }
 }

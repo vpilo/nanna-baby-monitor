@@ -19,14 +19,14 @@ import org.vpilo.babymonitor.network.common.crypto.deriveSharedSecretS
 import org.vpilo.babymonitor.network.common.crypto.verifyClientConfirmation
 import org.vpilo.babymonitor.network.common.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.common.pairing.PairingResult
-import org.vpilo.babymonitor.network.common.pairing.generatePairingPin
 import org.vpilo.babymonitor.network.common.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.common.protocol.receivePairingHelloOrNull
 import org.vpilo.babymonitor.network.common.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.common.protocol.sendPairingResult
-import org.vpilo.babymonitor.network.model.PairedClient
-import org.vpilo.babymonitor.network.model.ServerPairingFailureReason
-import org.vpilo.babymonitor.network.model.ServerPairingState
+import org.vpilo.babymonitor.network.model.pairing.PairedClient
+import org.vpilo.babymonitor.network.model.pairing.Pin
+import org.vpilo.babymonitor.network.model.pairing.ServerPairingFailureReason
+import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.identity.fingerprint
@@ -51,7 +51,7 @@ class PairingCoordinator(
     private var activeWindow: ActiveWindow? = null
 
     fun startPairingWindow(self: Device.LocalServer) {
-        val pin = generatePairingPin()
+        val pin = Pin.generate()
         val qrText =
             PairingQrPayload(
                 deviceId = self.id,
@@ -135,7 +135,7 @@ class PairingCoordinator(
     }
 
     private class ActiveWindow(
-        val pin: String,
+        val pin: Pin,
         var remainingAttempts: Int,
     )
 

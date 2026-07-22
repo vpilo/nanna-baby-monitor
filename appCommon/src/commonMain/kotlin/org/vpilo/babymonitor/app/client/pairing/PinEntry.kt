@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.focusRequester
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.client_pairing_pin_label
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.settings.model.Platform
 import org.vpilo.babymonitor.settings.model.getCurrentPlatform
 
@@ -23,7 +24,6 @@ import org.vpilo.babymonitor.settings.model.getCurrentPlatform
 fun PinEntry(
     pinResetKey: Any,
     modifier: Modifier = Modifier,
-    pairingPinLength: Int,
     onPinEntered: (pin: String) -> Unit,
 ) {
     var pin by remember(pinResetKey) { mutableStateOf("") }
@@ -36,10 +36,11 @@ fun PinEntry(
                 .focusRequester(focusRequester),
         value = pin,
         onValueChange = {
-            pin = it.uppercase().take(pairingPinLength)
-            if (pin.length == pairingPinLength) {
-                onPinEntered(pin)
-            }
+            Pin
+                .fromStringOrNull(Pin.normalize(it))
+                ?.let { validPin ->
+                    onPinEntered(validPin.toString())
+                }
         },
         label = { Text(stringResource(Res.string.client_pairing_pin_label)) },
     )

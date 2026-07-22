@@ -3,12 +3,15 @@ package org.vpilo.babymonitor.network.common.pairing
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
+import org.vpilo.babymonitor.network.model.pairing.Pin
 
 data class PairingQrPayload(
     val deviceId: DeviceId,
-    val pin: String,
+    val pin: Pin,
 ) {
-    fun asPayloadString(): String = listOf(QR_PAYLOAD_PREFIX, PAIRING_PROTOCOL_VERSION, deviceId, pin).joinToString(QR_PAYLOAD_SEPARATOR)
+    fun asPayloadString(): String =
+        listOf(QR_PAYLOAD_PREFIX, PAIRING_PROTOCOL_VERSION, deviceId, pin.toString())
+            .joinToString(QR_PAYLOAD_SEPARATOR)
 
     companion object {
         private val TAG = PairingQrPayload::class
@@ -36,9 +39,9 @@ data class PairingQrPayload(
                 return null
             }
 
-            val pin = parts[3]
-            if (pin.length != PAIRING_PIN_LENGTH) {
-                Logger.w(TAG) { "Invalid PIN length ${pin.length}" }
+            val pin = Pin.fromStringOrNull(parts[3])
+            if (pin == null) {
+                Logger.w(TAG) { "Invalid PIN '${parts[3]}'" }
                 return null
             }
 

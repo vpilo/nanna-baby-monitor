@@ -41,7 +41,6 @@ actual class CameraQrScannerViewModel actual constructor(
                 Logger.d(TAG) { "QR code scan: $it" }
                 it ?: return@subscribe
                 CameraQrScannerEffect.QrScanned(it).sendEffect()
-                // VALERIO pause scanning after success
             }
     }
 
@@ -62,7 +61,6 @@ actual class CameraQrScannerViewModel actual constructor(
 
     private val analyzer =
         ImageAnalysis.Analyzer { imageProxy ->
-            // VALERIO stop entire composable on error
             val image =
                 @ExperimentalGetImage
                 imageProxy.image
@@ -112,7 +110,6 @@ actual class CameraQrScannerViewModel actual constructor(
         appContext: Context,
         lifecycleOwner: LifecycleOwner,
     ) {
-        Logger.d(TAG) { "BINDING" }
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
 
         analysisUseCase.setAnalyzer(coroutineContext.asExecutor(), analyzer)

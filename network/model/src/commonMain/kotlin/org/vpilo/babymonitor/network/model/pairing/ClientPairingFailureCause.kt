@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.network.model
+package org.vpilo.babymonitor.network.model.pairing
 
 enum class ClientPairingFailureCause {
     INVALID_QR,

@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.network.model
+package org.vpilo.babymonitor.network.model.pairing
 
 sealed interface ServerPairingState {
     data object Idle : ServerPairingState

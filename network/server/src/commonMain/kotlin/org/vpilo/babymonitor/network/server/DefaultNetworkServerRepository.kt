@@ -39,8 +39,8 @@ import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
-import org.vpilo.babymonitor.network.model.ServerPairingState
 import org.vpilo.babymonitor.network.model.ServerState
+import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator

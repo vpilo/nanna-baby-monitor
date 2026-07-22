@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.network.common.pairing
 
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.network.model.pairing.Pin
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -11,7 +12,7 @@ class PairingQrPayloadTest {
         val payload =
             PairingQrPayload(
                 deviceId = DeviceId.random(),
-                pin = "AB23CD",
+                pin = Pin.generate(),
             )
 
         val decoded = PairingQrPayload.fromPayloadStringOrNull(payload.asPayloadString())
