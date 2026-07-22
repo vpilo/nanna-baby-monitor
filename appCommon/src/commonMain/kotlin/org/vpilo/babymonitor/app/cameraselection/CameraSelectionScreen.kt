@@ -71,7 +71,7 @@ fun CameraSelectionScreen(
                     onConnected()
                 }
 
-                is CameraSelectionScreenEffect.ConnectToLastServer -> {
+                is CameraSelectionScreenEffect.ConnectToServer -> {
                     viewModel.send(CameraSelectionScreenAction.ConnectToServer(effect.server))
                 }
 

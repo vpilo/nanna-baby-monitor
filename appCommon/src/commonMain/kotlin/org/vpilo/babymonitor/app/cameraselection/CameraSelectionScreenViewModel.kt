@@ -118,8 +118,8 @@ class CameraSelectionScreenViewModel(
             state.copy(isAvailableOnRelay = isRegistered).update()
         }
 
-        vmScope.launch {
-            if (deviceId != null) {
+        if (deviceId != null) {
+            vmScope.launch {
                 val deviceId = deviceId.toDeviceIdOrNull() ?: return@launch
                 val server =
                     localDiscoveryRepository.discoveredDevicesFlow
@@ -127,7 +127,7 @@ class CameraSelectionScreenViewModel(
                         .filterIsInstance<Device.Server>()
                         .firstOrNull { it.id == deviceId }
                         ?: return@launch
-                CameraSelectionScreenEffect.ConnectToLastServer(server).sendEffect()
+                CameraSelectionScreenEffect.ConnectToServer(server).sendEffect()
             }
         }
     }
@@ -167,6 +167,6 @@ class CameraSelectionScreenViewModel(
                 if (lastServerId == null) return@combine null
                 serverList.filterIsInstance<Device.Server>().firstOrNull { it.id == lastServerId }
             }.filterNotNull().first()
-        CameraSelectionScreenEffect.ConnectToLastServer(lastServer).sendEffect()
+        CameraSelectionScreenEffect.ConnectToServer(lastServer).sendEffect()
     }
 }

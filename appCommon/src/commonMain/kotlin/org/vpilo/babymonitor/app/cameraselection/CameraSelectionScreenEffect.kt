@@ -4,7 +4,7 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 
 sealed interface CameraSelectionScreenEffect {
-    data class ConnectToLastServer(
+    data class ConnectToServer(
         val server: Device.Server,
     ) : CameraSelectionScreenEffect
 
