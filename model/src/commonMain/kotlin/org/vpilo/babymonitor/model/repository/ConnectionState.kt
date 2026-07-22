@@ -27,6 +27,6 @@ sealed interface ConnectionState {
         ServerQuit,
         ClientQuit,
         NotConnectedYet,
-        ConnectionFailed,
+        PairingRevoked,
     }
 }

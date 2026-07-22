@@ -113,7 +113,7 @@ fun ClientHomeScreen(
             batteryLevel = state.batteryLevel,
             signalQuality = state.signalQuality,
             connectionState = state.connectionState,
-            onDisconnected = onDisconnected,
+            onDisconnected = { viewModel.send(ClientHomeScreenAction.Disconnect) },
             isRemoteServer = isRemoteServer,
         )
     }

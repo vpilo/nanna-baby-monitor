@@ -8,6 +8,7 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.http.encodeURLPathPart
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.pingInterval
 import io.ktor.websocket.timeout
 import kotlinx.coroutines.CoroutineScope
@@ -76,6 +77,12 @@ internal class WebSocketConnectionHandler(
                         onDisconnected(lastException ?: CancellationException("Closed by client"))
                     }
 
+                is PairingRevokedException -> {
+                    Logger.w(TAG) { "Pairing revoked by server $host for $endpointPath: ${lastException.message}" }
+                    connectionJob = null
+                    onDisconnected(lastException)
+                }
+
                 is ClosedSendChannelException,
                 is ClosedReceiveChannelException,
                 is WebSocketException,
@@ -127,7 +134,7 @@ internal class WebSocketConnectionHandler(
                     pingInterval = Constants.WEBSOCKET_PING_PERIOD
                     timeout = Constants.WEBSOCKET_TIMEOUT
 
-                    sessionBlock()
+                    runSession()
                 }
             }
         } else {
@@ -140,7 +147,26 @@ internal class WebSocketConnectionHandler(
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
-                sessionBlock()
+                runSession()
+            }
+        }
+    }
+
+    /**
+     * Runs [sessionBlock] and, if the session ends because the server closed it with a policy violation, translates the
+     * close reason into a [PairingRevokedException] so the connection is dropped for good instead of retried.
+     */
+    private suspend fun DefaultClientWebSocketSession.runSession() {
+        try {
+            sessionBlock()
+        } catch (
+            @Suppress("TooGenericExceptionCaught") ex: Exception,
+        ) {
+            val reason = closeReason.await() ?: throw ex
+            throw when (reason.knownReason) {
+                CloseReason.Codes.VIOLATED_POLICY -> PairingRevokedException(reason.message)
+                CloseReason.Codes.PROTOCOL_ERROR -> ProtocolException(reason.message)
+                else -> ex
             }
         }
     }
@@ -156,3 +182,8 @@ internal class WebSocketConnectionHandler(
         private val TAG = WebSocketConnectionHandler::class
     }
 }
+
+/** Thrown when the server closes a connection because this client is no longer paired with it. */
+internal class PairingRevokedException(
+    message: String,
+) : Exception(message)

@@ -23,6 +23,7 @@ import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
+import java.net.ProtocolException
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
@@ -85,18 +86,16 @@ internal class DefaultNetworkClientRepository(
         controlHandler = null
     }
 
-    override suspend fun disconnect() {
+    fun disconnect(closeReason: ConnectionState.ErrorReason) {
         closeAllConnections()
-        connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ClientQuit)
+        connectionState.value = ConnectionState.Disconnected(closeReason)
         foregroundLink.stop()
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
-    override fun reset() {
-        closeAllConnections()
-        foregroundLink.stop()
-        connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet)
-    }
+    override suspend fun disconnect() = disconnect(ConnectionState.ErrorReason.ClientQuit)
+
+    override fun reset() = disconnect(ConnectionState.ErrorReason.NotConnectedYet)
 
     private fun onControlConnectionOpened(server: Device.Server) {
         serverSelectionDataSource.set(server)
@@ -108,11 +107,27 @@ internal class DefaultNetworkClientRepository(
         server: Device.Server,
         exception: Throwable,
     ) {
-        Logger.i(TAG) { "Control connection closed: ${exception.prettify()}" }
-
         if (connectionState.value is ConnectionState.Disconnected) {
             return
         }
+
+        Logger.i(TAG) { "Control connection closed: ${exception.prettify()}" }
+
+        when (exception) {
+            is PairingRevokedException -> {
+                Logger.w(TAG) { "Server revoked our pairing; unpairing $server and giving up" }
+                scope.launch { pairingRepository.unpairServer(server.id) }
+                disconnect(ConnectionState.ErrorReason.PairingRevoked)
+                return
+            }
+
+            is ProtocolException -> {
+                Logger.w(TAG) { "Server reported a protocol issue. Incompatible version?" }
+                disconnect(ConnectionState.ErrorReason.ServerQuit)
+                return
+            }
+        }
+
         // Reconnection failure case
         if (serverSelectionDataSource.server.value == null) {
             connectionState.value = ConnectionState.Disconnected(ConnectionState.ErrorReason.ServerNotFound)

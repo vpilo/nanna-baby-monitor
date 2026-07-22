@@ -31,10 +31,10 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_choos
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connecting
 import babymonitor.appcommon.generated.resources.client_connection_chooser_no_servers_found
+import babymonitor.appcommon.generated.resources.client_connection_chooser_pairing_revoked
 import babymonitor.appcommon.generated.resources.client_connection_chooser_reconnecting
 import babymonitor.appcommon.generated.resources.client_connection_chooser_server_not_found
 import babymonitor.appcommon.generated.resources.client_connection_chooser_server_quit
-import babymonitor.appcommon.generated.resources.client_connection_chooser_unknown_error
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -234,8 +234,8 @@ private suspend fun getConnectionStateMessage(
                     label = Res.string.client_connection_chooser_client_quit
                 }
 
-                else -> {
-                    label = Res.string.client_connection_chooser_unknown_error
+                ConnectionState.ErrorReason.PairingRevoked -> {
+                    label = Res.string.client_connection_chooser_pairing_revoked
                 }
             }
         }
@@ -276,10 +276,10 @@ private fun CameraSelectionScreenConnectingPreview() =
 
 @Preview
 @Composable
-private fun CameraSelectionScreenNoServersPreview() =
+private fun CameraSelectionScreenRevokedPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
-            connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.ConnectionFailed),
+            connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.PairingRevoked),
             servers = emptyList(),
             onConnectRequested = {},
         )
