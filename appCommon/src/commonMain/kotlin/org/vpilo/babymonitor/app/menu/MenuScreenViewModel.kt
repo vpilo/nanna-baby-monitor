@@ -3,9 +3,9 @@ package org.vpilo.babymonitor.app.menu
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
-import org.vpilo.babymonitor.model.repository.IsConnectionAvailableRepository
-import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.model.repository.IsConnectionAvailableRepository
+import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 
 @Stable
 class MenuScreenViewModel(

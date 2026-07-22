@@ -14,7 +14,7 @@ import org.vpilo.babymonitor.network.common.crypto.verifyServerHandshakeProof
 import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.receiveSessionHandshakeResponseOrNull
 import org.vpilo.babymonitor.network.common.protocol.sendSessionHandshakeRequest
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import kotlin.io.encoding.Base64
 
 /** Runs the client side of the per-connection session handshake; returns `null` (and closes [this]) on any failure. */

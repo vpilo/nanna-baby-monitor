@@ -3,15 +3,15 @@ package org.vpilo.babymonitor.app.client.pairing
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.ClientPairingFailureCause
-import org.vpilo.babymonitor.model.repository.ClientPairingState
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
-import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.common.crypto.PAIRING_PIN_LENGTH
 import org.vpilo.babymonitor.network.common.crypto.decodePairingQrPayloadOrNull
+import org.vpilo.babymonitor.network.model.ClientPairingFailureCause
+import org.vpilo.babymonitor.network.model.ClientPairingState
+import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 
 @Stable
 class ClientPairingScreenViewModel(

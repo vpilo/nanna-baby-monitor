@@ -4,7 +4,6 @@ import androidx.compose.runtime.Stable
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -15,13 +14,13 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
-import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
-import org.vpilo.babymonitor.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.settings.model.Setting
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 

@@ -3,7 +3,7 @@ package org.vpilo.babymonitor.network.client
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.vpilo.babymonitor.model.repository.ServerState
+import org.vpilo.babymonitor.network.model.ServerState
 
 internal class NetworkControlDataSource {
     private val collector: MutableStateFlow<ServerState> =

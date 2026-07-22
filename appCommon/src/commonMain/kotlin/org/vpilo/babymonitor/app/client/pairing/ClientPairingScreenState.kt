@@ -1,7 +1,7 @@
 package org.vpilo.babymonitor.app.client.pairing
 
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.ClientPairingState
+import org.vpilo.babymonitor.network.model.ClientPairingState
 
 data class ClientPairingScreenState(
     val server: Device.Server? = null,

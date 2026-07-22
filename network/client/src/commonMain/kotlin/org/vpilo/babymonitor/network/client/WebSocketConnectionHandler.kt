@@ -22,7 +22,7 @@ import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.relayHttpClient
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.ProtocolException

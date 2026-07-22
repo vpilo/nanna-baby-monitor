@@ -51,6 +51,7 @@ kotlin {
             implementation(project(":camera:model"))
             implementation(project(":camera:presentation"))
             implementation(project(":network:common"))
+            implementation(project(":network:model"))
             implementation(project(":network:client"))
             implementation(project(":network:server"))
             implementation(project(":network:presentation"))

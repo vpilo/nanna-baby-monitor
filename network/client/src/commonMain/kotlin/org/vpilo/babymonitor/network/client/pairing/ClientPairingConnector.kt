@@ -7,8 +7,6 @@ import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.ClientPairingFailureCause
-import org.vpilo.babymonitor.model.repository.ClientPairingState
 import org.vpilo.babymonitor.network.client.PinnedTrustManager
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
@@ -24,8 +22,10 @@ import org.vpilo.babymonitor.network.common.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.common.protocol.receivePairingResultOrNull
 import org.vpilo.babymonitor.network.common.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.common.protocol.sendPairingHello
-import org.vpilo.babymonitor.settings.model.repository.PairedServer
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.ClientPairingFailureCause
+import org.vpilo.babymonitor.network.model.ClientPairingState
+import org.vpilo.babymonitor.network.model.repository.PairedServer
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import java.net.InetAddress
 import java.security.cert.X509Certificate
 import kotlin.io.encoding.Base64

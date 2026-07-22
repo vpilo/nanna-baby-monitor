@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.ServerPairingFailureReason
-import org.vpilo.babymonitor.model.repository.ServerPairingState
 import org.vpilo.babymonitor.network.common.crypto.PAIRING_PROTOCOL_VERSION
 import org.vpilo.babymonitor.network.common.crypto.PairingQrPayload
 import org.vpilo.babymonitor.network.common.crypto.buildPairingTranscript
@@ -27,10 +25,12 @@ import org.vpilo.babymonitor.network.common.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.common.protocol.receivePairingHelloOrNull
 import org.vpilo.babymonitor.network.common.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.common.protocol.sendPairingResult
+import org.vpilo.babymonitor.network.model.ServerPairingFailureReason
+import org.vpilo.babymonitor.network.model.ServerPairingState
+import org.vpilo.babymonitor.network.model.repository.PairedClient
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.identity.fingerprint
-import org.vpilo.babymonitor.settings.model.repository.PairedClient
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.encoding.Base64
 import kotlin.time.Duration.Companion.minutes
@@ -116,7 +116,7 @@ class PairingCoordinator(
 
         pairingRepository.pairClient(
             PairedClient(
-                clientId = hello.clientId.toString(),
+                deviceId = hello.clientId.toString(),
                 name = hello.clientName,
                 sharedSecretBase64 = Base64.encode(sharedSecret),
                 pairedAtEpochMillis = System.currentTimeMillis(),

@@ -22,12 +22,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_paired_devices
 import babymonitor.appcommon.generated.resources.paired_devices_empty
-import babymonitor.appcommon.generated.resources.paired_devices_revoke
+import babymonitor.appcommon.generated.resources.paired_devices_unpair
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
-import org.vpilo.babymonitor.settings.model.repository.PairedClient
 
 @Composable
 fun PairedDevicesScreen(
@@ -44,7 +45,7 @@ fun PairedDevicesScreen(
     ) {
         PairedDevicesView(
             modifier = Modifier.fillMaxSize(),
-            clients = state.clients,
+            devices = state.devices,
             onRevoke = { viewModel.send(PairedDevicesScreenAction.Revoke(it)) },
         )
     }
@@ -53,10 +54,10 @@ fun PairedDevicesScreen(
 @Composable
 private fun PairedDevicesView(
     modifier: Modifier = Modifier,
-    clients: List<PairedClient>,
+    devices: List<Device>,
     onRevoke: (clientId: String) -> Unit,
 ) {
-    if (clients.isEmpty()) {
+    if (devices.isEmpty()) {
         Box(
             modifier = modifier.padding(Theme.Paddings.Medium),
             contentAlignment = Alignment.TopCenter,
@@ -74,15 +75,15 @@ private fun PairedDevicesView(
         contentPadding = PaddingValues(Theme.Paddings.Medium),
         verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Medium),
     ) {
-        items(clients, key = { it.clientId }) { client ->
+        items(devices, key = { it.id }) { device ->
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = Theme.Paddings.Medium),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = client.name, style = MaterialTheme.typography.titleSmall)
-                OutlinedButton(onClick = { onRevoke(client.clientId) }) {
-                    Text(text = stringResource(Res.string.paired_devices_revoke))
+                Text(text = device.name, style = MaterialTheme.typography.titleSmall)
+                OutlinedButton(onClick = { onRevoke(device.id.toString()) }) {
+                    Text(text = stringResource(Res.string.paired_devices_unpair))
                 }
             }
             HorizontalDivider()
@@ -96,13 +97,11 @@ private fun PairedDevicesViewPreview() =
     AppPreviewTheme {
         PairedDevicesView(
             modifier = Modifier.fillMaxSize(),
-            clients =
+            devices =
                 (1..5).map { idx ->
-                    PairedClient(
-                        clientId = "$idx",
+                    Device.Client(
+                        id = DeviceId.random(),
                         name = "Device $idx",
-                        sharedSecretBase64 = "secret",
-                        pairedAtEpochMillis = 0L,
                     )
                 },
             onRevoke = {},
@@ -115,7 +114,7 @@ private fun PairedDevicesViewEmptyPreview() =
     AppPreviewTheme {
         PairedDevicesView(
             modifier = Modifier.fillMaxSize(),
-            clients = listOf(),
+            devices = listOf(),
             onRevoke = {},
         )
     }

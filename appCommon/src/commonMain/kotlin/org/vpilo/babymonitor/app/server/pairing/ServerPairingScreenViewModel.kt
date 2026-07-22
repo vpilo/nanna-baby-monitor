@@ -1,8 +1,8 @@
 package org.vpilo.babymonitor.app.server.pairing
 
 import androidx.compose.runtime.Stable
-import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceName

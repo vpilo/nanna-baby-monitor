@@ -1,7 +1,7 @@
 package org.vpilo.babymonitor.app.server.paireddevices
 
-import org.vpilo.babymonitor.settings.model.repository.PairedClient
+import org.vpilo.babymonitor.model.Device
 
 data class PairedDevicesScreenState(
-    val clients: List<PairedClient> = emptyList(),
+    val devices: List<Device> = emptyList(),
 )

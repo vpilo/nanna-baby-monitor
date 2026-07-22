@@ -9,8 +9,8 @@ import org.vpilo.babymonitor.network.client.session.clientSessionHandshake
 import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.protocolReceiveVideo
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.Setting
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceId
 

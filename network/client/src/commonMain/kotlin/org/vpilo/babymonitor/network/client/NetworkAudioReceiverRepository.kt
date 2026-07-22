@@ -13,7 +13,7 @@ import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import kotlin.coroutines.CoroutineContext
 
 internal class NetworkAudioReceiverRepository(

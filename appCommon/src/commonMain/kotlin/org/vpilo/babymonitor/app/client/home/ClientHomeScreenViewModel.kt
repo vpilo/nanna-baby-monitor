@@ -13,11 +13,11 @@ import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.ConnectionState
-import org.vpilo.babymonitor.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 

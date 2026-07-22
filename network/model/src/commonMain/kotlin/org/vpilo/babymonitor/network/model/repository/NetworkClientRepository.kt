@@ -1,7 +1,10 @@
-package org.vpilo.babymonitor.model.repository
+package org.vpilo.babymonitor.network.model.repository
 
 import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.ConnectionState
+import org.vpilo.babymonitor.network.model.ClientPairingState
+import org.vpilo.babymonitor.network.model.ServerState
 
 interface NetworkClientRepository {
     val connectionStateFlow: Flow<ConnectionState>

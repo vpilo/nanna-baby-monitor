@@ -1,15 +1,13 @@
-package org.vpilo.babymonitor.settings.data
+package org.vpilo.babymonitor.network.common.pairing
 
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.network.model.repository.PairedClient
+import org.vpilo.babymonitor.network.model.repository.PairedServer
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.Setting
-import org.vpilo.babymonitor.settings.model.repository.PairedClient
-import org.vpilo.babymonitor.settings.model.repository.PairedServer
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.PairedClientsJson
 import org.vpilo.babymonitor.settings.model.settings.PairedServersJson
@@ -38,15 +36,15 @@ internal class DefaultPairingRepository(
         settingsRepository.flowOf(Setting.PairedClientsJson).map { it.decodeClientsOrEmpty() }
 
     override suspend fun pairClient(client: PairedClient) {
-        val updated = loadClients().filterNot { it.clientId == client.clientId } + client
+        val updated = loadClients().filterNot { it.deviceId == client.deviceId } + client
         settingsRepository.save(Setting.PairedClientsJson, json.encodeToString(updated))
-        Logger.i(TAG) { "Paired client ${client.clientId}" }
+        Logger.i(TAG) { "Paired client ${client.deviceId}" }
     }
 
-    override suspend fun findClient(clientId: DeviceId): PairedClient? = loadClients().firstOrNull { it.clientId == clientId.toString() }
+    override suspend fun findClient(clientId: DeviceId): PairedClient? = loadClients().firstOrNull { it.deviceId == clientId.toString() }
 
     override suspend fun revokeClient(clientId: DeviceId) {
-        val updated = loadClients().filterNot { it.clientId == clientId.toString() }
+        val updated = loadClients().filterNot { it.deviceId == clientId.toString() }
         settingsRepository.save(Setting.PairedClientsJson, json.encodeToString(updated))
         Logger.i(TAG) { "Revoked client $clientId" }
     }

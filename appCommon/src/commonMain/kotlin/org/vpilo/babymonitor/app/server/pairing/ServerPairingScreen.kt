@@ -25,8 +25,8 @@ import babymonitor.appcommon.generated.resources.pairing_retry
 import babymonitor.appcommon.generated.resources.pairing_succeeded
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.model.repository.ServerPairingFailureReason
-import org.vpilo.babymonitor.model.repository.ServerPairingState
+import org.vpilo.babymonitor.network.model.ServerPairingFailureReason
+import org.vpilo.babymonitor.network.model.ServerPairingState
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination

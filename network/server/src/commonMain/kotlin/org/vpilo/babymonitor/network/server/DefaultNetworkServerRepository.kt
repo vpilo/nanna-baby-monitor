@@ -36,13 +36,13 @@ import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
-import org.vpilo.babymonitor.model.repository.NetworkServerRepository
-import org.vpilo.babymonitor.model.repository.ServerPairingState
-import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.model.ServerPairingState
+import org.vpilo.babymonitor.network.model.ServerState
+import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
 import org.vpilo.babymonitor.network.server.session.ActiveSessionRegistry

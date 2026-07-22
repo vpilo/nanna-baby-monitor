@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -34,6 +35,10 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":common"))
             implementation(project(":model"))
+            implementation(project(":network:model"))
+            implementation(project(":settings:model"))
+
+            implementation(libs.kotlinx.serialization)
 
             implementation(libs.ktor.websockets)
             implementation(libs.bundles.ktor.client)

@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.map
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.discovery.ktx.toAttributes
+import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 
 internal actual class DefaultLocalDiscoveryRepository(
     context: Context,

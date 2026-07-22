@@ -11,9 +11,9 @@ import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.model.repository.LocalDiscoveryRepository
-import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceId

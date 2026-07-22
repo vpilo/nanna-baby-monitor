@@ -6,8 +6,8 @@ import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
-import org.vpilo.babymonitor.model.repository.ServerState
 import org.vpilo.babymonitor.network.common.crypto.SessionFrameCipher
+import org.vpilo.babymonitor.network.model.ServerState
 
 suspend fun WebSocketSession.protocolSendAudio(
     chunk: EncodedAudioStreamChunk,

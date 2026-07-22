@@ -8,9 +8,9 @@ import org.koin.java.KoinJavaComponent
 import org.vpilo.babymonitor.app.settings.IsFirstRun
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceId

@@ -13,7 +13,7 @@ import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
 import org.vpilo.babymonitor.network.common.Constants
 import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.settings.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import kotlin.coroutines.CoroutineContext
 
 internal class NetworkVideoReceiverRepository(

@@ -41,8 +41,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScanner
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScannerViewModel
-import org.vpilo.babymonitor.model.repository.ClientPairingFailureCause
-import org.vpilo.babymonitor.model.repository.ClientPairingState
+import org.vpilo.babymonitor.network.model.ClientPairingFailureCause
+import org.vpilo.babymonitor.network.model.ClientPairingState
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination

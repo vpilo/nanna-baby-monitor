@@ -1,7 +1,8 @@
-package org.vpilo.babymonitor.settings.model.repository
+package org.vpilo.babymonitor.network.model.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 
 @Serializable
@@ -10,15 +11,19 @@ data class PairedServer(
     val name: String,
     val certFingerprint: String,
     val sharedSecretBase64: String,
-)
+) {
+    fun asDevice(): Device = Device.LocalServer(DeviceId.parse(deviceId), name)
+}
 
 @Serializable
 data class PairedClient(
-    val clientId: String,
+    val deviceId: String,
     val name: String,
     val sharedSecretBase64: String,
     val pairedAtEpochMillis: Long,
-)
+) {
+    fun asDevice(): Device = Device.Client(DeviceId.parse(deviceId), name)
+}
 
 interface PairingRepository {
     val pairedServers: Flow<List<PairedServer>>
