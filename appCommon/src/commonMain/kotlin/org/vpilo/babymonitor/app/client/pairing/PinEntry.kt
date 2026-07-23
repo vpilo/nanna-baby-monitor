@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.app.client.pairing
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.material3.OutlinedTextField
@@ -33,11 +34,13 @@ fun PinEntry(
         modifier =
             modifier
                 .requiredHeight(IntrinsicSize.Min)
+                .focusable()
                 .focusRequester(focusRequester),
         value = pin,
         onValueChange = {
+            pin = Pin.normalize(it)
             Pin
-                .fromStringOrNull(Pin.normalize(it))
+                .fromStringOrNull(pin)
                 ?.let { validPin ->
                     onPinEntered(validPin)
                 }
