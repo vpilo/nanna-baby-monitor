@@ -55,7 +55,6 @@ kotlin {
             implementation(libs.androidx.camera.compose)
             implementation(libs.androidx.camera.core)
             implementation(libs.androidx.camera.lifecycle)
-            implementation(project(":network:common"))
         }
         val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {

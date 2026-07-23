@@ -1,11 +1,11 @@
-package org.vpilo.babymonitor.network.server.pairing
+package org.vpilo.babymonitor.network.common.protocol
 
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.model.repository.ActiveSessionsRepository
+import org.vpilo.babymonitor.network.common.repository.InternalActiveSessionsRepository
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -13,10 +13,10 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Tracks which [WebSocketSession]s are currently authenticated as which [DeviceId], so an unpaired device's active sessions can be
  * cut off immediately.
  */
-internal class DefaultActiveSessionsRepository : ActiveSessionsRepository {
+internal class DefaultActiveSessionsRepository : InternalActiveSessionsRepository {
     private val sessionsByClient = ConcurrentHashMap<DeviceId, CopyOnWriteArrayList<WebSocketSession>>()
 
-    fun register(
+    override fun register(
         clientId: DeviceId,
         session: WebSocketSession,
     ) {
@@ -28,7 +28,7 @@ internal class DefaultActiveSessionsRepository : ActiveSessionsRepository {
         }
     }
 
-    fun unregister(
+    override fun unregister(
         clientId: DeviceId,
         session: WebSocketSession,
     ) {
@@ -40,16 +40,27 @@ internal class DefaultActiveSessionsRepository : ActiveSessionsRepository {
         }
     }
 
-    override suspend fun closeSessions(clientId: DeviceId) {
+    override suspend fun closeSessions(
+        clientId: DeviceId,
+        wasUnpaired: Boolean,
+    ) {
         val sessions = sessionsByClient.remove(clientId) ?: return
         sessions.forEach { session ->
             // One dead/already-closing session throwing must not stop the rest of this client's sessions from
             // being cut off too.
+            val reason =
+                if (wasUnpaired) {
+                    CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Unpaired")
+                } else {
+                    CloseReason(CloseReason.Codes.GOING_AWAY, "Server closing")
+                }
             runCatching {
-                session.close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Revoked"))
-            }.onFailure { Logger.w(TAG, it) { "Failed to close a session for revoked client $clientId" } }
+                session.close(reason)
+            }.onFailure {
+                Logger.w(TAG, it) { "Failed to close a session for client $clientId (was unpaired=$wasUnpaired)" }
+            }
         }
-        Logger.i(TAG) { "Closed ${sessions.size} active session(s) for revoked client $clientId" }
+        Logger.i(TAG) { "Closed ${sessions.size} active session(s) for client $clientId" }
     }
 
     private companion object {

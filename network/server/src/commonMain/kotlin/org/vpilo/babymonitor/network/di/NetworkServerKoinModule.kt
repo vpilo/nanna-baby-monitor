@@ -6,13 +6,11 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
-import org.vpilo.babymonitor.network.model.repository.ActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.server.DefaultNetworkServerRepository
 import org.vpilo.babymonitor.network.server.NetworkAudioSenderRepository
 import org.vpilo.babymonitor.network.server.NetworkVideoSenderRepository
 import org.vpilo.babymonitor.network.server.RelayServerRegistration
-import org.vpilo.babymonitor.network.server.pairing.DefaultActiveSessionsRepository
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
 
 val networkServerKoinModule: Module =
@@ -28,6 +26,4 @@ val networkServerKoinModule: Module =
 
         singleOf(::DefaultNetworkServerRepository)
             .bind<NetworkServerRepository>()
-        singleOf(::DefaultActiveSessionsRepository)
-            .bind<ActiveSessionsRepository>()
     }

@@ -15,7 +15,6 @@ import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
-import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.pingInterval
 import io.ktor.websocket.timeout
@@ -41,13 +40,13 @@ import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
+import org.vpilo.babymonitor.network.model.repository.ActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
@@ -55,6 +54,7 @@ internal class DefaultNetworkServerRepository(
     private val relayRegistration: RelayServerRegistration,
     private val pairingCoordinator: PairingCoordinator,
     deviceStateRepository: DeviceStateRepository,
+    private val activeSessionsRepository: ActiveSessionsRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
@@ -65,10 +65,6 @@ internal class DefaultNetworkServerRepository(
     private var self: Device.LocalServer? = null
 
     private val foregroundLink = ForegroundServiceLink(AppRole.SERVER)
-
-    private val activeControlSessions = CopyOnWriteArrayList<WebSocketSession>()
-    private val activeAudioSessions = CopyOnWriteArrayList<WebSocketSession>()
-    private val activeVideoSessions = CopyOnWriteArrayList<WebSocketSession>()
 
     private val state = MutableStateFlow(ServerState())
     override val serverStateFlow: Flow<ServerState> = state.asStateFlow()
@@ -173,9 +169,6 @@ internal class DefaultNetworkServerRepository(
         withContext(coroutineContext) {
             Logger.i(TAG) { "Requested server stop" }
             relayRegistration.stop()
-            activeControlSessions.closeAll()
-            activeAudioSessions.closeAll()
-            activeVideoSessions.closeAll()
             server?.stop(
                 shutdownGracePeriod = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
                 shutdownTimeout = Constants.SERVER_STOP_GRACE_PERIOD.inWholeSeconds,
@@ -189,25 +182,14 @@ internal class DefaultNetworkServerRepository(
 
     override suspend fun setCaptureMode(mode: CaptureMode) {
         when (mode) {
-            CaptureMode.VIDEO_ONLY -> {
-                activeAudioSessions.closeAll()
-            }
+            CaptureMode.VIDEO_ONLY,
+            CaptureMode.AUDIO_ONLY,
+                -> self?.id?.let { activeSessionsRepository.closeSessions(it, wasUnpaired = false) }
 
-            CaptureMode.AUDIO_ONLY -> {
-                activeVideoSessions.closeAll()
-            }
-
-            else -> {
-                // Nothing to do
-            }
+            else -> Unit // Nothing to do
         }
         Logger.i(TAG) { "Requested update to $mode" }
         state.update { it.copy(captureMode = mode) }
-    }
-
-    private suspend fun MutableList<WebSocketSession>.closeAll() {
-        forEach { it.close(CloseReason(CloseReason.Codes.GOING_AWAY, "")) }
-        clear()
     }
 
     private fun Application.serverModule() {
@@ -227,12 +209,10 @@ internal class DefaultNetworkServerRepository(
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
-                activeControlSessions.add(this)
                 try {
                     controlServerWebSocket(serverDeviceId = checkNotNull(self).id)
                 } finally {
                     Logger.i(TAG) { "Closed control session" }
-                    activeControlSessions.remove(this)
                 }
             }
             webSocket(Endpoints.STREAM_AUDIO) {
@@ -243,12 +223,10 @@ internal class DefaultNetworkServerRepository(
                     close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Audio streaming is disabled"))
                     return@webSocket
                 }
-                activeAudioSessions.add(this)
                 try {
                     audioStreamingServerWebSocket(serverDeviceId = checkNotNull(self).id)
                 } finally {
                     Logger.i(TAG) { "Closed audio session" }
-                    activeAudioSessions.remove(this)
                 }
             }
             webSocket(Endpoints.STREAM_VIDEO) {
@@ -259,12 +237,10 @@ internal class DefaultNetworkServerRepository(
                     close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Video streaming is disabled"))
                     return@webSocket
                 }
-                activeVideoSessions.add(this)
                 try {
                     videoStreamingServerWebSocket(serverDeviceId = checkNotNull(self).id)
                 } finally {
                     Logger.i(TAG) { "Closed video session" }
-                    activeVideoSessions.remove(this)
                 }
             }
             webSocket(Endpoints.PAIR) {

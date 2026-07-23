@@ -26,7 +26,7 @@ class PairedDevicesScreenViewModel(
                 vmScope.launch {
                     val clientId = action.clientId.toDeviceId()
                     unpairDeviceUseCase(clientId)
-                    activeSessionsRepository.closeSessions(clientId)
+                    activeSessionsRepository.closeSessions(clientId, wasUnpaired = true)
                 }
             }
         }

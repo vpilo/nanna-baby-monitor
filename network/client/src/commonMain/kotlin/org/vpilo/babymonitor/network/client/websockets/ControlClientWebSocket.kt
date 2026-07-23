@@ -10,6 +10,7 @@ import org.vpilo.babymonitor.network.common.protocol.ServerMessage
 import org.vpilo.babymonitor.network.common.protocol.StreamType
 import org.vpilo.babymonitor.network.common.protocol.receiveServerMessage
 import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.common.repository.InternalActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
@@ -23,12 +24,18 @@ internal suspend fun DefaultClientWebSocketSession.controlClientWebSocket(server
 
     val cipher = clientSessionHandshake(clientId, serverDeviceId, pairingRepository, StreamType.CONTROL) ?: return
 
-    runWebSocketCatching(TAG) {
-        while (true) {
-            when (val message = receiveServerMessage(cipher)) {
-                is ServerMessage.State -> dataSource.onServerStateReceived(message.payload)
+    val sessionRegistry = KoinPlatform.getKoin().get<InternalActiveSessionsRepository>()
+    sessionRegistry.register(serverDeviceId, this)
+    try {
+        runWebSocketCatching(TAG) {
+            while (true) {
+                when (val message = receiveServerMessage(cipher)) {
+                    is ServerMessage.State -> dataSource.onServerStateReceived(message.payload)
+                }
             }
         }
+    } finally {
+        sessionRegistry.unregister(serverDeviceId, this)
     }
 }
 
