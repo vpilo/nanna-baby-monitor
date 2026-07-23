@@ -1,8 +1,8 @@
-package org.vpilo.babymonitor.settings.data
+package org.vpilo.babymonitor.settings.model
 
 import java.io.File
 
-internal actual fun getDataStoreDir(): File {
+actual fun getSettingsDir(): File {
     val home = System.getProperty("user.home")
     return File(home, ".config/babymonitor")
 }
