@@ -37,22 +37,9 @@ kotlin {
             implementation(libs.bundles.ktor.server)
             implementation(libs.bundles.ktor.client)
             implementation(libs.ktor.server.netty)
+            implementation(libs.ktor.network.tls.certificates)
 
             implementation(libs.koin.core)
         }
-
-        val desktopMain = getByName("desktopMain")
-        desktopMain.dependencies {
-            implementation(libs.ktor.network.tls.certificates)
-        }
-
-        val androidMain = getByName("androidMain")
-        androidMain.dependencies {
-            implementation(libs.ktor.network.tls.certificates)
-        }
-    }
-
-    compilerOptions {
-        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 }

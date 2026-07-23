@@ -55,7 +55,7 @@ internal class ClientPairingConnector(
                 }
             }
 
-        if (server.addresses.isEmpty()) {
+        if (server is Device.RemoteServer || server.addresses.isEmpty()) {
             Logger.w(TAG) { "Server $server has no addresses" }
             return ClientPairingState.Failure(ClientPairingFailureCause.SERVER_NOT_ON_NETWORK)
         }

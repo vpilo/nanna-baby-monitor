@@ -29,7 +29,6 @@ import org.vpilo.babymonitor.network.model.pairing.ServerPairingFailureReason
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
-import org.vpilo.babymonitor.network.server.identity.fingerprint
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.encoding.Base64
 import kotlin.time.Duration.Companion.minutes
