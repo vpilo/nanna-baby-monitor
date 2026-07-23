@@ -80,6 +80,7 @@ class PairingCoordinator(
     ) {
         val window = activeWindow
         if (window == null) {
+            Logger.w(TAG) { "Rejecting pairing session: no active pairing window" }
             session.close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "No active pairing window"))
             return
         }

@@ -2,9 +2,12 @@ package org.vpilo.babymonitor.network.client.pairing
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
+import io.ktor.websocket.CloseReason
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.client.PinnedTrustManager
@@ -87,33 +90,13 @@ internal class ClientPairingConnector(
                 port = Constants.SERVICE_PORT,
                 path = Endpoints.PAIR,
             ) {
-                val clientKeyPair = EcdhKeyPair.create()
-                sendPairingHello(clientDevice.id, clientDevice.name, clientKeyPair.publicKeyEncoded)
-
-                val serverPublicKey = receiveBase64FrameOrNull()
-                val certificate = trustManager.capturedCertificate
-                if (serverPublicKey == null || certificate == null) {
-                    outcome = GENERIC_FAILURE
-                    return@wss
-                }
-
-                val transcript = buildPairingTranscript(clientKeyPair.publicKeyEncoded, serverPublicKey, certificate.sha256Fingerprint())
-                sendBase64Frame(computeClientConfirmation(pin, transcript))
-
-                outcome =
-                    when (val result = receivePairingResultOrNull()) {
-                        is PairingResult.Success -> {
-                            handleServerConfirmation(result, pin, transcript, clientKeyPair, serverPublicKey, server, certificate)
+                val certificate =
+                    trustManager.capturedCertificate
+                        ?: run {
+                            outcome = GENERIC_FAILURE
+                            return@wss
                         }
-
-                        is PairingResult.Failure -> {
-                            ClientPairingState.Failure(ClientPairingFailureCause.WRONG_PIN)
-                        }
-
-                        null -> {
-                            GENERIC_FAILURE
-                        }
-                    }
+                outcome = runPairing(certificate, server, clientDevice, pin)
             }
             outcome
         } catch (
@@ -121,6 +104,46 @@ internal class ClientPairingConnector(
         ) {
             Logger.w(TAG) { "Pairing with $server via $host (${host.hostAddress}) failed: $ex" }
             GENERIC_FAILURE
+        }
+    }
+
+    private suspend fun DefaultClientWebSocketSession.runPairing(
+        certificate: X509Certificate,
+        server: Device.Server,
+        clientDevice: Device.Client,
+        pin: Pin,
+    ): ClientPairingState {
+        try {
+            val clientKeyPair = EcdhKeyPair.create()
+            sendPairingHello(clientDevice.id, clientDevice.name, clientKeyPair.publicKeyEncoded)
+
+            val serverPublicKey = receiveBase64FrameOrNull() ?: return GENERIC_FAILURE
+
+            val transcript = buildPairingTranscript(clientKeyPair.publicKeyEncoded, serverPublicKey, certificate.sha256Fingerprint())
+            sendBase64Frame(computeClientConfirmation(pin, transcript))
+
+            return when (val result = receivePairingResultOrNull()) {
+                is PairingResult.Success -> {
+                    handleServerConfirmation(result, pin, transcript, clientKeyPair, serverPublicKey, server, certificate)
+                }
+
+                is PairingResult.Failure -> {
+                    ClientPairingState.Failure(ClientPairingFailureCause.WRONG_PIN)
+                }
+
+                null -> {
+                    GENERIC_FAILURE
+                }
+            }
+        } catch (ex: ClosedReceiveChannelException) {
+            val reason = closeReason.await() ?: throw ex
+            return ClientPairingState.Failure(
+                when (reason.knownReason) {
+                    CloseReason.Codes.CANNOT_ACCEPT -> ClientPairingFailureCause.NO_ACTIVE_PAIRING_WINDOW
+                    CloseReason.Codes.VIOLATED_POLICY -> ClientPairingFailureCause.WRONG_PIN
+                    else -> ClientPairingFailureCause.CONNECTION_FAILED
+                },
+            )
         }
     }
 
