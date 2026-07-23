@@ -65,7 +65,6 @@ kotlin {
 
         val desktopTest = getByName("desktopTest")
         desktopTest.dependencies {
-            implementation(libs.junit)
             implementation(libs.junit.platform)
             implementation(libs.ktor.network.tls.certificates)
         }

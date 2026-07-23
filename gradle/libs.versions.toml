@@ -73,7 +73,6 @@ androidx-camera-core = { group = "androidx.camera", name = "camera-core", versio
 androidx-camera-impl = { group = "androidx.camera", name = "camera-camera2", version.ref = "androidx-camera" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "androidx-camera" }
 androidx-camera-video = { group = "androidx.camera", name = "camera-video", version.ref = "androidx-camera" }
-androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "androidx-camera" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version.ref = "webcam-capture" }
 javacpp = { group = "org.bytedeco", name = "javacpp", version.ref = "javacpp" }
@@ -81,7 +80,6 @@ ffmpeg = { group = "org.bytedeco", name = "ffmpeg-platform", version.ref = "ffmp
 
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
-kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlin-serialization" }
 
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
@@ -113,8 +111,8 @@ oshi = { module = "com.github.oshi:oshi-core-java11", version.ref = "oshi" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
-junit = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 junit-platform = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
