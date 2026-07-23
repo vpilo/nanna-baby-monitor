@@ -24,7 +24,7 @@ import org.vpilo.babymonitor.settings.model.getCurrentPlatform
 fun PinEntry(
     pinResetKey: Any,
     modifier: Modifier = Modifier,
-    onPinEntered: (pin: String) -> Unit,
+    onPinEntered: (pin: Pin) -> Unit,
 ) {
     var pin by remember(pinResetKey) { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
@@ -39,7 +39,7 @@ fun PinEntry(
             Pin
                 .fromStringOrNull(Pin.normalize(it))
                 ?.let { validPin ->
-                    onPinEntered(validPin.toString())
+                    onPinEntered(validPin)
                 }
         },
         label = { Text(stringResource(Res.string.client_pairing_pin_label)) },

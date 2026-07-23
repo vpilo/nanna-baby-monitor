@@ -5,6 +5,7 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
+import org.vpilo.babymonitor.network.model.pairing.Pin
 
 interface NetworkClientRepository {
     val connectionStateFlow: Flow<ConnectionState>
@@ -15,7 +16,7 @@ interface NetworkClientRepository {
 
     suspend fun pairWith(
         server: Device.Server,
-        pin: String,
+        pin: Pin,
     ): ClientPairingState
 
     suspend fun disconnect()

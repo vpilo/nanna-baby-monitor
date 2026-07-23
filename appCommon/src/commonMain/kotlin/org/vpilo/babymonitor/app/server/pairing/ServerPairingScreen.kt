@@ -25,6 +25,7 @@ import babymonitor.appcommon.generated.resources.pairing_retry
 import babymonitor.appcommon.generated.resources.pairing_succeeded
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingFailureReason
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
@@ -83,7 +84,7 @@ private fun ServerPairingView(
             is ServerPairingState.Active -> {
                 QrCodeImage(data = pairingState.qrText, modifier = Modifier.size(240.dp))
                 Text(text = stringResource(Res.string.pairing_enter_pin), style = MaterialTheme.typography.bodyMedium)
-                Text(text = pairingState.pin, style = MaterialTheme.typography.displaySmall)
+                Text(text = pairingState.pin.toString(), style = MaterialTheme.typography.displaySmall)
             }
 
             is ServerPairingState.Succeeded -> {
@@ -128,8 +129,8 @@ private fun ServerPairingViewActivePreview() =
         ServerPairingView(
             pairingState =
                 ServerPairingState.Active(
-                    pin = "AB23CD",
-                    qrText = "bm|1|00000000-0000-0000-0000-000000000000|AB23CD|192.168.1.1",
+                    pin = Pin.generate(),
+                    qrText = "bm|1|00000000-0000-0000-0000-000000000000|AB23CD",
                 ),
         )
     }

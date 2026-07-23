@@ -20,6 +20,7 @@ import org.vpilo.babymonitor.network.common.Endpoints
 import org.vpilo.babymonitor.network.common.ForegroundServiceLink
 import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
+import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
@@ -74,7 +75,7 @@ internal class DefaultNetworkClientRepository(
 
     override suspend fun pairWith(
         server: Device.Server,
-        pin: String,
+        pin: Pin,
     ): ClientPairingState {
         val clientDevice = getLocalClientDeviceFlowUseCase().first()
         return pairingConnector.pairWith(server, clientDevice, pin)

@@ -9,6 +9,7 @@ import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.common.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
+import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 
@@ -69,7 +70,7 @@ class ClientPairingScreenViewModel(
         attemptPairing(qrPayload.pin)
     }
 
-    private fun attemptPairing(pin: String) {
+    private fun attemptPairing(pin: Pin) {
         val server = state.server ?: return
 
         vmScope.launch {

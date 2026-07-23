@@ -43,6 +43,7 @@ import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScanner
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScannerViewModel
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
+import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
@@ -104,7 +105,7 @@ private fun ClientPairingView(
     pairingState: ClientPairingState,
     isCameraAvailable: Boolean = true,
     onQrRead: (qrContent: String) -> Unit = {},
-    onPinEntered: (pin: String) -> Unit = {},
+    onPinEntered: (pin: Pin) -> Unit = {},
     onCameraError: () -> Unit = {},
 ) {
     Column(

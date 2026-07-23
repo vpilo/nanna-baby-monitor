@@ -4,7 +4,7 @@ sealed interface ServerPairingState {
     data object Idle : ServerPairingState
 
     data class Active(
-        val pin: String,
+        val pin: Pin,
         val qrText: String,
     ) : ServerPairingState
 

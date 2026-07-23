@@ -24,6 +24,7 @@ import org.vpilo.babymonitor.network.common.protocol.sendPairingHello
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.PairedServer
+import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import java.net.InetAddress
 import java.security.cert.X509Certificate
@@ -40,7 +41,7 @@ internal class ClientPairingConnector(
     suspend fun pairWith(
         server: Device.Server,
         clientDevice: Device.Client,
-        pin: String,
+        pin: Pin,
     ): ClientPairingState {
         val trustManager = PinnedTrustManager(expectedFingerprint = null)
         val httpClient =
@@ -75,7 +76,7 @@ internal class ClientPairingConnector(
         trustManager: PinnedTrustManager,
         server: Device.Server,
         clientDevice: Device.Client,
-        pin: String,
+        pin: Pin,
     ): ClientPairingState {
         Logger.w(TAG) { "Connecting to $host to pair" }
         return try {
@@ -132,7 +133,7 @@ internal class ClientPairingConnector(
      */
     private suspend fun handleServerConfirmation(
         result: PairingResult.Success,
-        pin: String,
+        pin: Pin,
         transcript: ByteArray,
         clientKeyPair: EcdhKeyPair,
         serverPublicKey: ByteArray,
