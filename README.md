@@ -27,7 +27,6 @@
 
 # Issues
 - android: on gl renderer release() wait until draw is done. easier to repro with high camera resolution.
-- Invert drag motion direction
 - Clients sometimes reconnect in background even after killing the app (notification shows up)
 - When returning to role selection screen, sometimes the app gets stuck for a few seconds
 - OnBackInvokedCallback is not enabled for the application. Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.

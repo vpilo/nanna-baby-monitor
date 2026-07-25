@@ -75,7 +75,9 @@ fun PanningVideoFeed(
             ViewfinderParams.compute(containerSize, originalFrameSize, rotation)
         }
 
-    LaunchedEffect(rotation, containerSize) { panOffset = Offset.Zero }
+    LaunchedEffect(rotation, containerSize, params.maxPan) {
+        panOffset = params.maxPan / 2f
+    }
 
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val isFeedActive = lifecycleState.isAtLeast(minLifecycleStateForVideoFeed)
@@ -92,8 +94,8 @@ fun PanningVideoFeed(
                         change.consume()
                         panOffset =
                             Offset(
-                                x = (panOffset.x - drag.x).coerceIn(-params.maxPan.x, params.maxPan.x),
-                                y = (panOffset.y - drag.y).coerceIn(-params.maxPan.y, params.maxPan.y),
+                                x = (panOffset.x + drag.x).coerceIn(-params.maxPan.x, params.maxPan.x),
+                                y = (panOffset.y + drag.y).coerceIn(-params.maxPan.y, params.maxPan.y),
                             )
                     }
                 },
