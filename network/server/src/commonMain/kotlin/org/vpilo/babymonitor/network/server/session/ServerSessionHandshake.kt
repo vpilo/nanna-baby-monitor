@@ -5,7 +5,7 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.security.crypto.computeServerHandshakeProof
 import org.vpilo.babymonitor.network.security.crypto.deriveServerSessionCipher
 import org.vpilo.babymonitor.network.security.crypto.generateSessionSalt
@@ -18,7 +18,7 @@ import kotlin.io.encoding.Base64
 /** Runs the server side of the per-connection session handshake; returns `null` (and closes [this]) on any failure. */
 internal suspend fun WebSocketSession.serverSessionHandshake(
     serverDeviceId: DeviceId,
-    pairingRepository: PairingRepository,
+    pairingStorageRepository: PairingStorageRepository,
     streamType: StreamType,
 ): ServerSessionHandshakeResult? {
     val request =
@@ -27,7 +27,7 @@ internal suspend fun WebSocketSession.serverSessionHandshake(
             return null
         }
 
-    val paired = pairingRepository.findClient(request.clientId)
+    val paired = pairingStorageRepository.findClient(request.clientId)
     if (paired == null) {
         Logger.w(TAG) { "Unknown or revoked client ${request.clientId}, refusing session" }
         close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No longer paired"))

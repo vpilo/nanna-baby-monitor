@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.map
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 
 class GetPairedDevicesForCurrentRoleFlowUseCase(
-    private val pairingRepository: PairingRepository,
+    private val pairingStorageRepository: PairingStorageRepository,
     private val roleRepository: AppRoleRepository,
 ) {
     operator fun invoke(): Flow<List<Device>> =
@@ -18,8 +18,8 @@ class GetPairedDevicesForCurrentRoleFlowUseCase(
         roleRepository.appRole
             .flatMapLatest { role ->
                 when (role) {
-                    AppRole.CLIENT -> pairingRepository.pairedServers.map { list -> list.map { it.asDevice() } }
-                    AppRole.SERVER -> pairingRepository.pairedClients.map { list -> list.map { it.asDevice() } }
+                    AppRole.CLIENT -> pairingStorageRepository.pairedServers.map { list -> list.map { it.asDevice() } }
+                    AppRole.SERVER -> pairingStorageRepository.pairedClients.map { list -> list.map { it.asDevice() } }
                     AppRole.UNDECIDED -> error("Unknown app role: $role")
                 }
             }

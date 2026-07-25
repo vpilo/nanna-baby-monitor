@@ -17,7 +17,7 @@ import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingFailureReason
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.security.crypto.EcdhKeyPair
 import org.vpilo.babymonitor.network.security.crypto.buildPairingTranscript
 import org.vpilo.babymonitor.network.security.crypto.computeServerConfirmation
@@ -38,7 +38,7 @@ import kotlin.time.Duration.Companion.minutes
  * 5-attempt lockout, and the ECDH+PIN exchange for a single `/pair` session.
  */
 internal class PairingCoordinator(
-    private val pairingRepository: PairingRepository,
+    private val pairingStorageRepository: PairingStorageRepository,
     coroutineContext: CoroutineContext,
 ) {
     private val scope = CoroutineScope(coroutineContext + SupervisorJob())
@@ -112,7 +112,7 @@ internal class PairingCoordinator(
         val ms = computeServerConfirmation(window.pin, transcript)
         session.sendPairingResult(PairingResult.Success(ms))
 
-        pairingRepository.pairClient(
+        pairingStorageRepository.pairClient(
             PairedClient(
                 deviceId = hello.clientId.toString(),
                 name = hello.clientName,

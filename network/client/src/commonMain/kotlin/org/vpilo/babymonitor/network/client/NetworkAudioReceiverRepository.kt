@@ -13,13 +13,13 @@ import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
 import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSocket
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import kotlin.coroutines.CoroutineContext
 
 internal class NetworkAudioReceiverRepository(
     dataSource: NetworkAudioDataSource,
     private val serverSelectionDataSource: ServerSelectionDataSource,
-    private val pairingRepository: PairingRepository,
+    private val pairingStorageRepository: PairingStorageRepository,
     coroutineContext: CoroutineContext,
 ) : SharedResourceHolder<AudioFrame>(
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
@@ -50,7 +50,7 @@ internal class NetworkAudioReceiverRepository(
                                 device = target,
                                 endpointPath = Endpoints.STREAM_AUDIO,
                                 sessionBlock = { audioStreamingClientWebSocket(serverDeviceId = target.id) },
-                                pairingRepository = pairingRepository,
+                                pairingStorageRepository = pairingStorageRepository,
                                 coroutineScope = coroutineScope,
                                 onDisconnected = {
                                     delay(Constants.RECONNECTION_TIMEOUT)

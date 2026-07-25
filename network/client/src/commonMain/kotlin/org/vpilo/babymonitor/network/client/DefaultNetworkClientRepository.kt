@@ -6,33 +6,26 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
-import org.vpilo.babymonitor.network.client.pairing.ClientPairingConnector
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.internal.ForegroundServiceLink
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.ServerState
-import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
-import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
-import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import java.net.ProtocolException
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
     private val serverSelectionDataSource: ServerSelectionDataSource,
     networkControlDataSource: NetworkControlDataSource,
-    private val pairingConnector: ClientPairingConnector,
-    private val pairingRepository: PairingRepository,
-    private val getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
+    private val pairingStorageRepository: PairingStorageRepository,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -66,19 +59,11 @@ internal class DefaultNetworkClientRepository(
                     onControlConnectionOpened(server)
                     controlClientWebSocket(serverDeviceId = server.id)
                 },
-                pairingRepository = pairingRepository,
+                pairingStorageRepository = pairingStorageRepository,
                 coroutineScope = scope,
             ).apply { connect() }
 
         connectionState.value = ConnectionState.Connecting(server)
-    }
-
-    override suspend fun pairWith(
-        server: Device.Server,
-        pin: Pin,
-    ): ClientPairingState {
-        val clientDevice = getLocalClientDeviceFlowUseCase().first()
-        return pairingConnector.pairWith(server, clientDevice, pin)
     }
 
     private fun closeAllConnections() {
@@ -117,7 +102,7 @@ internal class DefaultNetworkClientRepository(
         when (exception) {
             is PairingRevokedException -> {
                 Logger.w(TAG) { "Server revoked our pairing; unpairing $server and giving up" }
-                scope.launch { pairingRepository.unpairServer(server.id) }
+                scope.launch { pairingStorageRepository.unpairServer(server.id) }
                 disconnect(ConnectionState.ErrorReason.PairingRevoked)
                 return
             }

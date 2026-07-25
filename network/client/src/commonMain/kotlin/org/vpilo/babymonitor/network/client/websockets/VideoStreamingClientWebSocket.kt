@@ -8,7 +8,7 @@ import org.vpilo.babymonitor.network.client.NetworkVideoDataSource
 import org.vpilo.babymonitor.network.client.session.clientSessionHandshake
 import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsRepository
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.security.protocol.StreamType
 import org.vpilo.babymonitor.network.security.protocol.protocolReceiveVideo
 import org.vpilo.babymonitor.settings.model.Setting
@@ -16,14 +16,16 @@ import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceId
 
 internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket(serverDeviceId: DeviceId) {
-    val dataSource = KoinPlatform.getKoin().get<NetworkVideoDataSource>()
-    val pairingRepository = KoinPlatform.getKoin().get<PairingRepository>()
-    val settingsRepository = KoinPlatform.getKoin().get<SettingsRepository>()
+    val koin = KoinPlatform.getKoin()
+    val dataSource = koin.get<NetworkVideoDataSource>()
+    val pairingStorageRepository = koin.get<PairingStorageRepository>()
+    val settingsRepository = koin.get<SettingsRepository>()
+    val sessionRegistry = koin.get<InternalActiveSessionsRepository>()
+
     val clientId = settingsRepository.load(Setting.DeviceId).toDeviceId()
+    val pairedServer = pairingStorageRepository.findServer(serverDeviceId)
+    val cipher = clientSessionHandshake(clientId, serverDeviceId, pairedServer, StreamType.VIDEO) ?: return
 
-    val cipher = clientSessionHandshake(clientId, serverDeviceId, pairingRepository, StreamType.VIDEO) ?: return
-
-    val sessionRegistry = KoinPlatform.getKoin().get<InternalActiveSessionsRepository>()
     sessionRegistry.register(serverDeviceId, this)
     try {
         runWebSocketCatching(TAG) {

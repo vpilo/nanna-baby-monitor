@@ -1,23 +1,28 @@
 package org.vpilo.babymonitor.app.client.pairing
 
 import androidx.compose.runtime.Stable
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
+import org.vpilo.babymonitor.network.model.pairing.ClientPairingRepository
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
-import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
+import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 
 @Stable
 class ClientPairingScreenViewModel(
     private val deviceId: String,
-    private val networkClientRepository: NetworkClientRepository,
     private val localDiscoveryRepository: LocalDiscoveryRepository,
+    private val pairingStorageRepository: PairingStorageRepository,
+    private val clientPairingRepository: ClientPairingRepository,
+    private val getLocalClientDeviceFlowUseCase: GetLocalClientDeviceFlowUseCase,
 ) : AppViewModel<ClientPairingScreenAction, ClientPairingScreenState, ClientPairingScreenEffect>(
         initialState = ClientPairingScreenState(),
     ) {
@@ -75,9 +80,11 @@ class ClientPairingScreenViewModel(
 
         vmScope.launch {
             state.copy(pairingState = ClientPairingState.InProgress).update()
-            val outcome = networkClientRepository.pairWith(server, pin)
+            val clientDevice = getLocalClientDeviceFlowUseCase().first()
+            val outcome = clientPairingRepository.pairWith(server, clientDevice, pin)
             state.copy(pairingState = outcome).update()
             if (outcome is ClientPairingState.Success) {
+                pairingStorageRepository.pairServer(outcome.paired)
                 ClientPairingScreenEffect.Paired.sendEffect()
             }
         }

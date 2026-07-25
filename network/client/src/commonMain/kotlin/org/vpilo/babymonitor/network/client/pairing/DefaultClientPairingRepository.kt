@@ -14,10 +14,10 @@ import org.vpilo.babymonitor.network.client.PinnedTrustManager
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
+import org.vpilo.babymonitor.network.model.pairing.ClientPairingRepository
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.PairedServer
 import org.vpilo.babymonitor.network.model.pairing.Pin
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.network.security.crypto.EcdhKeyPair
 import org.vpilo.babymonitor.network.security.crypto.buildPairingTranscript
 import org.vpilo.babymonitor.network.security.crypto.computeClientConfirmation
@@ -36,12 +36,10 @@ import kotlin.io.encoding.Base64
 /**
  * Runs the client side of the pairing window: connects to the server's `/pair` endpoint with a
  * trust-on-first-use TLS trust manager, runs the ECDH+PIN exchange (Task 8), and — on success —
- * persists the derived shared secret and pinned server certificate fingerprint via [pairingRepository].
+ * returns the derived shared secret and pinned server certificate fingerprint for storage.
  */
-internal class ClientPairingConnector(
-    private val pairingRepository: PairingRepository,
-) {
-    suspend fun pairWith(
+internal class DefaultClientPairingRepository : ClientPairingRepository {
+    override suspend fun pairWith(
         server: Device.Server,
         clientDevice: Device.Client,
         pin: Pin,
@@ -167,21 +165,20 @@ internal class ClientPairingConnector(
             return ClientPairingState.Failure(ClientPairingFailureCause.MITM_SUSPECTED)
         }
         val sharedSecret = deriveSharedSecretS(clientKeyPair.deriveSharedSecret(serverPublicKey))
-        pairingRepository.pairServer(
+        val result =
             PairedServer(
                 deviceId = server.id.toString(),
                 name = server.name,
                 certFingerprint = certificate.sha256Fingerprint(),
                 sharedSecretBase64 = Base64.encode(sharedSecret),
-            ),
-        )
+            )
         Logger.i(TAG) { "Paired with server $server" }
-        return ClientPairingState.Success
+        return ClientPairingState.Success(result)
     }
 
     private companion object {
         private val GENERIC_FAILURE = ClientPairingState.Failure(ClientPairingFailureCause.CONNECTION_FAILED)
 
-        private val TAG = ClientPairingConnector::class
+        private val TAG = DefaultClientPairingRepository::class
     }
 }

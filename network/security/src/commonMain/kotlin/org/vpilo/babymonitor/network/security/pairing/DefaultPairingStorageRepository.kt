@@ -6,15 +6,15 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.model.pairing.PairedClient
 import org.vpilo.babymonitor.network.model.pairing.PairedServer
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.PairedClientsJson
 import org.vpilo.babymonitor.settings.model.settings.PairedServersJson
 
-internal class DefaultPairingRepository(
+internal class DefaultPairingStorageRepository(
     private val settingsRepository: SettingsRepository,
-) : PairingRepository {
+) : PairingStorageRepository {
     override val pairedServers =
         settingsRepository.flowOf(Setting.PairedServersJson).map { it.decodeServersOrEmpty() }
 
@@ -64,7 +64,7 @@ internal class DefaultPairingRepository(
             .getOrDefault(emptyList())
 
     private companion object {
-        private val TAG = DefaultPairingRepository::class
+        private val TAG = DefaultPairingStorageRepository::class
         private val json = Json { ignoreUnknownKeys = true }
     }
 }

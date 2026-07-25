@@ -5,7 +5,7 @@ import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.model.pairing.PairedClient
 import org.vpilo.babymonitor.network.model.pairing.PairedServer
 
-interface PairingRepository {
+interface PairingStorageRepository {
     val pairedServers: Flow<List<PairedServer>>
 
     suspend fun pairServer(server: PairedServer)

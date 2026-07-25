@@ -22,7 +22,7 @@ import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.internal.relayHttpClient
 import org.vpilo.babymonitor.network.model.Constants
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.ProtocolException
@@ -34,7 +34,7 @@ internal class WebSocketConnectionHandler(
     private val endpointPath: String,
     private val sessionBlock: suspend DefaultClientWebSocketSession.() -> Unit,
     private val onDisconnected: suspend (exception: Throwable) -> Unit = {},
-    private val pairingRepository: PairingRepository,
+    private val pairingStorageRepository: PairingStorageRepository,
     private val coroutineScope: CoroutineScope,
 ) {
     private var connectionJob: Job? = null
@@ -112,7 +112,7 @@ internal class WebSocketConnectionHandler(
     private suspend fun startWebSocket(host: InetAddress) {
         if (device !is Device.RemoteServer) {
             val expectedFingerprint =
-                pairingRepository.findServer(device.id)?.certFingerprint
+                pairingStorageRepository.findServer(device.id)?.certFingerprint
                     ?: error("Not paired with $device — refusing to connect")
             val pinnedClient =
                 HttpClient(CIO) {

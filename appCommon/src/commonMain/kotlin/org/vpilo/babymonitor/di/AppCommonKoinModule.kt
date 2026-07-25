@@ -48,7 +48,7 @@ val appSharedKoinModules =
                     localDiscoveryRepository = get(),
                     remoteDiscoveryRepository = get(),
                     deviceStateRepository = get(),
-                    pairingRepository = get(),
+                    pairingStorageRepository = get(),
                     getLocalClientDeviceFlowUseCase = get(),
                 )
             }
@@ -56,8 +56,10 @@ val appSharedKoinModules =
             viewModel { params ->
                 ClientPairingScreenViewModel(
                     deviceId = params.get(),
-                    networkClientRepository = get(),
                     localDiscoveryRepository = get(),
+                    pairingStorageRepository = get(),
+                    clientPairingRepository = get(),
+                    getLocalClientDeviceFlowUseCase = get(),
                 )
             }
         },

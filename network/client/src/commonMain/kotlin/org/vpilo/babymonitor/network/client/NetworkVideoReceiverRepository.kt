@@ -13,13 +13,13 @@ import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
-import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import kotlin.coroutines.CoroutineContext
 
 internal class NetworkVideoReceiverRepository(
     dataSource: NetworkVideoDataSource,
     private val serverSelectionDataSource: ServerSelectionDataSource,
-    private val pairingRepository: PairingRepository,
+    private val pairingStorageRepository: PairingStorageRepository,
     coroutineContext: CoroutineContext,
 ) : StreamingVideoReceiverRepository {
     private val coroutineScope = CoroutineScope(coroutineContext)
@@ -60,7 +60,7 @@ internal class NetworkVideoReceiverRepository(
                                 device = target,
                                 endpointPath = Endpoints.STREAM_VIDEO,
                                 sessionBlock = { videoStreamingClientWebSocket(serverDeviceId = target.id) },
-                                pairingRepository = pairingRepository,
+                                pairingStorageRepository = pairingStorageRepository,
                                 coroutineScope = coroutineScope,
                                 onDisconnected = {
                                     delay(Constants.RECONNECTION_TIMEOUT)
