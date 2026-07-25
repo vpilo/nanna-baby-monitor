@@ -1,6 +1,6 @@
 package org.vpilo.babymonitor.network.common.crypto
 
-data class SessionKeys(
+internal data class SessionKeys(
     val clientToServer: ByteArray,
     val serverToClient: ByteArray,
 ) {

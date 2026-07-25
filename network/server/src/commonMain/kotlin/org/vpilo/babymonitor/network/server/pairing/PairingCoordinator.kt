@@ -37,7 +37,7 @@ import kotlin.time.Duration.Companion.minutes
  * Runs the server side of the pairing window: PIN/QR generation, the 3-minute expiry timer, the
  * 5-attempt lockout, and the ECDH+PIN exchange for a single `/pair` session.
  */
-class PairingCoordinator(
+internal class PairingCoordinator(
     private val pairingRepository: PairingRepository,
     coroutineContext: CoroutineContext,
 ) {

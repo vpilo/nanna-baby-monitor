@@ -67,11 +67,12 @@ class SessionHandshakeTest {
     fun frameCiphersSealAndOpenAcrossSides() =
         runTest {
             val sharedSecret = Random.nextBytes(32)
-            val keys = deriveSessionKeys(sharedSecret, generateSessionSalt(), generateSessionSalt())
+            val clientSalt = generateSessionSalt()
+            val serverSalt = generateSessionSalt()
             val aad = "device-42|video".encodeToByteArray()
 
-            val serverCipher = keys.asServerCipher(aad)
-            val clientCipher = keys.asClientCipher(aad)
+            val serverCipher = deriveServerSessionCipher(sharedSecret, clientSalt, serverSalt, aad)
+            val clientCipher = deriveClientSessionCipher(sharedSecret, clientSalt, serverSalt, aad)
 
             val wireFrame = serverCipher.seal("frame-1".encodeToByteArray())
             assertContentEquals("frame-1".encodeToByteArray(), clientCipher.open(wireFrame))
@@ -84,14 +85,15 @@ class SessionHandshakeTest {
     fun frameCipherRejectsTamperedWireFrames() =
         runTest {
             val sharedSecret = Random.nextBytes(32)
-            val keys = deriveSessionKeys(sharedSecret, generateSessionSalt(), generateSessionSalt())
+            val clientSalt = generateSessionSalt()
+            val serverSalt = generateSessionSalt()
             val aad = "device-42|video".encodeToByteArray()
 
-            val wireFrame = keys.asServerCipher(aad).seal("frame".encodeToByteArray())
+            val wireFrame = deriveServerSessionCipher(sharedSecret, clientSalt, serverSalt, aad).seal("frame".encodeToByteArray())
             wireFrame[wireFrame.size - 1] = wireFrame[wireFrame.size - 1].inc()
 
             kotlin.test.assertFailsWith<Throwable> {
-                keys.asClientCipher(aad).open(wireFrame)
+                deriveClientSessionCipher(sharedSecret, clientSalt, serverSalt, aad).open(wireFrame)
             }
         }
 }

@@ -7,7 +7,7 @@ import java.security.KeyStore
  *
  * Only one password is used for both key store and private key for simplicity.
  */
-data class KeyStoreConfig(
+internal data class KeyStoreConfig(
     val keyStore: KeyStore,
     val keyAlias: String,
     val password: CharArray,

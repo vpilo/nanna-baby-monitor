@@ -5,9 +5,8 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.common.crypto.asServerCipher
 import org.vpilo.babymonitor.network.common.crypto.computeServerHandshakeProof
-import org.vpilo.babymonitor.network.common.crypto.deriveSessionKeys
+import org.vpilo.babymonitor.network.common.crypto.deriveServerSessionCipher
 import org.vpilo.babymonitor.network.common.crypto.generateSessionSalt
 import org.vpilo.babymonitor.network.common.crypto.verifyClientHandshakeProof
 import org.vpilo.babymonitor.network.common.protocol.StreamType
@@ -17,7 +16,7 @@ import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import kotlin.io.encoding.Base64
 
 /** Runs the server side of the per-connection session handshake; returns `null` (and closes [this]) on any failure. */
-suspend fun WebSocketSession.serverSessionHandshake(
+internal suspend fun WebSocketSession.serverSessionHandshake(
     serverDeviceId: DeviceId,
     pairingRepository: PairingRepository,
     streamType: StreamType,
@@ -45,9 +44,9 @@ suspend fun WebSocketSession.serverSessionHandshake(
     val serverSalt = generateSessionSalt()
     sendSessionHandshakeResponse(serverSalt, computeServerHandshakeProof(sharedSecret, request.salt, serverSalt))
 
-    val keys = deriveSessionKeys(sharedSecret, request.salt, serverSalt)
     val associatedData = serverDeviceId.toByteArray() + byteArrayOf(streamType.tag)
-    return ServerSessionHandshakeResult(keys.asServerCipher(associatedData), request.clientId)
+    val cipher = deriveServerSessionCipher(sharedSecret, request.salt, serverSalt, associatedData)
+    return ServerSessionHandshakeResult(cipher, request.clientId)
 }
 
 private const val TAG = "ServerSessionHandshake"

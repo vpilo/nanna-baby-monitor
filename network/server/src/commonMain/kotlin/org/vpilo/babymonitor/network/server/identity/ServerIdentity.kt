@@ -17,7 +17,7 @@ import kotlin.io.encoding.Base64
  * once at startup and reused for the lifetime of the process — this is the pinning anchor clients trust
  * after pairing (see [sha256Fingerprint]).
  */
-class ServerIdentity private constructor(
+internal class ServerIdentity private constructor(
     private val keyStore: KeyStore,
     private val password: String,
 ) {

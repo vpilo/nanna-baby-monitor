@@ -1,41 +1,28 @@
 package org.vpilo.babymonitor.network.common.protocol
 
-import io.ktor.websocket.Frame
-import io.ktor.websocket.WebSocketSession
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
-import org.vpilo.babymonitor.network.common.crypto.SessionFrameCipher
 import org.vpilo.babymonitor.network.model.ServerState
-
-suspend fun WebSocketSession.protocolSendAudio(
-    chunk: EncodedAudioStreamChunk,
-    cipher: SessionFrameCipher,
-) {
-    send(Frame.Binary(fin = true, data = cipher.seal(chunk.data)))
-}
-
-suspend fun WebSocketSession.protocolReceiveAudio(cipher: SessionFrameCipher): EncodedAudioStreamChunk =
-    EncodedAudioStreamChunk(cipher.open(incoming.receive().data))
 
 private const val VIDEO_HEADER_SIZE = 1 + 1 + 4 + 4
 
-suspend fun WebSocketSession.protocolSendVideo(
-    chunk: EncodedVideoStreamChunk,
-    cipher: SessionFrameCipher,
-) {
+fun encodeAudioFrame(chunk: EncodedAudioStreamChunk): ByteArray = chunk.data
+
+fun decodeAudioFrame(data: ByteArray): EncodedAudioStreamChunk = EncodedAudioStreamChunk(data)
+
+fun encodeVideoFrame(chunk: EncodedVideoStreamChunk): ByteArray {
     val frame = ByteArray(VIDEO_HEADER_SIZE + chunk.data.size)
     frame[0] = if (chunk.isKeyFrame) 1 else 0
     frame[1] = (chunk.rotation / 90).toByte()
     frame.storeIntAt(2, chunk.frameWidth)
     frame.storeIntAt(6, chunk.frameHeight)
     chunk.data.copyInto(frame, destinationOffset = VIDEO_HEADER_SIZE)
-    send(Frame.Binary(fin = true, data = cipher.seal(frame)))
+    return frame
 }
 
-suspend fun WebSocketSession.protocolReceiveVideo(cipher: SessionFrameCipher): EncodedVideoStreamChunk {
-    val data = cipher.open(incoming.receive().data)
+fun decodeVideoFrame(data: ByteArray): EncodedVideoStreamChunk {
     val isKeyFrame = data[0].toInt() != 0
     val rotation = (data[1].toInt() and 0xFF) * 90
     val frameWidth = data.getIntAt(2)
@@ -66,13 +53,8 @@ sealed interface ServerMessage {
 fun encodeServerMessage(payload: ServerState): ByteArray =
     "${ServerMessage.Key.State}\n${payload.captureMode},${payload.batteryLevel},${payload.signalQuality}".encodeToByteArray()
 
-suspend fun WebSocketSession.sendServerMessage(
-    payload: ServerState,
-    cipher: SessionFrameCipher,
-) = send(Frame.Binary(fin = true, data = cipher.seal(encodeServerMessage(payload))))
-
-suspend fun WebSocketSession.receiveServerMessage(cipher: SessionFrameCipher): ServerMessage {
-    val content = cipher.open(incoming.receive().data).decodeToString().split('\n', limit = 2)
+fun decodeServerMessage(data: ByteArray): ServerMessage {
+    val content = data.decodeToString().split('\n', limit = 2)
     check(content.size == 2) { "Invalid frame format, expected type key and payload" }
     val (key, payload) = content
     return when (key) {

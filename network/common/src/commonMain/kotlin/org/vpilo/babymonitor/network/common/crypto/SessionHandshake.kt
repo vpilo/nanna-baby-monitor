@@ -40,7 +40,27 @@ suspend fun verifyServerHandshakeProof(
     proof: ByteArray,
 ): Boolean = verifyHmacSha256(sharedSecret, SERVER_PROOF_LABEL + clientSalt + serverSalt, proof)
 
-suspend fun deriveSessionKeys(
+suspend fun deriveServerSessionCipher(
+    sharedSecret: ByteArray,
+    clientSalt: ByteArray,
+    serverSalt: ByteArray,
+    associatedData: ByteArray,
+): SessionFrameCipher {
+    val keys = deriveSessionKeys(sharedSecret, clientSalt, serverSalt)
+    return SessionFrameCipher(sendKey = keys.serverToClient, receiveKey = keys.clientToServer, associatedData = associatedData)
+}
+
+suspend fun deriveClientSessionCipher(
+    sharedSecret: ByteArray,
+    clientSalt: ByteArray,
+    serverSalt: ByteArray,
+    associatedData: ByteArray,
+): SessionFrameCipher {
+    val keys = deriveSessionKeys(sharedSecret, clientSalt, serverSalt)
+    return SessionFrameCipher(sendKey = keys.clientToServer, receiveKey = keys.serverToClient, associatedData = associatedData)
+}
+
+internal suspend fun deriveSessionKeys(
     sharedSecret: ByteArray,
     clientSalt: ByteArray,
     serverSalt: ByteArray,
@@ -51,9 +71,3 @@ suspend fun deriveSessionKeys(
         serverToClient = hkdfSha256(sharedSecret, combinedSalt, SERVER_TO_CLIENT_INFO, SESSION_KEY_SIZE_BYTES),
     )
 }
-
-fun SessionKeys.asServerCipher(associatedData: ByteArray): SessionFrameCipher =
-    SessionFrameCipher(sendKey = serverToClient, receiveKey = clientToServer, associatedData = associatedData)
-
-fun SessionKeys.asClientCipher(associatedData: ByteArray): SessionFrameCipher =
-    SessionFrameCipher(sendKey = clientToServer, receiveKey = serverToClient, associatedData = associatedData)
