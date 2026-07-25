@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.relay
 
+import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
@@ -32,11 +33,11 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceId
-import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.network.common.RelaySignals
-import org.vpilo.babymonitor.network.common.discovery.ktx.asTransportString
-import org.vpilo.babymonitor.network.common.discovery.ktx.fromTransportString
+import org.vpilo.babymonitor.network.model.Constants
+import org.vpilo.babymonitor.network.model.Endpoints
+import org.vpilo.babymonitor.network.model.RelaySignals
+import org.vpilo.babymonitor.network.model.transport.asTransportString
+import org.vpilo.babymonitor.network.model.transport.fromTransportString
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
@@ -65,8 +66,20 @@ class DefaultNetworkRelayRepository {
             embeddedServer(
                 factory = Netty,
                 configure = {
+                    // TODO authentication: ephemeral self-signed cert so the TLS connector can start;
+                    // real relay authentication is out of scope here.
+                    val keyStore =
+                        buildKeyStore {
+                            certificate(RELAY_KEY_ALIAS) {
+                                password = RELAY_KEYSTORE_PASSWORD
+                                domains = listOf(Constants.TLS_SERVER_NAME, Constants.SERVICES_LISTEN_ADDRESS)
+                            }
+                        }
                     sslConnector(
-                        // TODO authentication
+                        keyStore = keyStore,
+                        keyAlias = RELAY_KEY_ALIAS,
+                        keyStorePassword = { RELAY_KEYSTORE_PASSWORD.toCharArray() },
+                        privateKeyPassword = { RELAY_KEYSTORE_PASSWORD.toCharArray() },
                     ) {
                         host = Constants.SERVICES_LISTEN_ADDRESS
                         port = Constants.RELAY_PORT
@@ -319,6 +332,10 @@ class DefaultNetworkRelayRepository {
                 ?.toDeviceId()
 
     private companion object {
+        // TODO authentication — placeholder TLS identity until real relay authentication exists.
+        private const val RELAY_KEY_ALIAS = "babymonitor-relay"
+        private const val RELAY_KEYSTORE_PASSWORD = "babymonitor"
+
         private val TAG = DefaultNetworkRelayRepository::class
     }
 }

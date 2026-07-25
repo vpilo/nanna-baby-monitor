@@ -23,7 +23,12 @@ Key features:
 - **`codec`** — `expect/actual` audio/video encoder/decoder. Desktop uses FFmpeg (JavaCPP/bytedeco); Android uses platform MediaCodec.
 - **`camera:model`** — Capture repository interfaces (`VideoCaptureRepository`, `AudioCaptureRepository`).
 - **`camera:data`** — `expect/actual` data sources. Desktop uses `webcam-capture`; Android uses CameraX.
-- **`network:common`** — Constants (ports), `Endpoints`, `DiscoveryManager`.
+- **`network:model`** — Network domain types, repository interfaces, wire constants (`Constants`, `Endpoints`, `RelaySignals`),
+  device transport-string codecs (`asTransportString`/`fromTransportString`), and the `PairingQrPayload`.
+- **`network:internal`** — Internal network plumbing shared by server and client: mDNS discovery, active-session ledger, frame codecs,
+  relay HTTP client, foreground-service link. Compile-time dependency of `network:server`/`network:client` only (was `network:common`).
+- **`network:security`** — Pairing and session crypto: ECDH/HKDF/AEAD, pairing/session handshakes, the cipher facade,
+  `DefaultPairingRepository`, and the sealed-frame protocol. Compile-time dependency of `network:server`/`network:client` only.
 - **`network:server`** — Ktor server with WebSocket endpoints (`/audio`, `/video`). Encodes & streams.
 - **`network:client`** — Ktor client connecting to WebSocket endpoints. Receives & decodes.
 - **`androidService`** — Android-only foreground service infrastructure for background capture.

@@ -17,7 +17,7 @@ kotlin {
             implementation(project(":common"))
             implementation(project(":data"))
             implementation(project(":model"))
-            implementation(project(":network:common"))
+            implementation(project(":network:model"))
             implementation(project(":settings:data"))
             implementation(project(":settings:model"))
             implementation(libs.koin.core)
@@ -28,7 +28,7 @@ kotlin {
             implementation(libs.bundles.ktor.client)
 
             implementation(libs.ktor.server.netty)
-
+            implementation(libs.ktor.network.tls.certificates)
         }
     }
 }

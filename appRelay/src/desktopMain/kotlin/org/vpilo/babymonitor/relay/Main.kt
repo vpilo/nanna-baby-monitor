@@ -14,7 +14,6 @@ import org.vpilo.babymonitor.data.di.dataKoinModule
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceId
-import org.vpilo.babymonitor.network.common.di.networkCommonKoinModule
 import org.vpilo.babymonitor.settings.data.di.settingsDataKoinModule
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
@@ -33,7 +32,6 @@ private fun babyMonitorMain(args: Array<String>) {
                 },
                 dataKoinModule,
                 settingsDataKoinModule,
-                networkCommonKoinModule,
             )
         }.koin
 

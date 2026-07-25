@@ -2,9 +2,21 @@
 
 # Feature plan
 
+## Remaining pairing/security work
+* CameraSelectionScreen
+  * group for paired devices and a group for unpaired devices
+  * paired devices are sorted by online/not online
+  * unpaired devices group shows only online devices
+* Relay is broken due to new security model
+* pairing and security code needs reorganization and isolation (way too wide surface)
+* PairingCoordinator and ClientPairingConnector: investigate making into repositories + UseCases to chain actions
+
 ## Will have
-- A 'live' red icon when it is actually streaming.
-- Secure communication channels with clients (monitors) pairing with server (camera).
+- Add a 'live' red icon in server home screen when it is actually streaming (maybe grayed out while loading and/or when no frames come in)
+- Add an 'eye' icon in client home screen.
+- Remember the drag position in the PanningVideoFeed
+- Show the animated loading icon while video connection is being established
+- Add a 'close app' button/action on android notification
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
@@ -16,16 +28,19 @@
 - On relay setting, see if reachable and if authenticated.
 - Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start
   streaming audio.
+- Relay: investigate something like UDP hole-punching to simplify setup. RustDesk has a rendezvous server doing it.
 
 # Issues
-
-- OnBackInvokedCallback is not enabled for the application. Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
 - android: on gl renderer release() wait until draw is done. easier to repro with high camera resolution.
+- Invert drag motion direction
+- Clients sometimes reconnect in background even after killing the app (notification shows up)
+- When returning to role selection screen, sometimes the app gets stuck for a few seconds
+- OnBackInvokedCallback is not enabled for the application. Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
 - improve error handling and surfacing issues to the user
 - add versioning to relay communications
 
 # Completed features
-
+- Secure communication channels with clients (monitors) pairing with server (camera).
 - Server can also choose to toggle audio and video capture independently
 - Client UI shows server battery level and signal strength
 - Device name selection on both server and client
