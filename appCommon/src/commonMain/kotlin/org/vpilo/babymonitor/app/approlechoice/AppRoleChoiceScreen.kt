@@ -71,7 +71,7 @@ private fun AppRoleChoiceScreenContent(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(Theme.Paddings.Large),
+                    .padding(Theme.Paddings.Larger),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Medium),
         ) {

@@ -9,6 +9,7 @@ complexity:
   LongParameterList:
     functionThreshold: 8
     constructorThreshold: 10
+    excludes: ['**ViewModel.kt']
     ignoreAnnotated:
       - "Composable"
   CyclomaticComplexMethod:

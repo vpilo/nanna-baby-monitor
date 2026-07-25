@@ -34,11 +34,14 @@
     <string name="client_connection_chooser_connecting">Connecting to %1$s…</string>
     <string name="client_connection_chooser_reconnecting">Reconnecting to %1$s…</string>
     <string name="client_connection_chooser_connected">Connected to %1$s</string>
-    <string name="client_connection_chooser_no_servers_found">Looking for a camera app…</string>
+    <string name="client_connection_chooser_no_servers_found">Looking for camera apps…</string>
     <string name="client_connection_chooser_server_not_found">Connection failed</string>
     <string name="client_connection_chooser_server_quit">Connection was closed by the camera</string>
     <string name="client_connection_chooser_client_quit">Disconnected</string>
     <string name="client_connection_chooser_pairing_revoked">The camera removed this device's pairing. Pair again to reconnect.</string>
+    <string name="client_connection_chooser_servers_section_connectable">Connectable cameras</string>
+    <string name="client_connection_chooser_servers_section_new">New cameras</string>
+    <string name="client_connection_chooser_servers_section_paired">Paired cameras</string>
 
     <string name="server_mode_audio_and_video">Audio and Video</string>
     <string name="server_mode_audio_only">Audio only</string>

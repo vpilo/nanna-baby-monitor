@@ -3,13 +3,8 @@
 # Feature plan
 
 ## Remaining pairing/security work
-* CameraSelectionScreen
-  * group for paired devices and a group for unpaired devices
-  * paired devices are sorted by online/not online
-  * unpaired devices group shows only online devices
 * Relay is broken due to new security model
-* pairing and security code needs reorganization and isolation (way too wide surface)
-* PairingCoordinator and ClientPairingConnector: investigate making into repositories + UseCases to chain actions
+* PairingCoordinator and ClientPairingConnector: investigate making into repositories + UseCases
 
 ## Will have
 - Add a 'live' red icon in server home screen when it is actually streaming (maybe grayed out while loading and/or when no frames come in)

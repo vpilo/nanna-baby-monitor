@@ -14,14 +14,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalInspectionMode
 import org.vpilo.babymonitor.presentation.Theme
 
 @Composable
 fun PulseAnimation(modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition()
+    val inPreviewMode = LocalInspectionMode.current
     val progress by transition.animateFloat(
         initialValue = 0f,
-        targetValue = 1f,
+        targetValue = if (inPreviewMode) .5f else 1f,
         animationSpec =
             infiniteRepeatable(
                 animation = tween(1_000),
@@ -32,12 +34,12 @@ fun PulseAnimation(modifier: Modifier = Modifier) {
     Box(
         modifier =
             modifier
+                .size(Theme.Sizes.Button)
                 .graphicsLayer {
                     scaleX = progress
                     scaleY = progress
                     alpha = 1f - progress
-                }.size(Theme.Sizes.Button)
-                .border(
+                }.border(
                     width = Theme.Sizes.Button,
                     color = MaterialTheme.colorScheme.secondary,
                     shape = CircleShape,

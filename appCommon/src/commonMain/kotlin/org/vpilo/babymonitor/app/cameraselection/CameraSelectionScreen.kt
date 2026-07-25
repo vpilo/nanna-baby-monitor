@@ -1,7 +1,9 @@
 package org.vpilo.babymonitor.app.cameraselection
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,7 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,7 +28,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_connect
-import babymonitor.appcommon.generated.resources.camera_selection_server_type_local
 import babymonitor.appcommon.generated.resources.camera_selection_server_type_relay
 import babymonitor.appcommon.generated.resources.client_connection_chooser_choose
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
@@ -35,6 +37,9 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_pairi
 import babymonitor.appcommon.generated.resources.client_connection_chooser_reconnecting
 import babymonitor.appcommon.generated.resources.client_connection_chooser_server_not_found
 import babymonitor.appcommon.generated.resources.client_connection_chooser_server_quit
+import babymonitor.appcommon.generated.resources.client_connection_chooser_servers_section_connectable
+import babymonitor.appcommon.generated.resources.client_connection_chooser_servers_section_new
+import babymonitor.appcommon.generated.resources.client_connection_chooser_servers_section_paired
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -46,7 +51,6 @@ import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.ConnectionStatusIcons
-import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.LoadingIcon
 import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.preview.makePreviewServer
@@ -61,7 +65,9 @@ fun CameraSelectionScreen(
     onMenuClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
-    val serversList = remember(state) { state.availableServers.filterIsInstance<Device.Server>() }
+    val connectableServers = remember(state) { state.connectableServers }
+    val pairedServers = remember(state) { state.pairedServers }
+    val newServers = remember(state) { state.newServers }
     val snackbarController = LocalSnackbarController.current
 
     LaunchedEffect(viewModel.effectsFlow) {
@@ -107,7 +113,9 @@ fun CameraSelectionScreen(
                     .fillMaxSize()
                     .padding(Theme.Paddings.Medium),
             connectionState = state.connectionState,
-            servers = serversList,
+            connectableServers = connectableServers,
+            pairedServers = pairedServers,
+            newServers = newServers,
             onConnectRequested = { viewModel.send(CameraSelectionScreenAction.ConnectToServer(it)) },
         )
     }
@@ -117,7 +125,9 @@ fun CameraSelectionScreen(
 private fun CameraSelectionScreenContent(
     modifier: Modifier = Modifier,
     connectionState: ConnectionState,
-    servers: List<Device.Server>,
+    connectableServers: List<Device.Server> = emptyList(),
+    pairedServers: List<Device.Server> = emptyList(),
+    newServers: List<Device.Server> = emptyList(),
     onConnectRequested: (server: Device.Server) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
@@ -127,7 +137,6 @@ private fun CameraSelectionScreenContent(
             text = stringResource(Res.string.client_connection_chooser_choose),
             style = MaterialTheme.typography.bodyMedium,
         )
-        Spacer(modifier = Modifier.size(Theme.Paddings.Medium))
 
         (connectionState as? ConnectionState.Disconnected)
             ?.additionalInfo
@@ -139,54 +148,137 @@ private fun CameraSelectionScreenContent(
                 )
             }
 
-        LazyColumn(
-            state = lazyListState,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier =
-                Modifier
-                    .fillMaxWidth(fraction = .75f)
-                    .align(Alignment.CenterHorizontally),
-        ) {
-            if (servers.isEmpty()) {
-                item {
+        if (connectableServers.isEmpty() && pairedServers.isEmpty() && newServers.isEmpty()) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier =
+                    modifier
+                        .fillMaxSize(),
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = stringResource(Res.string.client_connection_chooser_no_servers_found),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    LoadingBox()
+                    LoadingIcon()
                 }
             }
+            return
+        }
 
-            items(items = servers, key = { it.name }) { server ->
-                val isRemote = server is Device.RemoteServer
-                Tooltip(
-                    text =
-                        stringResource(
-                            if (isRemote) {
-                                Res.string.camera_selection_server_type_relay
-                            } else {
-                                Res.string.camera_selection_server_type_local
-                            },
-                        ),
-                ) {
-                    Button(
-                        enabled = connectionState !is ConnectionState.Connecting,
-                        onClick = { onConnectRequested(server) },
-                    ) {
-                        if (isRemote) {
-                            Icon(imageVector = Icons.Default.Cloud, contentDescription = null)
-                        }
-                        Text(
-                            modifier = Modifier.padding(Theme.Paddings.Small),
-                            text = server.name,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        if ((connectionState as? ConnectionState.Connecting)?.server == server) {
-                            LoadingIcon()
-                        }
-                    }
+        LazyColumn(
+            state = lazyListState,
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Small),
+            modifier =
+                Modifier
+                    .padding(horizontal = Theme.Paddings.Medium)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally),
+        ) {
+            if (connectableServers.isNotEmpty()) {
+                stickyHeader {
+                    Header(label = Res.string.client_connection_chooser_servers_section_connectable)
                 }
-                Spacer(modifier = Modifier.size(Theme.Paddings.Tiny))
+                items(items = connectableServers, key = { it.name }) { server ->
+                    Server(
+                        name = server.name,
+                        isRemote = server is Device.RemoteServer,
+                        isEnabled = connectionState !is ConnectionState.Connecting,
+                        isConnecting = (connectionState as? ConnectionState.Connecting)?.server == server,
+                        onClick = { onConnectRequested(server) },
+                    )
+                }
+            }
+            if (pairedServers.isNotEmpty()) {
+                stickyHeader {
+                    Header(label = Res.string.client_connection_chooser_servers_section_paired)
+                }
+                items(items = pairedServers, key = { it.name }) { server ->
+                    Server(
+                        name = server.name,
+                        isRemote = server is Device.RemoteServer,
+                        isEnabled = false,
+                        isConnecting = (connectionState as? ConnectionState.Connecting)?.server == server,
+                        onClick = {},
+                    )
+                }
+            }
+            if (newServers.isNotEmpty()) {
+                stickyHeader {
+                    Header(label = Res.string.client_connection_chooser_servers_section_new)
+                }
+                items(items = newServers, key = { it.name }) { server ->
+                    Server(
+                        name = server.name,
+                        isRemote = server is Device.RemoteServer,
+                        isEnabled = connectionState !is ConnectionState.Connecting,
+                        isConnecting = (connectionState as? ConnectionState.Connecting)?.server == server,
+                        onClick = { onConnectRequested(server) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Header(
+    modifier: Modifier = Modifier,
+    label: StringResource,
+) {
+    Text(
+        modifier =
+            modifier
+                .padding(
+                    start = Theme.Paddings.Small,
+                    end = Theme.Paddings.Small,
+                    bottom = Theme.Paddings.Tiny,
+                    top = Theme.Paddings.Large,
+                ),
+        text = stringResource(label),
+        style = MaterialTheme.typography.titleLarge,
+    )
+}
+
+@Composable
+private fun Server(
+    modifier: Modifier = Modifier,
+    name: String,
+    isRemote: Boolean,
+    isEnabled: Boolean,
+    isConnecting: Boolean,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        enabled = isEnabled,
+        onClick = onClick,
+        border = CardDefaults.outlinedCardBorder(),
+        colors = CardDefaults.elevatedCardColors(),
+        elevation = CardDefaults.elevatedCardElevation(),
+        shape = CardDefaults.elevatedShape,
+    ) {
+        Row(
+            modifier = Modifier.padding(Theme.Paddings.Large),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = name,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (isRemote) {
+                Tooltip(text = stringResource(Res.string.camera_selection_server_type_relay)) {
+                    Icon(
+                        modifier = Modifier.padding(start = Theme.Paddings.Small),
+                        imageVector = Icons.Default.Cloud,
+                        contentDescription = null,
+                    )
+                }
+            }
+            if (isConnecting) {
+                LoadingIcon(modifier = Modifier.size(Theme.Sizes.IconSmall))
             }
         }
     }
@@ -246,14 +338,25 @@ private suspend fun getConnectionStateMessage(
 @Preview
 @Composable
 private fun CameraSelectionScreenPreview() =
-    AppPreviewTheme {
+    AppPreviewTheme(
+        modifier = Modifier.fillMaxSize(),
+    ) {
         CameraSelectionScreenContent(
             connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet),
-            servers =
+            connectableServers =
                 listOf(
-                    makePreviewServer("Baby Monitor-1234"),
-                    makePreviewServer("Bedroom Camera"),
-                    makePreviewServer("Remote Cam", isLocal = false),
+                    makePreviewServer("Baby Monitor 1234, paired and visible", isLocal = false),
+                    makePreviewServer("Bedroom camera, paired and visible"),
+                ),
+            pairedServers =
+                listOf(
+                    makePreviewServer("Remote Cam, paired", isLocal = false),
+                    makePreviewServer("Living room camera, paired"),
+                ),
+            newServers =
+                listOf(
+                    makePreviewServer("Toilet Cam, unpaired", isLocal = false),
+                    makePreviewServer("Pigeon nest, unpaired"),
                 ),
             onConnectRequested = {},
         )
@@ -262,13 +365,14 @@ private fun CameraSelectionScreenPreview() =
 @Preview
 @Composable
 private fun CameraSelectionScreenConnectingPreview() =
-    AppPreviewTheme(modifier = Modifier.fillMaxSize()) {
+    AppPreviewTheme {
+        val server = makePreviewServer("Baby Monitor 1234, paired and visible")
         CameraSelectionScreenContent(
-            connectionState = ConnectionState.Connecting(makePreviewServer("Bedroom Camera")),
-            servers =
+            connectionState = ConnectionState.Connecting(server),
+            connectableServers =
                 listOf(
-                    makePreviewServer("Baby Monitor-1234"),
-                    makePreviewServer("Remote Cam", isLocal = false),
+                    server,
+                    makePreviewServer("Bedroom camera, paired and visible"),
                 ),
             onConnectRequested = {},
         )
@@ -276,11 +380,10 @@ private fun CameraSelectionScreenConnectingPreview() =
 
 @Preview
 @Composable
-private fun CameraSelectionScreenRevokedPreview() =
+private fun CameraSelectionScreenEmptyPreview() =
     AppPreviewTheme {
         CameraSelectionScreenContent(
-            connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.PairingRevoked),
-            servers = emptyList(),
+            connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet),
             onConnectRequested = {},
         )
     }

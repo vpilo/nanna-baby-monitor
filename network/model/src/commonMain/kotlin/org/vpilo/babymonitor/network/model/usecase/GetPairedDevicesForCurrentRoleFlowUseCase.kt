@@ -9,7 +9,7 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 
-class GetPairedDevicesFlowUseCase(
+class GetPairedDevicesForCurrentRoleFlowUseCase(
     private val pairingRepository: PairingRepository,
     private val roleRepository: AppRoleRepository,
 ) {
