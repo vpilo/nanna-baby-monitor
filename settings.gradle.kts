@@ -14,6 +14,7 @@ include(":codec")
 include(":filters")
 
 include(":network:common")
+include(":network:security")
 include(":network:model")
 include(":network:client")
 include(":network:server")

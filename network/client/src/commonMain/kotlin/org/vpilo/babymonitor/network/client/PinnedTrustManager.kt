@@ -1,6 +1,6 @@
 package org.vpilo.babymonitor.network.client
 
-import org.vpilo.babymonitor.network.common.crypto.sha256Fingerprint
+import org.vpilo.babymonitor.network.security.crypto.sha256Fingerprint
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager

@@ -4,7 +4,7 @@ import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.network.tls.certificates.saveToFile
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.crypto.sha256Fingerprint
+import org.vpilo.babymonitor.network.security.crypto.sha256Fingerprint
 import org.vpilo.babymonitor.settings.model.getSettingsDir
 import java.io.File
 import java.security.KeyStore

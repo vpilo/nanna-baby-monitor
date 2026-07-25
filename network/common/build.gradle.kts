@@ -38,15 +38,10 @@ kotlin {
             implementation(project(":network:model"))
             implementation(project(":settings:model"))
 
-            implementation(libs.kotlinx.serialization)
-
             implementation(libs.ktor.websockets)
             implementation(libs.bundles.ktor.client)
 
             implementation(libs.koin.core)
-
-            implementation(libs.cryptography.core)
-            implementation(libs.cryptography.provider.jdk)
         }
 
         val desktopMain = getByName("desktopMain")
@@ -66,7 +61,6 @@ kotlin {
         val desktopTest = getByName("desktopTest")
         desktopTest.dependencies {
             implementation(libs.junit.platform)
-            implementation(libs.ktor.network.tls.certificates)
         }
     }
 }

@@ -20,9 +20,12 @@ import org.vpilo.babymonitor.network.client.pairing.ClientPairingConnector
 import org.vpilo.babymonitor.network.model.repository.IsConnectionAvailableRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
+import org.vpilo.babymonitor.network.security.di.networkSecurityKoinModule
 
 val networkClientKoinModule: Module =
     module {
+        includes(networkSecurityKoinModule)
+
         singleOf(::ServerSelectionDataSource)
         singleOf(::NetworkControlDataSource)
         singleOf(::NetworkAudioDataSource)

@@ -5,15 +5,15 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.common.crypto.SessionFrameCipher
-import org.vpilo.babymonitor.network.common.crypto.computeClientHandshakeProof
-import org.vpilo.babymonitor.network.common.crypto.deriveClientSessionCipher
-import org.vpilo.babymonitor.network.common.crypto.generateSessionSalt
-import org.vpilo.babymonitor.network.common.crypto.verifyServerHandshakeProof
-import org.vpilo.babymonitor.network.common.protocol.StreamType
-import org.vpilo.babymonitor.network.common.protocol.receiveSessionHandshakeResponseOrNull
-import org.vpilo.babymonitor.network.common.protocol.sendSessionHandshakeRequest
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
+import org.vpilo.babymonitor.network.security.crypto.SessionFrameCipher
+import org.vpilo.babymonitor.network.security.crypto.computeClientHandshakeProof
+import org.vpilo.babymonitor.network.security.crypto.deriveClientSessionCipher
+import org.vpilo.babymonitor.network.security.crypto.generateSessionSalt
+import org.vpilo.babymonitor.network.security.crypto.verifyServerHandshakeProof
+import org.vpilo.babymonitor.network.security.protocol.StreamType
+import org.vpilo.babymonitor.network.security.protocol.receiveSessionHandshakeResponseOrNull
+import org.vpilo.babymonitor.network.security.protocol.sendSessionHandshakeRequest
 import kotlin.io.encoding.Base64
 
 /** Runs the client side of the per-connection session handshake; returns `null` (and closes [this]) on any failure. */
