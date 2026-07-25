@@ -20,8 +20,8 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.relayHttpClient
+import org.vpilo.babymonitor.network.internal.relayHttpClient
+import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import java.net.ConnectException
 import java.net.InetAddress

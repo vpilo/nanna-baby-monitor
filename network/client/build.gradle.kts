@@ -36,7 +36,7 @@ kotlin {
             implementation(project(":model"))
             implementation(project(":codec"))
             implementation(project(":settings:model"))
-            implementation(project(":network:common"))
+            implementation(project(":network:internal"))
             implementation(project(":network:security"))
             implementation(project(":network:model"))
 

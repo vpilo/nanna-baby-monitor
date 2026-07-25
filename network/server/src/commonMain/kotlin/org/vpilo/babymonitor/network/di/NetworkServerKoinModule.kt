@@ -6,6 +6,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
+import org.vpilo.babymonitor.network.internal.di.networkInternalKoinModule
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.security.di.networkSecurityKoinModule
 import org.vpilo.babymonitor.network.server.DefaultNetworkServerRepository
@@ -16,6 +17,7 @@ import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
 
 val networkServerKoinModule: Module =
     module {
+        includes(networkInternalKoinModule)
         includes(networkSecurityKoinModule)
 
         singleOf(::RelayServerRegistration)

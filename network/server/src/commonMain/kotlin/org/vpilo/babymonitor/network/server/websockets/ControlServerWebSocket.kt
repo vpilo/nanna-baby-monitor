@@ -6,8 +6,8 @@ import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
-import org.vpilo.babymonitor.network.common.repository.InternalActiveSessionsRepository
+import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.network.security.protocol.StreamType

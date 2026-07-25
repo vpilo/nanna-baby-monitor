@@ -11,8 +11,8 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.client.PinnedTrustManager
-import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.Endpoints
+import org.vpilo.babymonitor.network.model.Constants
+import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.PairedServer

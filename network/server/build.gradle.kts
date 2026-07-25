@@ -30,7 +30,7 @@ kotlin {
             implementation(project(":model"))
             implementation(project(":camera:model"))
             implementation(project(":codec"))
-            implementation(project(":network:common"))
+            implementation(project(":network:internal"))
             implementation(project(":network:security"))
             implementation(project(":network:model"))
             implementation(project(":settings:model"))

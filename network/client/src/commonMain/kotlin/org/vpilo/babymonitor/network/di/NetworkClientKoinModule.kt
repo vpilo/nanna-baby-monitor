@@ -17,6 +17,7 @@ import org.vpilo.babymonitor.network.client.NetworkVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.ServerSelectionDataSource
 import org.vpilo.babymonitor.network.client.discovery.DefaultRemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.client.pairing.ClientPairingConnector
+import org.vpilo.babymonitor.network.internal.di.networkInternalKoinModule
 import org.vpilo.babymonitor.network.model.repository.IsConnectionAvailableRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
@@ -24,6 +25,7 @@ import org.vpilo.babymonitor.network.security.di.networkSecurityKoinModule
 
 val networkClientKoinModule: Module =
     module {
+        includes(networkInternalKoinModule)
         includes(networkSecurityKoinModule)
 
         singleOf(::ServerSelectionDataSource)

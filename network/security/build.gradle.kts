@@ -32,7 +32,7 @@ kotlin {
             implementation(project(":common"))
             implementation(project(":model"))
             implementation(project(":network:model"))
-            implementation(project(":network:common"))
+            implementation(project(":network:internal"))
             implementation(project(":settings:model"))
 
             implementation(libs.kotlinx.serialization)

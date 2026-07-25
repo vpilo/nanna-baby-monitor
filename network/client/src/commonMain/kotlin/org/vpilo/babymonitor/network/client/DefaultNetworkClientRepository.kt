@@ -15,9 +15,9 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.network.client.pairing.ClientPairingConnector
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
-import org.vpilo.babymonitor.network.common.Constants
-import org.vpilo.babymonitor.network.common.Endpoints
-import org.vpilo.babymonitor.network.common.ForegroundServiceLink
+import org.vpilo.babymonitor.network.internal.ForegroundServiceLink
+import org.vpilo.babymonitor.network.model.Constants
+import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.Pin

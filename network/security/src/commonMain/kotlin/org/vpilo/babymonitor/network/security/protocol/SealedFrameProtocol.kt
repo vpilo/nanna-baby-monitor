@@ -4,13 +4,13 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
-import org.vpilo.babymonitor.network.common.protocol.ServerMessage
-import org.vpilo.babymonitor.network.common.protocol.decodeAudioFrame
-import org.vpilo.babymonitor.network.common.protocol.decodeServerMessage
-import org.vpilo.babymonitor.network.common.protocol.decodeVideoFrame
-import org.vpilo.babymonitor.network.common.protocol.encodeAudioFrame
-import org.vpilo.babymonitor.network.common.protocol.encodeServerMessage
-import org.vpilo.babymonitor.network.common.protocol.encodeVideoFrame
+import org.vpilo.babymonitor.network.internal.protocol.ServerMessage
+import org.vpilo.babymonitor.network.internal.protocol.decodeAudioFrame
+import org.vpilo.babymonitor.network.internal.protocol.decodeServerMessage
+import org.vpilo.babymonitor.network.internal.protocol.decodeVideoFrame
+import org.vpilo.babymonitor.network.internal.protocol.encodeAudioFrame
+import org.vpilo.babymonitor.network.internal.protocol.encodeServerMessage
+import org.vpilo.babymonitor.network.internal.protocol.encodeVideoFrame
 import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.security.crypto.SessionFrameCipher
 

@@ -13,7 +13,7 @@ include(":androidService")
 include(":codec")
 include(":filters")
 
-include(":network:common")
+include(":network:internal")
 include(":network:security")
 include(":network:model")
 include(":network:client")

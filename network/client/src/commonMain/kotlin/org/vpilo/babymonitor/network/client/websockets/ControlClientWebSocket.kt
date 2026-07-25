@@ -6,9 +6,9 @@ import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceId
 import org.vpilo.babymonitor.network.client.NetworkControlDataSource
 import org.vpilo.babymonitor.network.client.session.clientSessionHandshake
-import org.vpilo.babymonitor.network.common.protocol.ServerMessage
-import org.vpilo.babymonitor.network.common.protocol.runWebSocketCatching
-import org.vpilo.babymonitor.network.common.repository.InternalActiveSessionsRepository
+import org.vpilo.babymonitor.network.internal.protocol.ServerMessage
+import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.repository.PairingRepository
 import org.vpilo.babymonitor.network.security.protocol.StreamType
 import org.vpilo.babymonitor.network.security.protocol.receiveServerMessage
