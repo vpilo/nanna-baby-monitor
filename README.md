@@ -4,13 +4,11 @@
 
 ## Remaining pairing/security work
 * Relay is broken due to new security model
-* PairingCoordinator and ClientPairingConnector: investigate making into repositories + UseCases
+* PairingCoordinator: investigate making into repository/UseCases
+* WebSocketConnectionHandler takes the pairing repository, needs to be removed and replaced with a fingerprint parameter; ultimately CameraSelectionScreenViewModel can give the fingerprint to the network client.
 
 ## Will have
-- Add a 'live' red icon in server home screen when it is actually streaming (maybe grayed out while loading and/or when no frames come in)
-- Add an 'eye' icon in client home screen.
 - Remember the drag position in the PanningVideoFeed
-- Show the animated loading icon while video connection is being established
 - Add a 'close app' button/action on android notification
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode
@@ -49,6 +47,8 @@
 - Tapping on the Android notification should open the app.
 - Add slider setting for noise sensitivity.
 - on client home, show if connected directly or via relay.
+- Add a 'live' red icon in server home screen when it is actually streaming (maybe grayed out while loading and/or when no frames come in)
+- Show the animated loading icon while video connection is being established
 
 # Resources
 

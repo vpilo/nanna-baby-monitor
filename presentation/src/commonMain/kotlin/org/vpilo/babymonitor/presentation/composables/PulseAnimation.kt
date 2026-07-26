@@ -13,12 +13,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalInspectionMode
 import org.vpilo.babymonitor.presentation.Theme
 
 @Composable
-fun PulseAnimation(modifier: Modifier = Modifier) {
+fun PulseAnimation(
+    modifier: Modifier = Modifier,
+    color: Color,
+) {
     val transition = rememberInfiniteTransition()
     val inPreviewMode = LocalInspectionMode.current
     val progress by transition.animateFloat(
@@ -41,7 +45,7 @@ fun PulseAnimation(modifier: Modifier = Modifier) {
                     alpha = 1f - progress
                 }.border(
                     width = Theme.Sizes.Button,
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = color,
                     shape = CircleShape,
                 ),
     )

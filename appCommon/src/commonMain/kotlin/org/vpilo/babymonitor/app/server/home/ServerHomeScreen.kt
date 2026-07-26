@@ -3,9 +3,6 @@ package org.vpilo.babymonitor.app.server.home
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -32,8 +29,11 @@ import org.vpilo.babymonitor.presentation.Theme
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.ConnectionStatusIcons
+import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.Tooltip
+import org.vpilo.babymonitor.presentation.composables.rememberIsVideoFeedActive
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
+import org.vpilo.babymonitor.presentation.server.RecordingIcon
 
 @Composable
 fun ServerHomeScreen(
@@ -55,7 +55,7 @@ fun ServerHomeScreen(
         title = stringResource(Res.string.app_title_server_home, state.name),
         mainAction = AppDestinationMainAction.Menu,
         actions = {
-            Tooltip(text = stringResource(Res.string.app_title_server_pairing)) {
+            Tooltip(text = stringResource(Res.string.app_title_server_pairing, state.name)) {
                 IconButton(onClick = onPairClicked) {
                     Icon(painter = painterResource(Res.drawable.pair), contentDescription = null)
                 }
@@ -84,7 +84,15 @@ private fun ServerHomeContent(
     videoStream: OpaqueVideoStream,
     onModeSelected: (CaptureMode) -> Unit,
 ) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+    val isFeedActive = rememberIsVideoFeedActive(videoStream).value
+    Box(modifier = modifier.fillMaxSize()) {
+        RecordingIcon(
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart)
+                    .zIndex(2f),
+            enabled = isFeedActive,
+        )
         CaptureModeSelector(
             modifier =
                 Modifier
@@ -98,6 +106,9 @@ private fun ServerHomeContent(
             videoStream = videoStream,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
         )
+        if (captureMode != CaptureMode.AUDIO_ONLY && !isFeedActive) {
+            LoadingBox()
+        }
     }
 }
 

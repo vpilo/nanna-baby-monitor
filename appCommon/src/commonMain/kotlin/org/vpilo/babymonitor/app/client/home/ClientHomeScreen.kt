@@ -43,7 +43,9 @@ import org.vpilo.babymonitor.presentation.client.SignalState
 import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.AppDestinationMainAction
 import org.vpilo.babymonitor.presentation.composables.Backdrop
+import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.Tooltip
+import org.vpilo.babymonitor.presentation.composables.rememberIsVideoFeedActive
 import org.vpilo.babymonitor.presentation.preview.makePreviewServer
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 
@@ -130,6 +132,7 @@ private fun ClientHomeScreenContent(
     onDisconnected: () -> Unit,
     isRemoteServer: Boolean,
 ) {
+    val isFeedActive = videoStream?.let { rememberIsVideoFeedActive(videoStream).value } ?: false
     Box(modifier = modifier) {
         PanningVideoFeed(videoStream = videoStream, captureMode = captureMode)
         if (batteryLevel != DEVICE_STATE_DATA_UNAVAILABLE || signalQuality != DEVICE_STATE_DATA_UNAVAILABLE) {
@@ -153,7 +156,9 @@ private fun ClientHomeScreenContent(
             }
         }
 
-        if (connectionState is ConnectionState.Connecting || connectionState is ConnectionState.Reconnecting) {
+        if (captureMode != CaptureMode.AUDIO_ONLY && !isFeedActive) {
+            LoadingBox()
+        } else if (connectionState is ConnectionState.Connecting || connectionState is ConnectionState.Reconnecting) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = SURFACE_ALPHA),
