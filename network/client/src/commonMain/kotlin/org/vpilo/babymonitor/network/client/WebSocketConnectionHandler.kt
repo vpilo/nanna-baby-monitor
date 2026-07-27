@@ -60,7 +60,6 @@ internal class WebSocketConnectionHandler(
     }
 
     private suspend fun connect(remainingHosts: Set<InetAddress>) {
-        check(connectionJob == null)
         val host = remainingHosts.first()
         val nextHosts = remainingHosts - host
         doConnect(host, nextHosts)
