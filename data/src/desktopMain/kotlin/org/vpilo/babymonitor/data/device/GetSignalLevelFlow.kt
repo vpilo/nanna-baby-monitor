@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.data
+package org.vpilo.babymonitor.data.device
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -12,7 +12,7 @@ import java.io.File
 private val PROC_NET_WIRELESS = File("/proc/net/wireless")
 private const val MAX_LINK_QUALITY = 70
 
-internal fun getSignalLevelFlow(): Flow<Int> =
+internal actual fun getSignalLevelFlow(): Flow<Int> =
     flow {
         while (true) {
             if (!PROC_NET_WIRELESS.exists()) {

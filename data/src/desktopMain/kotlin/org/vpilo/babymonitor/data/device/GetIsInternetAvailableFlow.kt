@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.data
+package org.vpilo.babymonitor.data.device
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -7,7 +7,7 @@ import org.vpilo.babymonitor.model.repository.DEVICE_STATE_UPDATE_INTERVAL
 import oshi.SystemInfo
 import oshi.hardware.NetworkIF
 
-internal fun getIsInternetAvailableFlow(): Flow<Boolean> =
+internal actual fun getIsInternetAvailableFlow(): Flow<Boolean> =
     flow {
         var previousAddresses: Set<String>? = null
         while (true) {

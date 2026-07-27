@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.data
+package org.vpilo.babymonitor.data.device
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -9,9 +9,11 @@ import android.net.NetworkRequest
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import org.koin.mp.KoinPlatform
 
-internal fun getIsInternetAvailableFlow(context: Context): Flow<Boolean> =
+internal actual fun getIsInternetAvailableFlow(): Flow<Boolean> =
     callbackFlow {
+        val context: Context = KoinPlatform.getKoin().get()
         val connectivityManager: ConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkRequest =
             NetworkRequest

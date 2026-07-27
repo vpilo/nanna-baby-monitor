@@ -1,17 +1,19 @@
-package org.vpilo.babymonitor.data
+package org.vpilo.babymonitor.data.device
 
 import android.content.Context
 import android.net.wifi.WifiManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_UPDATE_INTERVAL
 
 private const val UNKNOWN_RSSI = -127
 
-internal fun getSignalLevelFlow(context: Context): Flow<Int> =
+internal actual fun getSignalLevelFlow(): Flow<Int> =
     flow {
+        val context: Context = KoinPlatform.getKoin().get()
         val wifiManager =
             context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         while (true) {

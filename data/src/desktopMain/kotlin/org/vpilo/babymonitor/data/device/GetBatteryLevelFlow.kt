@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.data
+package org.vpilo.babymonitor.data.device
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -9,7 +9,7 @@ import org.vpilo.babymonitor.model.repository.DEVICE_STATE_DATA_UNAVAILABLE
 import org.vpilo.babymonitor.model.repository.DEVICE_STATE_UPDATE_INTERVAL
 import oshi.SystemInfo
 
-internal fun getBatteryLevelFlow(): Flow<Int> =
+internal actual fun getBatteryLevelFlow(): Flow<Int> =
     flow {
         while (true) {
             val powerSources = SystemInfo().hardware.powerSources
