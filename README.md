@@ -9,7 +9,6 @@
 
 ## Will have
 - Remember the drag position in the PanningVideoFeed
-- Add a 'close app' button/action on android notification
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode
 - Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
@@ -25,7 +24,7 @@
 
 # Issues
 - android: on gl renderer release() wait until draw is done. easier to repro with high camera resolution.
-- Clients sometimes reconnect in background even after killing the app (notification shows up)
+- client does not close everything when notification is tapped; local discovery for sure is still on
 - When returning to role selection screen, sometimes the app gets stuck for a few seconds
 - OnBackInvokedCallback is not enabled for the application. Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
 - improve error handling and surfacing issues to the user
@@ -49,6 +48,7 @@
 - on client home, show if connected directly or via relay.
 - Add a 'live' red icon in server home screen when it is actually streaming (maybe grayed out while loading and/or when no frames come in)
 - Show the animated loading icon while video connection is being established
+- Add a 'close app' button/action on android notification
 
 # Resources
 

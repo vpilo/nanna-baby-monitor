@@ -13,7 +13,7 @@ import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
-import org.vpilo.babymonitor.network.internal.ForegroundServiceLink
+import org.vpilo.babymonitor.network.internal.BackgroundServiceLink
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.ServerState
@@ -38,7 +38,10 @@ internal class DefaultNetworkClientRepository(
 
     private var controlHandler: WebSocketConnectionHandler? = null
 
-    private val foregroundLink = ForegroundServiceLink(AppRole.CLIENT)
+    private val foregroundLink =
+        BackgroundServiceLink(AppRole.CLIENT) {
+            closeAllConnections()
+        }
 
     override suspend fun connect(server: Device.Server) {
         val currentState = connectionState.value

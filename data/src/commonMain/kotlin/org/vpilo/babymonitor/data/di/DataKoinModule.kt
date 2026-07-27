@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.data.di
 
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -19,6 +20,6 @@ val dataKoinModule: Module =
         singleOf(::DefaultAudioPlaybackRepository)
             .bind<AudioPlaybackRepository>()
 
-        singleOf(::DefaultDeviceStateRepository)
+        factoryOf(::DefaultDeviceStateRepository)
             .bind<DeviceStateRepository>()
     }

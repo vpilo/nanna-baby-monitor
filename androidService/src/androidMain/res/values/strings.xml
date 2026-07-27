@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="service_notification_channel_name">Background service notification</string>
+    <string name="service_notification_action_close">Close app</string>
     <string name="service_title">Baby Monitor</string>
-    <string name="service_description_server">Recording from the camera and microphone. Tap to show.</string>
-    <string name="service_description_client">Receiving audio/video from a camera. Tap to show.</string>
+    <string name="service_description_server">Recording from camera and microphone. Tap to show.</string>
+    <string name="service_description_client">Streaming from a camera. Tap to show.</string>
 </resources>

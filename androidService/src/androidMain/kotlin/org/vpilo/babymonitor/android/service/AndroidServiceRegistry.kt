@@ -17,6 +17,8 @@ object AndroidServiceRegistry : KoinComponent {
 
     private var serviceInstance: LifecycleService? = null
 
+    private var appCloseListener: (() -> Unit)? = null
+
     private val scope = CoroutineScope(get<CoroutineContext>())
 
     val currentRole: AppRole
@@ -83,17 +85,27 @@ object AndroidServiceRegistry : KoinComponent {
     }
 
     /**
+     * Registers a callback invoked by [shutdown] to finish the foreground Activity, if any.
+     * Activities should call this in `onCreate`/`onDestroy` to register/clear themselves if the Android Service may be active during their
+     * lifecycle.
+     */
+    fun setAppCloseListener(listener: (() -> Unit)?) {
+        appCloseListener = listener
+    }
+
+    /**
      * Use to quit the app.
-     * Stops any started services.
+     * Stops any started services. If a [setAppCloseListener] was set, the Activity which set it should finish itself.
      */
     fun shutdown() {
-        Logger.d(TAG) { "Shutdown: stopping ${services.size} services" }
+        Logger.d(TAG) { "Shutdown: stopping ${services.size} services. Listener is ${if (appCloseListener != null) "on" else "off"}" }
         synchronized(services) {
             services.forEach { it.get()?.onServiceStopped() }
             services.clear()
         }
         val context: Context = get()
         context.stopService(Intent(context, AndroidServiceHost::class.java))
+        appCloseListener?.invoke()
     }
 
     internal fun reportServiceStarted(service: LifecycleService) {

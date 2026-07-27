@@ -20,6 +20,7 @@ import io.ktor.websocket.pingInterval
 import io.ktor.websocket.timeout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,7 +35,7 @@ import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
-import org.vpilo.babymonitor.network.internal.ForegroundServiceLink
+import org.vpilo.babymonitor.network.internal.BackgroundServiceLink
 import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
@@ -53,7 +54,7 @@ import kotlin.coroutines.CoroutineContext
 internal class DefaultNetworkServerRepository(
     private val relayRegistration: RelayServerRegistration,
     private val pairingCoordinator: PairingCoordinator,
-    deviceStateRepository: DeviceStateRepository,
+    private val deviceStateRepository: DeviceStateRepository,
     private val activeSessionsRepository: ActiveSessionsRepository,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
@@ -64,8 +65,6 @@ internal class DefaultNetworkServerRepository(
     private var serverIdentity: ServerIdentity? = null
     private var self: Device.LocalServer? = null
 
-    private val foregroundLink = ForegroundServiceLink(AppRole.SERVER)
-
     private val state = MutableStateFlow(ServerState())
     override val serverStateFlow: Flow<ServerState> = state.asStateFlow()
 
@@ -73,6 +72,11 @@ internal class DefaultNetworkServerRepository(
         get() = state.value.captureMode
 
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
+
+    private val foregroundLink =
+        BackgroundServiceLink(AppRole.SERVER) {
+            scope.launch { stop() }
+        }
 
     override fun setRelayHost(host: String) {
         relayRegistration.setRelayHost(host)
@@ -86,32 +90,6 @@ internal class DefaultNetworkServerRepository(
 
     override fun cancelPairingWindow() {
         pairingCoordinator.cancelPairingWindow()
-    }
-
-    init {
-        combine(
-            isServerReady,
-            relayRegistration.isRegistered,
-        ) { isServerReady, isRelayReady ->
-            state.update {
-                it.copy(
-                    isAvailableOnLocalNetwork = isServerReady,
-                    isAvailableOnRelay = isRelayReady,
-                )
-            }
-        }.launchIn(scope)
-
-        combine(
-            deviceStateRepository.batteryLevel,
-            deviceStateRepository.signalQuality,
-        ) { batteryLevel, signalQuality ->
-            state.update { it.copy(signalQuality = signalQuality, batteryLevel = batteryLevel) }
-        }.launchIn(scope)
-
-        deviceStateRepository.isInternetAvailable
-            .onEach {
-                relayRegistration.setEnabled(it)
-            }.launchIn(scope)
     }
 
     override suspend fun start(self: Device.LocalServer) {
@@ -163,6 +141,30 @@ internal class DefaultNetworkServerRepository(
         }
 
         Logger.i(TAG) { "Requested server start" }
+
+        combine(
+            isServerReady,
+            relayRegistration.isRegistered,
+        ) { isServerReady, isRelayReady ->
+            state.update {
+                it.copy(
+                    isAvailableOnLocalNetwork = isServerReady,
+                    isAvailableOnRelay = isRelayReady,
+                )
+            }
+        }.launchIn(scope)
+
+        combine(
+            deviceStateRepository.batteryLevel,
+            deviceStateRepository.signalQuality,
+        ) { batteryLevel, signalQuality ->
+            state.update { it.copy(signalQuality = signalQuality, batteryLevel = batteryLevel) }
+        }.launchIn(scope)
+
+        deviceStateRepository.isInternetAvailable
+            .onEach {
+                relayRegistration.setEnabled(it)
+            }.launchIn(scope)
     }
 
     override suspend fun stop() {
@@ -177,6 +179,7 @@ internal class DefaultNetworkServerRepository(
             server = null
             isServerReady.value = false
             foregroundLink.stop()
+            scope.coroutineContext.cancelChildren()
         }
     }
 

@@ -34,6 +34,11 @@ internal class AndroidServiceHost : LifecycleService() {
         startId: Int,
     ): Int {
         super.onStartCommand(intent, flags, startId)
+        if (intent?.action == ACTION_CLOSE) {
+            Logger.d(TAG) { "Close action received" }
+            AndroidServiceRegistry.shutdown()
+            return START_NOT_STICKY
+        }
         if (AndroidServiceRegistry.currentRole == AppRole.UNDECIDED) {
             Logger.w(TAG) { "Service started with no registered role; stopping" }
             stopSelf(startId)
@@ -80,13 +85,28 @@ internal class AndroidServiceHost : LifecycleService() {
                 AppRole.CLIENT -> R.string.service_description_client
                 AppRole.UNDECIDED -> R.string.service_title
             }
+
+        val closeIntent = Intent(this, AndroidServiceHost::class.java).setAction(ACTION_CLOSE)
+        val closePendingIntent =
+            PendingIntent.getService(
+                this,
+                0,
+                closeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+
         return NotificationCompat
             .Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.service_title))
             .setContentText(getString(textRes))
+            .setOngoing(true)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(createOpenAppPendingIntent())
-            .build()
+            .addAction(
+                R.drawable.close,
+                getString(R.string.service_notification_action_close),
+                closePendingIntent,
+            ).build()
     }
 
     private fun createOpenAppPendingIntent(): PendingIntent {
@@ -109,5 +129,6 @@ internal class AndroidServiceHost : LifecycleService() {
 
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "BackgroundServiceChannel"
+        private const val ACTION_CLOSE = "org.vpilo.babymonitor.action.CLOSE"
     }
 }

@@ -7,13 +7,15 @@ import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
 import org.vpilo.babymonitor.model.AppRole
 
 /**
- * Android [ForegroundServiceLink] to keep components alive in the background.
+ * Android [BackgroundServiceLink] to keep components alive in the background.
  *
  * This keeps the app's foreground service alive for the duration of the network components' availability, so connections and streaming
  * can keep running while the device is locked.
+ * When the service is closed, this will ensure the network components are also closed.
  */
-actual class ForegroundServiceLink actual constructor(
+actual class BackgroundServiceLink actual constructor(
     role: AppRole,
+    private val onStoppedByPlatform: () -> Unit,
 ) {
     private val service =
         object : AndroidService {
@@ -24,7 +26,7 @@ actual class ForegroundServiceLink actual constructor(
                 lifecycleOwner: LifecycleOwner,
             ) = Unit
 
-            override fun onServiceStopped() = Unit
+            override fun onServiceStopped() = onStoppedByPlatform()
         }
 
     actual fun start() {
