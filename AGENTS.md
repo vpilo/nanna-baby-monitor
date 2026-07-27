@@ -24,13 +24,17 @@ Key features:
 - **`camera:model`** — Capture repository interfaces (`VideoCaptureRepository`, `AudioCaptureRepository`).
 - **`camera:data`** — `expect/actual` data sources. Desktop uses `webcam-capture`; Android uses CameraX.
 - **`network:model`** — Network domain types, repository interfaces, wire constants (`Constants`, `Endpoints`, `RelaySignals`),
-  device transport-string codecs (`asTransportString`/`fromTransportString`), and the `PairingQrPayload`.
+  device transport-string codecs (`asTransportString`/`fromTransportString`), the `PairingQrPayload`, the relay settings
+  (`Setting.RelayHost`/`Setting.RelayPassphrase`) and `RelayConfiguration`.
 - **`network:internal`** — Internal network plumbing shared by server and client: mDNS discovery, active-session ledger, frame codecs,
-  relay HTTP client, foreground-service link. Compile-time dependency of `network:server`/`network:client` only (was `network:common`).
-- **`network:security`** — Pairing and session crypto: ECDH/HKDF/AEAD, pairing/session handshakes, the cipher facade,
-  `DefaultPairingRepository`, and the sealed-frame protocol. Compile-time dependency of `network:server`/`network:client` only.
+  foreground-service link. Compile-time dependency of `network:server`/`network:client` only (was `network:common`).
+- **`network:security`** — Pairing, session and relay-access crypto: ECDH/HKDF/AEAD/PBKDF2, the handshakes, the cipher facade,
+  `DefaultPairingRepository`, the sealed-frame protocol, and `relayWss`/`verifyRelayAccess`. Compile-time dependency of
+  `network:server`/`network:client`/`appRelay` only.
 - **`network:server`** — Ktor server with WebSocket endpoints (`/audio`, `/video`). Encodes & streams.
 - **`network:client`** — Ktor client connecting to WebSocket endpoints. Receives & decodes.
+- **`appRelay`** — Standalone relay that proxies opaque frames between camera and monitor when they are on different networks.
+  Configured only through `relay.conf` in `getSettingsDir()`; gates every endpoint on the relay access handshake.
 - **`androidService`** — Android-only foreground service infrastructure for background capture.
 - **`presentation`** — Common Composables for the Compose UI elements, theming.
 - **`settings:model`** — Settings data types and repository interfaces.
@@ -86,4 +90,5 @@ individually over multiple iterations:
   needing logging.
 - **Companion objects:** Should be at the bottom of a class and made private unless necessary.
 - **Dependencies:** Managed via version catalog at `gradle/libs.versions.toml`. Use `libs.` references in `build.gradle.kts`.
-- **No tests exist yet** — the project has no test source sets.
+- **Tests:** only `network:security` and `network:model` have them, covering the crypto primitives and the handshakes.
+  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest`.

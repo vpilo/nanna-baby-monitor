@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientLastServerId
-import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
@@ -21,6 +21,7 @@ import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.model.usecase.GetConnectableServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetNewServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetPairedNonVisibleServersFlowUseCase
+import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
@@ -33,6 +34,7 @@ class CameraSelectionScreenViewModel(
     private val getPairedNonVisibleServersFlowUseCase: GetPairedNonVisibleServersFlowUseCase,
     private val getConnectableServersFlowUseCase: GetConnectableServersFlowUseCase,
     private val getNewServersFlowUseCase: GetNewServersFlowUseCase,
+    private val getRelayConfigurationFlowUseCase: GetRelayConfigurationFlowUseCase,
     private val localDiscoveryRepository: LocalDiscoveryRepository,
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
     private val deviceStateRepository: DeviceStateRepository,
@@ -116,9 +118,9 @@ class CameraSelectionScreenViewModel(
                 waitForLastConnectedServer()
             }
 
-        settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
-            remoteDiscoveryRepository.setRelayHost(host)
-            state.copy(isRelayConfigured = host.isNotBlank()).update()
+        getRelayConfigurationFlowUseCase().subscribe { configuration ->
+            remoteDiscoveryRepository.setRelay(configuration)
+            state.copy(isRelayConfigured = configuration.isConfigured).update()
         }
 
         localDiscoveryRepository.isRegisteredFlow.subscribe { isRegistered ->
@@ -142,7 +144,7 @@ class CameraSelectionScreenViewModel(
     }
 
     override suspend fun onUnsubscribed() {
-        remoteDiscoveryRepository.setRelayHost()
+        remoteDiscoveryRepository.setRelay(RelayConfiguration.NONE)
         autoConnectJob?.cancel()
         autoConnectJob = null
     }

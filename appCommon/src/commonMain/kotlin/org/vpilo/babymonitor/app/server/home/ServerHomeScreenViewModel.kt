@@ -6,14 +6,15 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.vpilo.babymonitor.app.settings.LastCaptureMode
-import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
+import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
+import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceId
@@ -24,6 +25,7 @@ class ServerHomeScreenViewModel(
     private val discoveryManager: LocalDiscoveryRepository,
     private val server: NetworkServerRepository,
     private val settings: SettingsRepository,
+    private val getRelayConfigurationFlowUseCase: GetRelayConfigurationFlowUseCase,
     videoCaptureRepository: VideoCaptureRepository,
 ) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, Unit>(
         initialState = ServerHomeScreenState(),
@@ -44,10 +46,9 @@ class ServerHomeScreenViewModel(
             state.copy(captureMode = it).update()
             server.setCaptureMode(it)
         }
-        // TODO move to usecase
-        settings.flowOf(Setting.RelayHost).subscribe { host ->
-            state.copy(isRelayConfigured = host.isNotBlank()).update()
-            server.setRelayHost(host)
+        getRelayConfigurationFlowUseCase().subscribe { configuration ->
+            state.copy(isRelayConfigured = configuration.isConfigured).update()
+            server.setRelay(configuration)
         }
     }
 
@@ -71,6 +72,7 @@ class ServerHomeScreenViewModel(
     override fun onCleared() {
         runBlocking {
             discoveryManager.unregister()
+            server.setRelay(RelayConfiguration.NONE)
             server.stop()
         }
     }

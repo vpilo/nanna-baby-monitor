@@ -7,6 +7,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.NoiseAware
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -27,11 +28,12 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.core.module.dsl.viewModelOf
 import org.vpilo.babymonitor.app.navigation.Route
-import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.camera.model.settings.CameraResolution
 import org.vpilo.babymonitor.camera.model.settings.LowLightBoost
 import org.vpilo.babymonitor.camera.model.settings.SilenceDetectionThreshold
 import org.vpilo.babymonitor.model.AppRole
+import org.vpilo.babymonitor.network.model.settings.RelayHost
+import org.vpilo.babymonitor.network.model.settings.RelayPassphrase
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.settings.model.PlatformAvailability
 import org.vpilo.babymonitor.settings.model.Setting
@@ -89,6 +91,11 @@ fun ColumnScope.AppMenuContents(
     MenuSettingItem(
         setting = Setting.RelayHost,
         imageVector = Icons.Default.Cloud,
+    )
+
+    MenuSettingItem(
+        setting = Setting.RelayPassphrase,
+        imageVector = Icons.Default.Key,
     )
 
     MenuItem(

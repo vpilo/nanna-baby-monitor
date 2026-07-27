@@ -1,13 +1,8 @@
 package org.vpilo.babymonitor.network.server
 
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
-import io.ktor.client.plugins.websocket.wss
-import io.ktor.http.HttpMethod
-import io.ktor.http.encodeURLPathPart
 import io.ktor.websocket.Frame
-import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
-import io.ktor.websocket.timeout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -19,13 +14,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
-import org.vpilo.babymonitor.network.internal.relayHttpClient
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
+import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.RelaySignals
 import org.vpilo.babymonitor.network.model.transport.asTransportString
+import org.vpilo.babymonitor.network.security.relay.relayWss
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSocket
@@ -39,16 +36,16 @@ internal class RelayServerRegistration(
     private val _isRegistered = MutableStateFlow(false)
     val isRegistered: Flow<Boolean> = _isRegistered.asStateFlow()
 
-    private var relayHost: String = ""
+    private var relayConfiguration: RelayConfiguration = RelayConfiguration.NONE
     private lateinit var server: Device.LocalServer
     private var registrationJob: Job? = null
     private val activeStreamJobs = java.util.concurrent.CopyOnWriteArrayList<Job>()
 
     private var isEnabled: Boolean = true
 
-    fun setRelayHost(host: String) {
-        if (relayHost == host) return
-        relayHost = host
+    fun setRelay(configuration: RelayConfiguration) {
+        if (this.relayConfiguration == configuration) return
+        this.relayConfiguration = configuration
         restart()
     }
 
@@ -73,26 +70,21 @@ internal class RelayServerRegistration(
 
     fun restart() {
         stop()
-        if (!isEnabled || relayHost.isEmpty() || !this::server.isInitialized) return
+        if (!isEnabled || !relayConfiguration.isConfigured || !this::server.isInitialized) return
         registrationJob = scope.launch { runRegistrationLoop() }
     }
 
     private suspend fun runRegistrationLoop() {
         while (true) {
-            Logger.d(TAG) { "Connecting to relay at $relayHost as $server" }
+            Logger.d(TAG) { "Connecting to relay at ${relayConfiguration.host} as $server" }
             runCatching {
-                relayHttpClient.wss(
-                    method = HttpMethod.Get,
-                    host = relayHost,
-                    port = Constants.RELAY_PORT,
-                    path = Endpoints.Relay.SERVER_REGISTRATION,
+                relayWss(
+                    configuration = relayConfiguration,
+                    role = AppRole.SERVER,
+                    endpoint = Endpoints.Relay.SERVER_REGISTRATION,
                 ) {
-                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                    timeout = Constants.WEBSOCKET_TIMEOUT
-
                     runWebSocketCatching(TAG) {
-                        // TODO authentication
-                        send(Frame.Text(server.asTransportString(relayHost)))
+                        send(Frame.Text(server.asTransportString(relayConfiguration.host)))
                         Logger.i(TAG) { "Registered with relay as $server" }
                         _isRegistered.value = true
                         readRelaySignals()
@@ -131,15 +123,12 @@ internal class RelayServerRegistration(
         val job =
             scope.launch {
                 try {
-                    relayHttpClient.wss(
-                        method = HttpMethod.Get,
-                        host = relayHost,
-                        port = Constants.RELAY_PORT,
-                        path = "$streamPath/${server.idString.encodeURLPathPart()}",
+                    relayWss(
+                        configuration = relayConfiguration,
+                        role = AppRole.SERVER,
+                        endpoint = streamPath,
+                        serverId = server.id,
                     ) {
-                        pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                        timeout = Constants.WEBSOCKET_TIMEOUT
-
                         when (endpoint) {
                             Endpoints.CONTROL -> controlServerWebSocket(serverDeviceId = server.id)
                             Endpoints.STREAM_AUDIO -> audioStreamingServerWebSocket(serverDeviceId = server.id)

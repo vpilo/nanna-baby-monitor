@@ -1,7 +1,5 @@
 package org.vpilo.babymonitor.network.client.discovery
 
-import io.ktor.client.plugins.websocket.wss
-import io.ktor.http.HttpMethod
 import io.ktor.websocket.DefaultWebSocketSession
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
@@ -20,12 +18,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
-import org.vpilo.babymonitor.network.internal.relayHttpClient
 import org.vpilo.babymonitor.network.model.Constants
+import org.vpilo.babymonitor.network.model.Endpoints
+import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.model.transport.fromTransportString
+import org.vpilo.babymonitor.network.security.relay.relayWss
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultRemoteDiscoveryRepository(
@@ -39,20 +40,20 @@ internal class DefaultRemoteDiscoveryRepository(
     private val mutableIsRegisteredFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val isRegisteredFlow: Flow<Boolean> = mutableIsRegisteredFlow.asStateFlow()
 
-    private var relayHost: String = ""
+    private var relayConfiguration: RelayConfiguration = RelayConfiguration.NONE
     private var discoveryJob: Job? = null
     private var session: DefaultWebSocketSession? = null
 
     private var isEnabled: Boolean = true
 
-    override fun setRelayHost(host: String) {
-        relayHost = host
+    override fun setRelay(configuration: RelayConfiguration) {
+        relayConfiguration = configuration
         _discoveredDevicesFlow.value = emptySet()
 
         discoveryJob?.cancel()
         discoveryJob = null
 
-        if (relayHost.isNotBlank()) {
+        if (configuration.isConfigured) {
             start()
         } else {
             scope.launch {
@@ -64,7 +65,7 @@ internal class DefaultRemoteDiscoveryRepository(
 
     private fun start() {
         if (!isEnabled) return
-        if (relayHost.isEmpty()) return
+        if (!relayConfiguration.isConfigured) return
 
         discoveryJob =
             scope.launch {
@@ -77,13 +78,12 @@ internal class DefaultRemoteDiscoveryRepository(
 
     private suspend fun runDiscoveryLoop() {
         while (true) {
-            Logger.d(TAG) { "Relay discovery connection started for $relayHost" }
+            Logger.d(TAG) { "Relay discovery connection started for ${relayConfiguration.host}" }
             runCatching {
-                relayHttpClient.wss(
-                    method = HttpMethod.Get,
-                    host = relayHost,
-                    port = Constants.RELAY_PORT,
-                    path = "/relay/discovery",
+                relayWss(
+                    configuration = relayConfiguration,
+                    role = AppRole.CLIENT,
+                    endpoint = Endpoints.Relay.CLIENT_DISCOVERY,
                 ) {
                     pingInterval = Constants.WEBSOCKET_PING_PERIOD
                     timeout = Constants.WEBSOCKET_TIMEOUT
@@ -91,7 +91,6 @@ internal class DefaultRemoteDiscoveryRepository(
                     session = this
                     mutableIsRegisteredFlow.value = true
                     runWebSocketCatching(TAG) {
-                        // TODO authentication
                         for (frame in incoming) {
                             if (frame !is Frame.Text) continue
                             val servers =
@@ -100,7 +99,7 @@ internal class DefaultRemoteDiscoveryRepository(
                                     .lines()
                                     .filter { it.isNotEmpty() }
                                     .mapNotNull { line -> Device.RemoteServer.fromTransportString(line) }
-                                    .filter { it.relayHost == relayHost }
+                                    .filter { it.relayHost == relayConfiguration.host }
                                     .toSet()
                             if (_discoveredDevicesFlow.value != servers) {
                                 Logger.i(TAG) { "Relay found servers: $servers" }

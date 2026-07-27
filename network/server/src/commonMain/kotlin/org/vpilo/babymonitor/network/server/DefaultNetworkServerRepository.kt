@@ -39,6 +39,7 @@ import org.vpilo.babymonitor.network.internal.BackgroundServiceLink
 import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
+import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
 import org.vpilo.babymonitor.network.model.repository.ActiveSessionsRepository
@@ -78,8 +79,8 @@ internal class DefaultNetworkServerRepository(
             scope.launch { stop() }
         }
 
-    override fun setRelayHost(host: String) {
-        relayRegistration.setRelayHost(host)
+    override fun setRelay(configuration: RelayConfiguration) {
+        relayRegistration.setRelay(configuration)
     }
 
     override val pairingState: Flow<ServerPairingState> = pairingCoordinator.state

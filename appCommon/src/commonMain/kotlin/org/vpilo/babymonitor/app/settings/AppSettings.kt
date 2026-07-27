@@ -1,8 +1,6 @@
 package org.vpilo.babymonitor.app.settings
 
 import babymonitor.appcommon.generated.resources.Res
-import babymonitor.appcommon.generated.resources.relay_host_description
-import babymonitor.appcommon.generated.resources.relay_host_title
 import babymonitor.appcommon.generated.resources.server_mode_audio_and_video
 import babymonitor.appcommon.generated.resources.server_mode_audio_only
 import babymonitor.appcommon.generated.resources.server_mode_video_only
@@ -48,15 +46,6 @@ val Setting.Companion.ClientEnabledVideo by makeSetting {
 val Setting.Companion.ClientLastServerId by makeSetting {
     Setting.makeString(
         id = SettingId("client_last_server_id"),
-        default = "",
-    )
-}
-
-val Setting.Companion.RelayHost by makeSetting {
-    Setting.makeString(
-        id = SettingId("relay_host"),
-        name = Res.string.relay_host_title,
-        description = Res.string.relay_host_description,
         default = "",
     )
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="setting_relay_host_title">Remote relay hostname</string>
+    <string name="setting_relay_host_description">DDNS hostname for remote access (e.g. myhome.duckdns.org)</string>
+    <string name="setting_relay_passphrase_title">Remote relay passphrase</string>
+    <string name="setting_relay_passphrase_description">Shared secret configured on the relay. Every device using it needs the same one.</string>
+</resources>

@@ -3,9 +3,8 @@
 # Feature plan
 
 ## Remaining pairing/security work
-* Relay is broken due to new security model
 * PairingCoordinator: investigate making into repository/UseCases
-* WebSocketConnectionHandler takes the pairing repository, needs to be removed and replaced with a fingerprint parameter; ultimately CameraSelectionScreenViewModel can give the fingerprint to the network client.
+* WebSocketConnectionHandler takes the pairing repository, needs to be removed and replaced with a fingerprint parameter; ultimately CameraSelectionScreenViewModel can give the fingerprint to the network client. It also uses Koin directly to get the relay config, must be given to it.
 
 ## Will have
 - Remember the drag position in the PanningVideoFeed

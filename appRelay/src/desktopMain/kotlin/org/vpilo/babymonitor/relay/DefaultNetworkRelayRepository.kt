@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceId
@@ -38,6 +39,9 @@ import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.RelaySignals
 import org.vpilo.babymonitor.network.model.transport.asTransportString
 import org.vpilo.babymonitor.network.model.transport.fromTransportString
+import org.vpilo.babymonitor.network.security.crypto.sha256Fingerprint
+import org.vpilo.babymonitor.network.security.relay.verifyRelayAccess
+import java.security.cert.X509Certificate
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
@@ -52,29 +56,42 @@ class DefaultNetworkRelayRepository {
 
     private lateinit var device: Device.Relay
 
+    private lateinit var accessKey: ByteArray
+
+    /**
+     * Fingerprint of the certificate served by this relay.
+     */
+    private lateinit var certificateFingerprint: String
+
     private val remoteServers = MutableStateFlow<Map<Device.RemoteServer, WebSocketServerSession>>(emptyMap())
 
     private val pendingRelays =
         ConcurrentHashMap<PendingSessionKey, ConcurrentLinkedDeque<CompletableDeferred<WebSocketServerSession?>>>()
 
-    fun start(device: Device.Relay) {
+    fun start(
+        device: Device.Relay,
+        accessKey: ByteArray,
+    ) {
         if (server != null) return
 
         this.device = device
+        this.accessKey = accessKey
+
+        // Regenerated on every start: nothing pins this certificate, it only has to be stable for the lifetime
+        // of the process so that connectors and relay hash the same bytes during the access handshake.
+        val keyStore =
+            buildKeyStore {
+                certificate(RELAY_KEY_ALIAS) {
+                    password = RELAY_KEYSTORE_PASSWORD
+                    domains = listOf(Constants.TLS_SERVER_NAME, Constants.SERVICES_LISTEN_ADDRESS)
+                }
+            }
+        certificateFingerprint = (keyStore.getCertificate(RELAY_KEY_ALIAS) as X509Certificate).sha256Fingerprint()
 
         server =
             embeddedServer(
                 factory = Netty,
                 configure = {
-                    // TODO authentication: ephemeral self-signed cert so the TLS connector can start;
-                    // real relay authentication is out of scope here.
-                    val keyStore =
-                        buildKeyStore {
-                            certificate(RELAY_KEY_ALIAS) {
-                                password = RELAY_KEYSTORE_PASSWORD
-                                domains = listOf(Constants.TLS_SERVER_NAME, Constants.SERVICES_LISTEN_ADDRESS)
-                            }
-                        }
                     sslConnector(
                         keyStore = keyStore,
                         keyAlias = RELAY_KEY_ALIAS,
@@ -112,38 +129,40 @@ class DefaultNetworkRelayRepository {
         }
     }
 
+    // NOTE: Pairing is not allowed nor possible via relay.
     private fun Route.clientRoutes() {
         webSocket(Endpoints.Relay.CLIENT_DISCOVERY) {
             handleDiscovery()
         }
         webSocket("${Endpoints.Relay.CLIENT_CONTROL}/{serverId}") {
-            handleClientEndpoint(Endpoints.CONTROL)
+            handleClientEndpoint(Endpoints.CONTROL, Endpoints.Relay.CLIENT_CONTROL)
         }
         webSocket("${Endpoints.Relay.CLIENT_AUDIO}/{serverId}") {
-            handleClientEndpoint(Endpoints.STREAM_AUDIO)
+            handleClientEndpoint(Endpoints.STREAM_AUDIO, Endpoints.Relay.CLIENT_AUDIO)
         }
         webSocket("${Endpoints.Relay.CLIENT_VIDEO}/{serverId}") {
-            handleClientEndpoint(Endpoints.STREAM_VIDEO)
+            handleClientEndpoint(Endpoints.STREAM_VIDEO, Endpoints.Relay.CLIENT_VIDEO)
         }
     }
 
+    // NOTE: Pairing is not allowed nor possible via relay.
     private fun Route.serverRoutes() {
         webSocket(Endpoints.Relay.SERVER_REGISTRATION) {
             handleServerRegistration()
         }
         webSocket("${Endpoints.Relay.SERVER_CONTROL}/{serverId}") {
-            handleCameraStreamEndpoint(Endpoints.CONTROL)
+            handleCameraStreamEndpoint(Endpoints.CONTROL, Endpoints.Relay.SERVER_CONTROL)
         }
         webSocket("${Endpoints.Relay.SERVER_AUDIO}/{serverId}") {
-            handleCameraStreamEndpoint(Endpoints.STREAM_AUDIO)
+            handleCameraStreamEndpoint(Endpoints.STREAM_AUDIO, Endpoints.Relay.SERVER_AUDIO)
         }
         webSocket("${Endpoints.Relay.SERVER_VIDEO}/{serverId}") {
-            handleCameraStreamEndpoint(Endpoints.STREAM_VIDEO)
+            handleCameraStreamEndpoint(Endpoints.STREAM_VIDEO, Endpoints.Relay.SERVER_VIDEO)
         }
     }
 
     private suspend fun DefaultWebSocketServerSession.handleDiscovery() {
-        setupSession() ?: return
+        setupSession(AppRole.CLIENT, Endpoints.Relay.CLIENT_DISCOVERY) ?: return
 
         Logger.i(TAG) { "Client connected to discovery endpoint" }
         remoteServers.collect { set ->
@@ -153,7 +172,7 @@ class DefaultNetworkRelayRepository {
     }
 
     private suspend fun DefaultWebSocketServerSession.handleServerRegistration() {
-        setupSession() ?: return
+        setupSession(AppRole.SERVER, Endpoints.Relay.SERVER_REGISTRATION) ?: return
 
         Logger.i(TAG) { "Server connected to registration endpoint" }
         val registration =
@@ -197,8 +216,11 @@ class DefaultNetworkRelayRepository {
     }
 
     @Suppress("ReturnCount")
-    private suspend fun DefaultWebSocketServerSession.handleClientEndpoint(endpoint: String) {
-        setupSession() ?: return
+    private suspend fun DefaultWebSocketServerSession.handleClientEndpoint(
+        endpoint: String,
+        relayEndpoint: String,
+    ) {
+        setupSession(AppRole.CLIENT, relayEndpoint) ?: return
 
         Logger.i(TAG) { "Client connected to $endpoint for ${call.parameters["serverId"]}" }
         val id =
@@ -283,8 +305,11 @@ class DefaultNetworkRelayRepository {
     }
 
     @Suppress("ReturnCount")
-    private suspend fun DefaultWebSocketServerSession.handleCameraStreamEndpoint(endpoint: String) {
-        setupSession() ?: return
+    private suspend fun DefaultWebSocketServerSession.handleCameraStreamEndpoint(
+        endpoint: String,
+        relayEndpoint: String,
+    ) {
+        setupSession(AppRole.SERVER, relayEndpoint) ?: return
 
         Logger.i(TAG) { "Server connected to $endpoint for ${call.parameters["serverId"]}" }
         val id =
@@ -318,11 +343,25 @@ class DefaultNetworkRelayRepository {
             else -> error("Unknown endpoint: $endpoint")
         }
 
-    // The nullable Unit is only to allow single-line early returns on failure.
-    private suspend fun DefaultWebSocketServerSession.setupSession(): Unit? {
-        // TODO authentication
+    /**
+     * The gate every endpoint passes through: no route does anything before the peer has proven it holds the
+     * relay passphrase.
+     *
+     * The nullable Unit is only to allow single-line early returns on failure.
+     */
+    private suspend fun DefaultWebSocketServerSession.setupSession(
+        role: AppRole,
+        relayEndpoint: String,
+    ): Unit? {
         pingInterval = Constants.WEBSOCKET_PING_PERIOD
         timeout = Constants.WEBSOCKET_TIMEOUT
+
+        if (!verifyRelayAccess(accessKey, role, relayEndpoint, certificateFingerprint)) {
+            Logger.w(TAG) { "Refused unauthenticated $role connection to $relayEndpoint" }
+            // Deliberately unspecific: a caller guessing passphrases learns nothing from the close reason.
+            close(reason = CloseReason(CloseReason.Codes.NORMAL, ""))
+            return null
+        }
         return Unit
     }
 
@@ -332,7 +371,6 @@ class DefaultNetworkRelayRepository {
                 ?.toDeviceId()
 
     private companion object {
-        // TODO authentication — placeholder TLS identity until real relay authentication exists.
         private const val RELAY_KEY_ALIAS = "babymonitor-relay"
         private const val RELAY_KEYSTORE_PASSWORD = "babymonitor"
 

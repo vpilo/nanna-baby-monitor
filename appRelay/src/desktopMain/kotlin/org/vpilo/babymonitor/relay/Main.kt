@@ -14,6 +14,8 @@ import org.vpilo.babymonitor.data.di.dataKoinModule
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceId
+import org.vpilo.babymonitor.network.model.RelayConfiguration
+import org.vpilo.babymonitor.network.security.crypto.deriveRelayAccessKey
 import org.vpilo.babymonitor.settings.data.di.settingsDataKoinModule
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
@@ -23,7 +25,7 @@ import kotlin.system.exitProcess
 
 private const val TAG = "Relay"
 
-private fun babyMonitorMain(args: Array<String>) {
+private fun babyMonitorMain() {
     val koin =
         startKoin {
             modules(
@@ -35,28 +37,7 @@ private fun babyMonitorMain(args: Array<String>) {
             )
         }.koin
 
-    if (args.isEmpty()) {
-        Logger.e(TAG) { "Relay host name argument not provided" }
-        println(
-            "The Baby Monitor relay needs one argument: an hostname." +
-                " It can be either a public IP address, or a hostname from a domain or a dynamic DNS service.",
-        )
-        exitProcess(1)
-    }
-    if (args.size > 1) {
-        Logger.e(TAG) { "Too many arguments provided" }
-        println("The Baby Monitor relay needs only one argument: the hostname.")
-        exitProcess(1)
-    }
-    val hostName = args.first().trim()
-    if (hostName.isBlank()) {
-        Logger.e(TAG) { "Invalid relay host name argument" }
-        println(
-            "The Baby Monitor relay needs one argument: an hostname." +
-                " It can be either a public IP address, or a hostname from a domain or a dynamic DNS service.",
-        )
-        exitProcess(1)
-    }
+    val configuration = loadConfigurationOrExit()
 
     val coroutineContext: CoroutineContext = koin.get()
     val coroutineScope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -80,10 +61,10 @@ private fun babyMonitorMain(args: Array<String>) {
         val device =
             Device.Relay(
                 id = deferredDeviceId.await(),
-                name = hostName,
-                relayHost = hostName,
+                name = configuration.host,
+                relayHost = configuration.host,
             )
-        relay.start(device)
+        relay.start(device, deriveRelayAccessKey(configuration.passphrase))
     }
 
     Logger.i(TAG) { "Baby Monitor relay version ${BuildInfo.VERSION} running. Press Ctrl+C to end." }
@@ -97,14 +78,35 @@ private fun babyMonitorMain(args: Array<String>) {
     }
 }
 
+private fun loadConfigurationOrExit(): RelayConfiguration =
+    when (val outcome = loadRelayConfiguration()) {
+        is RelayConfigurationOutcome.Loaded -> {
+            outcome.configuration
+        }
+
+        is RelayConfigurationOutcome.TemplateCreated -> {
+            println("The Baby Monitor relay is not configured yet.")
+            println("A blank configuration was created at ${outcome.path.path}.")
+            println("Fill in the hostname and passphrase, then start the relay again.")
+            exitProcess(1)
+        }
+
+        is RelayConfigurationOutcome.Incomplete -> {
+            println("The Baby Monitor relay configuration at ${outcome.path.path} is incomplete.")
+            println("These entries still need a value: ${outcome.blankKeys.joinToString(", ")}.")
+            exitProcess(1)
+        }
+    }
+
+@Suppress("unused")
 fun main(args: Array<String>) {
-    babyMonitorMain(args)
+    babyMonitorMain()
 }
 
 @Suppress("MemberNameEqualsClassName")
 class Main private constructor() {
     companion object {
         @JvmStatic
-        fun main(args: Array<String>) = babyMonitorMain(args)
+        fun main(args: Array<String>) = babyMonitorMain()
     }
 }

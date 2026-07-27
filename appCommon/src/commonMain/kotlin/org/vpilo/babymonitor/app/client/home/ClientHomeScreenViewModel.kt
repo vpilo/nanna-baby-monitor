@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientEnabledAudio
 import org.vpilo.babymonitor.app.settings.ClientEnabledVideo
-import org.vpilo.babymonitor.app.settings.RelayHost
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
@@ -18,6 +17,7 @@ import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
+import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 
@@ -27,6 +27,7 @@ class ClientHomeScreenViewModel(
     private val videoReceiverRepository: StreamingVideoReceiverRepository,
     private val networkClientRepository: NetworkClientRepository,
     private val settingsRepository: SettingsRepository,
+    private val getRelayConfigurationFlowUseCase: GetRelayConfigurationFlowUseCase,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
 ) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
         initialState = ClientHomeScreenState(),
@@ -85,11 +86,11 @@ class ClientHomeScreenViewModel(
         isAudioEnabled.subscribe { isEnabled ->
             playReceivedAudio.setPlaying(vmScope, isEnabled)
         }
-        settingsRepository.flowOf(Setting.RelayHost).subscribe { host ->
+        getRelayConfigurationFlowUseCase().subscribe { configuration ->
             val connection = state.connectionState
             if (connection !is ConnectionState.Connected) return@subscribe
             val server = connection.server
-            if (server is Device.RemoteServer && server.relayHost != host) {
+            if (server is Device.RemoteServer && server.relayHost != configuration.host) {
                 networkClientRepository.disconnect()
                 ClientHomeScreenEffect.Disconnected.sendEffect()
             }

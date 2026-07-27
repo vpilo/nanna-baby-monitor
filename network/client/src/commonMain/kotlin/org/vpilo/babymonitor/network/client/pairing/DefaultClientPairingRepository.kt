@@ -10,7 +10,6 @@ import io.ktor.websocket.CloseReason
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.network.client.PinnedTrustManager
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
@@ -19,6 +18,7 @@ import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.PairedServer
 import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.security.crypto.EcdhKeyPair
+import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
 import org.vpilo.babymonitor.network.security.crypto.buildPairingTranscript
 import org.vpilo.babymonitor.network.security.crypto.computeClientConfirmation
 import org.vpilo.babymonitor.network.security.crypto.deriveSharedSecretS

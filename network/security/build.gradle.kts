@@ -38,6 +38,7 @@ kotlin {
             implementation(libs.kotlinx.serialization)
 
             implementation(libs.ktor.websockets)
+            implementation(libs.bundles.ktor.client)
 
             implementation(libs.koin.core)
 
@@ -54,6 +55,9 @@ kotlin {
         desktopTest.dependencies {
             implementation(libs.junit.platform)
             implementation(libs.ktor.network.tls.certificates)
+
+            implementation(libs.bundles.ktor.server)
+            implementation(libs.ktor.server.netty)
         }
     }
 }

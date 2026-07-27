@@ -18,6 +18,7 @@ kotlin {
             implementation(project(":data"))
             implementation(project(":model"))
             implementation(project(":network:model"))
+            implementation(project(":network:security"))
             implementation(project(":settings:data"))
             implementation(project(":settings:model"))
             implementation(libs.koin.core)

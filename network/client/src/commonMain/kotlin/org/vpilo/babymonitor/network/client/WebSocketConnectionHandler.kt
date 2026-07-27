@@ -7,7 +7,6 @@ import io.ktor.client.plugins.websocket.WebSocketException
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
-import io.ktor.http.encodeURLPathPart
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.pingInterval
 import io.ktor.websocket.timeout
@@ -16,13 +15,19 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
+import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.network.internal.relayHttpClient
 import org.vpilo.babymonitor.network.model.Constants
+import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
+import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
+import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
+import org.vpilo.babymonitor.network.security.relay.relayWss
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.ProtocolException
@@ -44,14 +49,21 @@ internal class WebSocketConnectionHandler(
         if (connectionJob?.isActive == true) {
             return
         }
-        connect(device.addresses)
+        connectionJob =
+            coroutineScope.launch {
+                if (device is Device.RemoteServer) {
+                    connectToRelay()
+                } else {
+                    connect(device.addresses)
+                }
+            }
     }
 
-    private fun connect(remainingHosts: Set<InetAddress>) {
+    private suspend fun connect(remainingHosts: Set<InetAddress>) {
         check(connectionJob == null)
         val host = remainingHosts.first()
         val nextHosts = remainingHosts - host
-        connectionJob = coroutineScope.launch { doConnect(host, nextHosts) }
+        doConnect(host, nextHosts)
     }
 
     private suspend fun doConnect(
@@ -110,45 +122,47 @@ internal class WebSocketConnectionHandler(
     }
 
     private suspend fun startWebSocket(host: InetAddress) {
-        if (device !is Device.RemoteServer) {
-            val expectedFingerprint =
-                pairingStorageRepository.findServer(device.id)?.certFingerprint
-                    ?: error("Not paired with $device — refusing to connect")
-            val pinnedClient =
-                HttpClient(CIO) {
-                    install(WebSockets) { clientPingInterval = Constants.WEBSOCKET_PING_PERIOD }
-                    engine {
-                        https {
-                            trustManager = PinnedTrustManager(expectedFingerprint)
-                            serverName = Constants.TLS_SERVER_NAME
-                        }
+        val expectedFingerprint =
+            pairingStorageRepository.findServer(device.id)?.certFingerprint
+                ?: error("Not paired with $device — refusing to connect")
+        val pinnedClient =
+            HttpClient(CIO) {
+                install(WebSockets) { clientPingInterval = Constants.WEBSOCKET_PING_PERIOD }
+                engine {
+                    https {
+                        trustManager = PinnedTrustManager(expectedFingerprint)
+                        serverName = Constants.TLS_SERVER_NAME
                     }
                 }
-            pinnedClient.use {
-                it.wss(
-                    method = HttpMethod.Get,
-                    host = host.hostAddress,
-                    port = Constants.SERVICE_PORT,
-                    path = endpointPath,
-                ) {
-                    pingInterval = Constants.WEBSOCKET_PING_PERIOD
-                    timeout = Constants.WEBSOCKET_TIMEOUT
-
-                    runSession()
-                }
             }
-        } else {
-            relayHttpClient.wss(
+        pinnedClient.use {
+            it.wss(
                 method = HttpMethod.Get,
-                host = host.hostName,
-                port = Constants.RELAY_PORT,
-                path = "/relay/client$endpointPath/${device.idString.encodeURLPathPart()}",
+                host = host.hostAddress,
+                port = Constants.SERVICE_PORT,
+                path = endpointPath,
             ) {
                 pingInterval = Constants.WEBSOCKET_PING_PERIOD
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
                 runSession()
             }
+        }
+    }
+
+    private suspend fun connectToRelay() {
+        val getRelayConfiguration = KoinPlatform.getKoin().get<GetRelayConfigurationFlowUseCase>()
+        val configuration = getRelayConfiguration().first()
+        if (!configuration.isConfigured) {
+            error("No relay configured — cannot connect to $device")
+        }
+        relayWss(
+            configuration = configuration,
+            role = AppRole.CLIENT,
+            endpoint = relayEndpointFor(endpointPath),
+            serverId = device.id,
+        ) {
+            runSession()
         }
     }
 
@@ -180,6 +194,14 @@ internal class WebSocketConnectionHandler(
 
     private companion object {
         private val TAG = WebSocketConnectionHandler::class
+
+        private fun relayEndpointFor(endpointPath: String): String =
+            when (endpointPath) {
+                Endpoints.CONTROL -> Endpoints.Relay.CLIENT_CONTROL
+                Endpoints.STREAM_AUDIO -> Endpoints.Relay.CLIENT_AUDIO
+                Endpoints.STREAM_VIDEO -> Endpoints.Relay.CLIENT_VIDEO
+                else -> error("Unknown endpoint: $endpointPath")
+            }
     }
 }
 

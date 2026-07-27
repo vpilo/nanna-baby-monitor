@@ -45,6 +45,7 @@ val appSharedKoinModules =
                     getPairedNonVisibleServersFlowUseCase = get(),
                     getConnectableServersFlowUseCase = get(),
                     getNewServersFlowUseCase = get(),
+                    getRelayConfigurationFlowUseCase = get(),
                     localDiscoveryRepository = get(),
                     remoteDiscoveryRepository = get(),
                     deviceStateRepository = get(),

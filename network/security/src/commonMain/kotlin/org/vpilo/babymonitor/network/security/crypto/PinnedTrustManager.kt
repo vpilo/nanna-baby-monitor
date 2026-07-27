@@ -1,21 +1,24 @@
-package org.vpilo.babymonitor.network.client
+package org.vpilo.babymonitor.network.security.crypto
 
-import org.vpilo.babymonitor.network.security.crypto.sha256Fingerprint
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
 /**
- * Client-side TLS trust for a single LAN connection to a Baby Monitor server.
+ * Client-side TLS trust for a single Baby Monitor connection.
  *
- * With [expectedFingerprint] `null`: trust-on-first-use — accepts any presented certificate (used only for
- * the `/pair` connection, where the server isn't trusted yet) but records it in [capturedCertificate] so the
- * caller can bind the actual negotiated certificate into the pairing transcript.
+ * With [expectedFingerprint] `null`: trust-on-first-use — accepts any presented certificate but records it in
+ * [capturedCertificate] so the caller can bind the actual negotiated certificate into a transcript. Used for the
+ * `/pair` connection, where the server isn't trusted yet, and for relay connections, where the relay is
+ * authenticated by the channel-bound access handshake rather than by PKI.
  *
  * With [expectedFingerprint] set: strict pinning — rejects any certificate whose SHA-256 fingerprint doesn't
- * match (used for every connection after pairing; see Task 11).
+ * match. Used for every LAN connection after pairing.
+ *
+ * One instance serves exactly one connection: [capturedCertificate] would otherwise race between them.
  */
-internal class PinnedTrustManager(
+@Suppress("CustomX509TrustManager")
+class PinnedTrustManager(
     private val expectedFingerprint: String?,
 ) : X509TrustManager {
     var capturedCertificate: X509Certificate? = null
