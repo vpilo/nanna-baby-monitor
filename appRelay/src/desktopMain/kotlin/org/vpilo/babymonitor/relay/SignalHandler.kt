@@ -17,7 +17,7 @@ object SignalHandler {
         signals
             .trySend(signal.name)
             .onFailure {
-                Logger.e(TAG, it) { "Already handling a signal, ignored ${signal.name}. ${it?.prettify() ?: ""}" }
+                Logger.e(TAG, it) { "Already handling a signal, ignored ${signal.name}. ${it?.prettify().orEmpty()}" }
             }
     }
 

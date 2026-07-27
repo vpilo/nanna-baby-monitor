@@ -1,10 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.vpilo.babymonitor.build.gitVersionProvider
 
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
+    id("babymonitor.git-version")
+    id("babymonitor.detekt")
 }
 
 kotlin {
@@ -30,7 +31,7 @@ android {
             .get()
             .toInt()
 
-    val appVersion = gitVersionProvider().get()
+    val appVersion = gitVersion.info.get()
     defaultConfig {
         applicationId = "org.vpilo.babymonitor"
         minSdk =

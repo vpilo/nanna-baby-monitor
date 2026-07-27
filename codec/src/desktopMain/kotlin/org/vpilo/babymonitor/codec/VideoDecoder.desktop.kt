@@ -159,15 +159,16 @@ actual class VideoDecoder actual constructor(
                     swsCtx?.let { sws_freeContext(it) }
                     bgrFrame?.let { av_frame_free(it) }
 
-                    bgrFrame =
+                    val newBgrFrame =
                         av_frame_alloc().apply {
                             format(AV_PIX_FMT_BGR24)
                             width(w)
                             height(h)
+                            bgrFrame = this
                         }
                     // align=1: byte alignment, so each row's linesize is exactly w*3 with no SIMD
                     // padding, matching BufferedImage's tightly-packed raster for a direct bulk copy.
-                    av_frame_get_buffer(bgrFrame, 1)
+                    av_frame_get_buffer(newBgrFrame, 1)
 
                     swsCtx = sws_getContext(
                         w,
@@ -187,6 +188,8 @@ actual class VideoDecoder actual constructor(
                     Logger.d(TAG) { "Decoder sws context configured for ${w}x$h" }
                 }
 
+                val newBgrFrame = checkNotNull(bgrFrame) { "bgrFrame is null after context creation" }
+
                 // Convert YUV → BGR
                 sws_scale(
                     swsCtx,
@@ -194,15 +197,15 @@ actual class VideoDecoder actual constructor(
                     decodedFrame.linesize(),
                     0,
                     h,
-                    bgrFrame!!.data(),
-                    bgrFrame!!.linesize(),
+                    newBgrFrame.data(),
+                    newBgrFrame.linesize(),
                 )
 
                 // Copy BGR bytes to a BufferedImage. The frame buffer is unpadded (align=1), so the
                 // bulk copy matches the image's w*3 row stride.
                 val image = BufferedImage(w, h, BufferedImage.TYPE_3BYTE_BGR)
                 val destPixels = (image.raster.dataBuffer as DataBufferByte).data
-                bgrFrame!!.data(0).get(destPixels)
+                newBgrFrame.data(0).get(destPixels)
 
                 emit(image.toComposeImageBitmap())
             }

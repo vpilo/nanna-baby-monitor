@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.build
+package org.vpilo.babymonitor.versioning
 
 /** Pure composition of [VersionInfo] from raw git output. No process execution here, so it is unit-testable. */
 object GitVersion {

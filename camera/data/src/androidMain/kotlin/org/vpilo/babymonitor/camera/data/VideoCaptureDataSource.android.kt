@@ -60,6 +60,8 @@ internal actual class VideoCaptureDataSource(
     private var videoCapture: VideoCapture<EncoderVideoOutput>? = null
 
     private val rendererLock = Any()
+
+    @Suppress("VarCouldBeVal")
     private var renderer: CameraGlRenderer =
         CameraGlRenderer(
             bridgeSize = resolution.toSize(),

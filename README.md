@@ -24,7 +24,7 @@
 # Issues
 - android: on gl renderer release() wait until draw is done. easier to repro with high camera resolution.
 - client does not close everything when notification is tapped; local discovery for sure is still on
-- When returning to role selection screen, sometimes the app gets stuck for a few seconds
+- When returning to role selection screen, sometimes the app gets stuck for a few seconds. Also when returning to role selection from server, the service host may crash because the server is still registered when something client side tries to register.
 - OnBackInvokedCallback is not enabled for the application. Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
 - improve error handling and surfacing issues to the user
 - add versioning to relay communications

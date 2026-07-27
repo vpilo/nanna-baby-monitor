@@ -22,6 +22,7 @@ import java.awt.Dimension
 import java.awt.image.BufferedImage
 import java.awt.image.LookupOp
 import java.awt.image.ShortLookupTable
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlin.math.max
@@ -32,10 +33,11 @@ import kotlin.time.measureTime
 
 internal actual class VideoCaptureDataSource(
     webcamGetter: () -> Webcam,
+    coroutineContext: CoroutineContext,
 ) {
-    actual constructor() : this({ Webcam.getDefault() })
+    actual constructor() : this({ Webcam.getDefault() }, Dispatchers.Default)
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutineScope = CoroutineScope(coroutineContext)
     private var videoCaptureJob: Job? = null
     private var resolution: CameraResolution = CameraResolution.Medium
     private val webcam: Webcam = webcamGetter()

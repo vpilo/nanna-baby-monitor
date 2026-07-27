@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.network.security.crypto
 
+import io.ktor.network.tls.certificates.buildKeyStore
 import java.security.cert.X509Certificate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -28,7 +29,7 @@ class CertificateFingerprintTest {
         // discussion of JDK internals); instead this reuses the same buildKeyStore helper Task 7 wires
         // into production code, keeping the test aligned with what actually ships.
         val keyStore =
-            io.ktor.network.tls.certificates.buildKeyStore {
+            buildKeyStore {
                 certificate("test") {
                     password = "test-password"
                     domains = listOf("localhost")

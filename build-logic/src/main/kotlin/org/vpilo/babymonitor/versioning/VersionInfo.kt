@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.build
+package org.vpilo.babymonitor.versioning
 
 import java.io.Serializable
 

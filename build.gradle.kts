@@ -1,4 +1,4 @@
-import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import org.jetbrains.compose.internal.utils.registerOrConfigure
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 buildscript {
@@ -8,6 +8,7 @@ buildscript {
 }
 
 plugins {
+    base
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
@@ -15,12 +16,10 @@ plugins {
     alias(libs.plugins.compose) apply false
     alias(libs.plugins.compose.stability.analyzer) apply false
     alias(libs.plugins.ktlint) apply false
-    alias(libs.plugins.detekt) apply false
 }
 
 subprojects {
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
-    apply(plugin = rootProject.libs.plugins.detekt.get().pluginId)
 
     configure<KtlintExtension> {
         version.set(rootProject.libs.versions.ktlint.asProvider())
@@ -30,17 +29,6 @@ subprojects {
         filter {
             exclude { it.file.path.contains("build") }
         }
-    }
-
-    configure<DetektExtension> {
-        config.setFrom(rootProject.files("config/detekt.yml"))
-        buildUponDefaultConfig = true
-        allRules = false
-        source.setFrom(
-            "src/commonMain/kotlin",
-            "src/androidMain/kotlin",
-            "src/desktopMain/kotlin",
-        )
     }
 }
 
@@ -59,4 +47,17 @@ tasks.register<Copy>("installGitHook") {
 
 tasks.named("prepareKotlinBuildScriptModel") {
     dependsOn("installGitHook")
+}
+
+// Add build-logic tests to the rest.
+val testTask = tasks.registerOrConfigure<Task>("test") {
+    description = "Runs all tests, including build-logic ones."
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    dependsOn(gradle.includedBuild("build-logic").task(":test"))
+    // Test tasks are named per target (`desktopTest`, `testAndroidHostTest`, ...) and live in the
+    // subprojects, so collect them by type: the live collections resolve once those are evaluated.
+    dependsOn(subprojects.map { it.tasks.withType<AbstractTestTask>() })
+}
+tasks.check {
+    dependsOn(testTask)
 }

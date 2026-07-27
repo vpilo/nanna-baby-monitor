@@ -1,10 +1,11 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.vpilo.babymonitor.build.gitVersionProvider
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
+    id("babymonitor.git-version")
+    id("babymonitor.detekt")
 }
 
 kotlin {
@@ -38,7 +39,7 @@ compose.desktop {
     application {
         mainClass = "org.vpilo.babymonitor.relay.MainKt"
 
-        val appVersion = gitVersionProvider().get()
+        val appVersion = gitVersion.info.get()
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.AppImage)
             packageName = "org.vpilo.babymonitor.relay"

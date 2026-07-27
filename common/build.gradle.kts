@@ -1,15 +1,16 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.vpilo.babymonitor.build.gitVersionProvider
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    id("babymonitor.git-version")
+    id("babymonitor.detekt")
 }
 
 val generateBuildInfo = tasks.register("generateBuildInfo") {
     description = "Generates a BuildInfo.kt file with versioning information."
 
-    val versionInfo = gitVersionProvider()
+    val versionInfo = gitVersion.info
     val outputDir = layout.buildDirectory.dir("generated/buildinfo/commonMain/kotlin")
 
     inputs.property("version", versionInfo.map { "${it.versionName}|${it.versionCore}|${it.versionCode}" })

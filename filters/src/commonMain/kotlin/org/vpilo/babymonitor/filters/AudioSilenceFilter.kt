@@ -17,7 +17,7 @@ import kotlin.math.sqrt
 class AudioSilenceFilter(
     input: AudioFrameFlow,
     sensitivityLevel: Int = MediaFormats.Audio.DEFAULT_NOISE_SENSITIVITY_LEVEL,
-) : AudioStreamFilter() {
+) : AudioStreamFilter {
     var sensitivityLevel: Int = clamp(sensitivityLevel)
         set(value) {
             field = clamp(value)

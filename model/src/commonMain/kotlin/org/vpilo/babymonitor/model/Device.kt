@@ -52,6 +52,7 @@ sealed class Device(
 
     override fun toString(): String = "${this::class.simpleName}('$name', id $id, ${addresses.size} addresses)"
 
+    @Suppress("UnnecessaryAbstractClass")
     abstract class Server(
         id: DeviceId,
         name: String,

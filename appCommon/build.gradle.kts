@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.compose.stability.analyzer)
     alias(libs.plugins.kotlin.serialization)
+    id("babymonitor.detekt")
 }
 
 kotlin {

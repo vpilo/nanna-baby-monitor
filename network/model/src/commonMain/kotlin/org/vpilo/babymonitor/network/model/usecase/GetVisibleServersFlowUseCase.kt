@@ -17,8 +17,8 @@ class GetVisibleServersFlowUseCase(
         ) { remote, local ->
             // Filter out remote devices if they are already available in the local network.
             val remoteOnlyDevices =
-                remote.filter { remote ->
-                    local.none { remote.id == it.id }
+                remote.filter { remoteServer ->
+                    local.none { remoteServer.id == it.id }
                 }
             (local + remoteOnlyDevices).filterIsInstance<Device.Server>().toSet()
         }

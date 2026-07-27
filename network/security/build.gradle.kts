@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlin.serialization)
+    id("babymonitor.detekt")
 }
 
 kotlin {
@@ -49,6 +50,7 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.network.tls.certificates)
         }
 
         val desktopTest = getByName("desktopTest")

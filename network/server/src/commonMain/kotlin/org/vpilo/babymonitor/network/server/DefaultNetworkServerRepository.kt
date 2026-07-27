@@ -60,7 +60,7 @@ internal class DefaultNetworkServerRepository(
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
-    private var isServerReady = MutableStateFlow(false)
+    private val isServerReady = MutableStateFlow(false)
 
     // The /pair route needs this identity's fingerprint to bind it into the pairing transcript.
     private var serverIdentity: ServerIdentity? = null

@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@Suppress("UnnecessaryAbstractClass")
 internal abstract class LifecycleService :
     Service(),
     LifecycleOwner {

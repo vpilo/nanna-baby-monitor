@@ -165,7 +165,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
             return ClientPairingState.Failure(ClientPairingFailureCause.MITM_SUSPECTED)
         }
         val sharedSecret = deriveSharedSecretS(clientKeyPair.deriveSharedSecret(serverPublicKey))
-        val result =
+        val pairedServer =
             PairedServer(
                 deviceId = server.id.toString(),
                 name = server.name,
@@ -173,7 +173,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
                 sharedSecretBase64 = Base64.encode(sharedSecret),
             )
         Logger.i(TAG) { "Paired with server $server" }
-        return ClientPairingState.Success(result)
+        return ClientPairingState.Success(pairedServer)
     }
 
     private companion object {

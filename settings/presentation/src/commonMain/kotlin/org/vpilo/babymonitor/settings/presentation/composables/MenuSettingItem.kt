@@ -53,10 +53,9 @@ fun <T : Any> MenuSettingItem(
         )
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
 
-    val setting =
-        checkNotNull(setting as? PrimitiveSetting<T>) {
-            "MenuSettingItem only supports PrimitiveSetting, but got ${setting::class.simpleName}"
-        }
+    checkNotNull(setting as? PrimitiveSetting<T>) {
+        "MenuSettingItem only supports PrimitiveSetting, but got ${setting::class.simpleName}"
+    }
 
     MenuItem(
         modifier = modifier,
@@ -109,8 +108,8 @@ fun <T : Any> MenuSettingItem(
 
                 Int::class -> {
                     val value = state.value as Int
-                    val onValueChange = { value: Int ->
-                        viewModel.send(MenuSettingItemAction.SetValue(value))
+                    val onValueChange = { newValue: Int ->
+                        viewModel.send(MenuSettingItemAction.SetValue(newValue))
                     }
                     TextField(
                         modifier = Modifier.fillMaxWidth(.3f),

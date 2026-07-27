@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
+    id("babymonitor.detekt")
 }
 
 kotlin {

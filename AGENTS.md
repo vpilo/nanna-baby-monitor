@@ -16,6 +16,7 @@ Key features:
 
 ## Architecture
 
+- **`build-logic`** — Included build holding the `babymonitor.*` convention plugins and the git-derived versioning.
 - **`common`** — Platform-agnostic logger (`Logger.d/i/w/e`), common dependency propagation.
 - **`model`** — Domain types, repository interfaces, flow typealiases (`CameraFrameFlow`, `StreamingVideoFlow`), and `SharedResourceHolder`
   base class.

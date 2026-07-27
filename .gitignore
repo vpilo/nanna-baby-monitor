@@ -4,7 +4,7 @@
 **/build/
 xcuserdata
 !src/**/build/
-!buildSrc/src/**/build/
+!build-logic/src/**/build/
 local.properties
 .idea/*
 !.idea/runConfigurations

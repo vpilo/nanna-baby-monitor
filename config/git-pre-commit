@@ -61,7 +61,7 @@ git checkout-index --all --force --quiet
 
 # 2. Run the checks against the would-be commit.
 echo "Running pre-commit checks (ktlintFormat, detekt)..."
-./gradlew ktlintFormat detekt --daemon --quiet
+./gradlew tidy --daemon --quiet
 CHECKS_RESULT=$?
 
 # 3. Re-stage any reformatting that touched originally-staged files, then let the trap restore.

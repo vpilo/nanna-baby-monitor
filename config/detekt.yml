@@ -30,6 +30,11 @@ naming:
   MatchingDeclarationName:
     multiplatformTargets: [ 'android', 'common', 'jvm', 'desktop' ]
 
+potential-bugs:
+  # detekt 1.23 has false positives on early returns, ignore for now.
+  UnreachableCode:
+    active: false
+
 style:
   MagicNumber:
     active: false
@@ -43,4 +48,11 @@ style:
     allowedNames: "(_.*|TAG)"
     ignoreAnnotated: [ 'Preview' ]
   ReturnCount:
+    active: false
+
+# detekt 1.23 has plenty of false positives on suspend modifiers and dispatcher injection, ignore for now.
+coroutines:
+  RedundantSuspendModifier:
+    active: false
+  InjectDispatcher:
     active: false

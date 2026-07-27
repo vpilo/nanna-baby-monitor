@@ -44,8 +44,6 @@ internal class DefaultRemoteDiscoveryRepository(
     private var discoveryJob: Job? = null
     private var session: DefaultWebSocketSession? = null
 
-    private var isEnabled: Boolean = true
-
     override fun setRelay(configuration: RelayConfiguration) {
         relayConfiguration = configuration
         _discoveredDevicesFlow.value = emptySet()
@@ -64,7 +62,6 @@ internal class DefaultRemoteDiscoveryRepository(
     }
 
     private fun start() {
-        if (!isEnabled) return
         if (!relayConfiguration.isConfigured) return
 
         discoveryJob =

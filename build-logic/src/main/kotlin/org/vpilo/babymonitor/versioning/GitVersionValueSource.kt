@@ -1,8 +1,6 @@
-package org.vpilo.babymonitor.build
+package org.vpilo.babymonitor.versioning
 
-import org.gradle.api.Project
 import org.gradle.api.logging.Logging
-import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ValueSource
 import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.process.ExecOperations
@@ -50,8 +48,3 @@ abstract class GitVersionValueSource : ValueSource<VersionInfo, ValueSourceParam
         private val logger = Logging.getLogger(GitVersionValueSource::class.java)
     }
 }
-
-/** Provider yielding the git-derived [VersionInfo] for this build. */
-@Suppress("unused")
-fun Project.gitVersionProvider(): Provider<VersionInfo> =
-    providers.of(GitVersionValueSource::class.java) {}
