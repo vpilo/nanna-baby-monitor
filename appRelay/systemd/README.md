@@ -2,6 +2,8 @@
 
 A systemd user service runs the relay in background on Linux easily, restarting it on reboot/crash.
 
+Note that pairing cannot happen over a relay. Pair on the local network first.
+
 ## Install
 
 1. Build the uber jar (works on any architecture):
@@ -15,12 +17,15 @@ A systemd user service runs the relay in background on Linux easily, restarting 
    cp appRelay/build/compose/jars/org.vpilo.babymonitor.relay-*.jar ~/.local/share/babymonitor-relay.jar
    cp appRelay/systemd/babymonitor-relay.service ~/.config/systemd/user/
    ```
-3. Edit the service file to set your own host name:
+3. Start the relay once to make a template config file, then edit it to set the hostname:
    ```sh
-    RELAY_HOST='some.host.name' # edit this
-   sed -i -re "s/<my-host-name>/$RELAY_HOST/" babymonitor-relay.service
+   java -jar ~/.local/share/babymonitor-relay.jar
+   nano ~/.config/babymonitor/relay.conf # or any other program to edit the configuration
     ```
-4. Enable and start:
+   The template will have two lines `host=` and `passphrase=`:
+   - `host` — public hostname or IP the apps reach the relay on.
+   - `passphrase` — shared secret. Enter the same value in every app under the relay settings; without it the relay refuses every connection.
+4. Enable and start the systemd service:
    ```sh
    systemctl --user daemon-reload
    systemctl --user enable --now babymonitor-relay
