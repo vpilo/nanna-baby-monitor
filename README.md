@@ -1,35 +1,46 @@
-# Baby Monitor app
+# Baby Monitor
 
-# Feature plan
+This is a baby monitor app, with secure video and audio streaming, for Android and PC (using Java). Not just for babies!
 
-## Remaining pairing/security work
-* PairingCoordinator: investigate making into repository/UseCases
-* WebSocketConnectionHandler takes the pairing repository, needs to be removed and replaced with a fingerprint parameter; ultimately CameraSelectionScreenViewModel can give the fingerprint to the network client. It also uses Koin directly to get the relay config, must be given to it.
+This app requires pairing between devices. Run the app in recording mode on one device (any Android 8+ device or a PC with a webcam). Using a pairing code or a QR, pair it with another devices set to watching mode. Connect anytime to watch and/or listen.
 
-## Will have
-- Remember the drag position in the PanningVideoFeed
-- Report if camera is unavailable, and enforce audio mode
-- Report if audio is unavailable, and enforce video mode
-- Quit if neither audio nor video are available, e.g. on a Raspberry Pi.
+Both the recording and the watching devices can be any Android 8+ device or any PC with a webcam. Obviously, the recording device needs a camera and microphone, and the watching device needs a screen and optional speakers!
 
-## Nice to have someday
-- Hide client UI with a tap on the video feed, to see only the video feed.
-- On server and/or client, allow disabling video rotation.
-- brightness correction should be done (or at least controlled) on the client, not the server.
-- On relay settings, show whether the relay is reachable and the passphrase accepted.
-- Quiet mode: play a sound when there's activity on video and/or audio. if a bt headset is connected, pressing play on it will start
-  streaming audio.
-- Relay: investigate something like UDP hole-punching to simplify setup. RustDesk has a rendezvous server doing it.
+The app provides a relay app (also using Java) to allow paired devices to see each other from anywhere. Both recording and watching devices can be then connected to any network, they only need to be able to connect to the relay hostname/port.
+The relay can be installed on a home server (with Dynamic DNS, e.g. duckdns.org, and with port `47814` forwarded to it), but also on a cloud service if you have one.
 
-# Issues
-- android: on gl renderer release() wait until draw is done. easier to repro with high camera resolution.
-- client does not close everything when notification is tapped; local discovery for sure is still on
-- When returning to role selection screen, sometimes the app gets stuck for a few seconds. Also when returning to role selection from server, the service host may crash because the server is still registered when something client side tries to register.
-- OnBackInvokedCallback is not enabled for the application. Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-- improve error handling and surfacing issues to the user
-- add versioning to relay communications
+# Features
 
-# Resources
+- Secure video and audio streaming.
+- Network discovery of recording apps on the same network.
+- Secure pairing between devices, using a pairing code or QR code.
+- Low light boost to see better in low light conditions.
+- Silence detection to avoid sending audio when it's all quiet.
+- Customizable recording quality.
+- Draggable video feed to see the whole video feed on any screen.
+- In theory, it works on any Android 8+ device and any computer with a webcam.
+- Supports multiple recording devices and multiple watching devices.
+- Relay server to allow devices to connect from anywhere.
+- Private, and without any cloud services or telemetry: this stays on your home network, and you can run your own relay server to stream from anywhere to anywhere.
 
-ui writing tips: https://proandroiddev.com/10-jetpack-compose-ui-tricks-you-probably-dont-know-d3dd63b617c9
-may try out https://github.com/kinsleykajiva/jopus to replace ffmpeg&mediacodec for audio streaming
+# Installation
+
+## Android
+
+..
+
+## Desktop
+
+..
+
+## Relay server
+
+See the [relay README](appRelay/systemd/README.md) for instructions on how to install the relay server.
+
+# AI disclaimer
+
+This app is *not* vibe coded. If it were, there would be many more tests :grimacing:
+
+While the most of the app is my own, certain features of this app were developed with the aid of AI tools: GPU-based camera processing, the security protocols, and pairing were all developed using Claude.
+
+As a new parent, without AI I would have never been able to get these features done to make the app publishable.
