@@ -31,6 +31,7 @@ import org.vpilo.babymonitor.network.security.relay.relayWss
 import java.net.ConnectException
 import java.net.InetAddress
 import java.net.ProtocolException
+import java.security.cert.CertificateException
 import kotlin.coroutines.cancellation.CancellationException
 import io.ktor.client.plugins.websocket.pingInterval as clientPingInterval
 
@@ -87,6 +88,12 @@ internal class WebSocketConnectionHandler(
                         Logger.i(TAG) { "Connection closed to $host for $endpointPath" }
                         onDisconnected(lastException ?: CancellationException("Closed by client"))
                     }
+
+                is CertificateException -> {
+                    Logger.w(TAG) { "Certificate mismatch for server $host for $endpointPath: ${lastException.message}" }
+                    connectionJob = null
+                    onDisconnected(lastException)
+                }
 
                 is PairingRevokedException -> {
                     Logger.w(TAG) { "Pairing revoked by server $host for $endpointPath: ${lastException.message}" }

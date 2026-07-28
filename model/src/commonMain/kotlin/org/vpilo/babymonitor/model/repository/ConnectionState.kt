@@ -28,5 +28,6 @@ sealed interface ConnectionState {
         ClientQuit,
         NotConnectedYet,
         PairingRevoked,
+        CertificateMismatch,
     }
 }

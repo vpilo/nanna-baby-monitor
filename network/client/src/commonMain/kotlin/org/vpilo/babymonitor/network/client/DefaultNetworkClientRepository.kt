@@ -20,6 +20,7 @@ import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import java.net.ProtocolException
+import java.security.cert.CertificateException
 import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
@@ -107,6 +108,13 @@ internal class DefaultNetworkClientRepository(
                 Logger.w(TAG) { "Server revoked our pairing; unpairing $server and giving up" }
                 scope.launch { pairingStorageRepository.unpairServer(server.id) }
                 disconnect(ConnectionState.ErrorReason.PairingRevoked)
+                return
+            }
+
+            is CertificateException -> {
+                Logger.w(TAG) { "Server certificate did not match with pairing; unpairing $server and giving up" }
+                scope.launch { pairingStorageRepository.unpairServer(server.id) }
+                disconnect(ConnectionState.ErrorReason.CertificateMismatch)
                 return
             }
 

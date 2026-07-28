@@ -30,6 +30,7 @@ import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_connect
 import babymonitor.appcommon.generated.resources.camera_selection_server_type_local
 import babymonitor.appcommon.generated.resources.camera_selection_server_type_relay
+import babymonitor.appcommon.generated.resources.client_connection_chooser_certificate_mismatch
 import babymonitor.appcommon.generated.resources.client_connection_chooser_choose
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connected
@@ -336,6 +337,10 @@ private suspend fun getConnectionStateMessage(
 
                 ConnectionState.ErrorReason.PairingRevoked -> {
                     label = Res.string.client_connection_chooser_pairing_revoked
+                }
+
+                ConnectionState.ErrorReason.CertificateMismatch -> {
+                    label = Res.string.client_connection_chooser_certificate_mismatch
                 }
             }
         }
