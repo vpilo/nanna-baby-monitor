@@ -2,14 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(./gradlew :appDesktop:desktopJar :appAndroid:assembleDebug)",
-      "Bash(./gradlew :codec:compileAndroidMain)",
-      "Bash(./gradlew :codec:detekt :codec:compileAndroidMain)",
+      "Bash(./gradlew :appDesktop:desktopJar)",
       "Bash(./gradlew :appAndroid:assembleDebug)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "mcp__android-studio-index__*",
       "WebSearch",
-      "Skill(superpowers:*)",
       "Bash(git add *)",
       "Bash(git commit *)",
       "WebFetch(domain:android.googlesource.com)"
