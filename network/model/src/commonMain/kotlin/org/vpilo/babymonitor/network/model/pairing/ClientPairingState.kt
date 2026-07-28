@@ -1,7 +1,7 @@
 package org.vpilo.babymonitor.network.model.pairing
 
 sealed interface ClientPairingState {
-    data object Waiting : ClientPairingState
+    data object Idle : ClientPairingState
 
     data object InProgress : ClientPairingState
 

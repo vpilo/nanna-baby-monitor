@@ -57,7 +57,6 @@
     <string name="client_reconnecting">Disconnected. Reconnecting…</string>
 
     <string name="app_title_server_pairing">Pair a device to %1$s</string>
-    <string name="pairing_waiting_for_window">Preparing…</string>
     <string name="pairing_enter_pin">Scan the QR code on the other device, or enter this code:</string>
     <string name="pairing_succeeded">Paired with %1$s</string>
     <string name="pairing_failed_lockout">Too many wrong attempts. Pairing has been canceled.</string>

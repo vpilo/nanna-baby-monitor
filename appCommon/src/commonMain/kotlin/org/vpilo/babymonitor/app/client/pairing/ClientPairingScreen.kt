@@ -200,7 +200,7 @@ private fun ClientPairingViewNormalPreview() {
         },
     ) {
         ClientPairingView(
-            pairingState = ClientPairingState.Waiting,
+            pairingState = ClientPairingState.Idle,
             serverName = "Baby room",
         )
     }

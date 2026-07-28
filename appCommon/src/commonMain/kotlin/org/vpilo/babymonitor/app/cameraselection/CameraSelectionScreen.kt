@@ -28,9 +28,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_connect
+import babymonitor.appcommon.generated.resources.camera_selection_server_type_local
 import babymonitor.appcommon.generated.resources.camera_selection_server_type_relay
 import babymonitor.appcommon.generated.resources.client_connection_chooser_choose
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
+import babymonitor.appcommon.generated.resources.client_connection_chooser_connected
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connecting
 import babymonitor.appcommon.generated.resources.client_connection_chooser_no_servers_found
 import babymonitor.appcommon.generated.resources.client_connection_chooser_pairing_revoked
@@ -250,35 +252,42 @@ private fun Server(
     isConnecting: Boolean,
     onClick: () -> Unit,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        enabled = isEnabled,
-        onClick = onClick,
-        border = CardDefaults.outlinedCardBorder(),
-        colors = CardDefaults.elevatedCardColors(),
-        elevation = CardDefaults.elevatedCardElevation(),
-        shape = CardDefaults.elevatedShape,
-    ) {
-        Row(
-            modifier = Modifier.padding(Theme.Paddings.Large),
-            verticalAlignment = Alignment.CenterVertically,
+    val serverTypeTooltip =
+        if (isRemote) {
+            Res.string.camera_selection_server_type_relay
+        } else {
+            Res.string.camera_selection_server_type_local
+        }
+
+    Tooltip(text = stringResource(serverTypeTooltip)) {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            enabled = isEnabled,
+            onClick = onClick,
+            border = CardDefaults.outlinedCardBorder(),
+            colors = CardDefaults.elevatedCardColors(),
+            elevation = CardDefaults.elevatedCardElevation(),
+            shape = CardDefaults.elevatedShape,
         ) {
-            Text(
-                modifier = Modifier.weight(1f),
-                text = name,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            if (isRemote) {
-                Tooltip(text = stringResource(Res.string.camera_selection_server_type_relay)) {
+            Row(
+                modifier = Modifier.padding(Theme.Paddings.Large),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = name,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                if (isRemote) {
                     Icon(
                         modifier = Modifier.padding(start = Theme.Paddings.Small),
                         imageVector = Icons.Default.Cloud,
                         contentDescription = null,
                     )
                 }
-            }
-            if (isConnecting) {
-                LoadingIcon(modifier = Modifier.size(Theme.Sizes.IconSmall))
+                if (isConnecting) {
+                    LoadingIcon(modifier = Modifier.size(Theme.Sizes.IconSmall))
+                }
             }
         }
     }
@@ -292,20 +301,19 @@ private suspend fun getConnectionStateMessage(
     var deviceName: String? = lastDevice?.name
 
     when (connectionState) {
-        is ConnectionState.Connecting,
-            -> {
-                label = Res.string.client_connection_chooser_connecting
-                deviceName = connectionState.server.name
-            }
+        is ConnectionState.Connecting -> {
+            label = Res.string.client_connection_chooser_connecting
+            deviceName = connectionState.server.name
+        }
 
-        is ConnectionState.Reconnecting,
-            -> {
-                label = Res.string.client_connection_chooser_reconnecting
-                deviceName = connectionState.server.name
-            }
+        is ConnectionState.Reconnecting -> {
+            label = Res.string.client_connection_chooser_reconnecting
+            deviceName = connectionState.server.name
+        }
 
         is ConnectionState.Connected -> {
-            return null
+            label = Res.string.client_connection_chooser_connected
+            deviceName = connectionState.server.name
         }
 
         is ConnectionState.Disconnected -> {
