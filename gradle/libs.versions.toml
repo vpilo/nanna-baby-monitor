@@ -4,6 +4,7 @@ kotlinx-coroutines = "1.11.0"
 kotlin-serialization = "1.11.0"
 agp = "9.3.1"
 koin = "4.2.2"
+log4j = "2.26.1"
 slf4j = "2.0.18"
 
 #noinspection UnusedVersionCatalogEntry
@@ -76,7 +77,7 @@ androidx-camera-video = { group = "androidx.camera", name = "camera-video", vers
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 webcam-capture = { group = "com.github.sarxos", name = "webcam-capture", version.ref = "webcam-capture" }
 javacpp = { group = "org.bytedeco", name = "javacpp", version.ref = "javacpp" }
-ffmpeg = { group = "org.bytedeco", name = "ffmpeg-platform", version.ref = "ffmpeg" }
+ffmpeg = { group = "org.bytedeco", name = "ffmpeg", version.ref = "ffmpeg" }
 
 kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
@@ -99,7 +100,6 @@ ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
-ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktor-server-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
 ktor-server-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
@@ -108,6 +108,7 @@ ktor-network-tls-certificates = { module = "io.ktor:ktor-network-tls-certificate
 jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
 oshi = { module = "com.github.oshi:oshi-core-java11", version.ref = "oshi" }
 
+log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
@@ -134,7 +135,6 @@ ktor-client = [
 ]
 ktor-server = [
     "ktor-server-core",
-    "ktor-server-cio",
     "ktor-server-websockets",
     "ktor-server-logging",
 ]

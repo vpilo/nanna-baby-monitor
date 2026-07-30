@@ -6,7 +6,14 @@ plugins {
     alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
     id("babymonitor.detekt")
+    id("babymonitor.javacpp-platform")
 }
+
+// Bytedeco splits each library into two bindings+native jars per platform.
+// Take only the natives of the platform being built to make smaller releases.
+val nativePlatform = javacppPlatform.classifier.get()
+val javacppNatives = dependencies.variantOf(libs.javacpp) { classifier(nativePlatform) }
+val ffmpegNatives = dependencies.variantOf(libs.ffmpeg) { classifier(nativePlatform) }
 
 kotlin {
     android {
@@ -41,6 +48,8 @@ kotlin {
         desktopMain.dependencies {
             implementation(libs.javacpp)
             implementation(libs.ffmpeg)
+            runtimeOnly(javacppNatives)
+            runtimeOnly(ffmpegNatives)
         }
     }
 

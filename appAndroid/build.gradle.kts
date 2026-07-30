@@ -1,3 +1,4 @@
+import com.android.builder.core.BuilderConstants
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -24,6 +25,11 @@ kotlin {
     }
 }
 
+val appVersion = gitVersion.info.get()
+base {
+    archivesName = "org.vpilo.babymonitor-${appVersion.versionCore}"
+}
+
 android {
     namespace = "org.vpilo.babymonitor"
     compileSdk =
@@ -31,9 +37,9 @@ android {
             .get()
             .toInt()
 
-    val appVersion = gitVersion.info.get()
     defaultConfig {
         applicationId = "org.vpilo.babymonitor"
+
         minSdk =
             libs.versions.android.minSdk
                 .get()
@@ -44,16 +50,48 @@ android {
                 .toInt()
         versionCode = appVersion.versionCode
         versionName = appVersion.versionName
+
     }
+
+    signingConfigs {
+        val keystoreFile = project.file("release/babymonitor.jks")
+        val keystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: ""
+        create(BuilderConstants.RELEASE) {
+            if (keystoreFile.exists() && keystorePassword.isNotEmpty()) {
+                logger.lifecycle("Using release keystore.")
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = true
+
+                storeFile = keystoreFile
+                storePassword = keystorePassword
+                keyAlias = "release"
+                keyPassword = keystorePassword
+            }
+        }
+    }
+    buildTypes {
+        named(BuilderConstants.RELEASE) {
+            isShrinkResources = true
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "release/proguard-rules-android.pro",
+            )
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // Multiple ktor-server-netty transitive Netty jars each ship their own copy; irrelevant at runtime.
+            // Multiple ktor-server-netty transitive Netty jars ship this.
             excludes += "/META-INF/INDEX.LIST"
-            // Every Netty artifact ships an identical copy for diagnostics; any one of them is fine to keep.
+            // Every Netty jar ships this, just keep one.
             pickFirsts += "/META-INF/io.netty.versions.properties"
         }
-        // No need to strip libraries, we only use Android libraries.
+        // No need to strip libraries, we only use 3rd party release libraries.
         packaging {
             jniLibs {
                 excludes.add("lib/**")
