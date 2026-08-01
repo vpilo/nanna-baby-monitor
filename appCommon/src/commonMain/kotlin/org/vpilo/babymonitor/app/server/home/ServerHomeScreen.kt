@@ -70,6 +70,7 @@ fun ServerHomeScreen(
     ) {
         ServerHomeContent(
             modifier = modifier,
+            isRecording = state.isAvailableOnLocalNetwork || state.isAvailableOnRelay,
             captureMode = state.captureMode,
             videoStream = viewModel.videoStream,
             onModeSelected = { viewModel.send(ServerHomeScreenAction.CaptureModeSelected(it)) },
@@ -80,6 +81,7 @@ fun ServerHomeScreen(
 @Composable
 private fun ServerHomeContent(
     modifier: Modifier,
+    isRecording: Boolean,
     captureMode: CaptureMode,
     videoStream: OpaqueVideoStream,
     onModeSelected: (CaptureMode) -> Unit,
@@ -91,7 +93,7 @@ private fun ServerHomeContent(
                 Modifier
                     .align(Alignment.TopStart)
                     .zIndex(2f),
-            enabled = isFeedActive,
+            enabled = isFeedActive && isRecording,
         )
         CaptureModeSelector(
             modifier =
@@ -118,6 +120,7 @@ private fun ServerHomeContentPreview() =
     AppPreviewTheme {
         ServerHomeContent(
             modifier = Modifier,
+            isRecording = true,
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             videoStream = makePreviewVideoStream(),
             onModeSelected = {},
