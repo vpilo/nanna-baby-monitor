@@ -6,19 +6,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.internal.discovery.ktx.toDeviceOrNull
 import javax.jmdns.ServiceEvent
 import javax.jmdns.ServiceListener
+import kotlin.collections.emptyMap
 
 internal class DesktopDiscoveryListener : ServiceListener {
-    private val _discoveredDevices: MutableStateFlow<Set<Device>> = MutableStateFlow(emptySet())
-    val discoveredDevices: StateFlow<Set<Device>> = _discoveredDevices.asStateFlow()
+    private val _discoveredDevices: MutableStateFlow<Map<DeviceId, Device>> = MutableStateFlow(emptyMap())
+    val discoveredDevices: StateFlow<Map<DeviceId, Device>> = _discoveredDevices.asStateFlow()
 
     private var device: Device? = null
 
     fun reset(device: Device? = null) {
         this.device = device
-        _discoveredDevices.value = emptySet()
+        _discoveredDevices.value = emptyMap()
     }
 
     override fun serviceAdded(event: ServiceEvent) {
@@ -34,17 +36,15 @@ internal class DesktopDiscoveryListener : ServiceListener {
             return
         }
 
-        if (_discoveredDevices.value.none { it.id == added.id }) {
-            Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
-        }
-        _discoveredDevices.update { devices -> devices.filterNot { it.id == added.id }.plus(added).toSet() }
+        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
+        _discoveredDevices.update { it + (added.id to added) }
     }
 
     override fun serviceRemoved(event: ServiceEvent) {
         val removed = event.toDeviceOrNull() ?: return
-        if (removed !in _discoveredDevices.value) return
+        if (removed.id !in _discoveredDevices.value) return
 
         Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $removed" }
-        _discoveredDevices.update { devices -> devices.filterNot { it.id == removed.id }.toSet() }
+        _discoveredDevices.update { it - removed.id }
     }
 }

@@ -27,7 +27,7 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
         @OptIn(FlowPreview::class)
         listener.discoveredDevices
             .debounce(LocalDiscoveryRepository.DISCOVERY_DEBOUNCE_TIME)
-            .map { it.toSortedSet() }
+            .map { it.values.toSortedSet() }
             .distinctUntilChanged()
 
     private val mutableIsRegisteredFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)

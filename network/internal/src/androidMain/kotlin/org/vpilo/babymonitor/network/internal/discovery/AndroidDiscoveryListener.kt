@@ -6,11 +6,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.internal.discovery.ktx.toDeviceOrNull
 
 internal class AndroidDiscoveryListener(
     private val nsdManager: NsdManager,
-    private val mutableDiscoveredDevicesFlow: MutableStateFlow<Set<Device>>,
+    private val mutableDiscoveredDevicesFlow: MutableStateFlow<Map<DeviceId, Device>>,
 ) : NsdManager.DiscoveryListener {
     private var device: Device? = null
 
@@ -52,15 +53,15 @@ internal class AndroidDiscoveryListener(
         }
 
         Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
-        mutableDiscoveredDevicesFlow.update { devices -> devices + added }
+        mutableDiscoveredDevicesFlow.update { it + (added.id to added) }
     }
 
     override fun onServiceLost(serviceInfo: NsdServiceInfo) {
         val removed = serviceInfo.toDeviceOrNull() ?: return
-        if (removed !in mutableDiscoveredDevicesFlow.value) return
+        if (removed.id !in mutableDiscoveredDevicesFlow.value) return
 
         Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $removed" }
-        mutableDiscoveredDevicesFlow.update { devices -> devices - removed }
+        mutableDiscoveredDevicesFlow.update { it - removed.id }
     }
 
     override fun onDiscoveryStopped(serviceType: String) {

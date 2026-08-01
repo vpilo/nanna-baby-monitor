@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.internal.discovery.ktx.toAttributes
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
@@ -37,7 +38,7 @@ internal actual class DefaultLocalDiscoveryRepository(
 
     private var multicastLock: WifiManager.MulticastLock? = null
 
-    private val mutableDiscoveredDevicesFlow: MutableStateFlow<Set<Device>> = MutableStateFlow(emptySet())
+    private val mutableDiscoveredDevicesFlow: MutableStateFlow<Map<DeviceId, Device>> = MutableStateFlow(emptyMap())
 
     private var discoveryListener: AndroidDiscoveryListener =
         AndroidDiscoveryListener(
@@ -50,7 +51,7 @@ internal actual class DefaultLocalDiscoveryRepository(
         @OptIn(FlowPreview::class)
         mutableDiscoveredDevicesFlow
             .debounce(LocalDiscoveryRepository.DISCOVERY_DEBOUNCE_TIME)
-            .map { it.toSortedSet() }
+            .map { it.values.toSortedSet() }
             .distinctUntilChanged()
 
     private val mutableIsRegisteredFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -119,7 +120,7 @@ internal actual class DefaultLocalDiscoveryRepository(
         this.device = null
         discoveryListener.reset()
         mutableIsRegisteredFlow.value = false
-        mutableDiscoveredDevicesFlow.value = emptySet()
+        mutableDiscoveredDevicesFlow.value = emptyMap()
         releaseMulticastLock()
         // It's apparently unreliable to keep using the same listener between sessions, so make a new one every time.
         discoveryListener =
