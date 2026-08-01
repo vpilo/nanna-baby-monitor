@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.network.security.protocol
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.network.security.pairing.PairingHello
@@ -17,11 +18,25 @@ suspend fun WebSocketSession.sendPairingHello(
 
 suspend fun WebSocketSession.receivePairingHelloOrNull(): PairingHello? {
     val frame = incoming.receive()
-    if (frame !is Frame.Text) return null
+    if (frame !is Frame.Text) {
+        Logger.w(TAG) { "Pairing hello is not a text frame" }
+        return null
+    }
     val parts = frame.readText().split("|", limit = 3)
-    if (parts.size != 3) return null
-    val clientId = parts[0].toDeviceIdOrNull() ?: return null
-    val publicKey = runCatching { Base64.decode(parts[2]) }.getOrNull() ?: return null
+    if (parts.size != 3) {
+        Logger.w(TAG) { "Pairing hello has ${parts.size} fields, expected 3" }
+        return null
+    }
+    val clientId =
+        parts[0].toDeviceIdOrNull() ?: run {
+            Logger.w(TAG) { "Pairing hello carries an unparseable device id: '${parts[0]}'" }
+            return null
+        }
+    val publicKey =
+        runCatching { Base64.decode(parts[2]) }.getOrNull() ?: run {
+            Logger.w(TAG) { "Pairing hello carries an unparseable public key" }
+            return null
+        }
     return PairingHello(clientId, parts[1], publicKey)
 }
 
@@ -52,3 +67,5 @@ suspend fun WebSocketSession.receivePairingResultOrNull(): PairingResult? {
         else -> null
     }
 }
+
+private const val TAG = "PairingProtocol"

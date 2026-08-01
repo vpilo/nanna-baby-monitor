@@ -57,15 +57,17 @@ kotlin {
 
             dependencies {
                 api(libs.kotlinx.coroutines)
+
+                implementation(libs.slf4j.simple)
             }
         }
 
         val desktopMain = getByName("desktopMain")
         desktopMain.dependencies {
-            implementation(libs.slf4j.api)
-            implementation(libs.slf4j.simple)
-
             api(libs.kotlinx.coroutines.jvm)
+
+            implementation(libs.slf4j.api)
         }
+
     }
 }

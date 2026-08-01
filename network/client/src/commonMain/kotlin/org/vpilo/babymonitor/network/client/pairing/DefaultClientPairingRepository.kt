@@ -91,6 +91,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
                 val certificate =
                     trustManager.capturedCertificate
                         ?: run {
+                            Logger.w(TAG) { "TLS session did not present a certificate to pin" }
                             outcome = GENERIC_FAILURE
                             return@wss
                         }
@@ -100,7 +101,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
         } catch (
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
-            Logger.w(TAG) { "Pairing with $server via $host (${host.hostAddress}) failed: $ex" }
+            Logger.w(TAG, ex) { "Pairing with $server via $host (${host.hostAddress}) failed" }
             GENERIC_FAILURE
         }
     }
@@ -115,7 +116,11 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
             val clientKeyPair = EcdhKeyPair.create()
             sendPairingHello(clientDevice.id, clientDevice.name, clientKeyPair.publicKeyEncoded)
 
-            val serverPublicKey = receiveBase64FrameOrNull() ?: return GENERIC_FAILURE
+            val serverPublicKey =
+                receiveBase64FrameOrNull() ?: run {
+                    Logger.w(TAG) { "Server did not answer the pairing hello with its public key" }
+                    return GENERIC_FAILURE
+                }
 
             val transcript = buildPairingTranscript(clientKeyPair.publicKeyEncoded, serverPublicKey, certificate.sha256Fingerprint())
             sendBase64Frame(computeClientConfirmation(pin, transcript))
@@ -130,6 +135,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
                 }
 
                 null -> {
+                    Logger.w(TAG) { "Server did not answer the pairing confirmation" }
                     GENERIC_FAILURE
                 }
             }
