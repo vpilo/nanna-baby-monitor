@@ -16,12 +16,14 @@ Key features:
 
 ## Architecture
 
-- **`build-logic`** — Included build holding the `babymonitor.*` convention plugins and the git-derived versioning.
+- **`build-logic`** — Included build holding the `babymonitor.*` convention plugins, the git-derived versioning, and the JavaCPP target
+  platform. Its classes only reach a module that applies one of its plugins.
 - **`common`** — Platform-agnostic logger (`Logger.d/i/w/e`), common dependency propagation.
 - **`model`** — Domain types, repository interfaces, flow typealiases (`CameraFrameFlow`, `StreamingVideoFlow`), and `SharedResourceHolder`
   base class.
 - **`data`** — Generic use repository implementations (e.g. `DefaultAppRoleRepository`).
 - **`codec`** — `expect/actual` audio/video encoder/decoder. Desktop uses FFmpeg (JavaCPP/bytedeco); Android uses platform MediaCodec.
+  Bundles the FFmpeg natives of one platform only, the host's unless `-Pjavacpp.platform=<classifier>` says otherwise.
 - **`camera:model`** — Capture repository interfaces (`VideoCaptureRepository`, `AudioCaptureRepository`).
 - **`camera:data`** — `expect/actual` data sources. Desktop uses `webcam-capture`; Android uses CameraX.
 - **`network:model`** — Network domain types, repository interfaces, wire constants (`Constants`, `Endpoints`, `RelaySignals`),
@@ -91,5 +93,6 @@ individually over multiple iterations:
   needing logging.
 - **Companion objects:** Should be at the bottom of a class and made private unless necessary.
 - **Dependencies:** Managed via version catalog at `gradle/libs.versions.toml`. Use `libs.` references in `build.gradle.kts`.
-- **Tests:** only `network:security` and `network:model` have them, covering the crypto primitives and the handshakes.
-  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest`.
+- **Tests:** only `network:security` and `network:model` have them, covering the crypto primitives and the handshakes, plus `build-logic`
+  for the version and platform derivation.
+  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :build-logic:test`.
