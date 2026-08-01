@@ -7,6 +7,7 @@
 
 ## Nice to have
 
+- when a device is renamed, save the new name in the pairing repository, and update the UI.
 - Remember the drag position in the PanningVideoFeed
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode
@@ -21,6 +22,7 @@
 
 # Known issues
 
+- android: must request camera and microphone permissions at runtime for both pairing and recording.
 - android: there is a memory leak.
 - android: on gl renderer release() wait until draw is done. easier to repro with high camera resolution.
 - client does not close everything when 'close app' notification is tapped; eg local discovery might still be on.

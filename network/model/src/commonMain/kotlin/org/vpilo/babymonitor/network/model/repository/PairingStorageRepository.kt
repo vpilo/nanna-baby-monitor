@@ -21,4 +21,9 @@ interface PairingStorageRepository {
     suspend fun findClient(clientId: DeviceId): PairedClient?
 
     suspend fun revokeClient(clientId: DeviceId)
+
+    suspend fun updateName(
+        clientId: DeviceId,
+        newName: String,
+    )
 }

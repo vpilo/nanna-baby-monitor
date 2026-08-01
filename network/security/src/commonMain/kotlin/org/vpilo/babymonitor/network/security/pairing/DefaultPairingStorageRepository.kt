@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.network.security.pairing
 
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.common.Logger
@@ -16,42 +17,68 @@ internal class DefaultPairingStorageRepository(
     private val settingsRepository: SettingsRepository,
 ) : PairingStorageRepository {
     override val pairedServers =
-        settingsRepository.flowOf(Setting.PairedServersJson).map { it.decodeServersOrEmpty() }
+        settingsRepository
+            .flowOf(Setting.PairedServersJson)
+            .map { it.decodeServersOrEmpty() }
+
+    override val pairedClients =
+        settingsRepository
+            .flowOf(Setting.PairedClientsJson)
+            .map { it.decodeClientsOrEmpty() }
 
     override suspend fun pairServer(server: PairedServer) {
-        val updated = loadServers().filterNot { it.deviceId == server.deviceId } + server
+        val updated = getServers().filterNot { it.deviceId == server.deviceId } + server
         settingsRepository.save(Setting.PairedServersJson, json.encodeToString(updated))
         Logger.i(TAG) { "Paired server ${server.deviceId}" }
     }
 
-    override suspend fun findServer(deviceId: DeviceId): PairedServer? = loadServers().firstOrNull { it.deviceId == deviceId.toString() }
+    override suspend fun findServer(deviceId: DeviceId): PairedServer? = getServers().firstOrNull { it.deviceId == deviceId.toString() }
 
     override suspend fun unpairServer(deviceId: DeviceId) {
-        val updated = loadServers().filterNot { it.deviceId == deviceId.toString() }
+        val updated = getServers().filterNot { it.deviceId == deviceId.toString() }
         settingsRepository.save(Setting.PairedServersJson, json.encodeToString(updated))
         Logger.i(TAG) { "Unpaired server $deviceId" }
     }
 
-    override val pairedClients =
-        settingsRepository.flowOf(Setting.PairedClientsJson).map { it.decodeClientsOrEmpty() }
-
     override suspend fun pairClient(client: PairedClient) {
-        val updated = loadClients().filterNot { it.deviceId == client.deviceId } + client
+        val updated = getClients().filterNot { it.deviceId == client.deviceId } + client
         settingsRepository.save(Setting.PairedClientsJson, json.encodeToString(updated))
         Logger.i(TAG) { "Paired client ${client.deviceId}" }
     }
 
-    override suspend fun findClient(clientId: DeviceId): PairedClient? = loadClients().firstOrNull { it.deviceId == clientId.toString() }
+    override suspend fun findClient(clientId: DeviceId): PairedClient? = getClients().firstOrNull { it.deviceId == clientId.toString() }
 
     override suspend fun revokeClient(clientId: DeviceId) {
-        val updated = loadClients().filterNot { it.deviceId == clientId.toString() }
+        val updated = getClients().filterNot { it.deviceId == clientId.toString() }
         settingsRepository.save(Setting.PairedClientsJson, json.encodeToString(updated))
         Logger.i(TAG) { "Revoked client $clientId" }
     }
 
-    private suspend fun loadServers(): List<PairedServer> = settingsRepository.load(Setting.PairedServersJson).decodeServersOrEmpty()
+    override suspend fun updateName(
+        clientId: DeviceId,
+        newName: String,
+    ) {
+        val id = clientId.toString()
+        val isClient = getClients().any { it.deviceId == clientId.toString() }
+        val setting = if (isClient) Setting.PairedClientsJson else Setting.PairedServersJson
 
-    private suspend fun loadClients(): List<PairedClient> = settingsRepository.load(Setting.PairedClientsJson).decodeClientsOrEmpty()
+        val updated =
+            if (isClient) {
+                getClients().map {
+                    if (it.deviceId == id) it.copy(name = newName) else it
+                }
+            } else {
+                getServers().map {
+                    if (it.deviceId == id) it.copy(name = newName) else it
+                }
+            }
+        settingsRepository.save(setting, json.encodeToString(updated))
+        Logger.i(TAG) { "Updated stored name for paired device $id to $newName" }
+    }
+
+    private suspend fun getServers(): List<PairedServer> = pairedServers.first()
+
+    private suspend fun getClients(): List<PairedClient> = pairedClients.first()
 
     private fun String.decodeServersOrEmpty(): List<PairedServer> =
         runCatching { json.decodeFromString<List<PairedServer>>(this) }
