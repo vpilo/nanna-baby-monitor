@@ -8,6 +8,10 @@
 -keep class * implements com.sun.jna.Library { *; }
 -keep class * implements com.sun.jna.Callback { *; }
 
+-keep class org.bridj.** { *; }
+-keep class com.github.sarxos.webcam.ds.buildin.natives.** { *; }
+-keepattributes Signature,InnerClasses,EnclosingMethod
+
 -keep class org.bytedeco.** { *; }
 -keep class * implements org.slf4j.spi.SLF4JServiceProvider { *; }
 -keep class dev.whyoleg.cryptography.providers.** { *; }
@@ -31,6 +35,9 @@
 -dontwarn aQute.bnd.annotation.spi.ServiceProvider
 -dontwarn com.google.errorprone.annotations.InlineMe
 
+# Optimizing Ktor stops the client's `wss` block from ever being invoked.
+-keep,allowobfuscation,allowshrinking class io.ktor.** { *; }
+
 # Ktor's Netty engine references every codec, TLS provider and logging backend it can ever use...
 -dontwarn ch.qos.logback.**
 -dontwarn com.aayushatharva.brotli4j.**
@@ -49,3 +56,9 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.jboss.marshalling.**
 -dontwarn reactor.blockhound.**
+-keep class io.netty.buffer.** { *; }
+-keep class io.netty.util.** { *; }
+-keep class io.netty.handler.codec.* { *; }
+-keep class io.netty.channel.socket.nio.NioServerSocketChannel { <init>(); }
+-keep class io.netty.channel.ChannelHandler$Sharable
+-keep,allowobfuscation @io.netty.channel.ChannelHandler$Sharable class *
