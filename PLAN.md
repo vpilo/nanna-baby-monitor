@@ -7,7 +7,7 @@
 
 ## Nice to have
 
-- when a device is renamed, save the new name in the pairing repository, and update the UI.
+- when a device is renamed, call `PairingStorageRepository.updateName` and update the UI.
 - Remember the drag position in the PanningVideoFeed
 - Report if camera is unavailable, and enforce audio mode
 - Report if audio is unavailable, and enforce video mode

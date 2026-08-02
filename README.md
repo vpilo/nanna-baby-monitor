@@ -47,7 +47,7 @@ Pairing two Android devices: the recording device shows the code, the watching d
 You can simply make debug builds from source.
 
 ```sh
-git clone https://gitlab.com/vpilo/babymonitor.git
+git clone https://codeberg.org/vpilo/babymonitor.git
 cd babymonitor
 ```
 
@@ -146,7 +146,7 @@ No location permission is requested, and no permission is used for anything othe
 
 # Contributing
 
-Issues and pull requests are welcome at [gitlab.com/vpilo/babymonitor](https://codeberg.org/vpilo/babymonitor).
+Issues and pull requests are welcome at [codeberg.org/vpilo/babymonitor](https://codeberg.org/vpilo/babymonitor).
 
 [AGENTS.md](AGENTS.md) describes the module layout and the build commands.
 
