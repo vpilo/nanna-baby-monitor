@@ -160,4 +160,4 @@ This app is *not* vibe coded. If it were, there would be many more tests :grimac
 
 As a new parent, without AI I would have never been able to get some features done to make the app publishable; while the most of the app
 is my own, certain features were developed with the aid of AI tools: GPU-based camera processing, the initial relay app, the security
-protocols, and pairing were all developed using Claude.
+protocols, and pairing were all developed using Claude, then thoroughly reviewed and in some cases rewritten by me.
