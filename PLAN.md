@@ -7,6 +7,8 @@
 
 ## Nice to have
 
+- Some previews should also be in dark mode
+- Pin entry & input fields background in white/alt surface in light&dark mode, now their background is same as surface
 - when a device is renamed, call `PairingStorageRepository.updateName` and update the UI.
 - Remember the drag position in the PanningVideoFeed
 - Report if camera is unavailable, and enforce audio mode
