@@ -29,7 +29,9 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
 
-        withHostTest {}
+        withHostTest {
+            isReturnDefaultValues = true
+        }
     }
 
     jvm("desktop")
