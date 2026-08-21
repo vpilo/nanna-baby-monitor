@@ -1,0 +1,85 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        CACHE_POLICY: "pull"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      variables:
+        CACHE_POLICY: "pull-push"
+
+stages:
+  - build
+
+variables:
+  GIT_DEPTH: "0"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle-home"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.java.installations.auto-detect=true"
+
+.gradle-cache-paths: &gradle-cache-paths
+  - .gradle-home/caches/modules-2/
+  - .gradle-home/caches/build-cache-1/
+  - .gradle-home/wrapper/
+
+.environment:
+  image: ghcr.io/cirruslabs/android-sdk:36 # Image must support both arm&x86.
+  stage: build
+  interruptible: true
+  artifacts:
+    name: "babymonitor-$CI_COMMIT_SHORT_SHA-$CI_JOB_NAME_SLUG"
+    expire_in: 1 week
+    when: always
+  cache:
+    - key: "gradle-$CI_JOB_NAME_SLUG"
+      paths: *gradle-cache-paths
+      policy: $CACHE_POLICY
+
+build:root:
+  extends: .environment
+  tags:
+    - saas-linux-medium-amd64
+  script:
+    - ./gradlew ktlintCheck detekt
+    - ./gradlew test
+  artifacts:
+    reports:
+      junit:
+        - "**/build/test-results/**/TEST-*.xml"
+
+build:android:
+  extends: .environment
+  tags:
+    - saas-linux-medium-amd64
+  needs:
+    - job: build:root
+      artifacts: false
+  script:
+    - ./gradlew :appAndroid:assembleDebug
+  artifacts:
+    paths:
+      - appAndroid/build/outputs/apk/*/*.apk
+
+build:linux-x86_64:
+  extends: .environment
+  tags:
+    - saas-linux-medium-amd64
+  needs:
+    - job: build:root
+      artifacts: false
+  script:
+    - ./gradlew :appDesktop:packageUberJarForCurrentOS
+  artifacts:
+    paths:
+      - appDesktop/build/compose/jars/*.jar
+
+build:linux-arm64:
+  extends: .environment
+  tags:
+    - saas-linux-small-arm64
+  needs:
+    - job: build:root
+      artifacts: false
+  script:
+    - ./gradlew :appDesktop:packageUberJarForCurrentOS
+  artifacts:
+    paths:
+      - appDesktop/build/compose/jars/*.jar
