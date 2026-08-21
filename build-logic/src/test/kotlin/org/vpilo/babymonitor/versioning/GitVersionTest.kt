@@ -4,7 +4,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class GitVersionTest {
-    private fun describe(tag: String, commits: Int) = "$tag-$commits-gabc1234"
+    private fun describe(
+        tag: String,
+        commits: Int,
+    ) = "$tag-$commits-gabc1234"
 
     @Test
     fun `main clean off-tag uses commit count as patch, no suffix`() {

@@ -21,11 +21,16 @@ tasks.withType<Detekt>().configureEach {
     exclude { "/build/generated/" in it.file.invariantSeparatorsPath }
 }
 
-tasks.withType<Detekt>()
+tasks
+    .withType<Detekt>()
     .matching { it.name.startsWith("detektMetadata") }
     .configureEach { enabled = false }
 
-plugins.withId(libs.plugins.kotlinMultiplatform.get().pluginId) {
+plugins.withId(
+    libs.plugins.kotlinMultiplatform
+        .get()
+        .pluginId,
+) {
     val detektTasks = tasks.withType<Detekt>()
 
     // With type resolution on, each compilation task's own source set is used by Detekt, and not commonMain.
@@ -51,7 +56,11 @@ plugins.withId(libs.plugins.kotlinMultiplatform.get().pluginId) {
 }
 
 // Ensure Detekt finds compile classpaths for Android to ensure type resolution is used.
-plugins.withId(libs.plugins.androidApplication.get().pluginId) {
+plugins.withId(
+    libs.plugins.androidApplication
+        .get()
+        .pluginId,
+) {
     val androidComponents = extensions.getByType<ApplicationAndroidComponentsExtension>()
     androidComponents.onVariants(androidComponents.selector().all()) { variant ->
         tasks.named<Detekt>(detektTaskName) {
@@ -61,7 +70,11 @@ plugins.withId(libs.plugins.androidApplication.get().pluginId) {
     }
 }
 
-plugins.withId(libs.plugins.ktlint.get().pluginId) {
+plugins.withId(
+    libs.plugins.ktlint
+        .get()
+        .pluginId,
+) {
     // Enforce running detekt after ktlint.
     val ktlintFormat = tasks.named("ktlintFormat")
     tasks.withType<Detekt>().configureEach {

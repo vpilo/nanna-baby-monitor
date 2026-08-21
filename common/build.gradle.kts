@@ -7,21 +7,22 @@ plugins {
     id("babymonitor.detekt")
 }
 
-val generateBuildInfo = tasks.register("generateBuildInfo") {
-    description = "Generates a BuildInfo.kt file with versioning information."
+val generateBuildInfo =
+    tasks.register("generateBuildInfo") {
+        description = "Generates a BuildInfo.kt file with versioning information."
 
-    val versionInfo = gitVersion.info
-    val outputDir = layout.buildDirectory.dir("generated/buildinfo/commonMain/kotlin")
+        val versionInfo = gitVersion.info
+        val outputDir = layout.buildDirectory.dir("generated/buildinfo/commonMain/kotlin")
 
-    inputs.property("version", versionInfo.map { "${it.versionName}|${it.versionCore}|${it.versionCode}" })
-    outputs.dir(outputDir)
+        inputs.property("version", versionInfo.map { "${it.versionName}|${it.versionCore}|${it.versionCode}" })
+        outputs.dir(outputDir)
 
-    doLast {
-        val info = versionInfo.get()
-        val packageDir = outputDir.get().asFile.resolve("org/vpilo/babymonitor/common")
-        packageDir.mkdirs()
-        packageDir.resolve("BuildInfo.kt").writeText(
-            """
+        doLast {
+            val info = versionInfo.get()
+            val packageDir = outputDir.get().asFile.resolve("org/vpilo/babymonitor/common")
+            packageDir.mkdirs()
+            packageDir.resolve("BuildInfo.kt").writeText(
+                """
             |package org.vpilo.babymonitor.common
             |
             |/** Generated at build time from git. Do not edit. */
@@ -31,10 +32,10 @@ val generateBuildInfo = tasks.register("generateBuildInfo") {
             |    const val VERSION_CODE: Int = ${info.versionCode}
             |}
             |
-            """.trimMargin(),
-        )
+                """.trimMargin(),
+            )
+        }
     }
-}
 
 kotlin {
     android {
@@ -72,6 +73,5 @@ kotlin {
 
             implementation(libs.slf4j.api)
         }
-
     }
 }

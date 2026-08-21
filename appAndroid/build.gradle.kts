@@ -50,7 +50,6 @@ android {
                 .toInt()
         versionCode = appVersion.versionCode
         versionName = appVersion.versionName
-
     }
 
     signingConfigs {

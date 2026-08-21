@@ -60,7 +60,7 @@ fi
 git checkout-index --all --force --quiet
 
 # 2. Run the checks against the would-be commit.
-echo "Running pre-commit checks (ktlintFormat, detekt)..."
+echo "Running pre-commit checks..."
 ./gradlew tidy --daemon --quiet
 CHECKS_RESULT=$?
 

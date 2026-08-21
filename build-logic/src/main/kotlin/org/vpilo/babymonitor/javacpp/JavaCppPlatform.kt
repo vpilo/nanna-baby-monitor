@@ -8,7 +8,9 @@ package org.vpilo.babymonitor.javacpp
  * The `-platform` Bytedeco artifacts pull in every platform classifier at once, wasting a lot of space. So this is needed to make the
  * built app only depend on the single right artifact instead.
  */
-enum class JavaCppPlatform(val classifier: String) {
+enum class JavaCppPlatform(
+    val classifier: String,
+) {
     LinuxX8664("linux-x86_64"),
     LinuxArm64("linux-arm64"),
     MacosX8664("macosx-x86_64"),
@@ -22,37 +24,44 @@ enum class JavaCppPlatform(val classifier: String) {
                 ?: error("Unknown JavaCPP platform '$classifier'. Supported: ${supportedClassifiers()}")
 
         /** Resolves the platform classifier of the given host machine. */
-        fun fromHost(osName: String, osArch: String): JavaCppPlatform {
+        fun fromHost(
+            osName: String,
+            osArch: String,
+        ): JavaCppPlatform {
             val os = osName.lowercase()
             val arch = osArch.lowercase()
             return when {
-                os.startsWith("linux") ->
+                os.startsWith("linux") -> {
                     when {
                         arch.isArm64() -> LinuxArm64
                         arch.isX8664() -> LinuxX8664
                         else -> null
                     }
+                }
 
-                os.startsWith("mac") || os.startsWith("darwin") ->
+                os.startsWith("mac") || os.startsWith("darwin") -> {
                     when {
                         arch.isArm64() -> MacosArm64
                         arch.isX8664() -> MacosX8664
                         else -> null
                     }
+                }
 
-                os.startsWith("windows") ->
+                os.startsWith("windows") -> {
                     when {
                         arch.isX8664() -> WindowsX8664
                         else -> null
                     }
+                }
 
-                else ->
+                else -> {
                     null
+                }
             }
                 ?: error(
                     "No JavaCPP native artifacts for host '$osName' '$osArch'." +
-                            " Rebuild with -P$GRADLE_PLATFORM_PROPERTY=<classifier> to choose a supported classifier:" +
-                            " ${supportedClassifiers()}",
+                        " Rebuild with -P$GRADLE_PLATFORM_PROPERTY=<classifier> to choose a supported classifier:" +
+                        " ${supportedClassifiers()}",
                 )
         }
 

@@ -27,7 +27,7 @@ subprojects {
         outputToConsole.set(true)
         ignoreFailures.set(false)
         filter {
-            exclude { it.file.path.contains("build") }
+            exclude { "build/" in it.file.invariantSeparatorsPath }
         }
     }
 }
@@ -49,15 +49,19 @@ tasks.named("prepareKotlinBuildScriptModel") {
     dependsOn("installGitHook")
 }
 
-// Add build-logic tests to the rest.
-val testTask = tasks.registerOrConfigure<Task>("test") {
-    description = "Runs all tests, including build-logic ones."
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
-    dependsOn(gradle.includedBuild("build-logic").task(":test"))
-    // Test tasks are named per target (`desktopTest`, `testAndroidHostTest`, ...) and live in the
-    // subprojects, so collect them by type: the live collections resolve once those are evaluated.
-    dependsOn(subprojects.map { it.tasks.withType<AbstractTestTask>() })
+fun List<String>.includeInTask(reference: (taskName: String) -> List<Named>) {
+    forEach { taskName ->
+        tasks.registerOrConfigure<Task>(taskName) {
+            description = "Runs $taskName, including on build-logic."
+            group = LifecycleBasePlugin.VERIFICATION_GROUP
+            dependsOn(reference(taskName))
+        }
+    }
 }
-tasks.check {
-    dependsOn(testTask)
-}
+
+// Gradle ignores included builds when matching task names.
+listOf("ktlintCheck", "ktlintFormat", "detekt", "tidy", "test")
+    .includeInTask { listOf(gradle.includedBuild("build-logic").task(":$it")) }
+// Ensure the test task resolves all targets.
+listOf("test")
+    .includeInTask { subprojects.flatMap { it.tasks.withType<AbstractTestTask>() } }

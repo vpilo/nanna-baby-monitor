@@ -35,12 +35,13 @@ abstract class GitVersionValueSource : ValueSource<VersionInfo, ValueSourceParam
 
     private fun git(vararg args: String): String? {
         val stdout = ByteArrayOutputStream()
-        val result = exec.exec {
-            commandLine(listOf("git") + args)
-            standardOutput = stdout
-            errorOutput = ByteArrayOutputStream()
-            isIgnoreExitValue = true
-        }
+        val result =
+            exec.exec {
+                commandLine(listOf("git") + args)
+                standardOutput = stdout
+                errorOutput = ByteArrayOutputStream()
+                isIgnoreExitValue = true
+            }
         return if (result.exitValue == 0) stdout.toString().trim() else null
     }
 

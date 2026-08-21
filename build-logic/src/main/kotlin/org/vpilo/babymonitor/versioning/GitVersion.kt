@@ -25,26 +25,30 @@ object GitVersion {
         val (majorMinor, patch) = parseCore(describe, commitCount)
         val core = "$majorMinor.$patch"
 
-        val branchToken = when (branch) {
-            MAIN_BRANCH -> null
-            DETACHED -> shortSha
-            else -> sanitizeBranch(branch)
-        }
+        val branchToken =
+            when (branch) {
+                MAIN_BRANCH -> null
+                DETACHED -> shortSha
+                else -> sanitizeBranch(branch)
+            }
 
-        val name = buildString {
-            append(core)
-            if (!branchToken.isNullOrEmpty()) append('-').append(branchToken)
-            if (isDirty) append("-SNAPSHOT")
-        }
+        val name =
+            buildString {
+                append(core)
+                if (!branchToken.isNullOrEmpty()) append('-').append(branchToken)
+                if (isDirty) append("-SNAPSHOT")
+            }
 
         return VersionInfo(versionName = name, versionCore = core, versionCode = commitCount)
     }
 
-    fun sanitizeBranch(branch: String): String =
-        branch.lowercase().replace(NON_SLUG, "-").trim('-')
+    fun sanitizeBranch(branch: String): String = branch.lowercase().replace(NON_SLUG, "-").trim('-')
 
     /** Returns MAJOR.MINOR and the patch number. Patch = commits since tag, or total commits when untagged. */
-    private fun parseCore(describe: String?, commitCount: Int): Pair<String, Int> {
+    private fun parseCore(
+        describe: String?,
+        commitCount: Int,
+    ): Pair<String, Int> {
         val match = describe?.let { DESCRIBE.find(it) } ?: return "0.0" to commitCount
         val tag = match.groupValues[1].removePrefix("v")
         val commitsSinceTag = match.groupValues[2].toInt()
