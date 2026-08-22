@@ -21,3 +21,4 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 .claude/skills/
 .codegraph
+.secure_files

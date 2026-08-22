@@ -53,10 +53,11 @@ android {
     }
 
     signingConfigs {
-        val keystoreFile = project.file("release/babymonitor.jks")
-        val keystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: ""
+        val keystorePath = providers.environmentVariable("RELEASE_KEYSTORE_FILE").orNull
+        val keystoreFile = keystorePath?.let { rootProject.file(it) }
+        val keystorePassword = providers.environmentVariable("RELEASE_KEYSTORE_PASSWORD").orNull
         create(BuilderConstants.RELEASE) {
-            if (keystoreFile.exists() && keystorePassword.isNotEmpty()) {
+            if (keystoreFile?.exists() == true && !keystorePassword.isNullOrEmpty()) {
                 logger.lifecycle("Using release keystore.")
                 enableV1Signing = true
                 enableV2Signing = true
