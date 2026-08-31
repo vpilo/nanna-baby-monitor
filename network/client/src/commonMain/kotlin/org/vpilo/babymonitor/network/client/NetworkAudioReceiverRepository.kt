@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.network.client
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.codec.AudioDecoder
 import org.vpilo.babymonitor.model.AudioFrame
@@ -14,12 +15,14 @@ import org.vpilo.babymonitor.network.client.websockets.audioStreamingClientWebSo
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
+import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import kotlin.coroutines.CoroutineContext
 
 internal class NetworkAudioReceiverRepository(
     dataSource: NetworkAudioDataSource,
     private val serverSelectionDataSource: ServerSelectionDataSource,
     private val pairingStorageRepository: PairingStorageRepository,
+    private val relayConfigurationRepository: RelayConfigurationRepository,
     coroutineContext: CoroutineContext,
 ) : SharedResourceHolder<AudioFrame>(
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
@@ -54,6 +57,7 @@ internal class NetworkAudioReceiverRepository(
                                 endpointPath = Endpoints.STREAM_AUDIO,
                                 sessionBlock = { audioStreamingClientWebSocket(serverDeviceId = target.id) },
                                 expectedFingerprint = expectedFingerprint,
+                                relayConfiguration = relayConfigurationRepository.relayConfiguration.first(),
                                 coroutineScope = coroutineScope,
                                 onDisconnected = {
                                     delay(Constants.RECONNECTION_TIMEOUT)

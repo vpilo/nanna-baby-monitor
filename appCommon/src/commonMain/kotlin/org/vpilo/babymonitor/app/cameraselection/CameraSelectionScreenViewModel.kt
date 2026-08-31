@@ -17,11 +17,11 @@ import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
+import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.model.usecase.GetConnectableServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetNewServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetPairedNonVisibleServersFlowUseCase
-import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
@@ -34,7 +34,7 @@ class CameraSelectionScreenViewModel(
     private val getPairedNonVisibleServersFlowUseCase: GetPairedNonVisibleServersFlowUseCase,
     private val getConnectableServersFlowUseCase: GetConnectableServersFlowUseCase,
     private val getNewServersFlowUseCase: GetNewServersFlowUseCase,
-    private val getRelayConfigurationFlowUseCase: GetRelayConfigurationFlowUseCase,
+    private val relayConfigurationRepository: RelayConfigurationRepository,
     private val localDiscoveryRepository: LocalDiscoveryRepository,
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
     private val deviceStateRepository: DeviceStateRepository,
@@ -118,7 +118,7 @@ class CameraSelectionScreenViewModel(
                 waitForLastConnectedServer()
             }
 
-        getRelayConfigurationFlowUseCase().subscribe { configuration ->
+        relayConfigurationRepository.relayConfiguration.subscribe { configuration ->
             remoteDiscoveryRepository.setRelay(configuration)
             state.copy(isRelayConfigured = configuration.isConfigured).update()
         }

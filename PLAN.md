@@ -1,9 +1,5 @@
 # Feature plan
 
-## Remaining pairing/security work
-
-* WebSocketConnectionHandler uses Koin directly to get the relay config, must be given to it.
-
 ## Nice to have
 
 - update labels in CameraSelectionScreenViewModel.

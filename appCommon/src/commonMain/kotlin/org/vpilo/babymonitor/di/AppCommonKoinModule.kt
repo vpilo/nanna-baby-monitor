@@ -16,6 +16,7 @@ import org.vpilo.babymonitor.app.server.home.ServerHomeScreenViewModel
 import org.vpilo.babymonitor.app.server.paireddevices.PairedDevicesScreenViewModel
 import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreenViewModel
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
+import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 import kotlin.coroutines.CoroutineContext
 
@@ -45,7 +46,7 @@ val appSharedKoinModules =
                     getPairedNonVisibleServersFlowUseCase = get(),
                     getConnectableServersFlowUseCase = get(),
                     getNewServersFlowUseCase = get(),
-                    getRelayConfigurationFlowUseCase = get(),
+                    relayConfigurationRepository = get(),
                     localDiscoveryRepository = get(),
                     remoteDiscoveryRepository = get(),
                     deviceStateRepository = get(),

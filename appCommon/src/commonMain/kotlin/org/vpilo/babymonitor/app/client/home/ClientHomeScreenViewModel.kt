@@ -17,7 +17,7 @@ import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
-import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
+import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 
@@ -27,7 +27,7 @@ class ClientHomeScreenViewModel(
     private val videoReceiverRepository: StreamingVideoReceiverRepository,
     private val networkClientRepository: NetworkClientRepository,
     private val settingsRepository: SettingsRepository,
-    private val getRelayConfigurationFlowUseCase: GetRelayConfigurationFlowUseCase,
+    private val relayConfigurationRepository: RelayConfigurationRepository,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
 ) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
         initialState = ClientHomeScreenState(),
@@ -86,7 +86,7 @@ class ClientHomeScreenViewModel(
         isAudioEnabled.subscribe { isEnabled ->
             playReceivedAudio.setPlaying(vmScope, isEnabled)
         }
-        getRelayConfigurationFlowUseCase().subscribe { configuration ->
+        relayConfigurationRepository.relayConfiguration.subscribe { configuration ->
             val connection = state.connectionState
             if (connection !is ConnectionState.Connected) return@subscribe
             val server = connection.server

@@ -15,16 +15,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
-import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
+import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
 import org.vpilo.babymonitor.network.security.relay.relayWss
 import java.net.ConnectException
@@ -41,6 +39,7 @@ internal class WebSocketConnectionHandler(
     private val onDisconnected: suspend (exception: Throwable) -> Unit = {},
     private val expectedFingerprint: String,
     private val coroutineScope: CoroutineScope,
+    private val relayConfiguration: RelayConfiguration? = null,
 ) {
     private var connectionJob: Job? = null
     private var retryJob: Job? = null
@@ -153,13 +152,13 @@ internal class WebSocketConnectionHandler(
     }
 
     private suspend fun connectToRelay() {
-        val getRelayConfiguration = KoinPlatform.getKoin().get<GetRelayConfigurationFlowUseCase>()
-        val configuration = getRelayConfiguration().first()
-        if (!configuration.isConfigured) {
+        checkNotNull(relayConfiguration) { "Relay configuration must be provided for remote servers" }
+
+        if (!relayConfiguration.isConfigured) {
             error("No relay configured - cannot connect to $device")
         }
         relayWss(
-            configuration = configuration,
+            configuration = relayConfiguration,
             role = AppRole.CLIENT,
             endpoint = relayEndpointFor(endpointPath),
             serverId = device.id,

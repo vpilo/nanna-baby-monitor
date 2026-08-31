@@ -14,7 +14,7 @@ import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
-import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
+import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceId
@@ -25,7 +25,7 @@ class ServerHomeScreenViewModel(
     private val discoveryManager: LocalDiscoveryRepository,
     private val server: NetworkServerRepository,
     private val settings: SettingsRepository,
-    private val getRelayConfigurationFlowUseCase: GetRelayConfigurationFlowUseCase,
+    private val relayConfigurationRepository: RelayConfigurationRepository,
     videoCaptureRepository: VideoCaptureRepository,
 ) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, Unit>(
         initialState = ServerHomeScreenState(),
@@ -46,7 +46,7 @@ class ServerHomeScreenViewModel(
             state.copy(captureMode = it).update()
             server.setCaptureMode(it)
         }
-        getRelayConfigurationFlowUseCase().subscribe { configuration ->
+        relayConfigurationRepository.relayConfiguration.subscribe { configuration ->
             state.copy(isRelayConfigured = configuration.isConfigured).update()
             server.setRelay(configuration)
         }

@@ -6,6 +6,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
@@ -19,6 +20,7 @@ import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
+import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import java.net.ProtocolException
 import java.security.cert.CertificateException
 import kotlin.coroutines.CoroutineContext
@@ -26,6 +28,7 @@ import kotlin.coroutines.CoroutineContext
 internal class DefaultNetworkClientRepository(
     private val serverSelectionDataSource: ServerSelectionDataSource,
     networkControlDataSource: NetworkControlDataSource,
+    private val relayConfigurationRepository: RelayConfigurationRepository,
     private val pairingStorageRepository: PairingStorageRepository,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
@@ -67,6 +70,7 @@ internal class DefaultNetworkClientRepository(
                     controlClientWebSocket(serverDeviceId = server.id)
                 },
                 expectedFingerprint = expectedFingerprint,
+                relayConfiguration = relayConfigurationRepository.relayConfiguration.first(),
                 coroutineScope = scope,
             ).apply { connect() }
 
