@@ -24,7 +24,6 @@ import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
-import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.model.usecase.GetRelayConfigurationFlowUseCase
 import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
 import org.vpilo.babymonitor.network.security.relay.relayWss
@@ -40,7 +39,7 @@ internal class WebSocketConnectionHandler(
     private val endpointPath: String,
     private val sessionBlock: suspend DefaultClientWebSocketSession.() -> Unit,
     private val onDisconnected: suspend (exception: Throwable) -> Unit = {},
-    private val pairingStorageRepository: PairingStorageRepository,
+    private val expectedFingerprint: String,
     private val coroutineScope: CoroutineScope,
 ) {
     private var connectionJob: Job? = null
@@ -128,9 +127,6 @@ internal class WebSocketConnectionHandler(
     }
 
     private suspend fun startWebSocket(host: InetAddress) {
-        val expectedFingerprint =
-            pairingStorageRepository.findServer(device.id)?.certFingerprint
-                ?: error("Not paired with $device — refusing to connect")
         val pinnedClient =
             HttpClient(CIO) {
                 install(WebSockets) { clientPingInterval = Constants.WEBSOCKET_PING_PERIOD }
@@ -160,7 +156,7 @@ internal class WebSocketConnectionHandler(
         val getRelayConfiguration = KoinPlatform.getKoin().get<GetRelayConfigurationFlowUseCase>()
         val configuration = getRelayConfiguration().first()
         if (!configuration.isConfigured) {
-            error("No relay configured — cannot connect to $device")
+            error("No relay configured - cannot connect to $device")
         }
         relayWss(
             configuration = configuration,

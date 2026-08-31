@@ -2,11 +2,12 @@
 
 ## Remaining pairing/security work
 
-* PairingCoordinator: investigate making into repository/UseCases
-* WebSocketConnectionHandler takes the pairing repository, needs to be removed and replaced with a fingerprint parameter; ultimately CameraSelectionScreenViewModel can give the fingerprint to the network client. It also uses Koin directly to get the relay config, must be given to it.
+* WebSocketConnectionHandler uses Koin directly to get the relay config, must be given to it.
 
 ## Nice to have
 
+- update labels in CameraSelectionScreenViewModel.
+- automatic reconnection should only work on the same type of server (local vs. remote).
 - Some previews should also be in dark mode
 - Pin entry & input fields background in white/alt surface in light&dark mode, now their background is same as surface
 - when a device is renamed, call `PairingStorageRepository.updateName` and update the UI.

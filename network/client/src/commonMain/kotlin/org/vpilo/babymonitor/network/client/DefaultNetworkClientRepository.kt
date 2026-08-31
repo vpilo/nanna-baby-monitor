@@ -54,6 +54,9 @@ internal class DefaultNetworkClientRepository(
         closeAllConnections()
 
         Logger.i(TAG) { "Connecting to $server" }
+        val expectedFingerprint =
+            pairingStorageRepository.findServer(server.id)?.certFingerprint
+                ?: error("Not paired with $server - unable to connect")
         controlHandler =
             WebSocketConnectionHandler(
                 device = server,
@@ -63,7 +66,7 @@ internal class DefaultNetworkClientRepository(
                     onControlConnectionOpened(server)
                     controlClientWebSocket(serverDeviceId = server.id)
                 },
-                pairingStorageRepository = pairingStorageRepository,
+                expectedFingerprint = expectedFingerprint,
                 coroutineScope = scope,
             ).apply { connect() }
 

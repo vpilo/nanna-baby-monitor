@@ -45,12 +45,15 @@ internal class NetworkAudioReceiverRepository(
                         handler?.disconnect()
                         handler = null
                         if (target == null) return@collect
+                        val expectedFingerprint =
+                            pairingStorageRepository.findServer(target.id)?.certFingerprint
+                                ?: error("Not paired with $target - unable to connect")
                         handler =
                             WebSocketConnectionHandler(
                                 device = target,
                                 endpointPath = Endpoints.STREAM_AUDIO,
                                 sessionBlock = { audioStreamingClientWebSocket(serverDeviceId = target.id) },
-                                pairingStorageRepository = pairingStorageRepository,
+                                expectedFingerprint = expectedFingerprint,
                                 coroutineScope = coroutineScope,
                                 onDisconnected = {
                                     delay(Constants.RECONNECTION_TIMEOUT)
