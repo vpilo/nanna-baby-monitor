@@ -26,7 +26,7 @@ fun buildPairingTranscript(
     serverCertFingerprint: String,
 ): ByteArray = clientPublicKey + serverPublicKey + serverCertFingerprint.encodeToByteArray()
 
-/** `KDF(PIN)` — the PIN is low-entropy, so this exists purely to get a fixed-size HMAC key, not to slow down brute force. */
+/** `KDF(PIN)` - the PIN is low-entropy, so this exists purely to get a fixed-size HMAC key, not to slow down brute force. */
 private suspend fun pinToMacKey(pin: Pin): ByteArray =
     hkdfSha256(
         pin.toString().encodeToByteArray(),

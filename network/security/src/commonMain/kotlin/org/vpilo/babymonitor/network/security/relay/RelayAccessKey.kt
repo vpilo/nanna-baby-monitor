@@ -7,8 +7,8 @@ import org.vpilo.babymonitor.network.security.crypto.deriveRelayAccessKey
 /**
  * Caches the derived relay access key for the passphrase currently in use.
  *
- * Derivation is deliberately expensive, and every relay connection — including each reconnection attempt of the
- * retry loops — needs the key, so deriving per connection would make reconnecting cost seconds.
+ * Derivation is deliberately expensive, and every relay connection - including each reconnection attempt of the
+ * retry loops - needs the key, so deriving per connection would make reconnecting cost seconds.
  */
 internal object RelayAccessKey {
     private val mutex = Mutex()

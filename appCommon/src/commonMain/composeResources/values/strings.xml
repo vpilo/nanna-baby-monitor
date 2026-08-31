@@ -77,7 +77,7 @@
     <string name="client_pairing_failed_wrong_pin">Wrong PIN, try again</string>
     <string name="client_pairing_failed_no_active_window">Pairing is not in progress on that device</string>
     <string name="client_pairing_failed_server_not_on_network">Server not on this network</string>
-    <string name="client_pairing_failed_mitm_suspected">Could not verify the server\'s identity — pairing aborted</string>
+    <string name="client_pairing_failed_mitm_suspected">Could not verify the server\'s identity - pairing aborted</string>
     <string name="client_pairing_failed_connection_failed">Connection failed, try again</string>
     <string name="client_pairing_qr_wrong_device">Scanned code is for a different device</string>
     <string name="client_pairing_pin_label">PIN</string>

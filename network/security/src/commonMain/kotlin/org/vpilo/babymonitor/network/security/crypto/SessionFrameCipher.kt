@@ -6,7 +6,7 @@ import org.vpilo.babymonitor.network.security.crypto.internal.sealAes256Gcm
 
 /**
  * Seals/opens frames for one direction pair of a single connection, using a monotonic counter as the
- * AES-GCM nonce — safe only because [sendKey]/[receiveKey] are fresh per session (see the session handshake
+ * AES-GCM nonce - safe only because [sendKey]/[receiveKey] are fresh per session (see the session handshake
  * above), so counter-from-0 never repeats a (key, nonce) pair. Wire format: `[8-byte big-endian counter][ciphertext + 16-byte tag]`.
  */
 class SessionFrameCipher internal constructor(
@@ -22,7 +22,7 @@ class SessionFrameCipher internal constructor(
         return counter.toCounterBytes() + sealed
     }
 
-    /** Trusts the counter embedded in [wireFrame] to reconstruct the nonce — safe because the WebSocket
+    /** Trusts the counter embedded in [wireFrame] to reconstruct the nonce - safe because the WebSocket
      * transport already guarantees in-order, non-duplicated delivery within a connection, so there's no
      * replay to defend against here beyond what AES-GCM's tag already catches (tampering). */
     suspend fun open(wireFrame: ByteArray): ByteArray {

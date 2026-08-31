@@ -21,7 +21,7 @@ private const val RELAY_KEY_ITERATIONS = 210_000
 private const val RELAY_KEY_SIZE_BYTES = 32
 private const val RELAY_NONCE_SIZE_BYTES = 32
 
-/** Turns the relay passphrase into the access key. Slow by design — derive once and cache. */
+/** Turns the relay passphrase into the access key. Slow by design - derive once and cache. */
 suspend fun deriveRelayAccessKey(passphrase: String): ByteArray =
     pbkdf2Sha256(passphrase.encodeToByteArray(), RELAY_KEY_SALT, RELAY_KEY_ITERATIONS, RELAY_KEY_SIZE_BYTES)
 

@@ -14,7 +14,7 @@ import kotlin.io.encoding.Base64
 
 /**
  * The server's persistent, per-install self-signed TLS identity. Loaded (or generated on first launch)
- * once at startup and reused for the lifetime of the process — this is the pinning anchor clients trust
+ * once at startup and reused for the lifetime of the process - this is the pinning anchor clients trust
  * after pairing (see [sha256Fingerprint]).
  */
 internal class ServerIdentity private constructor(

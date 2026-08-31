@@ -29,7 +29,7 @@ internal suspend fun sealAes256Gcm(
 
 /**
  * Opens a frame produced by [sealAes256Gcm]. Throws if [ciphertext]'s tag doesn't verify under [key]/[nonce]/[associatedData]
- * (tampered frame, wrong key, or mismatched associated data) — callers must treat any thrown exception as "drop the connection".
+ * (tampered frame, wrong key, or mismatched associated data) - callers must treat any thrown exception as "drop the connection".
  */
 @OptIn(DelicateCryptographyApi::class)
 internal suspend fun openAes256Gcm(

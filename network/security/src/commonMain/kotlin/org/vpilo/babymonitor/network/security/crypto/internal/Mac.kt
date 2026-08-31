@@ -12,7 +12,7 @@ internal suspend fun hmacSha256(
 }
 
 /**
- * Returns `false` on any mismatch (wrong key, tampered data, or truncated tag) instead of throwing —
+ * Returns `false` on any mismatch (wrong key, tampered data, or truncated tag) instead of throwing -
  * a failed proof is an expected outcome (wrong PIN, revoked pairing), not an error.
  */
 internal suspend fun verifyHmacSha256(

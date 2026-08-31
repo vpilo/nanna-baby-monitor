@@ -15,7 +15,7 @@ import org.vpilo.babymonitor.network.security.protocol.sendRelayAccessProof
  * Relay-side counterpart of [relayWss]: challenges the connector and returns whether it proved it holds the
  * relay passphrase.
  *
- * Says nothing on rejection — no error frame, no close reason of its own — so a caller guessing passphrases
+ * Says nothing on rejection - no error frame, no close reason of its own - so a caller guessing passphrases
  * learns only that the connection ended, and never obtains a relay proof to attack offline. The relay proves
  * itself only *after* the connector has, for the same reason.
  *

@@ -23,8 +23,8 @@ Note that pairing cannot happen over a relay. Pair on the local network first.
    nano ~/.config/babymonitor/relay.conf # or any other program to edit the configuration
     ```
    The template will have two lines `host=` and `passphrase=`:
-   - `host` — public hostname or IP the apps reach the relay on.
-   - `passphrase` — shared secret. Enter the same value in every app under the relay settings; without it the relay refuses every connection.
+   - `host` - public hostname or IP the apps reach the relay on.
+   - `passphrase` - shared secret. Enter the same value in every app under the relay settings; without it the relay refuses every connection.
 4. Enable and start the systemd service:
    ```sh
    systemctl --user daemon-reload

@@ -35,7 +35,7 @@ import kotlin.io.encoding.Base64
 
 /**
  * Runs the client side of the pairing window: connects to the server's `/pair` endpoint with a
- * trust-on-first-use TLS trust manager, runs the ECDH+PIN exchange (Task 8), and — on success —
+ * trust-on-first-use TLS trust manager, runs the ECDH+PIN exchange (Task 8), and - on success -
  * returns the derived shared secret and pinned server certificate fingerprint for storage.
  */
 internal class DefaultClientPairingRepository : ClientPairingRepository {
@@ -153,8 +153,8 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
 
     /**
      * Verifies the server's confirmation `Ms` against the client's own transcript before trusting anything the
-     * server said. A mismatch here — unlike a wrong PIN, which the server itself detects and reports via
-     * [PairingResult.Failure] — means a party other than the expected server produced this response: the TLS
+     * server said. A mismatch here - unlike a wrong PIN, which the server itself detects and reports via
+     * [PairingResult.Failure] - means a party other than the expected server produced this response: the TLS
      * connection didn't terminate where the client thinks it did. Reported as [ClientPairingFailureCause.MITM_SUSPECTED],
      * and the pairing is *not* persisted.
      */

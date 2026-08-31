@@ -34,7 +34,7 @@ private const val GREETING = "you are in"
 
 /**
  * Drives [relayWss] against a real TLS Ktor server running [verifyRelayAccess], so the wire format, the frame
- * ordering, and — most importantly — the two sides independently arriving at the same certificate fingerprint
+ * ordering, and - most importantly - the two sides independently arriving at the same certificate fingerprint
  * are all exercised on the stack that ships.
  */
 class RelayAccessRoundTripTest {
@@ -103,7 +103,7 @@ class RelayAccessRoundTripTest {
 
     /**
      * Stands in for an interceptor: the connector hashes the certificate it was actually served, so a relay
-     * verifying against any other certificate — as would happen if the TLS session terminated somewhere else —
+     * verifying against any other certificate - as would happen if the TLS session terminated somewhere else -
      * cannot agree on a transcript.
      */
     @Test

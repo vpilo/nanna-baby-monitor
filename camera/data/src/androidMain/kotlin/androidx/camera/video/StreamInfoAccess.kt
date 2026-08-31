@@ -13,7 +13,7 @@ package androidx.camera.video
  * `VideoCapture.clearPipeline()` resets the cached `StreamInfo` to INACTIVE
  * (which happens whenever a `SurfaceRequest.invalidate()` causes a surface-setup
  * error during the rebind), there is no further emission to push it back to ACTIVE
- * and the encoder surface is added as non-repeating — the camera then never drives
+ * and the encoder surface is added as non-repeating - the camera then never drives
  * frames to it.
  *
  * Work around this by handing CameraX a `MutableStateObservable<StreamInfo>` and

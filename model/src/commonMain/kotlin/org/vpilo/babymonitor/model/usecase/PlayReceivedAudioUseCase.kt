@@ -11,7 +11,7 @@ import org.vpilo.babymonitor.model.repository.StreamingAudioReceiverRepository
  * with the audio playback device (speaker).
  *
  * Call [setPlaying] to start or stop playback.
- * The caller's [CoroutineScope] controls the playback lifetime — when cancelled, playback stops.
+ * The caller's [CoroutineScope] controls the playback lifetime - when cancelled, playback stops.
  */
 class PlayReceivedAudioUseCase(
     private val audioReceiverRepository: StreamingAudioReceiverRepository,

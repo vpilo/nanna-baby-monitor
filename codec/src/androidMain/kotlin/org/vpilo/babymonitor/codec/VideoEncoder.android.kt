@@ -146,7 +146,7 @@ actual class VideoEncoder actual constructor(
                 setInteger(MediaFormat.KEY_FRAME_RATE, MediaFormats.Video.FRAME_RATE)
                 setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, MediaFormats.Video.KEY_FRAME_INTERVAL_SECONDS)
                 // Surface input mode: COLOR_FormatSurface tells MediaCodec we'll
-                // feed it via createInputSurface() — no byte-buffer input.
+                // feed it via createInputSurface() - no byte-buffer input.
                 setInteger(
                     MediaFormat.KEY_COLOR_FORMAT,
                     MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,

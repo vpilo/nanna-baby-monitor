@@ -33,11 +33,11 @@ import io.ktor.client.plugins.websocket.pingInterval as clientPingInterval
  * only runs once this app has proven it holds the relay passphrase *and* the relay has proven the same back.
  *
  * [endpoint] is one of the `Endpoints.Relay` constants and is bound into both proofs; [serverId], when given, is
- * appended to the request path but deliberately left out of the proofs — the relay routes on it, and binding it
+ * appended to the request path but deliberately left out of the proofs - the relay routes on it, and binding it
  * would force both sides to agree on its encoding for no security gain. [port] only ever moves for tests.
  *
  * The TLS certificate is not validated against any PKI. It is instead folded into the handshake transcript, so a
- * relay presenting a different certificate than the one both sides hash — an interceptor — fails to authenticate.
+ * relay presenting a different certificate than the one both sides hash - an interceptor - fails to authenticate.
  */
 suspend fun relayWss(
     configuration: RelayConfiguration,
@@ -84,7 +84,7 @@ suspend fun relayWss(
 
 /**
  * A rejecting relay says nothing and closes, so every receive here can end in a closed channel rather than a
- * value. That is the expected shape of "wrong passphrase" — not an error worth propagating to the retry loops,
+ * value. That is the expected shape of "wrong passphrase" - not an error worth propagating to the retry loops,
  * which would report it as a generic connection failure and bury the one thing the user needs to be told.
  */
 private suspend fun DefaultClientWebSocketSession.authenticateWithRelay(
@@ -115,12 +115,12 @@ private suspend fun DefaultClientWebSocketSession.authenticateWithRelay(
 
     val relayProof =
         runCatching { receiveRelayAccessProofOrNull() }.getOrNull() ?: run {
-            Logger.w(TAG) { "Relay refused access to $endpoint — check the relay passphrase" }
+            Logger.w(TAG) { "Relay refused access to $endpoint - check the relay passphrase" }
             return false
         }
 
     if (!verifyRelayAccessProof(accessKey, role, endpoint, fingerprint, connectorNonce, relayNonce, relayProof)) {
-        Logger.e(TAG) { "Relay failed to prove itself for $endpoint — the connection is being intercepted" }
+        Logger.e(TAG) { "Relay failed to prove itself for $endpoint - the connection is being intercepted" }
         close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Relay authentication failed"))
         return false
     }

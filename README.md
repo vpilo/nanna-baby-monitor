@@ -107,7 +107,7 @@ instructions on how to build and install it.
 ## First run
 
 Each device asks what it will do: record with its camera, or watch what another device is recording. The choice can be changed later from
-the menu. Give the device a recognizable name in the settings — that name is what the other devices will show.
+the menu. Give the device a recognizable name in the settings - that name is what the other devices will show.
 
 ## Pairing
 
@@ -136,10 +136,10 @@ paired by hand.
 
 Android permissions used by the app:
 
-- `CAMERA`, `RECORD_AUDIO` — only requested on a recording device, and only for the modes in use.
+- `CAMERA`, `RECORD_AUDIO` - only requested on a recording device, and only for the modes in use.
 - `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CAMERA`, `FOREGROUND_SERVICE_MICROPHONE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`,
-  `POST_NOTIFICATIONS` — to keep recording or playing with the screen off, with the ongoing notification Android requires.
-- `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `ACCESS_LOCAL_NETWORK`, `CHANGE_WIFI_MULTICAST_STATE` — streaming, and the
+  `POST_NOTIFICATIONS` - to keep recording or playing with the screen off, with the ongoing notification Android requires.
+- `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `ACCESS_LOCAL_NETWORK`, `CHANGE_WIFI_MULTICAST_STATE` - streaming, and the
   multicast traffic needed to find cameras on the local network.
 
 No location permission is requested, and no permission is used for anything other than the above.
