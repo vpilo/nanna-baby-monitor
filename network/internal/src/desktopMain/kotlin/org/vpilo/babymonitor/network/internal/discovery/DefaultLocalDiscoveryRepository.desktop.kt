@@ -1,13 +1,18 @@
 package org.vpilo.babymonitor.network.internal.discovery
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.io.IOException
+import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.internal.discovery.ktx.toAttributes
@@ -15,13 +20,23 @@ import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
+import kotlin.coroutines.CoroutineContext
 
-internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository {
+internal actual class DefaultLocalDiscoveryRepository(
+    private val coroutineContext: CoroutineContext,
+) : LocalDiscoveryRepository {
+    actual constructor() : this(
+        coroutineContext = KoinPlatform.getKoin().get(),
+    )
+
     private val discoveryService = JmDNS.create()
 
     private val listener = DesktopDiscoveryListener()
 
     private var device: Device? = null
+
+    private val scope: CoroutineScope = CoroutineScope(coroutineContext)
+    private var trimJob: Job? = null
 
     actual override val discoveredDevicesFlow: Flow<Set<Device>> =
         @OptIn(FlowPreview::class)
@@ -42,6 +57,14 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
             unregister()
         }
         this.device = device
+        trimJob?.cancel()
+        trimJob =
+            scope.launch {
+                while (true) {
+                    delay(Constants.DISCOVERY_TRIM_PERIOD)
+                    listener.trim()
+                }
+            }
         listener.reset(device)
         mutableIsRegisteredFlow.value = true
 
@@ -95,6 +118,8 @@ internal actual class DefaultLocalDiscoveryRepository : LocalDiscoveryRepository
         this.device = null
         listener.reset()
         mutableIsRegisteredFlow.value = false
+        trimJob?.cancel()
+        trimJob = null
     }
 
     actual override fun refresh() {

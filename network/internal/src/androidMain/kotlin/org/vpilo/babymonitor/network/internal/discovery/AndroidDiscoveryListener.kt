@@ -57,8 +57,8 @@ internal class AndroidDiscoveryListener(
     }
 
     override fun onServiceLost(serviceInfo: NsdServiceInfo) {
-        val removed = serviceInfo.toDeviceOrNull() ?: return
-        if (removed.id !in mutableDiscoveredDevicesFlow.value) return
+        val id = DeviceId.parseOrNull(serviceInfo.serviceName) ?: return
+        val removed = mutableDiscoveredDevicesFlow.value[id] ?: return
 
         Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $removed" }
         mutableDiscoveredDevicesFlow.update { it - removed.id }
