@@ -11,6 +11,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
@@ -21,6 +23,7 @@ import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.RelaySignals
+import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.network.model.transport.asTransportString
 import org.vpilo.babymonitor.network.security.relay.relayWss
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
@@ -29,6 +32,7 @@ import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSo
 import kotlin.coroutines.CoroutineContext
 
 internal class RelayServerRegistration(
+    private val relayConfigurationRepository: RelayConfigurationRepository,
     coroutineContext: CoroutineContext,
 ) {
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
@@ -43,7 +47,14 @@ internal class RelayServerRegistration(
 
     private var isEnabled: Boolean = true
 
-    fun setRelay(configuration: RelayConfiguration) {
+    init {
+        relayConfigurationRepository.relayConfiguration
+            .onEach { configuration ->
+                setRelay(configuration)
+            }.launchIn(scope)
+    }
+
+    private fun setRelay(configuration: RelayConfiguration) {
         if (this.relayConfiguration == configuration) return
         this.relayConfiguration = configuration
         restart()

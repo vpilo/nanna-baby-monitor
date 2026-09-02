@@ -13,11 +13,9 @@ import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
-import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
-import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.model.usecase.GetConnectableServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetNewServersFlowUseCase
@@ -34,7 +32,6 @@ class CameraSelectionScreenViewModel(
     private val getPairedNonVisibleServersFlowUseCase: GetPairedNonVisibleServersFlowUseCase,
     private val getConnectableServersFlowUseCase: GetConnectableServersFlowUseCase,
     private val getNewServersFlowUseCase: GetNewServersFlowUseCase,
-    private val relayConfigurationRepository: RelayConfigurationRepository,
     private val localDiscoveryRepository: LocalDiscoveryRepository,
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
     private val deviceStateRepository: DeviceStateRepository,
@@ -118,9 +115,8 @@ class CameraSelectionScreenViewModel(
                 waitForLastConnectedServer()
             }
 
-        relayConfigurationRepository.relayConfiguration.subscribe { configuration ->
-            remoteDiscoveryRepository.setRelay(configuration)
-            state.copy(isRelayConfigured = configuration.isConfigured).update()
+        vmScope.launch {
+            remoteDiscoveryRepository.start()
         }
 
         localDiscoveryRepository.isRegisteredFlow.subscribe { isRegistered ->
@@ -144,7 +140,9 @@ class CameraSelectionScreenViewModel(
     }
 
     override suspend fun onUnsubscribed() {
-        remoteDiscoveryRepository.setRelay(RelayConfiguration.NONE)
+        vmScope.launch {
+            remoteDiscoveryRepository.stop()
+        }
         autoConnectJob?.cancel()
         autoConnectJob = null
     }

@@ -11,7 +11,6 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
-import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
@@ -46,9 +45,9 @@ class ServerHomeScreenViewModel(
             state.copy(captureMode = it).update()
             server.setCaptureMode(it)
         }
+
         relayConfigurationRepository.relayConfiguration.subscribe { configuration ->
             state.copy(isRelayConfigured = configuration.isConfigured).update()
-            server.setRelay(configuration)
         }
     }
 
@@ -72,7 +71,6 @@ class ServerHomeScreenViewModel(
     override fun onCleared() {
         runBlocking {
             discoveryManager.unregister()
-            server.setRelay(RelayConfiguration.NONE)
             server.stop()
         }
     }

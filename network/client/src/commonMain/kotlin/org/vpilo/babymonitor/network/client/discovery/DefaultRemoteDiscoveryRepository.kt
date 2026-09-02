@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
@@ -24,6 +26,7 @@ import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.RelayConfiguration
+import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.model.transport.fromTransportString
 import org.vpilo.babymonitor.network.security.relay.relayWss
@@ -31,6 +34,7 @@ import kotlin.coroutines.CoroutineContext
 
 internal class DefaultRemoteDiscoveryRepository(
     coroutineContext: CoroutineContext,
+    private val relayConfigurationRepository: RelayConfigurationRepository,
 ) : RemoteDiscoveryRepository {
     private val scope = CoroutineScope(coroutineContext + SupervisorJob())
 
@@ -41,42 +45,52 @@ internal class DefaultRemoteDiscoveryRepository(
     override val isRegisteredFlow: Flow<Boolean> = mutableIsRegisteredFlow.asStateFlow()
 
     private var relayConfiguration: RelayConfiguration = RelayConfiguration.NONE
+
+    private var configurationJob: Job? = null
     private var discoveryJob: Job? = null
     private var session: DefaultWebSocketSession? = null
 
-    override fun setRelay(configuration: RelayConfiguration) {
+    private fun setRelay(configuration: RelayConfiguration) {
         relayConfiguration = configuration
         _discoveredDevicesFlow.value = emptySet()
 
         discoveryJob?.cancel()
         discoveryJob = null
 
+        Logger.d(TAG) { "Relay discovery configuration updated: $relayConfiguration" }
         if (configuration.isConfigured) {
-            start()
-        } else {
-            scope.launch {
-                session?.close()
-                session = null
-            }
+            discoveryJob =
+                scope.launch {
+                    runDiscoveryLoop()
+                }
         }
     }
 
-    private fun start() {
-        if (!relayConfiguration.isConfigured) return
+    override suspend fun start() {
+        Logger.d(TAG) { "Relay discovery started" }
+        mutableIsRegisteredFlow.value = false
+        configurationJob?.cancel()
+        configurationJob =
+            relayConfigurationRepository.relayConfiguration
+                .onEach { configuration ->
+                    setRelay(configuration)
+                }.launchIn(scope)
+    }
 
-        discoveryJob =
-            scope.launch {
-                session?.close()
-                session = null
-                mutableIsRegisteredFlow.value = false
-                runDiscoveryLoop()
-            }
+    override suspend fun stop() {
+        Logger.d(TAG) { "Relay discovery stopped" }
+        configurationJob?.cancel()
+        configurationJob = null
+        session?.close()
+        session = null
+        mutableIsRegisteredFlow.value = false
     }
 
     private suspend fun runDiscoveryLoop() {
         while (true) {
             Logger.d(TAG) { "Relay discovery connection started for ${relayConfiguration.host}" }
             runCatching {
+                session?.close()
                 relayWss(
                     configuration = relayConfiguration,
                     role = AppRole.CLIENT,
