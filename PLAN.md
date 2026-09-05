@@ -2,7 +2,6 @@
 
 ## Nice to have
 
-- update labels in CameraSelectionScreenViewModel.
 - automatic reconnection should only work on the same type of server (local vs. remote).
 - Some previews should also be in dark mode
 - Pin entry & input fields background in white/alt surface in light&dark mode, now their background is same as surface
