@@ -2,19 +2,17 @@ package org.vpilo.babymonitor.network.internal.discovery
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.update
 import kotlinx.io.IOException
-import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.internal.discovery.ktx.toAttributes
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
@@ -22,31 +20,40 @@ import javax.jmdns.JmDNS
 import javax.jmdns.ServiceInfo
 import kotlin.coroutines.CoroutineContext
 
-internal actual class DefaultLocalDiscoveryRepository(
-    private val coroutineContext: CoroutineContext,
+internal actual class DefaultLocalDiscoveryRepository actual constructor(
+    coroutineContext: CoroutineContext,
 ) : LocalDiscoveryRepository {
-    actual constructor() : this(
-        coroutineContext = KoinPlatform.getKoin().get(),
-    )
+    private val discoveredDevices: MutableStateFlow<Map<DeviceId, Device>> = MutableStateFlow(emptyMap())
 
     private val discoveryService = JmDNS.create()
 
-    private val listener = DesktopDiscoveryListener()
+    private val listener = DesktopDiscoveryListener(discoveredDevices)
 
     private var device: Device? = null
 
-    private val scope: CoroutineScope = CoroutineScope(coroutineContext)
-    private var trimJob: Job? = null
-
     actual override val discoveredDevicesFlow: Flow<Set<Device>> =
         @OptIn(FlowPreview::class)
-        listener.discoveredDevices
+        discoveredDevices
             .debounce(LocalDiscoveryRepository.DISCOVERY_DEBOUNCE_TIME)
             .map { it.values.toSortedSet() }
             .distinctUntilChanged()
 
     private val mutableIsRegisteredFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual override val isRegisteredFlow: Flow<Boolean> = mutableIsRegisteredFlow.asStateFlow()
+
+    private val watchdog =
+        DeviceWatchdog(
+            devicesFlow = discoveredDevices,
+            onDeviceUnreachable = { removed ->
+                Logger.i(TAG) { "Device unreachable: $removed" }
+                discoveredDevices.update { it - removed.id }
+            },
+            onDeviceReturned = { returned ->
+                Logger.i(TAG) { "Device returned: $returned" }
+                discoveredDevices.update { it + (returned.id to returned) }
+            },
+            coroutineScope = CoroutineScope(coroutineContext),
+        )
 
     actual override fun register(device: Device) {
         if (this.device == device) {
@@ -57,14 +64,6 @@ internal actual class DefaultLocalDiscoveryRepository(
             unregister()
         }
         this.device = device
-        trimJob?.cancel()
-        trimJob =
-            scope.launch {
-                while (true) {
-                    delay(Constants.DISCOVERY_TRIM_PERIOD)
-                    listener.trim()
-                }
-            }
         listener.reset(device)
         mutableIsRegisteredFlow.value = true
 
@@ -80,6 +79,7 @@ internal actual class DefaultLocalDiscoveryRepository(
                     -> {
                         Logger.d(TAG) { "Discovering services" }
                         discoveryService.addServiceListener(DISCOVERY_DESKTOP_SERVICE_TYPE, listener)
+                        watchdog.startWatching()
                     }
 
                 else -> {
@@ -106,10 +106,12 @@ internal actual class DefaultLocalDiscoveryRepository(
                 discoveryService.unregisterAllServices()
             }
 
-            is Device.Client -> {
-                Logger.d(TAG) { "Discovery stopped" }
-                discoveryService.removeServiceListener(DISCOVERY_DESKTOP_SERVICE_TYPE, listener)
-            }
+            is Device.Client,
+            is Device.Relay,
+                -> {
+                    Logger.d(TAG) { "Discovery stopped" }
+                    discoveryService.removeServiceListener(DISCOVERY_DESKTOP_SERVICE_TYPE, listener)
+                }
 
             else -> {
                 error("Invalid device type: $device")
@@ -118,8 +120,7 @@ internal actual class DefaultLocalDiscoveryRepository(
         this.device = null
         listener.reset()
         mutableIsRegisteredFlow.value = false
-        trimJob?.cancel()
-        trimJob = null
+        watchdog.stopWatching()
     }
 
     actual override fun refresh() {

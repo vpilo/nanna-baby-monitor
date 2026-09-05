@@ -12,7 +12,6 @@ object Constants {
     const val DISCOVERY_SERVICE_TYPE = "babymonitor"
 
     const val SERVICES_LISTEN_ADDRESS: String = "0.0.0.0"
-    val DISCOVERY_TRIM_PERIOD: Duration = 30.seconds
 
     const val TLS_SERVER_NAME = "BabyMonitorDevice"
 

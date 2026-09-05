@@ -3,8 +3,11 @@ package org.vpilo.babymonitor.network.internal.discovery
 import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import kotlin.coroutines.CoroutineContext
 
-internal expect class DefaultLocalDiscoveryRepository() : LocalDiscoveryRepository {
+internal expect class DefaultLocalDiscoveryRepository(
+    coroutineContext: CoroutineContext,
+) : LocalDiscoveryRepository {
     override val discoveredDevicesFlow: Flow<Set<Device>>
 
     override val isRegisteredFlow: Flow<Boolean>

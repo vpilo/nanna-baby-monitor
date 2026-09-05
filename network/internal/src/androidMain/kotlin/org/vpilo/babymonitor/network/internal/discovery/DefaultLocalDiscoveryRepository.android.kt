@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
@@ -18,12 +20,15 @@ import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.internal.discovery.ktx.toAttributes
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import kotlin.coroutines.CoroutineContext
 
 internal actual class DefaultLocalDiscoveryRepository(
     context: Context,
+    coroutineContext: CoroutineContext,
 ) : LocalDiscoveryRepository {
-    actual constructor() : this(
+    actual constructor(coroutineContext: CoroutineContext) : this(
         context = KoinPlatform.getKoin().get(),
+        coroutineContext = coroutineContext,
     )
 
     private var device: Device? = null
@@ -39,6 +44,20 @@ internal actual class DefaultLocalDiscoveryRepository(
     private var multicastLock: WifiManager.MulticastLock? = null
 
     private val mutableDiscoveredDevicesFlow: MutableStateFlow<Map<DeviceId, Device>> = MutableStateFlow(emptyMap())
+
+    private val watchdog =
+        DeviceWatchdog(
+            devicesFlow = mutableDiscoveredDevicesFlow,
+            onDeviceUnreachable = { removed ->
+                Logger.i(TAG) { "Device unreachable: $removed" }
+                mutableDiscoveredDevicesFlow.update { it - removed.id }
+            },
+            onDeviceReturned = { returned ->
+                Logger.i(TAG) { "Device returned: $returned" }
+                mutableDiscoveredDevicesFlow.update { it + (returned.id to returned) }
+            },
+            coroutineScope = CoroutineScope(coroutineContext),
+        )
 
     private var discoveryListener: AndroidDiscoveryListener =
         AndroidDiscoveryListener(
@@ -85,6 +104,7 @@ internal actual class DefaultLocalDiscoveryRepository(
                         NsdManager.PROTOCOL_DNS_SD,
                         discoveryListener,
                     )
+                    watchdog.startWatching()
                 }
         }
     }
@@ -129,6 +149,7 @@ internal actual class DefaultLocalDiscoveryRepository(
                 mutableDiscoveredDevicesFlow = mutableDiscoveredDevicesFlow,
             )
         registrationListener = AndroidRegistrationListener()
+        watchdog.stopWatching()
     }
 
     actual override fun refresh() {
