@@ -32,7 +32,7 @@ import org.vpilo.babymonitor.network.server.websockets.videoStreamingServerWebSo
 import kotlin.coroutines.CoroutineContext
 
 internal class RelayServerRegistration(
-    private val relayConfigurationRepository: RelayConfigurationRepository,
+    relayConfigurationRepository: RelayConfigurationRepository,
     coroutineContext: CoroutineContext,
 ) {
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
@@ -50,14 +50,10 @@ internal class RelayServerRegistration(
     init {
         relayConfigurationRepository.relayConfiguration
             .onEach { configuration ->
-                setRelay(configuration)
+                if (this.relayConfiguration == configuration) return@onEach
+                this.relayConfiguration = configuration
+                restart()
             }.launchIn(scope)
-    }
-
-    private fun setRelay(configuration: RelayConfiguration) {
-        if (this.relayConfiguration == configuration) return
-        this.relayConfiguration = configuration
-        restart()
     }
 
     fun identifySelf(server: Device.LocalServer) {
@@ -79,7 +75,7 @@ internal class RelayServerRegistration(
         registrationJob = null
     }
 
-    fun restart() {
+    private fun restart() {
         stop()
         if (!isEnabled || !relayConfiguration.isConfigured || !this::server.isInitialized) return
         registrationJob = scope.launch { runRegistrationLoop() }

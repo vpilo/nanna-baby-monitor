@@ -26,7 +26,7 @@ import io.ktor.websocket.timeout
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
@@ -51,6 +51,11 @@ private data class PendingSessionKey(
     val endpoint: String,
 )
 
+private data class RegisteredServer(
+    val server: Device.RemoteServer,
+    val session: WebSocketServerSession,
+)
+
 class DefaultNetworkRelayRepository {
     private var server: EmbeddedServer<*, *>? = null
 
@@ -63,7 +68,7 @@ class DefaultNetworkRelayRepository {
      */
     private lateinit var certificateFingerprint: String
 
-    private val remoteServers = MutableStateFlow<Map<Device.RemoteServer, WebSocketServerSession>>(emptyMap())
+    private val remoteServers = MutableStateFlow<Map<DeviceId, RegisteredServer>>(emptyMap())
 
     private val pendingRelays =
         ConcurrentHashMap<PendingSessionKey, ConcurrentLinkedDeque<CompletableDeferred<WebSocketServerSession?>>>()
@@ -165,8 +170,8 @@ class DefaultNetworkRelayRepository {
         setupSession(AppRole.CLIENT, Endpoints.Relay.CLIENT_DISCOVERY) ?: return
 
         Logger.i(TAG) { "Client connected to discovery endpoint" }
-        remoteServers.collect { set ->
-            val servers = set.keys.map { it.asTransportString() }
+        remoteServers.collect { registrations ->
+            val servers = registrations.values.map { it.server.asTransportString() }
             send(servers.joinToString("\n"))
         }
     }
@@ -195,25 +200,49 @@ class DefaultNetworkRelayRepository {
             return
         }
 
-        remoteServers.update { it + (server to this) }
         Logger.i(TAG) { "Registered: $server" }
+        val stale = remoteServers.getAndUpdate { it + (server.id to RegisteredServer(server, this)) }[server.id]
+        stale?.let { closeStaleSession(it) }
         try {
             @Suppress("UnusedPrivateProperty", "ControlFlowWithEmptyBody", "unused")
             for (ignored in incoming) {
                 // drain to detect disconnect
             }
         } finally {
-            remoteServers.update { it - server }
-            pendingRelays
-                .filter { (key, _) -> key.serverId == server.id }
-                .forEach { (key, _) ->
-                    pendingRelays
-                        .remove(key)
-                        ?.forEach { deferred -> deferred.complete(null) }
-                }
-            Logger.i(TAG) { "Unregistered: $server" }
+            unregister(server)
         }
     }
+
+    // Re-registrations after a network change are normal, but need handling to avoid leaving a stale session.
+    private fun WebSocketServerSession.unregister(server: Device.RemoteServer) {
+        val oldRemoteServers =
+            remoteServers.getAndUpdate { registrations ->
+                if (registrations[server.id]?.session === this) registrations - server.id else registrations
+            }
+        val isStaleSession = oldRemoteServers[server.id]?.session !== this
+        if (isStaleSession) {
+            Logger.d(TAG) { "Closed stale session: $server" }
+            return
+        }
+        pendingRelays
+            .filter { (key, _) -> key.serverId == server.id }
+            .forEach { (key, _) ->
+                pendingRelays
+                    .remove(key)
+                    ?.forEach { deferred -> deferred.complete(null) }
+            }
+        Logger.i(TAG) { "Unregistered: $server" }
+    }
+
+    private fun closeStaleSession(stale: RegisteredServer) =
+        with(stale.session) {
+            Logger.d(TAG) { "Closing stale registration for ${stale.server}" }
+            launch {
+                withTimeoutOrNull(Constants.WEBSOCKET_TIMEOUT) {
+                    close(CloseReason(CloseReason.Codes.GOING_AWAY, "Replaced by new session"))
+                }
+            }
+        }
 
     @Suppress("ReturnCount")
     private suspend fun DefaultWebSocketServerSession.handleClientEndpoint(
@@ -232,11 +261,7 @@ class DefaultNetworkRelayRepository {
                 }
 
         val registrationSession =
-            remoteServers.value
-                .firstNotNullOfOrNull { (server, session) ->
-                    if (server.id != id) return@firstNotNullOfOrNull null
-                    session
-                }
+            remoteServers.value[id]?.session
                 ?: run {
                     Logger.w(TAG) { "Closing client connection to $endpoint, cannot find session" }
                     close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Server not found: $id"))
