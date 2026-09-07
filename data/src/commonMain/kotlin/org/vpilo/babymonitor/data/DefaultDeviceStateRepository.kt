@@ -7,20 +7,18 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
-import org.koin.core.component.KoinComponent
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
-import org.vpilo.babymonitor.data.device.getBatteryLevelFlow
-import org.vpilo.babymonitor.data.device.getIsInternetAvailableFlow
-import org.vpilo.babymonitor.data.device.getSignalLevelFlow
+import org.vpilo.babymonitor.data.device.DeviceStateDataSource
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import kotlin.time.Duration.Companion.seconds
 
-internal class DefaultDeviceStateRepository :
-    DeviceStateRepository,
-    KoinComponent {
+internal class DefaultDeviceStateRepository(
+    dataSource: DeviceStateDataSource,
+) : DeviceStateRepository {
     override val batteryLevel: Flow<Int> =
-        getBatteryLevelFlow()
+        dataSource
+            .batteryLevel
             .onCompletion { ex ->
                 ex?.let { Logger.e(TAG) { "Battery level retrieval error: ${ex.prettify()}" } }
             }.distinctUntilChanged()
@@ -29,7 +27,8 @@ internal class DefaultDeviceStateRepository :
             }
 
     override val signalQuality: Flow<Int> =
-        getSignalLevelFlow()
+        dataSource
+            .signalLevel
             .onCompletion { ex ->
                 ex?.let { Logger.e(TAG) { "Signal quality retrieval error: ${ex.prettify()}" } }
             }.distinctUntilChanged()
@@ -39,7 +38,8 @@ internal class DefaultDeviceStateRepository :
 
     @OptIn(FlowPreview::class)
     override val isInternetAvailable: Flow<Boolean> =
-        getIsInternetAvailableFlow()
+        dataSource
+            .isInternetAvailable
             .debounce(INTERNET_STATE_DEBOUNCE_TIMEOUT)
             .drop(1)
             .onCompletion { ex ->
@@ -48,8 +48,8 @@ internal class DefaultDeviceStateRepository :
                 Logger.d(TAG) { "Internet availability changed: $state" }
             }
 
-    internal companion object {
-        internal val TAG = DefaultDeviceStateRepository::class
+    private companion object {
+        private val TAG = DefaultDeviceStateRepository::class
 
         private val INTERNET_STATE_DEBOUNCE_TIMEOUT = 10.seconds
     }

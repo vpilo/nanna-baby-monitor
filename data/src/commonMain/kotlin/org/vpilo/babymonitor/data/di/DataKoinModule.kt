@@ -8,12 +8,15 @@ import org.koin.dsl.module
 import org.vpilo.babymonitor.data.DefaultAppRoleRepository
 import org.vpilo.babymonitor.data.DefaultAudioPlaybackRepository
 import org.vpilo.babymonitor.data.DefaultDeviceStateRepository
+import org.vpilo.babymonitor.data.device.DeviceStateDataSource
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.model.repository.AudioPlaybackRepository
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 
 val dataKoinModule: Module =
     module {
+        singleOf(::DeviceStateDataSource)
+
         singleOf(::DefaultAppRoleRepository)
             .bind<AppRoleRepository>()
 
