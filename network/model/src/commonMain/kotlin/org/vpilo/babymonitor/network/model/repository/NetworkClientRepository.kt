@@ -4,8 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.network.model.ServerState
-import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
-import org.vpilo.babymonitor.network.model.pairing.Pin
 
 interface NetworkClientRepository {
     val connectionStateFlow: Flow<ConnectionState>

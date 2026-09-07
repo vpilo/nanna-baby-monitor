@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import io.github.alexzhirkevich.qrose.options.QrColors
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
 import org.vpilo.babymonitor.presentation.Theme

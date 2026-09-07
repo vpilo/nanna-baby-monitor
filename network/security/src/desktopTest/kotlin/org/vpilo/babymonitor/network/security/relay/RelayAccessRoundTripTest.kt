@@ -24,7 +24,6 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 private const val ENDPOINT = "/relay/discovery"
 private const val PASSPHRASE = "a shared relay passphrase"

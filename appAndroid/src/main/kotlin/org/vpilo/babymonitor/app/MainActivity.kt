@@ -4,9 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.CompositionLocalProvider
-import org.koin.core.Koin
-import org.koin.core.context.GlobalContext
-import org.koin.core.context.stopKoin
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
 
 class MainActivity : ComponentActivity() {

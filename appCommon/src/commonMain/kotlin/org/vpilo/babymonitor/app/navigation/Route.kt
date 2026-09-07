@@ -1,7 +1,6 @@
 package org.vpilo.babymonitor.app.navigation
 
 import kotlinx.serialization.Serializable
-import org.vpilo.babymonitor.model.repository.DeviceId
 
 sealed interface Route {
     @Serializable
