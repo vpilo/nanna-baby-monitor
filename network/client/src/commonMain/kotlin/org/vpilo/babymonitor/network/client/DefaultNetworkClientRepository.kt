@@ -13,8 +13,10 @@ import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
+import org.vpilo.babymonitor.model.repository.LocalClientDeviceRepository
 import org.vpilo.babymonitor.network.client.websockets.controlClientWebSocket
 import org.vpilo.babymonitor.network.internal.BackgroundServiceLink
+import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.ServerState
@@ -27,9 +29,11 @@ import kotlin.coroutines.CoroutineContext
 
 internal class DefaultNetworkClientRepository(
     private val serverSelectionDataSource: ServerSelectionDataSource,
-    networkControlDataSource: NetworkControlDataSource,
+    private val networkControlDataSource: NetworkControlDataSource,
     private val relayConfigurationRepository: RelayConfigurationRepository,
     private val pairingStorageRepository: PairingStorageRepository,
+    private val activeSessionsRepository: InternalActiveSessionsRepository,
+    private val localClientDeviceRepository: LocalClientDeviceRepository,
     coroutineContext: CoroutineContext,
 ) : NetworkClientRepository {
     private val scope = CoroutineScope(SupervisorJob() + coroutineContext)
@@ -60,6 +64,7 @@ internal class DefaultNetworkClientRepository(
         val expectedFingerprint =
             pairingStorageRepository.findServer(server.id)?.certFingerprint
                 ?: error("Not paired with $server - unable to connect")
+        val localDevice = localClientDeviceRepository.localDevice.first()
         controlHandler =
             WebSocketConnectionHandler(
                 device = server,
@@ -67,7 +72,13 @@ internal class DefaultNetworkClientRepository(
                 onDisconnected = { onControlConnectionClosed(server, it) },
                 sessionBlock = {
                     onControlConnectionOpened(server)
-                    controlClientWebSocket(serverDeviceId = server.id)
+                    controlClientWebSocket(
+                        localDevice = localDevice,
+                        serverDeviceId = server.id,
+                        dataSource = networkControlDataSource,
+                        pairingStorageRepository = pairingStorageRepository,
+                        activeSessionsRepository = activeSessionsRepository,
+                    )
                 },
                 expectedFingerprint = expectedFingerprint,
                 relayConfiguration = relayConfigurationRepository.relayConfiguration.first(),

@@ -18,11 +18,15 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.RelaySignals
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.network.model.transport.asTransportString
 import org.vpilo.babymonitor.network.security.relay.relayWss
@@ -33,6 +37,11 @@ import kotlin.coroutines.CoroutineContext
 
 internal class RelayServerRegistration(
     relayConfigurationRepository: RelayConfigurationRepository,
+    private val pairingStorageRepository: PairingStorageRepository,
+    private val activeSessionsRepository: InternalActiveSessionsRepository,
+    private val streamingAudioSenderRepository: StreamingAudioSenderRepository,
+    private val streamingVideoSenderRepository: StreamingVideoSenderRepository,
+    private val serverStateDataSource: ServerStateDataSource,
     coroutineContext: CoroutineContext,
 ) {
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
@@ -137,9 +146,32 @@ internal class RelayServerRegistration(
                         serverId = server.id,
                     ) {
                         when (endpoint) {
-                            Endpoints.CONTROL -> controlServerWebSocket(serverDeviceId = server.id)
-                            Endpoints.STREAM_AUDIO -> audioStreamingServerWebSocket(serverDeviceId = server.id)
-                            Endpoints.STREAM_VIDEO -> videoStreamingServerWebSocket(serverDeviceId = server.id)
+                            Endpoints.CONTROL -> {
+                                controlServerWebSocket(
+                                    serverDeviceId = server.id,
+                                    pairingStorageRepository = pairingStorageRepository,
+                                    activeSessionsRepository = activeSessionsRepository,
+                                    serverStateDataSource = serverStateDataSource,
+                                )
+                            }
+
+                            Endpoints.STREAM_AUDIO -> {
+                                audioStreamingServerWebSocket(
+                                    serverDeviceId = server.id,
+                                    pairingStorageRepository = pairingStorageRepository,
+                                    activeSessionsRepository = activeSessionsRepository,
+                                    streamingAudioSenderRepository = streamingAudioSenderRepository,
+                                )
+                            }
+
+                            Endpoints.STREAM_VIDEO -> {
+                                videoStreamingServerWebSocket(
+                                    serverDeviceId = server.id,
+                                    pairingStorageRepository = pairingStorageRepository,
+                                    activeSessionsRepository = activeSessionsRepository,
+                                    streamingVideoSenderRepository = streamingVideoSenderRepository,
+                                )
+                            }
                         }
                     }
                 } catch (ex: CancellationException) {

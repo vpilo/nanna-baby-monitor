@@ -1,10 +1,9 @@
 package org.vpilo.babymonitor.network.client.websockets
 
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
-import org.koin.mp.KoinPlatform
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.EncodedAudioStreamChunk
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.model.repository.toDeviceId
 import org.vpilo.babymonitor.network.client.NetworkAudioDataSource
 import org.vpilo.babymonitor.network.client.session.clientSessionHandshake
 import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
@@ -12,22 +11,18 @@ import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsR
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.security.protocol.StreamType
 import org.vpilo.babymonitor.network.security.protocol.protocolReceiveAudio
-import org.vpilo.babymonitor.settings.model.Setting
-import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
-import org.vpilo.babymonitor.settings.model.settings.DeviceId
 
-internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket(serverDeviceId: DeviceId) {
-    val koin = KoinPlatform.getKoin()
-    val dataSource = koin.get<NetworkAudioDataSource>()
-    val pairingStorageRepository = koin.get<PairingStorageRepository>()
-    val settingsRepository = koin.get<SettingsRepository>()
-    val sessionRegistry = koin.get<InternalActiveSessionsRepository>()
-
-    val clientId = settingsRepository.load(Setting.DeviceId).toDeviceId()
+internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket(
+    localDevice: Device.Client,
+    serverDeviceId: DeviceId,
+    dataSource: NetworkAudioDataSource,
+    pairingStorageRepository: PairingStorageRepository,
+    activeSessionsRepository: InternalActiveSessionsRepository,
+) {
     val pairedServer = pairingStorageRepository.findServer(serverDeviceId)
-    val cipher = clientSessionHandshake(clientId, serverDeviceId, pairedServer, StreamType.AUDIO) ?: return
+    val cipher = clientSessionHandshake(localDevice.id, serverDeviceId, pairedServer, StreamType.AUDIO) ?: return
 
-    sessionRegistry.register(serverDeviceId, this)
+    activeSessionsRepository.register(serverDeviceId, this)
     try {
         runWebSocketCatching(TAG) {
             while (true) {
@@ -36,7 +31,7 @@ internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket
             }
         }
     } finally {
-        sessionRegistry.unregister(serverDeviceId, this)
+        activeSessionsRepository.unregister(serverDeviceId, this)
     }
 }
 

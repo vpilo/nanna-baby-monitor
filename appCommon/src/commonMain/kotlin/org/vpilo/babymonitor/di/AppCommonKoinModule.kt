@@ -16,7 +16,6 @@ import org.vpilo.babymonitor.app.server.home.ServerHomeScreenViewModel
 import org.vpilo.babymonitor.app.server.paireddevices.PairedDevicesScreenViewModel
 import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreenViewModel
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
-import org.vpilo.babymonitor.settings.model.usecase.GetLocalClientDeviceFlowUseCase
 import kotlin.coroutines.CoroutineContext
 
 expect val appPlatformModule: Module
@@ -27,7 +26,6 @@ val appSharedKoinModules =
             single<CoroutineContext> { Dispatchers.Default }
 
             factoryOf(::PlayReceivedAudioUseCase)
-            factoryOf(::GetLocalClientDeviceFlowUseCase)
 
             viewModelOf(::OnboardingScreenViewModel)
             viewModelOf(::AppRoleChoiceScreenViewModel)
@@ -49,7 +47,7 @@ val appSharedKoinModules =
                     remoteDiscoveryRepository = get(),
                     deviceStateRepository = get(),
                     pairingStorageRepository = get(),
-                    getLocalClientDeviceFlowUseCase = get(),
+                    localClientDeviceRepository = get(),
                 )
             }
 
@@ -59,7 +57,7 @@ val appSharedKoinModules =
                     localDiscoveryRepository = get(),
                     pairingStorageRepository = get(),
                     clientPairingRepository = get(),
-                    getLocalClientDeviceFlowUseCase = get(),
+                    localClientDeviceRepository = get(),
                 )
             }
         },

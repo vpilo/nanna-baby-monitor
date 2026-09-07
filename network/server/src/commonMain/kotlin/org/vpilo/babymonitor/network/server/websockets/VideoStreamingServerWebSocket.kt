@@ -4,7 +4,6 @@ import io.ktor.websocket.DefaultWebSocketSession
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.launch
-import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
@@ -15,23 +14,23 @@ import org.vpilo.babymonitor.network.security.protocol.StreamType
 import org.vpilo.babymonitor.network.security.protocol.protocolSendVideo
 import org.vpilo.babymonitor.network.server.session.serverSessionHandshake
 
-internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket(serverDeviceId: DeviceId) {
-    val pairingStorageRepository = KoinPlatform.getKoin().get<PairingStorageRepository>()
-
+internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket(
+    serverDeviceId: DeviceId,
+    pairingStorageRepository: PairingStorageRepository,
+    activeSessionsRepository: InternalActiveSessionsRepository,
+    streamingVideoSenderRepository: StreamingVideoSenderRepository,
+) {
     Logger.d(TAG) { "WebSocket opened" }
 
     val handshake = serverSessionHandshake(serverDeviceId, pairingStorageRepository, StreamType.VIDEO) ?: return
 
-    val sessionRegistry = KoinPlatform.getKoin().get<InternalActiveSessionsRepository>()
-    sessionRegistry.register(handshake.clientId, this)
+    activeSessionsRepository.register(handshake.clientId, this)
     try {
         coroutineScope {
-            val repository = KoinPlatform.getKoin().get<StreamingVideoSenderRepository>()
-
             val senderJob =
                 launch {
                     runWebSocketCatching(TAG) {
-                        repository.chunks
+                        streamingVideoSenderRepository.chunks
                             .dropWhile {
                                 val drop = !it.isKeyFrame
                                 if (drop) Logger.d(TAG) { "Dropping non-keyframe chunk while waiting for first keyframe" }
@@ -54,7 +53,7 @@ internal suspend fun DefaultWebSocketSession.videoStreamingServerWebSocket(serve
             readerJob.invokeOnCompletion { senderJob.cancel() }
         }
     } finally {
-        sessionRegistry.unregister(handshake.clientId, this)
+        activeSessionsRepository.unregister(handshake.clientId, this)
     }
 }
 

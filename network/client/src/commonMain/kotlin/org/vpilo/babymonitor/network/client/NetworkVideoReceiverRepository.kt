@@ -10,8 +10,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.codec.VideoDecoder
 import org.vpilo.babymonitor.model.OpaqueVideoStream
+import org.vpilo.babymonitor.model.repository.LocalClientDeviceRepository
 import org.vpilo.babymonitor.model.repository.StreamingVideoReceiverRepository
 import org.vpilo.babymonitor.network.client.websockets.videoStreamingClientWebSocket
+import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
@@ -19,10 +21,12 @@ import org.vpilo.babymonitor.network.model.repository.RelayConfigurationReposito
 import kotlin.coroutines.CoroutineContext
 
 internal class NetworkVideoReceiverRepository(
-    dataSource: NetworkVideoDataSource,
+    private val dataSource: NetworkVideoDataSource,
     private val serverSelectionDataSource: ServerSelectionDataSource,
     private val pairingStorageRepository: PairingStorageRepository,
     private val relayConfigurationRepository: RelayConfigurationRepository,
+    private val activeSessionsRepository: InternalActiveSessionsRepository,
+    private val localClientDeviceRepository: LocalClientDeviceRepository,
     coroutineContext: CoroutineContext,
 ) : StreamingVideoReceiverRepository {
     private val coroutineScope = CoroutineScope(coroutineContext)
@@ -58,6 +62,7 @@ internal class NetworkVideoReceiverRepository(
                         handler?.disconnect()
                         handler = null
                         if (target == null) return@collect
+                        val localDevice = localClientDeviceRepository.localDevice.first()
                         val expectedFingerprint =
                             pairingStorageRepository.findServer(target.id)?.certFingerprint
                                 ?: error("Not paired with $target - unable to connect")
@@ -65,7 +70,15 @@ internal class NetworkVideoReceiverRepository(
                             WebSocketConnectionHandler(
                                 device = target,
                                 endpointPath = Endpoints.STREAM_VIDEO,
-                                sessionBlock = { videoStreamingClientWebSocket(serverDeviceId = target.id) },
+                                sessionBlock = {
+                                    videoStreamingClientWebSocket(
+                                        localDevice = localDevice,
+                                        serverDeviceId = target.id,
+                                        dataSource = dataSource,
+                                        pairingStorageRepository = pairingStorageRepository,
+                                        activeSessionsRepository = activeSessionsRepository,
+                                    )
+                                },
                                 expectedFingerprint = expectedFingerprint,
                                 relayConfiguration = relayConfigurationRepository.relayConfiguration.first(),
                                 coroutineScope = coroutineScope,

@@ -3,7 +3,6 @@ package org.vpilo.babymonitor.network.server.websockets
 import io.ktor.websocket.DefaultWebSocketSession
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
@@ -14,20 +13,21 @@ import org.vpilo.babymonitor.network.security.protocol.StreamType
 import org.vpilo.babymonitor.network.security.protocol.protocolSendAudio
 import org.vpilo.babymonitor.network.server.session.serverSessionHandshake
 
-internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket(serverDeviceId: DeviceId) {
-    val pairingStorageRepository = KoinPlatform.getKoin().get<PairingStorageRepository>()
+internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket(
+    serverDeviceId: DeviceId,
+    pairingStorageRepository: PairingStorageRepository,
+    activeSessionsRepository: InternalActiveSessionsRepository,
+    streamingAudioSenderRepository: StreamingAudioSenderRepository,
+) {
     val handshake = serverSessionHandshake(serverDeviceId, pairingStorageRepository, StreamType.AUDIO) ?: return
 
-    val sessionRegistry = KoinPlatform.getKoin().get<InternalActiveSessionsRepository>()
-    sessionRegistry.register(handshake.clientId, this)
+    activeSessionsRepository.register(handshake.clientId, this)
     try {
         coroutineScope {
-            val repository = KoinPlatform.getKoin().get<StreamingAudioSenderRepository>()
-
             val senderJob =
                 launch {
                     runWebSocketCatching(TAG) {
-                        repository.chunks
+                        streamingAudioSenderRepository.chunks
                             .collect {
                                 protocolSendAudio(it, handshake.cipher)
                             }
@@ -46,7 +46,7 @@ internal suspend fun DefaultWebSocketSession.audioStreamingServerWebSocket(serve
             readerJob.invokeOnCompletion { senderJob.cancel() }
         }
     } finally {
-        sessionRegistry.unregister(handshake.clientId, this)
+        activeSessionsRepository.unregister(handshake.clientId, this)
     }
 }
 

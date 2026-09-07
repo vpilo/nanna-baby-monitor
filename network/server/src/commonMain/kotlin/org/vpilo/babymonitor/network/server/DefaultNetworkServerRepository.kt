@@ -23,11 +23,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
@@ -35,14 +33,17 @@ import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
+import org.vpilo.babymonitor.model.repository.StreamingAudioSenderRepository
+import org.vpilo.babymonitor.model.repository.StreamingVideoSenderRepository
 import org.vpilo.babymonitor.network.internal.BackgroundServiceLink
 import org.vpilo.babymonitor.network.internal.protocol.runWebSocketCatching
+import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
-import org.vpilo.babymonitor.network.model.repository.ActiveSessionsRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
+import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
@@ -54,8 +55,12 @@ import kotlin.coroutines.CoroutineContext
 internal class DefaultNetworkServerRepository(
     private val relayRegistration: RelayServerRegistration,
     private val pairingCoordinator: PairingCoordinator,
+    private val pairingStorageRepository: PairingStorageRepository,
     private val deviceStateRepository: DeviceStateRepository,
-    private val activeSessionsRepository: ActiveSessionsRepository,
+    private val activeSessionsRepository: InternalActiveSessionsRepository,
+    private val streamingAudioSenderRepository: StreamingAudioSenderRepository,
+    private val streamingVideoSenderRepository: StreamingVideoSenderRepository,
+    private val serverStateDataSource: ServerStateDataSource,
     private val coroutineContext: CoroutineContext,
 ) : NetworkServerRepository {
     private var server: EmbeddedServer<*, *>? = null
@@ -65,11 +70,10 @@ internal class DefaultNetworkServerRepository(
     private var serverIdentity: ServerIdentity? = null
     private var self: Device.LocalServer? = null
 
-    private val state = MutableStateFlow(ServerState())
-    override val serverStateFlow: Flow<ServerState> = state.asStateFlow()
+    override val serverStateFlow: Flow<ServerState> = serverStateDataSource.state
 
     private val currentCaptureMode: CaptureMode
-        get() = state.value.captureMode
+        get() = serverStateDataSource.state.value.captureMode
 
     private val scope: CoroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
 
@@ -142,7 +146,7 @@ internal class DefaultNetworkServerRepository(
             isServerReady,
             relayRegistration.isRegistered,
         ) { isServerReady, isRelayReady ->
-            state.update {
+            serverStateDataSource.update {
                 it.copy(
                     isAvailableOnLocalNetwork = isServerReady,
                     isAvailableOnRelay = isRelayReady,
@@ -154,7 +158,7 @@ internal class DefaultNetworkServerRepository(
             deviceStateRepository.batteryLevel,
             deviceStateRepository.signalQuality,
         ) { batteryLevel, signalQuality ->
-            state.update { it.copy(signalQuality = signalQuality, batteryLevel = batteryLevel) }
+            serverStateDataSource.update { it.copy(signalQuality = signalQuality, batteryLevel = batteryLevel) }
         }.launchIn(scope)
 
         deviceStateRepository.isInternetAvailable
@@ -188,7 +192,7 @@ internal class DefaultNetworkServerRepository(
             else -> Unit // Nothing to do
         }
         Logger.i(TAG) { "Requested update to $mode" }
-        state.update { it.copy(captureMode = mode) }
+        serverStateDataSource.update { it.copy(captureMode = mode) }
     }
 
     private fun Application.serverModule() {
@@ -209,7 +213,12 @@ internal class DefaultNetworkServerRepository(
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
                 try {
-                    controlServerWebSocket(serverDeviceId = checkNotNull(self).id)
+                    controlServerWebSocket(
+                        serverDeviceId = checkNotNull(self).id,
+                        pairingStorageRepository = pairingStorageRepository,
+                        activeSessionsRepository = activeSessionsRepository,
+                        serverStateDataSource = serverStateDataSource,
+                    )
                 } finally {
                     Logger.i(TAG) { "Closed control session" }
                 }
@@ -223,7 +232,12 @@ internal class DefaultNetworkServerRepository(
                     return@webSocket
                 }
                 try {
-                    audioStreamingServerWebSocket(serverDeviceId = checkNotNull(self).id)
+                    audioStreamingServerWebSocket(
+                        serverDeviceId = checkNotNull(self).id,
+                        pairingStorageRepository = pairingStorageRepository,
+                        activeSessionsRepository = activeSessionsRepository,
+                        streamingAudioSenderRepository = streamingAudioSenderRepository,
+                    )
                 } finally {
                     Logger.i(TAG) { "Closed audio session" }
                 }
@@ -237,7 +251,12 @@ internal class DefaultNetworkServerRepository(
                     return@webSocket
                 }
                 try {
-                    videoStreamingServerWebSocket(serverDeviceId = checkNotNull(self).id)
+                    videoStreamingServerWebSocket(
+                        serverDeviceId = checkNotNull(self).id,
+                        pairingStorageRepository = pairingStorageRepository,
+                        activeSessionsRepository = activeSessionsRepository,
+                        streamingVideoSenderRepository = streamingVideoSenderRepository,
+                    )
                 } finally {
                     Logger.i(TAG) { "Closed video session" }
                 }
