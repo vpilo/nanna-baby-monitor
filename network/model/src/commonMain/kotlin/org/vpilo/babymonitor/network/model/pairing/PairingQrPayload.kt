@@ -24,7 +24,7 @@ data class PairingQrPayload(
         fun fromPayloadStringOrNull(payload: String): PairingQrPayload? {
             val parts = payload.split(QR_PAYLOAD_SEPARATOR, limit = QR_PAYLOAD_FIELD_COUNT)
             if (parts.size != QR_PAYLOAD_FIELD_COUNT || parts.first() != QR_PAYLOAD_PREFIX) {
-                Logger.w(TAG) { "Not a baby monitor QR" }
+                Logger.w(TAG) { "Not a Nanna Baby Monitor QR" }
                 return null
             }
             val version = parts[1].toIntOrNull()

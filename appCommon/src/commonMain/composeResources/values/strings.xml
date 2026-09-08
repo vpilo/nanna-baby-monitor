@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
-    <string name="app_name">Baby monitor</string>
+    <string name="app_name">Nanna Baby Monitor</string>
     <string name="app_copyright">© 2026 Valerio Pilo</string>
 
     <string name="app_title_server_home">Camera: %1$s</string>
@@ -13,7 +13,7 @@
     <string name="app_permissions_needed">The app needs permission to continue: it posts notifications showing that the app is running, and may need confirmation to be able to discover other apps on the local network.</string>
 
     <string name="app_role_choice_icon_description">App icon</string>
-    <string name="app_role_choice_presentation_title">Welcome to Baby Monitor!</string>
+    <string name="app_role_choice_presentation_title">Welcome to Nanna Baby Monitor!</string>
     <string name="app_role_choice_presentation_description">This app lets you use a device to point the camera and microphone at something, and another device to see and hear what's being recorded. Either may be an Android phone or a computer.</string>
     <string name="app_role_record">Record something with this device's camera</string>
     <string name="app_role_choice_prompt">What will this device do?</string>

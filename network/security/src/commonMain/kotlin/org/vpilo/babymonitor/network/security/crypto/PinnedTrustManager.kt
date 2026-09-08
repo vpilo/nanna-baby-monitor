@@ -5,7 +5,7 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.X509TrustManager
 
 /**
- * Client-side TLS trust for a single Baby Monitor connection.
+ * Client-side TLS trust for a single Nanna Baby Monitor connection.
  *
  * With [expectedFingerprint] `null`: trust-on-first-use - accepts any presented certificate but records it in
  * [capturedCertificate] so the caller can bind the actual negotiated certificate into a transcript. Used for the

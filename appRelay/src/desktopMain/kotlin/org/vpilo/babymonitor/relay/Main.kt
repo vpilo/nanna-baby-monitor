@@ -67,7 +67,7 @@ private fun babyMonitorMain() {
         relay.start(device, deriveRelayAccessKey(configuration.passphrase))
     }
 
-    Logger.i(TAG) { "Baby Monitor relay version ${BuildInfo.VERSION} running. Press Ctrl+C to end." }
+    Logger.i(TAG) { "Nanna Baby Monitor relay version ${BuildInfo.VERSION} running. Press Ctrl+C to end." }
 
     SignalHandler.awaitSignal {
         Logger.i(TAG) { "Shutting down on signal $it" }
@@ -85,14 +85,14 @@ private fun loadConfigurationOrExit(): RelayConfiguration =
         }
 
         is RelayConfigurationOutcome.TemplateCreated -> {
-            println("The Baby Monitor relay is not configured yet.")
+            println("The Nanna Baby Monitor relay is not configured yet.")
             println("A blank configuration was created at ${outcome.path.path}.")
             println("Fill in the hostname and passphrase, then start the relay again.")
             exitProcess(1)
         }
 
         is RelayConfigurationOutcome.Incomplete -> {
-            println("The Baby Monitor relay configuration at ${outcome.path.path} is incomplete.")
+            println("The Nanna Baby Monitor relay configuration at ${outcome.path.path} is incomplete.")
             println("These entries still need a value: ${outcome.blankKeys.joinToString(", ")}.")
             exitProcess(1)
         }

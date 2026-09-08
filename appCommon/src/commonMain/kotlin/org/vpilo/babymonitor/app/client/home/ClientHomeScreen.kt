@@ -191,7 +191,7 @@ private fun ClientHomeScreenPreview() =
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             batteryLevel = 5,
             signalQuality = 3,
-            connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
+            connectionState = ConnectionState.Connected(makePreviewServer("Nanna Baby Monitor-1234")),
             onDisconnected = { },
             isRemoteServer = false,
         )
@@ -207,7 +207,7 @@ private fun ClientHomeScreenVideoOnlyPreview() =
             captureMode = CaptureMode.VIDEO_ONLY,
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = 93,
-            connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
+            connectionState = ConnectionState.Connected(makePreviewServer("Nanna Baby Monitor-1234")),
             onDisconnected = { },
             isRemoteServer = true,
         )
@@ -223,7 +223,7 @@ private fun ClientHomeScreenNoSignalOrBatteryPreview() =
             captureMode = CaptureMode.AUDIO_AND_VIDEO,
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
-            connectionState = ConnectionState.Connected(makePreviewServer("Baby Monitor-1234")),
+            connectionState = ConnectionState.Connected(makePreviewServer("Nanna Baby Monitor-1234")),
             onDisconnected = { },
             isRemoteServer = false,
         )

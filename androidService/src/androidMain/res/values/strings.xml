@@ -2,7 +2,7 @@
 <resources>
     <string name="service_notification_channel_name">Background service notification</string>
     <string name="service_notification_action_close">Close app</string>
-    <string name="service_title">Baby Monitor</string>
+    <string name="service_title">Nanna Baby Monitor</string>
     <string name="service_description_server">Recording from camera and microphone. Tap to show.</string>
     <string name="service_description_client">Streaming from a camera. Tap to show.</string>
 </resources>

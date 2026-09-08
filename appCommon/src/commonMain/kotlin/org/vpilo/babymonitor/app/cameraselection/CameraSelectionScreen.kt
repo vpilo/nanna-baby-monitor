@@ -358,7 +358,7 @@ private fun CameraSelectionScreenPreview() =
             connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet),
             connectableServers =
                 listOf(
-                    makePreviewServer("Baby Monitor 1234, paired and visible", isLocal = false),
+                    makePreviewServer("Nanna Baby Monitor 1234, paired and visible", isLocal = false),
                     makePreviewServer("Bedroom camera, paired and visible"),
                 ),
             pairedServers =
@@ -379,7 +379,7 @@ private fun CameraSelectionScreenPreview() =
 @Composable
 private fun CameraSelectionScreenConnectingPreview() =
     AppPreviewTheme {
-        val server = makePreviewServer("Baby Monitor 1234, paired and visible")
+        val server = makePreviewServer("Nanna Baby Monitor 1234, paired and visible")
         CameraSelectionScreenContent(
             connectionState = ConnectionState.Connecting(server),
             connectableServers =

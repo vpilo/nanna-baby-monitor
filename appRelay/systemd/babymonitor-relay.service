@@ -1,5 +1,5 @@
 [Unit]
-Description=Baby Monitor Relay
+Description=Nanna Baby Monitor Relay
 After=network.target
 
 [Service]

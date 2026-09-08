@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Baby Monitor is a **Kotlin Multiplatform** app (Android + Desktop/JVM) for streaming audio and video between devices. At runtime the app
+Nanna Baby Monitor is a **Kotlin Multiplatform** app (Android + Desktop/JVM) for streaming audio and video between devices. At runtime the app
 assumes one of two roles:
 
 - **Server (Camera):** Captures audio/video, and shows the video on the screen as a viewfinder. If and only if any clients connect, the app

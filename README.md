@@ -1,14 +1,15 @@
-# Baby Monitor
+# Nanna Baby Monitor
 
 This is a baby monitor app, with secure video and audio streaming, for Android and PC (using Java).
+No accounts, no cloud servers, no telemetry, forever free and open source.
 
-Not just for babies! Watch your pets, your plants, your home, or anything else you want to securely keep an eye on.
+Nanna is "baby sleep" in Italian. But this is not just for babies! Watch your pets, your plants, your home, or anything else you want to securely and privately keep an eye on.
 
 This app requires pairing between devices. Run the app in recording mode on one device (any Android 8+ device or a PC with a webcam). Using
 a pairing code or a QR, pair it with another devices set to watching mode. Connect anytime to watch and/or listen.
 Obviously, the recording device needs a camera and microphone, and the watching device needs a screen and optional speakers!
 
-The app provides an optional relay app to allow paired devices to see each other from anywhere. Both recording and watching devices can be
+The app provides an optional relay application to allow paired devices to see each other from anywhere. Both recording and watching devices can be
 then connected to from any network, they only need to be able to connect to the relay hostname/port.
 The relay can be installed on a home server (with Dynamic DNS, e.g. duckdns.org, and with port `47814` forwarded to it), but also on a cloud
 service if you have one.
@@ -22,21 +23,20 @@ service if you have one.
 - Silence detection to avoid sending audio when it's all quiet.
 - Customizable recording quality.
 - Draggable video feed to see the whole video feed on any screen.
-- In theory, it works on any Android 8+ device and any computer with a webcam.
+- In theory, it works on any Android 8+ device and any computer (with a webcam, if you want to record from it).
 - Supports multiple recording devices and multiple watching devices.
-- Relay server to allow devices to connect from anywhere.
-- Private, and without any cloud services or telemetry: this stays on your home network, and you can run your own relay server to stream
-  securely from anywhere to anywhere.
+- Private, and without any cloud services or telemetry: it stays on your home's network.
+- You can also run your own relay server, to allow devices to stream securely from anywhere to anywhere.
 
 # Screenshots
 
 | Recording on Android                                        | Watching on a PC                                          |
 |-------------------------------------------------------------|-----------------------------------------------------------|
-| ![Recording device](docs/screenshots/android-recording.jpg)  | ![Watching device](docs/screenshots/desktop-watching.jpg)  |
+| ![Recording device](docs/screenshots/android-recording.jpg) | ![Watching device](docs/screenshots/desktop-watching.jpg) |
 
-| Choosing a camera to watch                                  | Pairing a new camera                            |
-|-------------------------------------------------------------|-------------------------------------------------|
-| ![Camera selection](docs/screenshots/desktop-selection.jpg)  | ![Pairing](docs/screenshots/desktop-pairing.jpg) |
+| Choosing a camera to watch                                  | Pairing a new camera                             |
+|-------------------------------------------------------------|--------------------------------------------------|
+| ![Camera selection](docs/screenshots/desktop-selection.jpg) | ![Pairing](docs/screenshots/desktop-pairing.jpg) |
 
 Pairing two Android devices: the recording device shows the code, the watching device scans or types it.
 
@@ -47,7 +47,7 @@ Pairing two Android devices: the recording device shows the code, the watching d
 You can simply make debug builds from source.
 
 ```sh
-git clone https://codeberg.org/vpilo/babymonitor.git
+git clone https://gitlab.com/vpilo/babymonitor.git
 cd babymonitor
 ```
 
@@ -88,14 +88,14 @@ Build it on the machine that will run it. Only the native libraries of one platf
 To try a build without packaging it, run it directly with `./gradlew :appDesktop:run`.
 
 Native installers (`./gradlew :appDesktop:packageAppImage`, `:appDesktop:packageDeb`) need a full JDK 21 including `jpackage` and the
-`jmods` directory, which the JetBrains Runtime that Gradle downloads provides. `packageDeb` additionally needs `dpkg` and `fakeroot`
+`jmods` directory, already provided by the JetBrains Runtime that Gradle downloads. `packageDeb` additionally needs `dpkg` and `fakeroot`
 installed on the build machine.
 
 ## Release builds
 
 You can also make your own release builds, but to build the Android one, you'll have to create your own keystore (Android Studio: Build
-menu > Generate Signed App Bundle or APK).
-Use `:appDesktop:runRelease` and `:appDesktop:packageReleaseUberJarForCurrentOS`) to build the  optimized version, around 70 MB.
+menu > Generate Signed App Bundle or APK): use `./gradlew appAndroid:assembleRelease`.
+Use `:appDesktop:runRelease` and `:appDesktop:packageReleaseUberJarForCurrentOS`) to build the optimized version, around 70 MB.
 
 ## Relay server
 
@@ -107,11 +107,11 @@ instructions on how to build and install it.
 ## First run
 
 Each device asks what it will do: record with its camera, or watch what another device is recording. The choice can be changed later from
-the menu. Give the device a recognizable name in the settings - that name is what the other devices will show.
+the menu. Give a camera a recognizable name in the settings, so you can find it when there are more cameras running.
 
 ## Pairing
 
-Devices must be paired once, and pairing can only be performed from the local network for security.
+Devices must be paired once, and pairing can only be performed from the local network, for security.
 
 1. On the recording device, open the menu and choose to pair a device. It shows a QR code and a six-character code, both valid for a short
    time.
@@ -125,11 +125,11 @@ start streaming. The recording device shows its own viewfinder at all times, but
 watching. It is best to turn the screen off on the recording device to save battery; the app will keep running in the background.
 
 Audio and video can each be muted from either side, and the video feed can be dragged around to see all of it on a screen with a different
-shape.
+shape. Note that if you mute or blind the recording device, watchers will not be able to unmute or unblind it.
 
 ## Security and privacy
 
-Pairings can be revoked at any time from the server, and the client can likewise unpair cameras.
+Pairings to clients can be revoked at any time from the camera app, and the client can likewise unpair cameras.
 
 No accounts, no cloud services, no telemetry, no analytics: nothing leaves the devices except the streams, and only to devices that were
 paired by hand.
@@ -146,13 +146,13 @@ No location permission is requested, and no permission is used for anything othe
 
 # Contributing
 
-Issues and pull requests are welcome at [codeberg.org/vpilo/babymonitor](https://codeberg.org/vpilo/babymonitor).
+Issues and pull requests are welcome at [gitlab.com/vpilo/babymonitor](https://gitlab.com/vpilo/babymonitor).
 
 [AGENTS.md](AGENTS.md) describes the module layout and the build commands.
 
 # License
 
-Baby Monitor is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+Nanna Baby Monitor is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
 # AI disclaimer
 

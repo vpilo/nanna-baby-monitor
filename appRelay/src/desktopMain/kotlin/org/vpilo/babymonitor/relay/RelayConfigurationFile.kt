@@ -44,12 +44,12 @@ private fun writeTemplate(file: File) {
     check(directory.exists() || directory.mkdirs()) { "Failed to create ${directory.path}" }
     file.writeText(
         """
-        # Baby Monitor relay configuration.
+        # Nanna Baby Monitor relay configuration.
 
         # Public hostname or IP clients reach this relay on.
         $HOST_KEY=
 
-        # Shared secret. Choose a long, hard-to-guess value and enter it in every Baby Monitor app.
+        # Shared secret. Choose a long, hard-to-guess value and enter it in every Nanna Baby Monitor app.
         $PASSPHRASE_KEY=
         """.trimIndent() + "\n",
     )

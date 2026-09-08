@@ -1,4 +1,4 @@
-# Baby Monitor Relay installation
+# Nanna Baby Monitor Relay installation
 
 A systemd user service runs the relay in background on Linux easily, restarting it on reboot/crash.
 
