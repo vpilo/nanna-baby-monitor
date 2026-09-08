@@ -5,7 +5,9 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_icon
+import babymonitor.appcommon.generated.resources.app_name
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 
 private fun babyMonitorMain() {
@@ -15,7 +17,7 @@ private fun babyMonitorMain() {
     application {
         Window(
             onCloseRequest = ::exitApplication,
-            title = "Baby Monitor",
+            title = stringResource(Res.string.app_name),
             icon = painterResource(Res.drawable.app_icon),
             state = rememberPersistedWindowState(settingsRepository),
         ) {

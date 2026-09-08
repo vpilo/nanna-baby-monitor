@@ -19,7 +19,7 @@ abstract class GitVersionValueSource : ValueSource<VersionInfo, ValueSourceParam
         val commitCount = git("rev-list", "--count", "HEAD")?.toIntOrNull()
         if (commitCount == null) {
             logger.warn(
-                "Baby Monitor: unable to read git history (not a git repository or shallow clone " +
+                "Unable to read git history (not a git repository or shallow clone " +
                     "with no commits); falling back to version 0.0.0.",
             )
             return VersionInfo("0.0.0", "0.0.0", 0)

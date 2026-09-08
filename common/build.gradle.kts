@@ -62,8 +62,6 @@ kotlin {
 
             dependencies {
                 api(libs.kotlinx.coroutines)
-
-                implementation(libs.slf4j.simple)
             }
         }
 
@@ -72,6 +70,7 @@ kotlin {
             api(libs.kotlinx.coroutines.jvm)
 
             implementation(libs.slf4j.api)
+            runtimeOnly(libs.slf4j.simple)
         }
     }
 }
