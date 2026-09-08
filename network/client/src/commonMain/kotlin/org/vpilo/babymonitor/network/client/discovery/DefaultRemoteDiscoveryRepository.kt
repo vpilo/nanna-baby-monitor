@@ -79,6 +79,8 @@ internal class DefaultRemoteDiscoveryRepository(
 
     override suspend fun stop() {
         Logger.d(TAG) { "Relay discovery stopped" }
+        discoveryJob?.cancel()
+        discoveryJob = null
         configurationJob?.cancel()
         configurationJob = null
         session?.close()

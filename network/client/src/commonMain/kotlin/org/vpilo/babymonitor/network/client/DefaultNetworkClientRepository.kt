@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.network.client
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -51,6 +52,8 @@ internal class DefaultNetworkClientRepository(
             closeAllConnections()
         }
 
+    private var relayReconfigurationJob: Job? = null
+
     override suspend fun connect(server: Device.Server) {
         val currentState = connectionState.value
         if (currentState is ConnectionState.Connecting || currentState is ConnectionState.Connected) {
@@ -86,6 +89,18 @@ internal class DefaultNetworkClientRepository(
             ).apply { connect() }
 
         connectionState.value = ConnectionState.Connecting(server)
+
+        if (server is Device.RemoteServer) {
+            relayReconfigurationJob =
+                scope.launch {
+                    val initialConfiguration = relayConfigurationRepository.relayConfiguration.first()
+                    relayConfigurationRepository.relayConfiguration.collect { configuration ->
+                        if (initialConfiguration != configuration) {
+                            disconnect()
+                        }
+                    }
+                }
+        }
     }
 
     private fun closeAllConnections() {
@@ -98,6 +113,8 @@ internal class DefaultNetworkClientRepository(
         closeAllConnections()
         connectionState.value = ConnectionState.Disconnected(closeReason)
         foregroundLink.stop()
+        relayReconfigurationJob?.cancel()
+        relayReconfigurationJob = null
         Logger.i(TAG) { "Client state: ${connectionState.value}" }
     }
 
