@@ -41,20 +41,21 @@ compose.desktop {
 
             packageName = "org.vpilo.babymonitor"
             packageVersion = appVersion.versionCore
-            description = "Camera application to stream audio video to and from Android and Desktop devices"
+            description = "Nanna Baby Monitor. Camera application to stream audio and video to and from Android and Desktop devices"
             copyright = "© 2026 Valerio Pilo. All rights reserved."
             licenseFile.set(rootProject.file("LICENSE"))
 
             linux {
+                iconFile.set(project.file("icons/icon.png"))
                 menuGroup = "video"
                 appCategory = "VIDEO"
                 debPackageVersion = appVersion.versionCore
-                debMaintainer = "maintainer@example.com"
                 rpmLicenseType = "Affero GPL v3"
                 rpmPackageVersion = appVersion.versionCore
             }
 
             windows {
+                iconFile.set(project.file("icons/icon.ico"))
                 menuGroup = "Video"
                 perUserInstall = true
                 exePackageVersion = appVersion.versionCore

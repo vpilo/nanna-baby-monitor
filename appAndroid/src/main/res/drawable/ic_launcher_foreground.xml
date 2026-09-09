@@ -1,43 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="512dp"
-    android:height="512dp"
+    android:width="108dp"
+    android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-    <path android:pathData="M128,0 L384,0 C480,0 512,32 512,128 L512,384 C512,480 480,512 384,512 L128,512 C32,512 0,480 0,384 L0,128 C0,32 32,0 128,0 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="linear"
-                android:startX="0"
-                android:startY="0"
-                android:endX="0"
-                android:endY="512">
-                <item android:offset="0" android:color="#10233F" />
-                <item android:offset="1" android:color="#060E1C" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:fillColor="#FFF8EC"
-        android:pathData="M70,142 Q70,178 106,178 Q70,178 70,214 Q70,178 34,178 Q70,178 70,142 Z" />
-    <path
-        android:fillColor="#FFF8EC"
-        android:pathData="M459,358 Q459,384 485,384 Q459,384 459,410 Q459,384 433,384 Q459,384 459,358 Z" />
-    <path
-        android:fillColor="#D9FFF8EC"
-        android:pathData="M74,287 a13,13 0 1 0 0,26 a13,13 0 1 0 0,-26 Z" />
-    <path
-        android:fillColor="#BFFFF8EC"
-        android:pathData="M428,235 a11,11 0 1 0 0,22 a11,11 0 1 0 0,-22 Z" />
-    <path
-        android:fillColor="#A6FFF8EC"
-        android:pathData="M44,236 a8,8 0 1 0 0,16 a8,8 0 1 0 0,-16 Z" />
     <group
-        android:scaleX="0.78"
-        android:scaleY="0.78"
-        android:translateX="108.41"
-        android:translateY="56.32">
+        android:scaleX="0.57"
+        android:scaleY="0.57"
+        android:translateX="148.15"
+        android:translateY="110.08">
         <path
             android:fillColor="#95673F"
             android:pathData="M356.174,16.696V256H55.652V16.696C55.652,7.457,63.108,0,72.348,0c22.595,0,43.519,8.793,58.991,24.71c9.571,9.35,18.809,20.369,22.595,36.508H257.89c3.785-16.139,13.025-27.27,22.817-36.842C295.959,8.793,316.883,0,339.478,0C348.718,0,356.174,7.457,356.174,16.696z" />

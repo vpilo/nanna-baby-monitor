@@ -3,14 +3,15 @@
 This is a baby monitor app, with secure video and audio streaming, for Android and PC (using Java).
 No accounts, no cloud servers, no telemetry, forever free and open source.
 
-Nanna is "baby sleep" in Italian. But this is not just for babies! Watch your pets, your plants, your home, or anything else you want to securely and privately keep an eye on.
+Nanna means "baby sleep" in Italian. But this is not just for babies!
+Watch your pets, your plants, your home, or anything else you want to securely and privately keep an eye on.
 
 This app requires pairing between devices. Run the app in recording mode on one device (any Android 8+ device or a PC with a webcam). Using
 a pairing code or a QR, pair it with another devices set to watching mode. Connect anytime to watch and/or listen.
 Obviously, the recording device needs a camera and microphone, and the watching device needs a screen and optional speakers!
 
-The app provides an optional relay application to allow paired devices to see each other from anywhere. Both recording and watching devices can be
-then connected to from any network, they only need to be able to connect to the relay hostname/port.
+The app provides an optional relay application to allow paired devices to see each other from anywhere. Both recording and watching devices
+can be then connected to from any network, they only need to be able to connect to the relay hostname/port.
 The relay can be installed on a home server (with Dynamic DNS, e.g. duckdns.org, and with port `47814` forwarded to it), but also on a cloud
 service if you have one.
 
@@ -153,6 +154,8 @@ Issues and pull requests are welcome at [gitlab.com/vpilo/babymonitor](https://g
 # License
 
 Nanna Baby Monitor is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+
+The owl icon is CC0 artwork from [SVG Repo](https://www.svgrepo.com/svg/289213/owl).
 
 # AI disclaimer
 
