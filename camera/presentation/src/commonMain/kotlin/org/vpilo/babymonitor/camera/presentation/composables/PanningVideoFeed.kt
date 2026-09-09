@@ -29,6 +29,7 @@ import babymonitor.camera.presentation.generated.resources.Res
 import babymonitor.camera.presentation.generated.resources.server_in_audio_only_mode
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.common.BuildInfo
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
@@ -123,10 +124,12 @@ fun PanningVideoFeed(
                 rotation = rotation,
             )
         }
-        FpsCounter(
-            modifier = Modifier.align(Alignment.BottomEnd),
-            videoStream = videoStream,
-        )
+        if (BuildInfo.IS_DEBUG) {
+            FpsCounter(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                videoStream = videoStream,
+            )
+        }
     }
 }
 

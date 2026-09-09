@@ -86,6 +86,10 @@ KMP project with `androidLibrary` and `jvm("desktop")` targets.
 ./gradlew :appAndroid:assembleDebug
 ```
 
+The Gradle property `babymonitor.release` marks a build as a release. This is used to obtain reproducible builds for F-Droid, in order to
+share the same signing key for both releases. IT drives both `BuildInfo.IS_DEBUG` and the version name - only a release build made on a tag
+is named after the tag alone, everything else keeps its branch and `-SNAPSHOT` markers.
+
 When building to verify changes, since this is a small app, it's quickest to just build the entire project instead of building modules
 individually over multiple iterations:
 

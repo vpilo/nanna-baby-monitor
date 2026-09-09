@@ -1,6 +1,7 @@
 package org.vpilo.babymonitor.versioning
 
 import org.gradle.api.logging.Logging
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.ValueSource
 import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.process.ExecOperations
@@ -11,7 +12,7 @@ import javax.inject.Inject
  * Reads git at configuration time. Implemented as a [ValueSource] so it re-evaluates each build
  * (reflecting the current git state) while remaining compatible with the configuration cache.
  */
-abstract class GitVersionValueSource : ValueSource<VersionInfo, ValueSourceParameters.None> {
+abstract class GitVersionValueSource : ValueSource<VersionInfo, GitVersionValueSource.Parameters> {
     @get:Inject
     abstract val exec: ExecOperations
 
@@ -30,7 +31,18 @@ abstract class GitVersionValueSource : ValueSource<VersionInfo, ValueSourceParam
         val shortSha = git("rev-parse", "--short", "HEAD") ?: "unknown"
         val isDirty = !git("status", "--porcelain").isNullOrEmpty()
 
-        return GitVersion.compute(describe, commitCount, branch, shortSha, isDirty)
+        // F-Droid's reproducible build system requires stable tags: when using the release Gradle property on CI, only use the
+        //  git tag.
+        val isReleaseBuild = parameters.releaseBuild.getOrElse(false)
+
+        return GitVersion.compute(
+            describe = describe,
+            commitCount = commitCount,
+            branch = branch,
+            shortSha = shortSha,
+            isDirty = isDirty,
+            isReleaseBuild = isReleaseBuild,
+        )
     }
 
     private fun git(vararg args: String): String? {
@@ -43,6 +55,11 @@ abstract class GitVersionValueSource : ValueSource<VersionInfo, ValueSourceParam
                 isIgnoreExitValue = true
             }
         return if (result.exitValue == 0) stdout.toString().trim() else null
+    }
+
+    interface Parameters : ValueSourceParameters {
+        /** See [GitVersionExtension.isReleaseBuild]. */
+        val releaseBuild: Property<Boolean>
     }
 
     private companion object {

@@ -10,6 +10,19 @@ abstract class GitVersionExtension
     constructor(
         providers: ProviderFactory,
     ) {
+        /**
+         * Whether this build is meant to produce a release, via `-Pbabymonitor.release=true`.
+         */
+        val isReleaseBuild: Provider<Boolean> =
+            providers.gradleProperty(RELEASE_PROPERTY).map(String::toBoolean).orElse(false)
+
         /** The git-derived [VersionInfo] for this build. */
-        val info: Provider<VersionInfo> = providers.of(GitVersionValueSource::class.java) {}
+        val info: Provider<VersionInfo> =
+            providers.of(GitVersionValueSource::class.java) {
+                parameters.releaseBuild.set(isReleaseBuild)
+            }
+
+        private companion object {
+            private const val RELEASE_PROPERTY = "babymonitor.release"
+        }
     }

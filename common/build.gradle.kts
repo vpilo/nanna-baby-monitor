@@ -14,11 +14,18 @@ val generateBuildInfo =
         val versionInfo = gitVersion.info
         val outputDir = layout.buildDirectory.dir("generated/buildinfo/commonMain/kotlin")
 
+        // Debug vs release is an app-packaging concept, and this module compiles once for every target: there is no
+        // variant here to read it from. So it comes from the same explicit flag that names the version, keeping the
+        // two in step - anything inferred from the invocation would build the same commit differently.
+        val isReleaseBuild = gitVersion.isReleaseBuild
+
         inputs.property("version", versionInfo.map { "${it.versionName}|${it.versionCore}|${it.versionCode}" })
+        inputs.property("isReleaseBuild", isReleaseBuild)
         outputs.dir(outputDir)
 
         doLast {
             val info = versionInfo.get()
+            val isDebug = !isReleaseBuild.get() || info.versionName.contains("SNAPSHOT")
             val packageDir = outputDir.get().asFile.resolve("org/vpilo/babymonitor/common")
             packageDir.mkdirs()
             packageDir.resolve("BuildInfo.kt").writeText(
@@ -30,6 +37,7 @@ val generateBuildInfo =
             |    const val VERSION: String = "${info.versionName}"
             |    const val VERSION_CORE: String = "${info.versionCore}"
             |    const val VERSION_CODE: Int = ${info.versionCode}
+            |    const val IS_DEBUG: Boolean = $isDebug
             |}
             |
                 """.trimMargin(),

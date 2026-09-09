@@ -9,11 +9,14 @@ object GitVersion {
     private val NON_SLUG = Regex("[^a-z0-9]+")
 
     /**
+     * Computes version name and code from git output.
+     *
      * @param describe output of `git describe --tags --long`, or null when there is no reachable tag.
      * @param commitCount total commits on HEAD (`git rev-list --count HEAD`); also the Android versionCode.
      * @param branch current branch, or "HEAD" when detached.
      * @param shortSha short commit hash, used as the branch token when detached.
      * @param isDirty whether the working copy has uncommitted changes.
+     * @param isReleaseBuild whether this version is meant explicitly for a release build.
      */
     fun compute(
         describe: String?,
@@ -21,9 +24,14 @@ object GitVersion {
         branch: String,
         shortSha: String,
         isDirty: Boolean,
+        isReleaseBuild: Boolean,
     ): VersionInfo {
-        val (majorMinor, patch) = parseCore(describe, commitCount)
+        val described = describe?.let { DESCRIBE.find(it) }
+        val (majorMinor, patch) = parseCore(described, commitCount)
         val core = "$majorMinor.$patch"
+
+        val isTaggedRelease = isReleaseBuild && described != null && patch == 0
+        if (isTaggedRelease) return VersionInfo(versionName = core, versionCore = core, versionCode = commitCount)
 
         val branchToken =
             when (branch) {
@@ -46,10 +54,10 @@ object GitVersion {
 
     /** Returns MAJOR.MINOR and the patch number. Patch = commits since tag, or total commits when untagged. */
     private fun parseCore(
-        describe: String?,
+        described: MatchResult?,
         commitCount: Int,
     ): Pair<String, Int> {
-        val match = describe?.let { DESCRIBE.find(it) } ?: return "0.0" to commitCount
+        val match = described ?: return "0.0" to commitCount
         val tag = match.groupValues[1].removePrefix("v")
         val commitsSinceTag = match.groupValues[2].toInt()
         val parts = tag.split('.')

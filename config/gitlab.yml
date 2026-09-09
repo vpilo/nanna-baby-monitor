@@ -127,7 +127,7 @@ release:android:
     - tar -xzf glab.tar.gz -C /usr/local bin/glab && rm glab.tar.gz
     - glab auth login --job-token "$CI_JOB_TOKEN" --hostname "$CI_SERVER_FQDN" --api-protocol "$CI_SERVER_PROTOCOL"
     - glab -R "$CI_PROJECT_PATH" securefile download --all --output-dir "$CI_PROJECT_DIR/.secure_files"
-    - ./gradlew :appAndroid:assembleRelease
+    - ./gradlew :appAndroid:assembleRelease -Pbabymonitor.release=true
     - mv appAndroid/build/outputs/apk/*/*.apk .
     - mv appAndroid/build/outputs/mapping/release/mapping.txt ./mapping-$VERSION.txt
   artifacts:
@@ -145,7 +145,7 @@ release:linux-x86_64:
     - job: build:linux-x86_64
       artifacts: false
   script:
-    - ./gradlew -Pjavacpp.platform=linux-x86_64 :appDesktop:packageReleaseUberJarForCurrentOS
+    - ./gradlew -Pjavacpp.platform=linux-x86_64 :appDesktop:packageReleaseUberJarForCurrentOS -Pbabymonitor.release=true
     - mv appDesktop/build/compose/jars/*.jar .
   artifacts:
     paths:
@@ -161,7 +161,7 @@ release:linux-arm64:
     - job: build:linux-arm64
       artifacts: false
   script:
-    - ./gradlew -Pjavacpp.platform=linux-arm64 :appDesktop:packageReleaseUberJarForCurrentOS
+    - ./gradlew -Pjavacpp.platform=linux-arm64 :appDesktop:packageReleaseUberJarForCurrentOS -Pbabymonitor.release=true
     - mv appDesktop/build/compose/jars/*.jar .
   artifacts:
     paths:
