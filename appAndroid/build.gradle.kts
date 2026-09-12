@@ -8,10 +8,16 @@ plugins {
     id("babymonitor.git-version")
 }
 
+val jvmVersion =
+    libs.versions.jvm.toolchain
+        .get()
+
 kotlin {
+    jvmToolchain(jvmVersion.toInt())
+
     target {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
+            jvmTarget.set(JvmTarget.fromTarget(jvmVersion))
         }
     }
 
@@ -98,7 +104,24 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.toVersion(jvmVersion)
+        targetCompatibility = JavaVersion.toVersion(jvmVersion)
+    }
+}
+
+tasks.register("generateVersionFile") {
+    description = "Writes the version of this build to a file to identify a release."
+
+    val versionInfo = gitVersion.info
+    val outputFile = layout.buildDirectory.file("outputs/version.txt")
+
+    inputs.property("version", versionInfo.map { "${it.versionName}|${it.versionCode}" })
+    outputs.file(outputFile)
+
+    doLast {
+        val info = versionInfo.get()
+        val file = outputFile.get().asFile
+        file.parentFile.mkdirs()
+        file.writeText("versionCode=${info.versionCode}\nversionName=${info.versionName}\n")
     }
 }

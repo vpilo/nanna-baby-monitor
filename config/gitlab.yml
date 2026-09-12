@@ -127,13 +127,15 @@ release:android:
     - tar -xzf glab.tar.gz -C /usr/local bin/glab && rm glab.tar.gz
     - glab auth login --job-token "$CI_JOB_TOKEN" --hostname "$CI_SERVER_FQDN" --api-protocol "$CI_SERVER_PROTOCOL"
     - glab -R "$CI_PROJECT_PATH" securefile download --all --output-dir "$CI_PROJECT_DIR/.secure_files"
-    - ./gradlew :appAndroid:assembleRelease -Pbabymonitor.release=true
+    - ./gradlew :appAndroid:assembleRelease :appAndroid:generateVersionFile -Pbabymonitor.release=true
     - mv appAndroid/build/outputs/apk/*/*.apk .
     - mv appAndroid/build/outputs/mapping/release/mapping.txt ./mapping-$VERSION.txt
+    - mv appAndroid/build/outputs/version.txt .
   artifacts:
     paths:
       - ./*.apk
       - ./mapping-*.txt
+      - ./version.txt
 
 release:linux-x86_64:
   extends: .release-build
@@ -197,3 +199,8 @@ release:gitlab:
         - name: "Desktop jar (linux-arm64)"
           url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/download?job=release:linux-arm64"
           link_type: package
+        # filepath publishes it under /-/releases/permalink/latest/downloads/version.txt
+        - name: "Version information"
+          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/version.txt?job=release:android"
+          link_type: other
+          filepath: /version.txt

@@ -1,0 +1,28 @@
+This is a baby monitor app, with secure video and audio streaming, for Android and PC (using Java).
+No accounts, no cloud servers, no telemetry, forever free and open source.
+
+Nanna means "baby sleep" in Italian. But this is not just for babies!
+Watch your pets, your plants, your home, or anything else you want to securely and privately keep an eye on.
+
+This app requires pairing between devices. Run the app in recording mode on any Android 8+ device. Using pairing code or a QR, pair it with
+another devices set to watching mode. Connect anytime to watch and/or listen.
+
+Features:
+
+* Secure video and audio streaming.
+* Network discovery of recording apps on the same network.
+* Secure pairing between devices, using a pairing code or QR code.
+* Low light boost to see better in low light conditions.
+* Silence detection to avoid sending audio when it's all quiet.
+* Customizable recording quality.
+* Draggable video feed to see the whole video feed on any screen.
+* Works on Android 8.0 and later.
+* Supports multiple recording devices and multiple watching devices.
+* Private, and without any cloud services or telemetry: it stays on your home's network.
+
+Nanna is also available as a desktop application for Linux, Windows and macOS, which can act as either a recording or a watching device;
+it will work with the Android app in any combination. It is published together with this project's source code on GitLab.
+
+An optional relay app lets paired devices reach each other from outside the home network. The relay only ever sees encrypted data, and you
+host it yourself on a machine you control. Without it, the app streams only within a single local network. It is also published together with
+this project's source code.
