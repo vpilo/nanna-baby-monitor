@@ -55,8 +55,8 @@ android {
         val keystorePath = providers.environmentVariable("RELEASE_KEYSTORE_FILE").orNull
         val keystoreFile = keystorePath?.let { rootProject.file(it) }
         val keystorePassword = providers.environmentVariable("RELEASE_KEYSTORE_PASSWORD").orNull
-        create(BuilderConstants.RELEASE) {
-            if (keystoreFile?.exists() == true && !keystorePassword.isNullOrEmpty()) {
+        if (keystoreFile?.exists() == true && !keystorePassword.isNullOrEmpty()) {
+            create(BuilderConstants.RELEASE) {
                 logger.lifecycle("Using release keystore.")
                 enableV1Signing = true
                 enableV2Signing = true
@@ -78,7 +78,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "release/proguard-rules-android.pro",
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 
