@@ -1,36 +1,21 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.compose)
-    alias(libs.plugins.compose.compiler)
+    id("babymonitor.android-target")
+    id("babymonitor.compose")
+    id("babymonitor.desktop-target")
     id("babymonitor.detekt")
 }
 
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.data"
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
 
         androidResources {
             enable = true
         }
-
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
     }
-
-    jvm("desktop")
 
     sourceSets {
         commonMain.dependencies {
@@ -38,8 +23,6 @@ kotlin {
             implementation(project(":model"))
             implementation(project(":settings:model"))
 
-            implementation(libs.compose.runtime)
-            implementation(libs.compose.resources)
             implementation(libs.koin.core)
         }
         val desktopMain = getByName("desktopMain")

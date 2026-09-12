@@ -1,10 +1,9 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.compose)
-    alias(libs.plugins.compose.compiler)
+    id("babymonitor.android-target")
+    id("babymonitor.compose")
+    id("babymonitor.desktop-target")
     id("babymonitor.detekt")
     id("babymonitor.javacpp-platform")
 }
@@ -18,21 +17,7 @@ val ffmpegNatives = dependencies.variantOf(libs.ffmpeg) { classifier(nativePlatf
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.codec"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
     }
-
-    jvm("desktop")
 
     sourceSets {
         commonMain.dependencies {

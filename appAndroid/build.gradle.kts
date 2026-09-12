@@ -3,10 +3,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.compose)
-    alias(libs.plugins.compose.compiler)
-    id("babymonitor.git-version")
+    id("babymonitor.compose")
     id("babymonitor.detekt")
+    id("babymonitor.git-version")
 }
 
 kotlin {

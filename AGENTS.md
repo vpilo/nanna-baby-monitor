@@ -17,7 +17,9 @@ Key features:
 ## Architecture
 
 - **`build-logic`** - Included build holding the `babymonitor.*` convention plugins: the git-derived versioning, the JavaCPP target
-  platform, and the detekt setup. Its classes only reach a module that applies one of its plugins.
+  platform, the detekt setup, the shared KMP target setup (`android-target` sets the JVM toolchain, `minSdk`, `compileSdk` and the
+  Android `jvmTarget`/`compileOptions`; `desktop-target` adds the `jvm("desktop")` target), and `compose`, which applies the Compose
+  Gradle and compiler plugins. Its classes only reach a module that applies one of its plugins.
 - **`common`** - Platform-agnostic logger (`Logger.d/i/w/e`), common dependency propagation.
 - **`model`** - Domain types, repository interfaces, flow typealiases (`AudioFrameFlow`, `StreamingVideoFlow`), and `SharedResourceHolder`
   base class.

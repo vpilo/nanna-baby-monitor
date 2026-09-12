@@ -1,29 +1,15 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    id("babymonitor.android-target")
+    id("babymonitor.desktop-target")
     id("babymonitor.detekt")
 }
 
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.filters"
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
     }
-
-    jvm("desktop")
 
     sourceSets {
         commonMain.dependencies {

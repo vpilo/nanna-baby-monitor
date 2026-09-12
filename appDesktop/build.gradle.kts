@@ -2,11 +2,10 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.compose)
-    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
-    id("babymonitor.git-version")
+    id("babymonitor.compose")
     id("babymonitor.detekt")
+    id("babymonitor.git-version")
 }
 
 kotlin {

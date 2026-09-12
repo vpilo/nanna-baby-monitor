@@ -32,6 +32,7 @@ tasks.register("tidy") {
 
 dependencies {
     compileOnly(pluginMarker(libs.plugins.androidApplication))
+    compileOnly(pluginMarker(libs.plugins.androidLibrary))
     compileOnly(libs.kotlin.gradle.plugin)
 
     testImplementation(kotlin("test"))

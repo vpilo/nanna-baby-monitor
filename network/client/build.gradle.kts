@@ -1,31 +1,16 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.compose)
-    alias(libs.plugins.compose.compiler)
+    id("babymonitor.android-target")
+    id("babymonitor.compose")
+    id("babymonitor.desktop-target")
     id("babymonitor.detekt")
 }
 
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.network.client"
-        minSdk =
-            libs.versions.android.minSdk
-                .get()
-                .toInt()
-        compileSdk =
-            libs.versions.android.compileSdk
-                .get()
-                .toInt()
-
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_21)
-        }
     }
-
-    jvm("desktop")
 
     sourceSets {
         androidMain.dependencies {
@@ -42,7 +27,6 @@ kotlin {
             implementation(project(":network:model"))
 
             implementation(libs.bundles.ktor.client)
-            implementation(libs.compose.ui)
 
             implementation(libs.koin.core)
         }
