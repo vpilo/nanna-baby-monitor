@@ -130,5 +130,7 @@ tasks.register("generateVersionFile") {
         val file = outputFile.get().asFile
         file.parentFile.mkdirs()
         file.writeText("versionCode=${info.versionCode}\nversionName=${info.versionName}\n")
+        logger.lifecycle("Wrote version file to ${file.absolutePath}")
+        logger.lifecycle("Version: ${info.versionName} (${info.versionCode})")
     }
 }
