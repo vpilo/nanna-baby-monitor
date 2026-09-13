@@ -56,4 +56,4 @@ source repository.
 
 Questions about this policy: **nanna@coldshock.net**
 
-Source code: https://gitlab.com/vpilo/babym
+Source code: https://gitlab.com/vpilo/nanna-baby-monitor

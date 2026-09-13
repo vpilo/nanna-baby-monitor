@@ -41,7 +41,7 @@ versionName=6.0.0
 `filepath: /version.txt`, which makes GitLab serve it from a URL that always resolves to the newest release:
 
 ```
-https://gitlab.com/vpilo/babym/-/releases/permalink/latest/downloads/version.txt
+https://gitlab.com/vpilo/nanna-baby-monitor/-/releases/permalink/latest/downloads/version.txt
 ```
 
 The recipe polls that URL:
