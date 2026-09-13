@@ -1,3 +1,7 @@
+# Keep line numbers so crash stack traces can be retraced with the release's mapping.txt.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
 # Fucking Netty can't go through R8 at all..
 -dontwarn io.netty.internal.tcnative.**
 -keep class io.netty.buffer.** { *; }

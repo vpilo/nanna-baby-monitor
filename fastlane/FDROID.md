@@ -44,41 +44,10 @@ versionName=6.0.0
 https://gitlab.com/vpilo/nanna-baby-monitor/-/releases/permalink/latest/downloads/version.txt
 ```
 
-The recipe polls that URL:
-
-```yaml
-UpdateCheckMode: HTTP
-UpdateCheckData: <url>|versionCode=(\d+)|<url>|versionName=(.+)
-AutoUpdateMode: Version
-```
-
-`AutoUpdateMode: Version` needs no tag pattern because tags are bare `X.Y.Z`, identical to the version name, so
-fdroid can work out the commit for the generated `Builds` entry. It copies `subdir`, `gradle` and `gradleprops`
-from the previous entry.
+F-droid polls that URL in the `metadata/org.vpilo.babymonitor.yml` recipe (fdroiddata repo).
 
 Check it from an fdroiddata checkout before submitting:
 
 ```sh
 fdroid checkupdates -v org.vpilo.babymonitor
 ```
-
-## Release certificate fingerprint
-
-`AllowedAPKSigningKeys` pins the certificate F-Droid is allowed to accept. Take it from the keystore, as
-lowercase hex with no separators:
-
-```sh
-keytool -list -v -keystore babymonitor.jks -alias release \
-  | awk -F'SHA256: ' '/SHA256:/ {gsub(/:/, "", $2); print tolower($2); exit}'
-```
-
-## Expect to verify at submission
-
-- The build must succeed with no keystore. Without `RELEASE_KEYSTORE_FILE`/`RELEASE_KEYSTORE_PASSWORD` the
-  release signing config is not created at all and `assembleRelease` emits an unsigned APK.
-- F-Droid needs a full clone with tags: both the version code and the version core come from git history, and a
-  shallow or tagless checkout silently produces `0.0.<count>`.
-- `gradle/wrapper/gradle-wrapper.jar` is the only binary in the repository; fdroidserver checks it against its
-  list of known-good wrapper hashes.
-- F-Droid admins enable `Binaries` only after reproducing a release themselves, so the first tag is published
-  F-Droid-signed and later ones switch to the project's signature.
