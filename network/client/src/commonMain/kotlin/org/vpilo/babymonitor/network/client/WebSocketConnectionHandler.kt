@@ -67,13 +67,33 @@ internal class WebSocketConnectionHandler(
     private suspend fun doConnect(
         host: InetAddress,
         nextHosts: Set<InetAddress>,
+    ): Unit =
+        attemptSafeConnection(target = host, connect = { startWebSocket(host) }) {
+            if (nextHosts.isNotEmpty()) {
+                delay(Constants.WEBSOCKET_CONNECTION_ATTEMPT_DELAY)
+                val nextHost = nextHosts.first()
+                doConnect(nextHost, nextHosts - nextHost)
+            } else {
+                Logger.w(TAG) { "Failed to connect to any of the hosts for $endpointPath" }
+                connectionJob = null
+                onDisconnected(ConnectException("Connection failure"))
+            }
+        }
+
+    /**
+     * Runs [connect]; on failure calls [onDisconnected] callback, or [onUnreachable] if the server cannot be reached.
+     */
+    private suspend fun attemptSafeConnection(
+        target: Any?,
+        connect: suspend () -> Unit,
+        onUnreachable: suspend () -> Unit,
     ) {
         var lastException: Exception? = null
 
-        Logger.i(TAG) { "Connecting to $host for $endpointPath (device: $device)" }
+        Logger.i(TAG) { "Connecting to $target for $endpointPath (device: $device)" }
 
         try {
-            startWebSocket(host)
+            connect()
         } catch (
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
@@ -83,18 +103,18 @@ internal class WebSocketConnectionHandler(
                 is CancellationException,
                 null,
                     -> {
-                        Logger.i(TAG) { "Connection closed to $host for $endpointPath" }
+                        Logger.i(TAG) { "Connection closed to $target for $endpointPath" }
                         onDisconnected(lastException ?: CancellationException("Closed by client"))
                     }
 
                 is CertificateException -> {
-                    Logger.w(TAG) { "Certificate mismatch for server $host for $endpointPath: ${lastException.message}" }
+                    Logger.w(TAG) { "Certificate mismatch for server $target for $endpointPath: ${lastException.message}" }
                     connectionJob = null
                     onDisconnected(lastException)
                 }
 
                 is PairingRevokedException -> {
-                    Logger.w(TAG) { "Pairing revoked by server $host for $endpointPath: ${lastException.message}" }
+                    Logger.w(TAG) { "Pairing revoked by server $target for $endpointPath: ${lastException.message}" }
                     connectionJob = null
                     onDisconnected(lastException)
                 }
@@ -104,21 +124,13 @@ internal class WebSocketConnectionHandler(
                 is WebSocketException,
                 is ProtocolException,
                     -> {
-                        Logger.i(TAG) { "Connection closed by server $host for $endpointPath: ${lastException.prettify()}" }
+                        Logger.i(TAG) { "Connection closed by server $target for $endpointPath: ${lastException.prettify()}" }
                         onDisconnected(lastException)
                     }
 
                 else -> {
-                    Logger.w(TAG) { "Failed to connect to $host for $endpointPath: ${lastException.prettify()}" }
-                    if (nextHosts.isNotEmpty()) {
-                        delay(Constants.WEBSOCKET_CONNECTION_ATTEMPT_DELAY)
-                        val nextHost = nextHosts.first()
-                        doConnect(nextHost, nextHosts - nextHost)
-                    } else {
-                        Logger.w(TAG) { "Failed to connect to any of the hosts for $endpointPath" }
-                        connectionJob = null
-                        onDisconnected(ConnectException("Connection failure"))
-                    }
+                    Logger.w(TAG) { "Failed to connect to $target for $endpointPath: ${lastException.prettify()}" }
+                    onUnreachable()
                 }
             }
         }
@@ -151,7 +163,13 @@ internal class WebSocketConnectionHandler(
         }
     }
 
-    private suspend fun connectToRelay() {
+    private suspend fun connectToRelay(): Unit =
+        attemptSafeConnection(target = relayConfiguration?.host, connect = ::handleRelaySession) {
+            connectionJob = null
+            onDisconnected(ConnectException("Relay connection failure"))
+        }
+
+    private suspend fun handleRelaySession() {
         checkNotNull(relayConfiguration) { "Relay configuration must be provided for remote servers" }
 
         if (!relayConfiguration.isConfigured) {

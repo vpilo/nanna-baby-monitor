@@ -3,8 +3,10 @@ package org.vpilo.babymonitor.codec
 import android.media.MediaCodec
 import android.media.MediaFormat
 import android.view.Surface
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -16,6 +18,8 @@ import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.StreamingVideoFlow
 import java.nio.ByteBuffer
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("NestedBlockDepth", "LoopWithTooManyJumpStatements")
 actual class VideoDecoder actual constructor(
@@ -40,7 +44,16 @@ actual class VideoDecoder actual constructor(
             coroutineScope.launch {
                 mutableVideoStream.surface.collectLatest { surface ->
                     if (surface == null || !isActive) return@collectLatest
-                    decodeTo(surface)
+                    while (true) {
+                        try {
+                            runDecodingSession(surface)
+                        } catch (ex: CancellationException) {
+                            throw ex
+                        } catch (ex: IllegalStateException) {
+                            Logger.e(TAG, ex) { "Video decoder failed, restarting" }
+                        }
+                        delay(RESTART_DELAY)
+                    }
                 }
             }
     }
@@ -50,7 +63,7 @@ actual class VideoDecoder actual constructor(
         decodeJob = null
     }
 
-    private suspend fun decodeTo(surface: Surface) {
+    private suspend fun runDecodingSession(surface: Surface) {
         var codec: MediaCodec? = null
         try {
             input.collect { chunk ->
@@ -222,5 +235,8 @@ actual class VideoDecoder actual constructor(
 
         /** Timeout when waiting for a free input buffer to submit encoded data. */
         const val INPUT_TIMEOUT_US = 10_000L
+
+        /** Delay before retrying to build the codec on failure. */
+        val RESTART_DELAY: Duration = 2.seconds
     }
 }
