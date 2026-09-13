@@ -57,6 +57,11 @@ android {
         versionName = appVersion.versionName
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.toVersion(jvmVersion)
+        targetCompatibility = JavaVersion.toVersion(jvmVersion)
+    }
+
     signingConfigs {
         val keystorePath = providers.environmentVariable("RELEASE_KEYSTORE_FILE").orNull
         val keystoreFile = keystorePath?.let { rootProject.file(it) }
@@ -88,6 +93,12 @@ android {
         }
     }
 
+    // The AGP dependency blob breaks reproducible build support for F-Droid.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -102,10 +113,6 @@ android {
                 excludes.add("lib/**")
             }
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.toVersion(jvmVersion)
-        targetCompatibility = JavaVersion.toVersion(jvmVersion)
     }
 }
 
