@@ -127,13 +127,15 @@ release:android:
     - tar -xzf glab.tar.gz -C /usr/local bin/glab && rm glab.tar.gz
     - glab auth login --job-token "$CI_JOB_TOKEN" --hostname "$CI_SERVER_FQDN" --api-protocol "$CI_SERVER_PROTOCOL"
     - glab -R "$CI_PROJECT_PATH" securefile download --all --output-dir "$CI_PROJECT_DIR/.secure_files"
-    - ./gradlew :appAndroid:assembleRelease :appAndroid:generateVersionFile -Pbabymonitor.release=true
+    - ./gradlew :appAndroid:assembleRelease :appAndroid:bundleRelease :appAndroid:generateVersionFile -Pbabymonitor.release=true
     - mv appAndroid/build/outputs/apk/*/*.apk .
+    - mv appAndroid/build/outputs/bundle/*/*.aab .
     - mv appAndroid/build/outputs/mapping/release/mapping.txt ./mapping-$VERSION.txt
     - mv appAndroid/build/outputs/version.txt .
   artifacts:
     paths:
       - ./*.apk
+      - ./*.aab
       - ./mapping-*.txt
       - ./version.txt
 
