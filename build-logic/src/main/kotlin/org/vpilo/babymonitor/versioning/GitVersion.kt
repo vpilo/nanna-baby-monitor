@@ -27,10 +27,10 @@ object GitVersion {
         isReleaseBuild: Boolean,
     ): VersionInfo {
         val described = describe?.let { DESCRIBE.find(it) }
-        val (majorMinor, patch) = parseCore(described, commitCount)
-        val core = "$majorMinor.$patch"
+        val commitsSinceTag = described?.groupValues?.get(2)?.toInt()
+        val core = parseCore(described?.groupValues?.get(1), commitsSinceTag, commitCount)
 
-        val isTaggedRelease = isReleaseBuild && described != null && patch == 0
+        val isTaggedRelease = isReleaseBuild && commitsSinceTag == 0
         if (isTaggedRelease) return VersionInfo(versionName = core, versionCore = core, versionCode = commitCount)
 
         val branchToken =
@@ -52,17 +52,15 @@ object GitVersion {
 
     fun sanitizeBranch(branch: String): String = branch.lowercase().replace(NON_SLUG, "-").trim('-')
 
-    /** Returns MAJOR.MINOR and the patch number. Patch = commits since tag, or total commits when untagged. */
+    /** Returns MAJOR.MINOR.PATCH. Patch = the tag's patch plus commits since the tag, or total commits when untagged. */
     private fun parseCore(
-        described: MatchResult?,
+        tag: String?,
+        commitsSinceTag: Int?,
         commitCount: Int,
-    ): Pair<String, Int> {
-        val match = described ?: return "0.0" to commitCount
-        val tag = match.groupValues[1].removePrefix("v")
-        val commitsSinceTag = match.groupValues[2].toInt()
-        val parts = tag.split('.')
-        val major = parts.getOrNull(0)?.filter(Char::isDigit)?.ifEmpty { "0" } ?: "0"
-        val minor = parts.getOrNull(1)?.filter(Char::isDigit)?.ifEmpty { "0" } ?: "0"
-        return "$major.$minor" to commitsSinceTag
+    ): String {
+        if (tag == null || commitsSinceTag == null) return "0.0.$commitCount"
+        val parts = tag.removePrefix("v").split('.')
+        val (major, minor, tagPatch) = (0..2).map { parts.getOrNull(it)?.filter(Char::isDigit)?.ifEmpty { "0" } ?: "0" }
+        return "$major.$minor.${tagPatch.toInt() + commitsSinceTag}"
     }
 }

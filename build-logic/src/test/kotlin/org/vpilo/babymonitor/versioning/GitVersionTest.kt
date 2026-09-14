@@ -31,6 +31,33 @@ class GitVersionTest {
     }
 
     @Test
+    fun `exactly on a patch tag keeps the tag's patch`() {
+        val v = GitVersion.compute(describe("5.1.6", 0), 401, "main", "abc1234", isDirty = false, isReleaseBuild = false)
+        assertEquals("5.1.6", v.versionName)
+    }
+
+    @Test
+    fun `commits after a patch tag add to the tag's patch`() {
+        val v = GitVersion.compute(describe("5.1.6", 2), 403, "main", "abc1234", isDirty = false, isReleaseBuild = false)
+        assertEquals("5.1.8", v.versionName)
+        assertEquals("5.1.8", v.versionCore)
+    }
+
+    @Test
+    fun `release build on a patch tag is named after the tag alone`() {
+        val v = GitVersion.compute(describe("5.1.6", 0), 401, "HEAD", "abc1234", isDirty = true, isReleaseBuild = true)
+        assertEquals("5.1.6", v.versionName)
+        assertEquals("5.1.6", v.versionCore)
+        assertEquals(401, v.versionCode)
+    }
+
+    @Test
+    fun `a release build off a patch tag keeps branch and dirt`() {
+        val v = GitVersion.compute(describe("5.1.6", 2), 403, "HEAD", "abc1234", isDirty = true, isReleaseBuild = true)
+        assertEquals("5.1.8-abc1234-SNAPSHOT", v.versionName)
+    }
+
+    @Test
     fun `release build on a tag ignores a detached head and a dirty tree`() {
         val v = GitVersion.compute(describe("2.0.0", 0), 243, "HEAD", "abc1234", isDirty = true, isReleaseBuild = true)
         assertEquals("2.0.0", v.versionName)
