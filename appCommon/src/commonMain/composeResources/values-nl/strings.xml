@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="app_title_server_home">Camera: %1$s</string>
+    <string name="app_title_client_connect">Verbinden met een camera</string>
+    <string name="app_title_client_home">Monitor</string>
+    <string name="app_title_menu">Menu</string>
+
+    <string name="navigation_title_app_permissions">App-machtigingen</string>
+    <string name="app_permissions_needed">De app heeft toestemming nodig om door te gaan: hij toont meldingen dat de app actief is en heeft mogelijk een bevestiging nodig om andere apps op het lokale netwerk te kunnen vinden.</string>
+
+    <string name="app_role_choice_icon_description">App-pictogram</string>
+    <string name="app_role_choice_presentation_title">Welkom bij Nanna Baby Monitor!</string>
+    <string name="app_role_choice_presentation_description">Met deze app gebruik je het ene apparaat om de camera en de microfoon ergens op te richten, en een ander apparaat om te zien en te horen wat er wordt opgenomen. Beide kunnen een Android-telefoon of een computer zijn.</string>
+    <string name="app_role_record">Iets opnemen met de camera van dit apparaat</string>
+    <string name="app_role_choice_prompt">Wat gaat dit apparaat doen?</string>
+    <string name="app_role_choice_alternative">of</string>
+    <string name="app_role_monitor">Bekijken wat een ander apparaat opneemt</string>
+
+    <string name="menu_disconnect_title">Verbinding verbreken</string>
+    <string name="menu_disconnect_description">Verbreek de verbinding met het opnemende apparaat.</string>
+    <string name="menu_change_role_title">Rol van de app wijzigen</string>
+    <string name="menu_change_role_description">Wissel op dit apparaat tussen opnemen en bekijken.</string>
+    <string name="menu_quit_desktop">Afsluiten</string>
+    <string name="menu_quit_android">App sluiten</string>
+
+    <string name="camera_selection_server_type_local">Camera op dit netwerk</string>
+    <string name="camera_selection_server_type_relay">Camera op een ander netwerk</string>
+
+    <string name="client_connection_chooser_choose">Kies een opnemende camera om verbinding mee te maken.</string>
+    <string name="client_connection_chooser_connecting">Verbinden met %1$s…</string>
+    <string name="client_connection_chooser_reconnecting">Opnieuw verbinden met %1$s…</string>
+    <string name="client_connection_chooser_connected">Verbonden met %1$s</string>
+    <string name="client_connection_chooser_no_servers_found">Zoeken naar camera's…</string>
+    <string name="client_connection_chooser_server_not_found">Verbinding mislukt</string>
+    <string name="client_connection_chooser_server_quit">De camera heeft de verbinding verbroken</string>
+    <string name="client_connection_chooser_client_quit">Verbinding verbroken</string>
+    <string name="client_connection_chooser_error_details">Foutdetails: %1$s</string>
+    <string name="client_connection_chooser_pairing_revoked">De camera heeft de koppeling van dit apparaat verwijderd. Koppel opnieuw om verbinding te maken.</string>
+    <string name="client_connection_chooser_certificate_mismatch">De handtekening van de camera is gewijzigd. Koppel opnieuw om verbinding te maken.</string>
+    <string name="client_connection_chooser_servers_section_connectable">Beschikbare camera's</string>
+    <string name="client_connection_chooser_servers_section_new">Onbekende camera's</string>
+    <string name="client_connection_chooser_servers_section_paired">Gekoppelde camera's</string>
+
+    <string name="server_mode_audio_and_video">Audio en video</string>
+    <string name="server_mode_audio_only">Alleen audio</string>
+    <string name="server_mode_video_only">Alleen video</string>
+
+    <string name="client_no_audio">De camera heeft audio uitgeschakeld</string>
+    <string name="client_no_video">De camera heeft video uitgeschakeld</string>
+    <string name="client_play_audio">Beginnen met luisteren</string>
+    <string name="client_play_video">Camerabeeld tonen</string>
+    <string name="client_pause_audio">Stoppen met luisteren</string>
+    <string name="client_pause_video">Camerabeeld verbergen</string>
+    <string name="client_disconnect">Verbinding verbreken</string>
+    <string name="client_reconnecting">Verbinding verbroken. Opnieuw verbinden…</string>
+
+    <string name="app_title_server_pairing">Een apparaat koppelen aan %1$s</string>
+    <string name="pairing_enter_pin">Scan de QR-code op het andere apparaat of voer deze code in:</string>
+    <string name="pairing_succeeded">Gekoppeld met %1$s</string>
+    <string name="pairing_failed_lockout">Te veel mislukte pogingen. Het koppelen is geannuleerd.</string>
+    <string name="pairing_failed_expired">De tijd om te koppelen is verstreken.</string>
+    <string name="pairing_progress">Koppelen...</string>
+    <string name="pairing_retry">Opnieuw proberen</string>
+
+    <string name="app_title_paired_devices">Gekoppelde apparaten</string>
+    <string name="paired_devices_empty">Er zijn nog geen apparaten gekoppeld.</string>
+    <string name="paired_devices_unpair">Ontkoppelen</string>
+    <string name="menu_paired_devices_title">Gekoppelde apparaten beheren</string>
+
+    <string name="app_title_client_pairing">Koppelen met %1$s</string>
+    <string name="client_pairing_camera_or_pin">Scan de QR-code op "%1$s" of voer de pincode in die daarop wordt getoond.</string>
+    <string name="client_pairing_server_not_on_network">Camera niet gevonden op dit netwerk</string>
+    <string name="client_pairing_failed_invalid_qr">Ongeldige QR-code</string>
+    <string name="client_pairing_failed_wrong_pin">Onjuiste pincode, probeer het opnieuw</string>
+    <string name="client_pairing_failed_no_active_window">Op dat apparaat is geen koppeling bezig</string>
+    <string name="client_pairing_failed_server_not_on_network">Camera bestaat niet op dit netwerk</string>
+    <string name="client_pairing_failed_mitm_suspected">Kan de identiteit van de camera niet verifiëren - koppelen afgebroken</string>
+    <string name="client_pairing_failed_connection_failed">Verbinding mislukt, probeer het opnieuw</string>
+    <string name="client_pairing_qr_wrong_device">De gescande code hoort bij een ander apparaat</string>
+    <string name="client_pairing_pin_label">Pincode</string>
+    <string name="client_pairing_camera_failure">Camera niet beschikbaar, QR-codes kunnen niet worden gescand</string>
+    <string name="menu_paired_devices_description">Bekijk en verwijder apparaten die aan deze camera zijn gekoppeld</string>
+</resources>

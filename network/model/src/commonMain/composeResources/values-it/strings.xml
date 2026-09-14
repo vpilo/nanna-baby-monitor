@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="setting_relay_host_title">Nome host del relay remoto</string>
+    <string name="setting_relay_host_description">Nome host DDNS per l'accesso remoto (es. casamia.duckdns.org)</string>
+    <string name="setting_relay_passphrase_title">Passphrase del relay remoto</string>
+    <string name="setting_relay_passphrase_description">Segreto condiviso configurato sul relay. Ogni dispositivo deve usare lo stesso.</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="setting_relay_host_title">Hostnaam van de externe relay</string>
+    <string name="setting_relay_host_description">DDNS-hostnaam voor toegang op afstand (bijv. mijnhuis.duckdns.org)</string>
+    <string name="setting_relay_passphrase_title">Wachtwoordzin van de externe relay</string>
+    <string name="setting_relay_passphrase_description">Gedeeld geheim dat op de relay is ingesteld. Elk apparaat dat de relay gebruikt, heeft dezelfde nodig.</string>
+</resources>

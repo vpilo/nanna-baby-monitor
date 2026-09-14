@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="setting_int_current_value">Valore: %1$s</string>
+    <string name="setting_int_increment">Aumenta</string>
+    <string name="setting_int_decrement">Diminuisci</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="setting_camera_resolution_title">Cameraresolutie</string>
+    <string name="setting_camera_resolution_description">Kies hoe hoog de resolutie van de stream moet zijn.</string>
+    <string name="setting_camera_resolution_low">Laag (480p, 10fps)</string>
+    <string name="setting_camera_resolution_medium">Gemiddeld (720p, 20fps)</string>
+    <string name="setting_camera_resolution_high">Hoog (1080p, 30fps)</string>
+    <string name="setting_low_light_boost_title">Licht versterkingin het donker</string>
+    <string name="setting_low_light_boost_description">Maakt de video automatisch helderder wanneer de kamer donker is.</string>
+    <string name="setting_silence_detection_threshold_title">Drempel voor stiltedetectie</string>
+    <string name="setting_silence_detection_threshold_description">Geluidsniveau dat nog als stilte wordt beschouwd.</string>
+</resources>

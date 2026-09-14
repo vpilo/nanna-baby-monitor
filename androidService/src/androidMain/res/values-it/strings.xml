@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_notification_channel_name">Notifica del servizio in background</string>
+    <string name="service_notification_action_close">Chiudi l\'app</string>
+    <string name="service_description_server">Registrazione da telecamera e microfono. Tocca per aprire.</string>
+    <string name="service_description_client">Ricezione dello streaming da una telecamera. Tocca per aprire.</string>
+</resources>

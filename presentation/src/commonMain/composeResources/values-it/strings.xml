@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="back">Indietro</string>
+    <string name="menu">Menu</string>
+
+    <string name="client_battery_level">Livello della batteria</string>
+    <string name="client_signal_quality">Qualità del segnale</string>
+
+    <string name="network_available_on_local_network">Disponibile sulla rete locale</string>
+    <string name="network_available_on_relay">Disponibile sul relay remoto</string>
+    <string name="network_unavailable_on_local_network">Non disponibile sulla rete locale</string>
+    <string name="network_unavailable_on_relay">Non disponibile sul relay remoto</string>
+</resources>

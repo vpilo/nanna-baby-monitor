@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="navigation_title_permissions">App-machtigingen</string>
+    <string name="permissions_needed">De app heeft toestemming voor de camera en de microfoon nodig om door te gaan.</string>
+    <string name="server_in_audio_only_mode">De camera neemt alleen audio op</string>
+</resources>

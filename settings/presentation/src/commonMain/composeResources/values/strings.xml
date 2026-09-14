@@ -4,9 +4,9 @@
     <string name="setting_int_increment">Increment</string>
     <string name="setting_int_decrement">Decrement</string>
 
-    <string name="example" translateable="false">Example string</string>
+    <string name="example" translatable="false">Example string</string>
 
-    <string name="example_mode_audio_and_video" translateable="false">example: Audio and Video</string>
-    <string name="example_mode_audio_only" translateable="false">example: Audio only</string>
-    <string name="example_mode_video_only" translateable="false">example: Video only</string>
+    <string name="example_mode_audio_and_video" translatable="false">example: Audio and Video</string>
+    <string name="example_mode_audio_only" translatable="false">example: Audio only</string>
+    <string name="example_mode_video_only" translatable="false">example: Video only</string>
 </resources>

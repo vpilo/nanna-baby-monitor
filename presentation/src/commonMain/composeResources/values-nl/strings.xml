@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="back">Terug</string>
+    <string name="menu">Menu</string>
+
+    <string name="client_battery_level">Batterijniveau</string>
+    <string name="client_signal_quality">Signaalkwaliteit</string>
+
+    <string name="network_available_on_local_network">Beschikbaar op het lokale netwerk</string>
+    <string name="network_available_on_relay">Beschikbaar via de externe relay</string>
+    <string name="network_unavailable_on_local_network">Niet beschikbaar op het lokale netwerk</string>
+    <string name="network_unavailable_on_relay">Niet beschikbaar via de externe relay</string>
+</resources>

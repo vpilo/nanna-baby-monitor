@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="navigation_title_permissions">Autorizzazioni dell'app</string>
+    <string name="permissions_needed">L'app ha bisogno delle autorizzazioni Fotocamera e Microfono per continuare.</string>
+    <string name="server_in_audio_only_mode">La telecamera sta registrando solo l'audio</string>
+</resources>

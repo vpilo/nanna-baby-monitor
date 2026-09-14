@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_notification_channel_name">Melding van achtergrondservice</string>
+    <string name="service_notification_action_close">App sluiten</string>
+    <string name="service_description_server">Opnemen via camera en microfoon. Tik om te openen.</string>
+    <string name="service_description_client">Stream van een camera. Tik om te openen.</string>
+</resources>

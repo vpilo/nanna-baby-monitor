@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="app_title_server_home">Telecamera: %1$s</string>
+    <string name="app_title_client_connect">Connettiti a una telecamera</string>
+    <string name="app_title_client_home">Monitor</string>
+    <string name="app_title_menu">Menu</string>
+
+    <string name="navigation_title_app_permissions">Autorizzazioni dell'app</string>
+    <string name="app_permissions_needed">L'app ha bisogno di alcune autorizzazioni per continuare: mostra notifiche che indicano che è in esecuzione e potrebbe richiedere una conferma per poter individuare altre app sulla rete locale.</string>
+
+    <string name="app_role_choice_icon_description">Icona dell'app</string>
+    <string name="app_role_choice_presentation_title">Benvenuto in Nanna Baby Monitor!</string>
+    <string name="app_role_choice_presentation_description">Questa app ti permette di usare un dispositivo per puntare la telecamera e il microfono su qualcosa, e un altro dispositivo per vedere e sentire ciò che viene registrato. Entrambi possono essere un telefono Android o un computer.</string>
+    <string name="app_role_record">Registra qualcosa con la telecamera di questo dispositivo</string>
+    <string name="app_role_choice_prompt">Cosa farà questo dispositivo?</string>
+    <string name="app_role_choice_alternative">oppure</string>
+    <string name="app_role_monitor">Guarda ciò che un altro dispositivo sta registrando</string>
+
+    <string name="menu_disconnect_title">Disconnetti</string>
+    <string name="menu_disconnect_description">Disconnettiti dal dispositivo che sta registrando.</string>
+    <string name="menu_change_role_title">Cambia il ruolo dell'app</string>
+    <string name="menu_change_role_description">Passa tra registrazione e visualizzazione su questo dispositivo.</string>
+    <string name="menu_quit_desktop">Esci</string>
+    <string name="menu_quit_android">Chiudi l'app</string>
+
+    <string name="camera_selection_server_type_local">Telecamera su questa rete</string>
+    <string name="camera_selection_server_type_relay">Telecamera su un'altra rete</string>
+
+    <string name="client_connection_chooser_choose">Scegli la telecamera a cui connetterti.</string>
+    <string name="client_connection_chooser_connecting">Connessione a %1$s…</string>
+    <string name="client_connection_chooser_reconnecting">Riconnessione a %1$s…</string>
+    <string name="client_connection_chooser_connected">Connesso a %1$s</string>
+    <string name="client_connection_chooser_no_servers_found">Ricerca di telecamere in corso…</string>
+    <string name="client_connection_chooser_server_not_found">Connessione non riuscita</string>
+    <string name="client_connection_chooser_server_quit">La telecamera ha chiuso la connessione</string>
+    <string name="client_connection_chooser_client_quit">Disconnesso</string>
+    <string name="client_connection_chooser_error_details">Dettagli dell'errore: %1$s</string>
+    <string name="client_connection_chooser_pairing_revoked">La telecamera ha rimosso l'associazione di questo dispositivo. Associalo di nuovo per riconnetterti.</string>
+    <string name="client_connection_chooser_certificate_mismatch">La firma della telecamera è cambiata. Associa di nuovo il dispositivo per riconnetterti.</string>
+    <string name="client_connection_chooser_servers_section_connectable">Telecamere disponibili</string>
+    <string name="client_connection_chooser_servers_section_new">Telecamere sconosciute</string>
+    <string name="client_connection_chooser_servers_section_paired">Telecamere associate</string>
+
+    <string name="server_mode_audio_and_video">Audio e video</string>
+    <string name="server_mode_audio_only">Solo audio</string>
+    <string name="server_mode_video_only">Solo video</string>
+
+    <string name="client_no_audio">La telecamera ha disattivato l'audio</string>
+    <string name="client_no_video">La telecamera ha disattivato il video</string>
+    <string name="client_play_audio">Inizia ad ascoltare</string>
+    <string name="client_play_video">Mostra la telecamera</string>
+    <string name="client_pause_audio">Smetti di ascoltare</string>
+    <string name="client_pause_video">Nascondi la telecamera</string>
+    <string name="client_disconnect">Disconnetti</string>
+    <string name="client_reconnecting">Disconnesso. Riconnessione in corso…</string>
+
+    <string name="app_title_server_pairing">Associa un dispositivo a %1$s</string>
+    <string name="pairing_enter_pin">Scansiona il codice QR sull'altro dispositivo, oppure inserisci questo codice:</string>
+    <string name="pairing_succeeded">Associato a %1$s</string>
+    <string name="pairing_failed_lockout">Troppi tentativi errati. L'associazione è stata annullata.</string>
+    <string name="pairing_failed_expired">Il tempo a disposizione per l'associazione è scaduto.</string>
+    <string name="pairing_progress">Associazione in corso...</string>
+    <string name="pairing_retry">Riprova</string>
+
+    <string name="app_title_paired_devices">Dispositivi associati</string>
+    <string name="paired_devices_empty">Non è stato ancora associato nessun dispositivo.</string>
+    <string name="paired_devices_unpair">Dissocia</string>
+    <string name="menu_paired_devices_title">Gestisci i dispositivi associati</string>
+
+    <string name="app_title_client_pairing">Associa a %1$s</string>
+    <string name="client_pairing_camera_or_pin">Scansiona il codice QR su "%1$s" oppure inserisci il PIN che sta mostrando.</string>
+    <string name="client_pairing_server_not_on_network">Telecamera non trovata su questa rete</string>
+    <string name="client_pairing_failed_invalid_qr">Codice QR non valido</string>
+    <string name="client_pairing_failed_wrong_pin">PIN errato, riprova</string>
+    <string name="client_pairing_failed_no_active_window">Su quel dispositivo non è in corso nessuna associazione</string>
+    <string name="client_pairing_failed_server_not_on_network">Telecamera non presente su questa rete</string>
+    <string name="client_pairing_failed_mitm_suspected">Impossibile verificare l'identità della telecamera - associazione interrotta</string>
+    <string name="client_pairing_failed_connection_failed">Connessione non riuscita, riprova</string>
+    <string name="client_pairing_qr_wrong_device">Il codice scansionato appartiene a un altro dispositivo</string>
+    <string name="client_pairing_pin_label">PIN</string>
+    <string name="client_pairing_camera_failure">Fotocamera non disponibile, impossibile scansionare i codici QR</string>
+    <string name="menu_paired_devices_description">Vedi e revoca i dispositivi associati a questa telecamera</string>
+</resources>

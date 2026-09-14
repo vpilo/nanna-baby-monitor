@@ -35,6 +35,7 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_choos
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connected
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connecting
+import babymonitor.appcommon.generated.resources.client_connection_chooser_error_details
 import babymonitor.appcommon.generated.resources.client_connection_chooser_no_servers_found
 import babymonitor.appcommon.generated.resources.client_connection_chooser_pairing_revoked
 import babymonitor.appcommon.generated.resources.client_connection_chooser_reconnecting
@@ -145,7 +146,7 @@ private fun CameraSelectionScreenContent(
             ?.additionalInfo
             ?.let { exception ->
                 Text(
-                    text = "Error details: ${exception.prettify()}",
+                    text = stringResource(Res.string.client_connection_chooser_error_details, exception.prettify()),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
