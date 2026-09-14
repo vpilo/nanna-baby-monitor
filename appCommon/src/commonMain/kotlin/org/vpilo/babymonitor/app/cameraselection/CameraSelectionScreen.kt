@@ -184,7 +184,7 @@ private fun CameraSelectionScreenContent(
                 stickyHeader {
                     Header(label = Res.string.client_connection_chooser_servers_section_connectable)
                 }
-                items(items = connectableServers, key = { it.name }) { server ->
+                items(items = connectableServers, key = { it.id }) { server ->
                     Server(
                         name = server.name,
                         isRemote = server is Device.RemoteServer,
@@ -198,7 +198,7 @@ private fun CameraSelectionScreenContent(
                 stickyHeader {
                     Header(label = Res.string.client_connection_chooser_servers_section_paired)
                 }
-                items(items = pairedServers, key = { it.name }) { server ->
+                items(items = pairedServers, key = { it.id }) { server ->
                     Server(
                         name = server.name,
                         isRemote = server is Device.RemoteServer,
@@ -212,7 +212,7 @@ private fun CameraSelectionScreenContent(
                 stickyHeader {
                     Header(label = Res.string.client_connection_chooser_servers_section_new)
                 }
-                items(items = newServers, key = { it.name }) { server ->
+                items(items = newServers, key = { it.id }) { server ->
                     Server(
                         name = server.name,
                         isRemote = server is Device.RemoteServer,
@@ -370,6 +370,33 @@ private fun CameraSelectionScreenPreview() =
             newServers =
                 listOf(
                     makePreviewServer("Toilet Cam, unpaired", isLocal = false),
+                    makePreviewServer("Pigeon nest, unpaired"),
+                ),
+            onConnectRequested = {},
+        )
+    }
+
+@Preview
+@Composable
+private fun CameraSelectionScreenDuplicateNamesPreview() =
+    AppPreviewTheme(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        CameraSelectionScreenContent(
+            connectionState = ConnectionState.Disconnected(ConnectionState.ErrorReason.NotConnectedYet),
+            connectableServers =
+                listOf(
+                    makePreviewServer("Bedroom camera, paired and visible"),
+                    makePreviewServer("Bedroom camera, paired and visible"),
+                ),
+            pairedServers =
+                listOf(
+                    makePreviewServer("Living room camera, paired"),
+                    makePreviewServer("Living room camera, paired"),
+                ),
+            newServers =
+                listOf(
+                    makePreviewServer("Pigeon nest, unpaired"),
                     makePreviewServer("Pigeon nest, unpaired"),
                 ),
             onConnectRequested = {},
