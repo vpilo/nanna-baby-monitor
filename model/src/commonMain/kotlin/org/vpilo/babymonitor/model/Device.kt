@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.model
 
+import androidx.compose.runtime.Stable
 import org.vpilo.babymonitor.model.repository.DeviceId
 import java.net.InetAddress
 
@@ -10,6 +11,7 @@ import java.net.InetAddress
  * @property name User-defined name of the device.
  * @property addresses IP addresses of the device.
  */
+@Stable
 sealed class Device(
     val id: DeviceId,
     val name: String,
@@ -52,6 +54,7 @@ sealed class Device(
 
     override fun toString(): String = "${this::class.simpleName}('$name', id $id, ${addresses.size} addresses)"
 
+    @Stable
     @Suppress("UnnecessaryAbstractClass")
     abstract class Server(
         id: DeviceId,
@@ -61,6 +64,7 @@ sealed class Device(
         companion object
     }
 
+    @Stable
     class LocalServer(
         id: DeviceId,
         name: String,
@@ -69,6 +73,7 @@ sealed class Device(
         constructor(id: DeviceId, name: String) : this(id, name, emptySet())
     }
 
+    @Stable
     class RemoteServer(
         id: DeviceId,
         name: String,
@@ -77,6 +82,7 @@ sealed class Device(
         companion object
     }
 
+    @Stable
     class Client(
         id: DeviceId,
         name: String,
@@ -85,6 +91,7 @@ sealed class Device(
         constructor(id: DeviceId, name: String) : this(id, name, emptySet())
     }
 
+    @Stable
     class Relay(
         id: DeviceId,
         name: String,
