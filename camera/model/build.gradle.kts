@@ -10,6 +10,10 @@ plugins {
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.camera.model"
+
+        androidResources {
+            enable = true
+        }
     }
 
     sourceSets {
