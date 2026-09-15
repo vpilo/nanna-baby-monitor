@@ -5,14 +5,28 @@ object GitVersion {
     const val MAIN_BRANCH = "main"
     private const val DETACHED = "HEAD"
 
-    private val DESCRIBE = Regex("""^(.*)-(\d+)-g[0-9a-f]+$""")
+    // `git describe --match` glob selecting the base tags.
+    const val BASE_TAG_GLOB = "[0-9]*.[0-9]*.0"
+
+    // Google Play max version code is capped to 2100000000.
+    private const val MAX_MAJOR = 2099
+    private const val MAX_MINOR = 999
+    private const val MAX_PATCH = 999
+
+    private val DESCRIBE = Regex("""(\d+)\.(\d+)\.0-(\d+)-g[0-9a-f]+""")
+    private val VERSION_TAG = Regex("""\d+\.\d+\.\d+""")
     private val NON_SLUG = Regex("[^a-z0-9]+")
 
     /**
      * Computes version name and code from git output.
      *
-     * @param describe output of `git describe --tags --long`, or null when there is no reachable tag.
-     * @param commitCount total commits on HEAD (`git rev-list --count HEAD`); also the Android versionCode.
+     * The version is `MAJOR.MINOR.PATCH`: `MAJOR.MINOR` comes from the nearest `MAJOR.MINOR.0` tag, and PATCH counts the commits
+     * since it. Any other version tag is only a label, which a release build requires to match the computed version.
+     *
+     * The version code is `MAJOR * 10^6 + MINOR * 10^3 + PATCH`.
+     *
+     * @param describe output of `git describe --tags --long --match` [BASE_TAG_GLOB], or null when there is no reachable base tag.
+     * @param headTags tags pointing at HEAD.
      * @param branch current branch, or "HEAD" when detached.
      * @param shortSha short commit hash, used as the branch token when detached.
      * @param isDirty whether the working copy has uncommitted changes.
@@ -20,18 +34,25 @@ object GitVersion {
      */
     fun compute(
         describe: String?,
-        commitCount: Int,
+        headTags: List<String>,
         branch: String,
         shortSha: String,
         isDirty: Boolean,
         isReleaseBuild: Boolean,
     ): VersionInfo {
-        val described = describe?.let { DESCRIBE.find(it) }
-        val commitsSinceTag = described?.groupValues?.get(2)?.toInt()
-        val core = parseCore(described?.groupValues?.get(1), commitsSinceTag, commitCount)
+        check(describe != null || !isReleaseBuild) {
+            "A release build needs a reachable MAJOR.MINOR.0 tag: fetch the full history and its tags."
+        }
 
-        val isTaggedRelease = isReleaseBuild && commitsSinceTag == 0
-        if (isTaggedRelease) return VersionInfo(versionName = core, versionCore = core, versionCode = commitCount)
+        val (major, minor, patch) = parseCore(describe)
+        val core = "$major.$minor.$patch"
+        val code = versionCode(major, minor, patch)
+
+        val versionTags = headTags.filter(VERSION_TAG::matches)
+        if (isReleaseBuild && versionTags.isNotEmpty()) {
+            check(core in versionTags) { "Version tags $versionTags on HEAD don't match its computed version $core." }
+            return VersionInfo(versionName = core, versionCore = core, versionCode = code)
+        }
 
         val branchToken =
             when (branch) {
@@ -47,20 +68,27 @@ object GitVersion {
                 if (isDirty) append("-SNAPSHOT")
             }
 
-        return VersionInfo(versionName = name, versionCore = core, versionCode = commitCount)
+        return VersionInfo(versionName = name, versionCore = core, versionCode = code)
     }
 
     fun sanitizeBranch(branch: String): String = branch.lowercase().replace(NON_SLUG, "-").trim('-')
 
-    /** Returns MAJOR.MINOR.PATCH. Patch = the tag's patch plus commits since the tag, or total commits when untagged. */
-    private fun parseCore(
-        tag: String?,
-        commitsSinceTag: Int?,
-        commitCount: Int,
-    ): String {
-        if (tag == null || commitsSinceTag == null) return "0.0.$commitCount"
-        val parts = tag.removePrefix("v").split('.')
-        val (major, minor, tagPatch) = (0..2).map { parts.getOrNull(it)?.filter(Char::isDigit)?.ifEmpty { "0" } ?: "0" }
-        return "$major.$minor.${tagPatch.toInt() + commitsSinceTag}"
+    /** Returns MAJOR, MINOR and PATCH, or all zeros when there is no base tag. */
+    private fun parseCore(describe: String?): Triple<Int, Int, Int> {
+        if (describe == null) return Triple(0, 0, 0)
+        val match = checkNotNull(DESCRIBE.matchEntire(describe)) { "'$describe' is not based on a MAJOR.MINOR.0 tag." }
+        val (major, minor, commitsSinceTag) = match.destructured
+        return Triple(major.toInt(), minor.toInt(), commitsSinceTag.toInt())
+    }
+
+    private fun versionCode(
+        major: Int,
+        minor: Int,
+        patch: Int,
+    ): Int {
+        check(major <= MAX_MAJOR) { "Major version $major exceeds $MAX_MAJOR." }
+        check(minor <= MAX_MINOR) { "Minor version $minor exceeds $MAX_MINOR." }
+        check(patch <= MAX_PATCH) { "$patch commits since $major.$minor.0 exceed $MAX_PATCH: tag a new MAJOR.MINOR.0." }
+        return (major * 1000 + minor) * 1000 + patch
     }
 }

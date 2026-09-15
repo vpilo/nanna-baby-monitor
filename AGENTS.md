@@ -88,9 +88,17 @@ KMP project with `androidLibrary` and `jvm("desktop")` targets.
 ./gradlew :appAndroid:assembleDebug
 ```
 
+Versions are derived from git by `build-logic` (`GitVersion`):
+
+- `MAJOR.MINOR` comes from the nearest `MAJOR.MINOR.0` tag; PATCH is the number of commits since it. Other tags never change the version.
+- The version code is `MAJOR * 10^6 + MINOR * 10^3 + PATCH`. The build fails past major 2099, minor 999 or patch 999: tag a new
+  `MAJOR.MINOR.0`.
+- To release a new minor/major, tag `MAJOR.MINOR.0`. To release a patch, tag the commit with its computed version.
+
 The Gradle property `babymonitor.release` marks a build as a release. This is used to obtain reproducible builds for F-Droid, in order to
-share the same signing key for both releases. IT drives both `BuildInfo.IS_DEBUG` and the version name - only a release build made on a tag
-is named after the tag alone, everything else keeps its branch and `-SNAPSHOT` markers.
+share the same signing key for both releases. It drives both `BuildInfo.IS_DEBUG` and the version name - only a release build on a version
+tag is named after the tag alone, everything else keeps its branch and `-SNAPSHOT` markers. A release build fails when no `MAJOR.MINOR.0`
+tag is reachable (CI clones need the full history and tags), or when a version tag on HEAD differs from the computed version.
 
 When building to verify changes, since this is a small app, it's quickest to just build the entire project instead of building modules
 individually over multiple iterations:

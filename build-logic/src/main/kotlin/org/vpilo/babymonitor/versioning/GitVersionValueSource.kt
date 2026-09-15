@@ -17,16 +17,15 @@ abstract class GitVersionValueSource : ValueSource<VersionInfo, GitVersionValueS
     abstract val exec: ExecOperations
 
     override fun obtain(): VersionInfo {
-        val commitCount = git("rev-list", "--count", "HEAD")?.toIntOrNull()
-        if (commitCount == null) {
+        val describe = git("describe", "--tags", "--long", "--match", GitVersion.BASE_TAG_GLOB)
+        if (describe == null) {
             logger.warn(
-                "Unable to read git history (not a git repository or shallow clone " +
-                    "with no commits); falling back to version 0.0.0.",
+                "No MAJOR.MINOR.0 tag reachable from HEAD (not a git repository, shallow clone " +
+                    "or missing tags); falling back to version 0.0.0.",
             )
-            return VersionInfo("0.0.0", "0.0.0", 0)
         }
 
-        val describe = git("describe", "--tags", "--long")
+        val headTags = git("tag", "--points-at", "HEAD")?.lines().orEmpty()
         val branch = git("rev-parse", "--abbrev-ref", "HEAD") ?: "HEAD"
         val shortSha = git("rev-parse", "--short", "HEAD") ?: "unknown"
         val isDirty = !git("status", "--porcelain").isNullOrEmpty()
@@ -37,7 +36,7 @@ abstract class GitVersionValueSource : ValueSource<VersionInfo, GitVersionValueS
 
         return GitVersion.compute(
             describe = describe,
-            commitCount = commitCount,
+            headTags = headTags,
             branch = branch,
             shortSha = shortSha,
             isDirty = isDirty,
