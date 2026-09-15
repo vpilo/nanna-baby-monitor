@@ -1,0 +1,30 @@
+Questa app è un baby monitor con trasmissione video e audio sicuri, per Android e PC (usando Java).
+Nessun account, niente cloud, niente telemetria; gratuita e open source, per sempre.
+
+Nonostante il nome "Nanna", quest'app non è solo per i bambini!
+Tieni d'occhio i tuoi animali, le tue piante, la tua casa o qualsiasi altra cosa, in modo sicuro e riservato.
+
+Quest'app richiede l'associazione tra dispositivi. Avvia l'app in modalità registrazione su un qualsiasi dispositivo con Android 8 o
+successivo (o un PC, o un Raspberry Pi...). Con un codice QR o un PIN, associalo a un altro dispositivo in modalità visualizzazione.
+Connettiti in qualsiasi momento per guardare e/o ascoltare.
+
+Funzionalità:
+
+* Trasmissione video e audio sicura.
+* Individuazione automatica delle app in registrazione sulla stessa rete.
+* Associazione sicura tra dispositivi, tramite codice QR o PIN.
+* Miglioramento della luminosità, per vedere meglio in condizioni di luce scarsa.
+* Rilevamento del silenzio, per non sentire rumore di fondo quando è tutto tranquillo.
+* Qualità di registrazione personalizzabile.
+* Video trascinabile, per vedere l'intera inquadratura su qualsiasi schermo.
+* Funziona su Android 8.0 e versioni successive, e su ogni computer con Java.
+* Supporta più dispositivi in registrazione e più dispositivi in visualizzazione.
+* Riservata, senza servizi cloud né telemetria: tutto resta sulla rete di casa tua.
+
+Nanna è disponibile anche come applicazione desktop per Linux, Windows e macOS, che può fungere sia da dispositivo in registrazione sia da
+dispositivo in visualizzazione, e funziona assieme all'app Android in qualsiasi combinazione. È pubblicata su GitLab insieme al codice
+sorgente del progetto.
+
+Un'app relay opzionale permette ai dispositivi associati di collegarsi anche da fuori la rete di casa. Il relay vede solo dati cifrati, e
+lo installi tu stesso su un computer sotto il tuo controllo. Senza relay, l'app trasmette solo all'interno di una singola rete locale.
+Anche il relay è pubblicato insieme al codice sorgente del progetto.

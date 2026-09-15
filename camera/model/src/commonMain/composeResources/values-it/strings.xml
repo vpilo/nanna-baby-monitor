@@ -5,7 +5,7 @@
     <string name="setting_camera_resolution_low">Bassa (480p, 10fps)</string>
     <string name="setting_camera_resolution_medium">Media (720p, 20fps)</string>
     <string name="setting_camera_resolution_high">Alta (1080p, 30fps)</string>
-    <string name="setting_low_light_boost_title">Migliora luminositá in luce scarsa</string>
+    <string name="setting_low_light_boost_title">Migliora luminosità in luce scarsa</string>
     <string name="setting_low_light_boost_description">Schiarisce automaticamente il video quando la stanza è buia.</string>
     <string name="setting_silence_detection_threshold_title">Soglia di rilevamento del silenzio</string>
     <string name="setting_silence_detection_threshold_description">Livello di rumore massimo da considerare come silenzio.</string>

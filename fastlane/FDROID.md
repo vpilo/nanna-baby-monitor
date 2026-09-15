@@ -9,14 +9,16 @@ its original signature instead of re-signing with the F-Droid key.
 
 - `fastlane/metadata/android/en-US/` — store listing (title, descriptions, changelogs, screenshots). Read
   directly out of this repository by F-Droid, and usable by `fastlane supply` for Play.
-- `fastlane/metadata/android/en-US/changelogs/default.txt` — the "What's New" text.
+- `fastlane/metadata/android/it-IT/`, `nl-NL/` — translated listings. No screenshots; F-Droid falls back to
+  the `en-US` ones.
+- `fastlane/metadata/android/<locale>/changelogs/default.txt` — the "What's New" text.
 
 ## Per release
 
 1. Tag, and let `release:android` publish the signed APK. Reproducibility depends on that job passing
    `-Pbabymonitor.release=true`.
-2. Refresh `fastlane/metadata/android/en-US/changelogs/default.txt`. It can go in any commit, so
-   no release commit is needed; left alone, the previous text keeps showing.
+2. Refresh `changelogs/default.txt` in every locale. It can go in any commit, so no release commit is
+   needed; left alone, the previous text keeps showing.
 
 Nothing else: fdroid notices the release on its own and appends the matching `Builds` entry. Only the first
 submission needs the recipe filled in by hand.

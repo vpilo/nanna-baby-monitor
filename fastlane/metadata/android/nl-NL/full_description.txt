@@ -1,0 +1,28 @@
+Dit is een babyfoon-app met beveiligde video- en audiostreaming, voor Android en pc (via Java).
+Geen accounts, geen cloudservers, geen telemetrie; voor altijd gratis en open source.
+
+"Nanna" is het Italiaanse woord voor de slaap van een baby. Maar deze app is niet alleen voor baby's!
+Houd je huisdieren, je planten, je huis of wat je maar wilt veilig en privé in de gaten.
+
+Deze app vereist het koppelen van apparaten. Start de app in de opnamemodus op een willekeurig apparaat met Android 8 of hoger. Koppel het
+met een koppelcode of QR-code aan een ander apparaat in de kijkmodus. Maak op elk moment verbinding om te kijken en/of te luisteren.
+
+Functies:
+
+* Beveiligde video- en audiostreaming.
+* Automatisch vinden van opnemende apps op hetzelfde netwerk.
+* Veilig koppelen van apparaten met een koppelcode of QR-code.
+* Lichtversterking om beter te zien bij weinig licht.
+* Stiltedetectie, zodat er geen audio wordt verstuurd als het stil is.
+* Instelbare opnamekwaliteit.
+* Versleepbaar camerabeeld, zodat je het hele beeld op elk scherm kunt zien.
+* Werkt op Android 8.0 en hoger.
+* Ondersteunt meerdere opnemende en meerdere kijkende apparaten.
+* Privé, zonder clouddiensten of telemetrie: alles blijft op je thuisnetwerk.
+
+Nanna is ook beschikbaar als desktopapplicatie voor Linux, Windows en macOS, die zowel als opnemend als kijkend apparaat kan dienen en in
+elke combinatie samenwerkt met de Android-app. Deze wordt samen met de broncode van dit project gepubliceerd op GitLab.
+
+Met een optionele relay-app kunnen gekoppelde apparaten elkaar ook buiten het thuisnetwerk bereiken. De relay ziet alleen versleutelde
+gegevens en draait op een computer die je zelf beheert. Zonder relay streamt de app alleen binnen één lokaal netwerk. Ook de relay wordt
+samen met de broncode van dit project gepubliceerd.
