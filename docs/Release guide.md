@@ -28,7 +28,7 @@ For example, `5.1.0-13-g9fd8e35` is version `5.1.13`.
 
 ## Steps
 
-1. Update `fastlane/metadata/android/<locale>/changelogs/default.txt` in every locale. This can be done in any commit.
+1. Update `appAndroid/src/main/play/release-notes/<locale>/default.txt` in every locale. This can be done in any commit.
 2. Tag and push. The tag message becomes the release notes.
    ```sh
    git tag -a 5.2.0 -m "Release notes"
@@ -47,11 +47,12 @@ matches the APK published by CI, distributes that APK with its original signatur
 
 ### Store listing
 
-F-Droid reads it from this repository.
+F-Droid reads it from this repository, in the Triple-T layout under `appAndroid/src/main/play/`.
 
-- `metadata/android/en-US/`: title, descriptions, changelog and screenshots.
-- `metadata/android/it-IT/`, `nl-NL/`: translations. Screenshots fall back to `en-US`.
-- `changelogs/default.txt`: shown only for the latest release (`CurrentVersionCode`).
+- `listings/en-US/`: title, descriptions and graphics (icon, feature graphic, phone screenshots).
+- `listings/it-IT/`, `nl-NL/`: translations and localized feature graphics. Other graphics fall back to `en-US`.
+- `release-notes/<locale>/default.txt`: shown only for the latest release (`CurrentVersionCode`).
+- `docs/play-feature-graphic.odg`: source of the feature graphics.
 
 ### Update check
 

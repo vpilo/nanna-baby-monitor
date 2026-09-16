@@ -68,5 +68,5 @@ jobs:
         run: |
           gh release create "$TAG" \
             --title "Nanna Baby Monitor $TAG" \
-            --notes-file fastlane/metadata/android/en-US/changelogs/default.txt \
+            --notes-file appAndroid/src/main/play/release-notes/en-US/default.txt \
             assets/*
