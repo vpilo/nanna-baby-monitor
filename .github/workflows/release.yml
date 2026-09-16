@@ -59,6 +59,8 @@ jobs:
           pattern: '*-release*'
           path: assets
           merge-multiple: true
+      # Not needed for releases.
+      - run: rm -f assets/*.aab
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
