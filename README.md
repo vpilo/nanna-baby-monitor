@@ -1,5 +1,9 @@
 # Nanna Baby Monitor
 
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/icon.png" alt="Nanna Baby Monitor icon" width="128">
+</p>
+
 This is a baby monitor app, with secure video and audio streaming, for Android and PC (using Java).
 No accounts, no cloud servers, no telemetry, forever free and open source.
 
