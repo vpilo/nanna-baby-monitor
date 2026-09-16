@@ -22,7 +22,7 @@ Funzionalità:
 * Riservata, senza servizi cloud né telemetria: tutto resta sulla rete di casa tua.
 
 Nanna è disponibile anche come applicazione desktop per Linux, Windows e macOS, che può fungere sia da dispositivo in registrazione sia da
-dispositivo in visualizzazione, e funziona assieme all'app Android in qualsiasi combinazione. È pubblicata su GitLab insieme al codice
+dispositivo in visualizzazione, e funziona assieme all'app Android in qualsiasi combinazione. È pubblicata su GitHub insieme al codice
 sorgente del progetto.
 
 Un'app relay opzionale permette ai dispositivi associati di collegarsi anche da fuori la rete di casa. Il relay vede solo dati cifrati, e

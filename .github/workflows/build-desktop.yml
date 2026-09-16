@@ -1,0 +1,45 @@
+name: Build Desktop
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: JavaCPP platform classifier of the bundled FFmpeg natives (linux-x86_64, linux-arm64).
+        type: string
+        required: true
+      runner:
+        description: Runner label matching the build platform.
+        type: string
+        required: true
+      release:
+        description: Build the release jar instead of the debug one.
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: Build desktop ${{ inputs.release && 'release' || 'debug' }} ${{ inputs.platform }}
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup
+
+      - name: Build debug jar
+        if: ${{ !inputs.release }}
+        run: ./gradlew -Pjavacpp.platform=${{ inputs.platform }} :appDesktop:packageUberJarForCurrentOS
+
+      - name: Build release jar
+        if: ${{ inputs.release }}
+        run: ./gradlew -Pjavacpp.platform=${{ inputs.platform }} :appDesktop:packageReleaseUberJarForCurrentOS -Pbabymonitor.release=true
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: desktop-${{ inputs.release && 'release' || 'debug' }}-${{ inputs.platform }}
+          path: appDesktop/build/compose/jars/*.jar
+          if-no-files-found: error
+          retention-days: ${{ inputs.release && 90 || 14 }}

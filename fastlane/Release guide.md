@@ -66,7 +66,7 @@ versionName=5.2.0
 The recipe (`metadata/org.vpilo.babymonitor.yml` in fdroiddata) polls that file from the latest release with `UpdateCheckMode: HTTP`:
 
 ```
-https://gitlab.com/vpilo/nanna-baby-monitor/-/releases/permalink/latest/downloads/version.txt
+https://github.com/vpilo/nanna-baby-monitor/releases/latest/download/version.txt
 ```
 
 To test it from an fdroiddata checkout:

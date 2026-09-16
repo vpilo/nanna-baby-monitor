@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: ['*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  check:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - run: ./gradlew ktlintCheck detekt
+      - run: ./gradlew test
+
+  android:
+    needs: check
+    uses: ./.github/workflows/build-android.yml
+    with:
+      release: true
+    secrets:
+      BABY_MONITOR_KEYSTORE_BASE64: ${{ secrets.BABY_MONITOR_KEYSTORE_BASE64 }}
+      BABY_MONITOR_KEYSTORE_PASSWORD: ${{ secrets.BABY_MONITOR_KEYSTORE_PASSWORD }}
+
+  desktop:
+    needs: check
+    strategy:
+      matrix:
+        include:
+          - platform: linux-x86_64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    uses: ./.github/workflows/build-desktop.yml
+    with:
+      platform: ${{ matrix.platform }}
+      runner: ${{ matrix.runner }}
+      release: true
+
+  publish:
+    name: GitHub release
+    needs: [android, desktop]
+    runs-on: ubuntu-latest
+    # Manual approval to review the run summary (assets and notes) first.
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: '*-release*'
+          path: assets
+          merge-multiple: true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            --title "Nanna Baby Monitor $TAG" \
+            --notes-file fastlane/metadata/android/en-US/changelogs/default.txt \
+            assets/*

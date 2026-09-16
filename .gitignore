@@ -21,4 +21,4 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 .claude/skills/
 .codegraph
-.secure_files
+appAndroid/release/*.jks

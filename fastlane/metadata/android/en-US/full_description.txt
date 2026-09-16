@@ -21,7 +21,7 @@ Features:
 * Private, and without any cloud services or telemetry: it stays on your home's network.
 
 Nanna is also available as a desktop application for Linux, Windows and macOS, which can act as either a recording or a watching device;
-it will work with the Android app in any combination. It is published together with this project's source code on GitLab.
+it will work with the Android app in any combination. It is published together with this project's source code on GitHub.
 
 An optional relay app lets paired devices reach each other from outside the home network. The relay only ever sees encrypted data, and you
 host it yourself on a machine you control. Without it, the app streams only within a single local network. It is also published together with

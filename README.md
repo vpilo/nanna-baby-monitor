@@ -48,7 +48,7 @@ Pairing two Android devices: the recording device shows the code, the watching d
 You can simply make debug builds from source.
 
 ```sh
-git clone https://gitlab.com/vpilo/nanna-baby-monitor.git
+git clone https://github.com/vpilo/nanna-baby-monitor.git
 cd babymonitor
 ```
 
@@ -147,7 +147,7 @@ No location permission is requested, and no permission is used for anything othe
 
 # Contributing
 
-Issues and pull requests are welcome at [gitlab.com/vpilo/nanna-baby-monitor](https://gitlab.com/vpilo/nanna-baby-monitor).
+Issues and pull requests are welcome at [github.com/vpilo/nanna-baby-monitor](https://github.com/vpilo/nanna-baby-monitor).
 
 [AGENTS.md](AGENTS.md) describes the module layout and the build commands.
 

@@ -21,7 +21,7 @@ Functies:
 * Privé, zonder clouddiensten of telemetrie: alles blijft op je thuisnetwerk.
 
 Nanna is ook beschikbaar als desktopapplicatie voor Linux, Windows en macOS, die zowel als opnemend als kijkend apparaat kan dienen en in
-elke combinatie samenwerkt met de Android-app. Deze wordt samen met de broncode van dit project gepubliceerd op GitLab.
+elke combinatie samenwerkt met de Android-app. Deze wordt samen met de broncode van dit project gepubliceerd op GitHub.
 
 Met een optionele relay-app kunnen gekoppelde apparaten elkaar ook buiten het thuisnetwerk bereiken. De relay ziet alleen versleutelde
 gegevens en draait op een computer die je zelf beheert. Zonder relay streamt de app alleen binnen één lokaal netwerk. Ook de relay wordt
