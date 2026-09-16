@@ -35,7 +35,7 @@ javacpp = "1.5.14"
 ffmpeg = "8.1.2-1.5.14"
 
 cryptography = "0.6.0"
-qrose = "1.2.0"
+qrose = "1.2.1"
 zxing = "3.5.4"
 
 ktor = "3.5.2"
