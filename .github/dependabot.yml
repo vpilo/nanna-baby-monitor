@@ -1,0 +1,62 @@
+version: 2
+
+registries:
+  gradle-plugin-portal:
+    type: maven-repository
+    url: https://plugins.gradle.org/m2
+  maven-central:
+    type: maven-repository
+    url: https://repo.maven.apache.org/maven2
+  google-maven:
+    type: maven-repository
+    url: https://maven.google.com
+
+updates:
+  - package-ecosystem: gradle
+    directories:
+      - "/"
+      - "/build-logic"
+    registries:
+      - gradle-plugin-portal
+      - maven-central
+      - google-maven
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "org.jetbrains.kotlinx*"
+      compose:
+        patterns:
+          - "org.jetbrains.compose*"
+          - "org.jetbrains.androidx*"
+      androidx:
+        patterns:
+          - "androidx.*"
+          - "com.android.*"
+      ktor:
+        patterns:
+          - "io.ktor*"
+      koin:
+        patterns:
+          - "io.insert-koin*"
+      javacpp:
+        patterns:
+          - "org.bytedeco*"
+      logging:
+        patterns:
+          - "org.apache.logging.log4j*"
+          - "org.slf4j*"
+      lint:
+        patterns:
+          - "org.jlleitschuh.gradle.ktlint*"
+          - "io.gitlab.arturbosch.detekt*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
