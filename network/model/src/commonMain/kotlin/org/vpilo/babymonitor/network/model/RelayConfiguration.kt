@@ -10,7 +10,8 @@ data class RelayConfiguration(
     val isConfigured: Boolean
         get() = host.isNotBlank() && passphrase.isNotBlank()
 
-    override fun toString(): String = "RelayConfiguration('$host', ${if (passphrase.isBlank()) "no" else "with"} passphrase)"
+    override fun toString(): String =
+        "RelayConfiguration(<host ${host.hashCode()}>, ${if (passphrase.isBlank()) "no" else "with"} passphrase)"
 
     companion object {
         val NONE = RelayConfiguration(host = "", passphrase = "")

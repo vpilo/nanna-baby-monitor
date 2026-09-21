@@ -12,4 +12,6 @@ data class PairedServer(
     val sharedSecretBase64: String,
 ) {
     fun asDevice(): Device = Device.LocalServer(DeviceId.parse(deviceId), name)
+
+    override fun toString(): String = "PairedServer($deviceId)"
 }

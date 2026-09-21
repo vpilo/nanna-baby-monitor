@@ -92,7 +92,7 @@ internal class RelayServerRegistration(
 
     private suspend fun runRegistrationLoop() {
         while (true) {
-            Logger.d(TAG) { "Connecting to relay at ${relayConfiguration.host} as $server" }
+            Logger.d(TAG) { "Connecting to relay at $relayConfiguration as $server" }
             runCatching {
                 relayWss(
                     configuration = relayConfiguration,

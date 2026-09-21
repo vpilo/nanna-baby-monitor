@@ -12,12 +12,12 @@ fun Device.RemoteServer.Companion.fromTransportString(transportString: String): 
     if (transportString.isBlank()) return null
     val splits = transportString.split("#", limit = 3)
     if (splits.size != 3) {
-        Logger.w("DeviceTransport") { "Invalid transport string: $transportString" }
+        Logger.w("DeviceTransport") { "Malformed transport string" }
         return null
     }
     val (rawId, relayHost, name) = splits
     if (rawId.isBlank() || relayHost.isBlank() || name.isBlank()) {
-        Logger.w("DeviceTransport") { "Invalid transport string: $transportString" }
+        Logger.w("DeviceTransport") { "Invalid transport string" }
         return null
     }
     val id = DeviceId.parseOrNull(rawId) ?: return null

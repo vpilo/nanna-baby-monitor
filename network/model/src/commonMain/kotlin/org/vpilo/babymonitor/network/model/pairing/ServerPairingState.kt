@@ -6,11 +6,15 @@ sealed interface ServerPairingState {
     data class Active(
         val pin: Pin,
         val qrText: String,
-    ) : ServerPairingState
+    ) : ServerPairingState {
+        override fun toString(): String = "ServerPairingState.Active"
+    }
 
     data class Succeeded(
         val clientName: String,
-    ) : ServerPairingState
+    ) : ServerPairingState {
+        override fun toString(): String = "ServerPairingState.Succeeded"
+    }
 
     data class Failed(
         val reason: ServerPairingFailureReason,

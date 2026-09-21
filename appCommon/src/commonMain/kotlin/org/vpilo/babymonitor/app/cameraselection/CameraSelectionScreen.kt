@@ -47,7 +47,6 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_serve
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
@@ -145,8 +144,9 @@ private fun CameraSelectionScreenContent(
         (connectionState as? ConnectionState.Disconnected)
             ?.additionalInfo
             ?.let { exception ->
+                val detail = exception::class.simpleName ?: "<unknown>"
                 Text(
-                    text = stringResource(Res.string.client_connection_chooser_error_details, exception.prettify()),
+                    text = stringResource(Res.string.client_connection_chooser_error_details, detail),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
