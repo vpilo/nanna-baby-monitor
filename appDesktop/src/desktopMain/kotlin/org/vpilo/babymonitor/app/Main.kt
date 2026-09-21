@@ -14,9 +14,15 @@ private fun babyMonitorMain() {
     val koin = initializeKoin()
     val settingsRepository = koin.get<SettingsRepository>()
 
+    onApplicationStart()
     application {
+        fun onCloseRequestHandler() {
+            onApplicationStop()
+            exitApplication()
+        }
+
         Window(
-            onCloseRequest = ::exitApplication,
+            onCloseRequest = ::onCloseRequestHandler,
             title = stringResource(Res.string.app_name),
             icon = painterResource(Res.drawable.app_icon),
             state = rememberPersistedWindowState(settingsRepository),

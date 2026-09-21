@@ -15,6 +15,7 @@ import org.vpilo.babymonitor.app.onboarding.OnboardingScreenViewModel
 import org.vpilo.babymonitor.app.server.home.ServerHomeScreenViewModel
 import org.vpilo.babymonitor.app.server.paireddevices.PairedDevicesScreenViewModel
 import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreenViewModel
+import org.vpilo.babymonitor.errorreport.model.ErrorRecorder
 import org.vpilo.babymonitor.model.usecase.PlayReceivedAudioUseCase
 import kotlin.coroutines.CoroutineContext
 
@@ -23,7 +24,7 @@ expect val appPlatformModule: Module
 val appSharedKoinModules =
     listOf(
         module {
-            single<CoroutineContext> { Dispatchers.Default }
+            single<CoroutineContext> { Dispatchers.Default + ErrorRecorder.getCoroutineExceptionHandler() }
 
             factoryOf(::PlayReceivedAudioUseCase)
 

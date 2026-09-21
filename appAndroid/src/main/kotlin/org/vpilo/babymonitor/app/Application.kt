@@ -9,5 +9,6 @@ class Application : Application() {
         initializeKoin {
             androidContext(this@Application)
         }
+        onApplicationStart()
     }
 }

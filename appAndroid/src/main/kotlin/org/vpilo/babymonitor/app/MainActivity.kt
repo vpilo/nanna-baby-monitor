@@ -4,11 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.CompositionLocalProvider
+import org.koin.android.ext.android.get
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
+import kotlin.coroutines.CoroutineContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // The application might stay in memory after quit.
+        onApplicationStart()
 
         AndroidServiceRegistry.setAppCloseListener(::quit)
 
@@ -27,6 +32,7 @@ class MainActivity : ComponentActivity() {
     private fun quit() {
         AndroidServiceRegistry.setAppCloseListener(null)
         AndroidServiceRegistry.shutdown()
+        onApplicationStop()
         finishAndRemoveTask()
     }
 }
