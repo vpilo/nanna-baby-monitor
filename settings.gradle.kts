@@ -30,6 +30,10 @@ include(":settings:data")
 include(":settings:model")
 include(":settings:presentation")
 
+include(":errorreport:data")
+include(":errorreport:model")
+include(":errorreport:presentation")
+
 include(":model")
 include(":data")
 include(":presentation")
