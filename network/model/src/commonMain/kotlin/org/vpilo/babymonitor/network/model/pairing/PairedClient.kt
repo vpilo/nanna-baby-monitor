@@ -12,4 +12,6 @@ data class PairedClient(
     val pairedAtEpochMillis: Long,
 ) {
     fun asDevice(): Device = Device.Client(DeviceId.parse(deviceId), name)
+
+    override fun toString(): String = "PairedClient($deviceId)"
 }

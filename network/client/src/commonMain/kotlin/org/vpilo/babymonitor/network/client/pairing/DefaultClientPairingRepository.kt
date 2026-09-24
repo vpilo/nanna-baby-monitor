@@ -9,6 +9,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.websocket.CloseReason
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
@@ -79,7 +80,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
         clientDevice: Device.Client,
         pin: Pin,
     ): ClientPairingState {
-        Logger.w(TAG) { "Connecting to $host to pair" }
+        Logger.w(TAG) { "Connecting to $server to pair" }
         return try {
             var outcome: ClientPairingState = GENERIC_FAILURE
             wss(
@@ -101,7 +102,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
         } catch (
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
-            Logger.w(TAG, ex) { "Pairing with $server via $host (${host.hostAddress}) failed" }
+            Logger.w(TAG) { "Pairing with $server failed: ${ex.prettify()}" }
             GENERIC_FAILURE
         }
     }

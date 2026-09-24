@@ -122,7 +122,7 @@ internal class PairingCoordinator(
         )
         activeWindow = null
         _state.value = ServerPairingState.Succeeded(hello.clientName)
-        Logger.i(TAG) { "Paired with client ${hello.clientId} (${hello.clientName})" }
+        Logger.i(TAG) { "Paired with client ${hello.clientId}" }
     }
 
     private fun registerWrongAttempt(window: ActiveWindow) {

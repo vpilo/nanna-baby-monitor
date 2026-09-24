@@ -59,7 +59,7 @@ class DefaultSettingsRepository(
                     type.java.enumConstants?.firstOrNull { (it as Enum<*>).name == savedString }
                         ?: run {
                             Logger.w(TAG) {
-                                "Saved value '$savedString' for setting '$id' does not match any enum constant!"
+                                "Saved value for setting '$id' does not match any enum constant!"
                             }
                             default
                         }
@@ -77,7 +77,7 @@ class DefaultSettingsRepository(
         val validatedValue =
             setting.validateChange(value)
                 ?: run {
-                    Logger.w(TAG) { "Validation failed for value '$value' of '${setting.id}': keeping previous value." }
+                    Logger.w(TAG) { "Validation failed for new value of '${setting.id}': keeping previous value." }
                     return
                 }
         dataStore.edit { settings ->
@@ -95,7 +95,7 @@ class DefaultSettingsRepository(
 
                 else -> {
                     if (setting.type.java.isEnum) {
-                        check(validatedValue is Enum<*>) { "Value $validatedValue is not an enum for setting ${setting.id}" }
+                        check(validatedValue is Enum<*>) { "Value is not an enum for setting ${setting.id}" }
                         settings[stringPreferencesKey(setting.id.value)] = validatedValue.name
                     } else {
                         error("Unsupported type ${setting.type} for setting ${setting.id}")
@@ -121,7 +121,7 @@ class DefaultSettingsRepository(
                         entries
                     }
                 entries.forEach { (setting, value) ->
-                    Logger.d(TAG) { "Delayed save of '${setting.id}' to $value" }
+                    Logger.d(TAG) { "Delayed save of '${setting.id}'" }
                     @Suppress("UNCHECKED_CAST")
                     save(setting as Setting<Any>, value)
                 }

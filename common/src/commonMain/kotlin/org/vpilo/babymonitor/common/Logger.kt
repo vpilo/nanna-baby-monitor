@@ -1,8 +1,9 @@
 package org.vpilo.babymonitor.common
 
+import kotlin.concurrent.Volatile
 import kotlin.reflect.KClass
 
-public expect val platformLogger: PlatformLogger
+internal expect val platformLogger: PlatformLogger
 
 /**
  * Logging abstraction.
@@ -11,6 +12,14 @@ public expect val platformLogger: PlatformLogger
  */
 public object Logger {
     private const val UNKNOWN_CLASS_NAME = "<BabyMonitor>"
+
+    @Volatile
+    var currentLogger: PlatformLogger = platformLogger
+        private set
+
+    internal fun setLogger(logger: PlatformLogger) {
+        currentLogger = logger
+    }
 
     /**
      * Log a message at debug level from [caller].
@@ -23,7 +32,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(caller.asTag(), LogLevel.DEBUG, message(), throwable)
+        currentLogger.log(caller.asTag(), LogLevel.DEBUG, message(), throwable)
     }
 
     /**
@@ -36,7 +45,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(tag, LogLevel.DEBUG, message(), throwable)
+        currentLogger.log(tag, LogLevel.DEBUG, message(), throwable)
     }
 
     /**
@@ -50,7 +59,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(caller.asTag(), LogLevel.INFO, message(), throwable)
+        currentLogger.log(caller.asTag(), LogLevel.INFO, message(), throwable)
     }
 
     /**
@@ -63,7 +72,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(tag, LogLevel.INFO, message(), throwable)
+        currentLogger.log(tag, LogLevel.INFO, message(), throwable)
     }
 
     /**
@@ -77,7 +86,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(caller.asTag(), LogLevel.WARN, message(), throwable)
+        currentLogger.log(caller.asTag(), LogLevel.WARN, message(), throwable)
     }
 
     /**
@@ -90,7 +99,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(tag, LogLevel.WARN, message(), throwable)
+        currentLogger.log(tag, LogLevel.WARN, message(), throwable)
     }
 
     /**
@@ -104,7 +113,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(caller.asTag(), LogLevel.ERROR, message(), throwable)
+        currentLogger.log(caller.asTag(), LogLevel.ERROR, message(), throwable)
     }
 
     /**
@@ -117,7 +126,7 @@ public object Logger {
         throwable: Throwable? = null,
         message: () -> String,
     ) {
-        platformLogger.log(tag, LogLevel.ERROR, message(), throwable)
+        currentLogger.log(tag, LogLevel.ERROR, message(), throwable)
     }
 
     /**

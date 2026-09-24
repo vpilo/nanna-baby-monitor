@@ -10,6 +10,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // It's necessary to ensure the app is reinitialized here: the application might stay in memory after quit, keeping the Application
+        // created, but without an Activity.
+        onApplicationStart()
+
         AndroidServiceRegistry.setAppCloseListener(::quit)
 
         setContent {
@@ -27,6 +31,7 @@ class MainActivity : ComponentActivity() {
     private fun quit() {
         AndroidServiceRegistry.setAppCloseListener(null)
         AndroidServiceRegistry.shutdown()
+        onApplicationStop()
         finishAndRemoveTask()
     }
 }

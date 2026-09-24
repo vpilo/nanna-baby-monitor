@@ -90,7 +90,7 @@ internal class DefaultRemoteDiscoveryRepository(
 
     private suspend fun runDiscoveryLoop() {
         while (true) {
-            Logger.d(TAG) { "Relay discovery connection started for ${relayConfiguration.host}" }
+            Logger.d(TAG) { "Relay discovery connection started" }
             runCatching {
                 session?.close()
                 relayWss(

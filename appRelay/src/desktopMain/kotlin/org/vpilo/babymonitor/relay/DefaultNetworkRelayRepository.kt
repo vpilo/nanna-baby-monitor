@@ -190,7 +190,7 @@ class DefaultNetworkRelayRepository {
                 }
         val server = Device.RemoteServer.fromTransportString(registration)
         if (server == null) {
-            Logger.e(TAG) { "Invalid server registration: '$registration'" }
+            Logger.e(TAG) { "Invalid server registration!" }
             close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Invalid registration"))
             return
         }

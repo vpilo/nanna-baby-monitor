@@ -68,7 +68,7 @@ internal class WebSocketConnectionHandler(
         host: InetAddress,
         nextHosts: Set<InetAddress>,
     ): Unit =
-        attemptSafeConnection(target = host, connect = { startWebSocket(host) }) {
+        attemptSafeConnection(target = host.hashCode(), connect = { startWebSocket(host) }) {
             if (nextHosts.isNotEmpty()) {
                 delay(Constants.WEBSOCKET_CONNECTION_ATTEMPT_DELAY)
                 val nextHost = nextHosts.first()
@@ -108,13 +108,13 @@ internal class WebSocketConnectionHandler(
                     }
 
                 is CertificateException -> {
-                    Logger.w(TAG) { "Certificate mismatch for server $target for $endpointPath: ${lastException.message}" }
+                    Logger.w(TAG) { "Certificate mismatch for server $target for $endpointPath: ${lastException.prettify()}" }
                     connectionJob = null
                     onDisconnected(lastException)
                 }
 
                 is PairingRevokedException -> {
-                    Logger.w(TAG) { "Pairing revoked by server $target for $endpointPath: ${lastException.message}" }
+                    Logger.w(TAG) { "Pairing revoked by server $target for $endpointPath: ${lastException.prettify()}" }
                     connectionJob = null
                     onDisconnected(lastException)
                 }
@@ -164,7 +164,7 @@ internal class WebSocketConnectionHandler(
     }
 
     private suspend fun connectToRelay(): Unit =
-        attemptSafeConnection(target = relayConfiguration?.host, connect = ::handleRelaySession) {
+        attemptSafeConnection(target = relayConfiguration, connect = ::handleRelaySession) {
             connectionJob = null
             onDisconnected(ConnectException("Relay connection failure"))
         }

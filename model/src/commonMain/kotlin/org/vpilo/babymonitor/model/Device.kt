@@ -52,7 +52,7 @@ sealed class Device(
         return true
     }
 
-    override fun toString(): String = "${this::class.simpleName}('$name', id $id, ${addresses.size} addresses)"
+    override fun toString(): String = "${this::class.simpleName}($id, ${addresses.size} addresses)"
 
     @Stable
     @Suppress("UnnecessaryAbstractClass")

@@ -32,7 +32,7 @@ actual class CameraQrScannerViewModel actual constructor(
     override fun SubscriptionScope.onSubscribed() {
         qrReader.scannedDataFlow
             .subscribe {
-                Logger.d(TAG) { "QR code scan: $it" }
+                Logger.d(TAG) { "QR code scanned" }
                 it ?: return@subscribe
                 CameraQrScannerEffect.QrScanned(it).sendEffect()
             }

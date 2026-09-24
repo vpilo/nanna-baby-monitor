@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Only the staged error reports; must match the directory in errorreport:data. -->
+    <cache-path
+        name="error_reports"
+        path="error-reports/" />
+</paths>

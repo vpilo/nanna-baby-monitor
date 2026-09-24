@@ -124,7 +124,7 @@ internal class DefaultNetworkServerRepository(
                 server = this
 
                 val readyHandler: (ApplicationEnvironment) -> Unit = {
-                    Logger.i(TAG) { "Server is ready at ${Constants.SERVICES_LISTEN_ADDRESS}" }
+                    Logger.i(TAG) { "Server is ready" }
                     isServerReady.value = true
                 }
                 lateinit var stoppedHandler: (Application) -> Unit

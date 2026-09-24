@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="error_report_prompt_title">Inviare una segnalazione di errore?</string>
+    <string name="error_report_prompt_message">L'ultima volta l'app non si è chiusa correttamente. Puoi inviare una segnalazione allo sviluppatore per aiutare a risolvere il problema: contiene il registro dell'app di quella sessione e informazioni di base sul dispositivo, senza dati personali. Potrai controllare l'email prima di inviarla, oppure condividere direttamente il file zip della segnalazione con lo sviluppatore.</string>
+    <string name="error_report_send">Invia</string>
+    <string name="error_report_dont_send">Non inviare</string>
+    <string name="error_report_building_title">Preparazione della segnalazione…</string>
+    <string name="error_report_handoff_title">Segnalazione pronta</string>
+    <string name="error_report_handoff_shared">La segnalazione è stata condivisa. Se hai scelto la tua app email, controlla l'email, poi inviala. Puoi anche condividere direttamente il file zip della segnalazione con lo sviluppatore, tramite qualsiasi altra app.</string>
+    <string name="error_report_handoff_attach">Allega questo file all'email appena aperta, poi inviala, oppure condividi direttamente il file zip con lo sviluppatore. Il file verrà eliminato quando chiuderai questo messaggio!</string>
+    <string name="error_report_handoff_attach_no_mail_client">Non è stato possibile aprire un'app email. Invia questo file via email a %1$s, oppure condividi direttamente il file zip con lo sviluppatore: l'indirizzo è stato copiato negli appunti. Il file verrà eliminato quando chiuderai questo messaggio!</string>
+    <string name="error_report_failed_title">Segnalazione non inviata</string>
+    <string name="error_report_failed_message">Non è stato possibile preparare la segnalazione.</string>
+    <string name="error_report_close">Chiudi</string>
+</resources>

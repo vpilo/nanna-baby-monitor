@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.network.security.pairing
 
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
@@ -73,7 +74,7 @@ internal class DefaultPairingStorageRepository(
                 }
             }
         settingsRepository.save(setting, json.encodeToString(updated))
-        Logger.i(TAG) { "Updated stored name for paired device $id to $newName" }
+        Logger.i(TAG) { "Updated stored name for paired device $id" }
     }
 
     private suspend fun getServers(): List<PairedServer> = pairedServers.first()
@@ -92,6 +93,11 @@ internal class DefaultPairingStorageRepository(
 
     private companion object {
         private val TAG = DefaultPairingStorageRepository::class
-        private val json = Json { ignoreUnknownKeys = true }
+        private val json =
+            Json {
+                ignoreUnknownKeys = true
+                @OptIn(ExperimentalSerializationApi::class)
+                exceptionsWithDebugInfo = false
+            }
     }
 }
