@@ -1,3 +1,2 @@
-Prima versione.
-
+Aggiunto una richiesta di invio di un rapporto degli errori dopo un crash. Per favore, inviate i rapporti, mi aiuteranno a correggere i bug più velocemente!
 Le associazioni ora funzionano in entrambe le direzioni. Dopo l'aggiornamento, aggiorna tutti i dispositivi e associali di nuovo.

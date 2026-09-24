@@ -74,6 +74,8 @@
     <string name="app_title_client_pairing">Pair with %1$s</string>
     <string name="client_pairing_camera_or_pin">Scan the QR code on "%1$s" or enter the PIN it is showing.</string>
     <string name="client_pairing_server_not_on_network">Camera not found on this network</string>
+    <string name="client_pairing_failed_storage_error">Storage error</string>
+    <string name="client_pairing_failed_protocol_error">Protocol error</string>
     <string name="client_pairing_failed_invalid_qr">Invalid QR code</string>
     <string name="client_pairing_failed_wrong_pin">Wrong PIN, try again</string>
     <string name="client_pairing_failed_no_active_window">Pairing is not in progress on that device</string>

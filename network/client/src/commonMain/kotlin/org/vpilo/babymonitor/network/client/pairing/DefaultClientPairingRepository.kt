@@ -59,12 +59,11 @@ internal class DefaultClientPairingRepository(
 
         val identity =
             runCatching {
-                // First use generates an RSA key, which takes seconds on slow phones.
                 withContext(Dispatchers.IO) { loadIdentity() }
             }.getOrElse {
                 if (it is CancellationException) throw it
                 Logger.e(TAG, it) { "Unable to load or create this device's identity" }
-                return GENERIC_FAILURE
+                return ClientPairingState.Failure(ClientPairingFailureCause.STORAGE_ERROR)
             }
 
         val trustManager = PinnedTrustManager(expectedFingerprint = null)
@@ -111,7 +110,7 @@ internal class DefaultClientPairingRepository(
                     trustManager.capturedCertificate
                         ?: run {
                             Logger.w(TAG) { "TLS session did not present a certificate to pin" }
-                            outcome = GENERIC_FAILURE
+                            outcome = ClientPairingState.Failure(ClientPairingFailureCause.PROTOCOL_ERROR)
                             return@wss
                         }
                 outcome = runPairing(certificate, server, clientDevice, clientCertFingerprint, pin)
@@ -139,7 +138,7 @@ internal class DefaultClientPairingRepository(
             val serverPublicKey =
                 receiveBase64FrameOrNull() ?: run {
                     Logger.w(TAG) { "Server did not answer the pairing hello with its public key" }
-                    return GENERIC_FAILURE
+                    return ClientPairingState.Failure(ClientPairingFailureCause.PROTOCOL_ERROR)
                 }
 
             val transcript =

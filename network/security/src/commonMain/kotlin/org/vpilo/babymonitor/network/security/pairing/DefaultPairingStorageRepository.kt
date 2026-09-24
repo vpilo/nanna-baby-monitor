@@ -2,7 +2,6 @@ package org.vpilo.babymonitor.network.security.pairing
 
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.common.Logger
@@ -11,20 +10,14 @@ import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
-import org.vpilo.babymonitor.settings.model.settings.LegacyPairedClientsJson
-import org.vpilo.babymonitor.settings.model.settings.LegacyPairedServersJson
 import org.vpilo.babymonitor.settings.model.settings.PairedDevicesJson
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class DefaultPairingStorageRepository(
     private val settingsRepository: SettingsRepository,
 ) : PairingStorageRepository {
-    private val legacyPairingsCleared = AtomicBoolean(false)
-
     override val pairedDevices =
         settingsRepository
             .flowOf(Setting.PairedDevicesJson)
-            .onStart { clearLegacyPairingsOnce() }
             .map { it.decodeOrEmpty() }
 
     override suspend fun pair(device: PairedDevice) {
@@ -51,12 +44,6 @@ internal class DefaultPairingStorageRepository(
     private suspend fun getDevices(): List<PairedDevice> = pairedDevices.first()
 
     private suspend fun save(devices: List<PairedDevice>) = settingsRepository.save(Setting.PairedDevicesJson, json.encodeToString(devices))
-
-    private suspend fun clearLegacyPairingsOnce() {
-        if (!legacyPairingsCleared.compareAndSet(false, true)) return
-        settingsRepository.clear(Setting.LegacyPairedServersJson)
-        settingsRepository.clear(Setting.LegacyPairedClientsJson)
-    }
 
     private fun String.decodeOrEmpty(): List<PairedDevice> =
         runCatching { json.decodeFromString<List<PairedDevice>>(this) }

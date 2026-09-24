@@ -30,7 +30,9 @@ import babymonitor.appcommon.generated.resources.client_pairing_failed_connectio
 import babymonitor.appcommon.generated.resources.client_pairing_failed_invalid_qr
 import babymonitor.appcommon.generated.resources.client_pairing_failed_mitm_suspected
 import babymonitor.appcommon.generated.resources.client_pairing_failed_no_active_window
+import babymonitor.appcommon.generated.resources.client_pairing_failed_protocol_error
 import babymonitor.appcommon.generated.resources.client_pairing_failed_server_not_on_network
+import babymonitor.appcommon.generated.resources.client_pairing_failed_storage_error
 import babymonitor.appcommon.generated.resources.client_pairing_failed_wrong_pin
 import babymonitor.appcommon.generated.resources.client_pairing_qr_wrong_device
 import babymonitor.appcommon.generated.resources.client_pairing_server_not_on_network
@@ -136,6 +138,8 @@ private fun ClientPairingView(
 
                 is ClientPairingState.Failure -> {
                     when (pairingState.reason) {
+                        ClientPairingFailureCause.STORAGE_ERROR -> Res.string.client_pairing_failed_storage_error
+                        ClientPairingFailureCause.PROTOCOL_ERROR -> Res.string.client_pairing_failed_protocol_error
                         ClientPairingFailureCause.INVALID_QR -> Res.string.client_pairing_failed_invalid_qr
                         ClientPairingFailureCause.WRONG_PIN -> Res.string.client_pairing_failed_wrong_pin
                         ClientPairingFailureCause.NO_ACTIVE_PAIRING_WINDOW -> Res.string.client_pairing_failed_no_active_window

@@ -5,12 +5,9 @@ import kotlinx.coroutines.test.runTest
 import org.vpilo.babymonitor.model.settings.SettingId
 import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.settings.model.Setting
-import org.vpilo.babymonitor.settings.model.settings.LegacyPairedClientsJson
-import org.vpilo.babymonitor.settings.model.settings.LegacyPairedServersJson
 import org.vpilo.babymonitor.settings.model.settings.PairedDevicesJson
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.uuid.Uuid
 
@@ -65,26 +62,6 @@ class DefaultPairingStorageRepositoryTest {
             repository.updateName(Uuid.parse(device.deviceId), "Kitchen")
 
             assertEquals("Kitchen", repository.find(Uuid.parse(device.deviceId))?.name)
-        }
-
-    @Test
-    fun legacyPairingsAreClearedAndIgnored() =
-        runTest {
-            val legacyServers = """[{"deviceId":"${Uuid.random()}","name":"Old","certFingerprint":"x","sharedSecretBase64":"eA=="}]"""
-            val legacyClients =
-                """[{"deviceId":"${Uuid.random()}","name":"Old","sharedSecretBase64":"eA==","pairedAtEpochMillis":1}]"""
-            val settings =
-                FakeSettingsRepository(
-                    mapOf(
-                        Setting.LegacyPairedServersJson.id to legacyServers,
-                        Setting.LegacyPairedClientsJson.id to legacyClients,
-                    ),
-                )
-            val repository = DefaultPairingStorageRepository(settings)
-
-            assertEquals(emptyList(), repository.pairedDevices.first())
-            assertFalse(settings.values.value.containsKey(Setting.LegacyPairedServersJson.id))
-            assertFalse(settings.values.value.containsKey(Setting.LegacyPairedClientsJson.id))
         }
 
     @Test

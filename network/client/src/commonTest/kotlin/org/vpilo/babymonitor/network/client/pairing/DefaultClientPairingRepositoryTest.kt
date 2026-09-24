@@ -20,6 +20,6 @@ class DefaultClientPairingRepositoryTest {
 
             val outcome = repository.pairWith(server, Device.Client(Uuid.random(), "Phone"), Pin.generate())
 
-            assertEquals(ClientPairingState.Failure(ClientPairingFailureCause.CONNECTION_FAILED), outcome)
+            assertEquals(ClientPairingState.Failure(ClientPairingFailureCause.STORAGE_ERROR), outcome)
         }
 }

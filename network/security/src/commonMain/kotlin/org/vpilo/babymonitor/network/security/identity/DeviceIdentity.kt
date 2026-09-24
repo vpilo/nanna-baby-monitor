@@ -34,7 +34,6 @@ class DeviceIdentity private constructor(
         )
 
     companion object {
-        /** Blocking: reads the key store, or generates an RSA key on first use. */
         @Synchronized
         fun loadOrCreate(): DeviceIdentity {
             val directory = File(getSettingsDir(), IDENTITY_DIRECTORY_NAME)

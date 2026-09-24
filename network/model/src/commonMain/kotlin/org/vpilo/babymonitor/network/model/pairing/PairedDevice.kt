@@ -5,8 +5,9 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 
 /**
- * A pairing with a peer, valid whichever of the two devices is the camera. [certFingerprint] is the peer's TLS identity, pinned
- * whenever the peer is the camera; [sharedSecretBase64] is `S`, used by the session handshake in either direction.
+ * A pairing with a peer.
+ * [certFingerprint] is the peer's TLS identity, pinned whenever the peer is the camera; [sharedSecretBase64] is `S`, used by the
+ * session handshake in either direction.
  */
 @Serializable
 data class PairedDevice(

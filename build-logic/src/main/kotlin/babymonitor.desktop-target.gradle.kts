@@ -14,3 +14,7 @@ plugins.withId(
         jvm("desktop")
     }
 }
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}

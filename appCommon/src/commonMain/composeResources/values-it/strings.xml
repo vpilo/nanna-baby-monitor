@@ -70,6 +70,8 @@
     <string name="app_title_client_pairing">Associa a %1$s</string>
     <string name="client_pairing_camera_or_pin">Scansiona il codice QR su "%1$s" oppure inserisci il PIN che sta mostrando.</string>
     <string name="client_pairing_server_not_on_network">Telecamera non trovata su questa rete</string>
+    <string name="client_pairing_failed_storage_error">Errore di archiviazione</string>
+    <string name="client_pairing_failed_protocol_error">Errore di protocollo</string>
     <string name="client_pairing_failed_invalid_qr">Codice QR non valido</string>
     <string name="client_pairing_failed_wrong_pin">PIN errato, riprova</string>
     <string name="client_pairing_failed_no_active_window">Su quel dispositivo non è in corso nessuna associazione</string>
@@ -79,5 +81,5 @@
     <string name="client_pairing_qr_wrong_device">Il codice scansionato appartiene a un altro dispositivo</string>
     <string name="client_pairing_pin_label">PIN</string>
     <string name="client_pairing_camera_failure">Fotocamera non disponibile, impossibile scansionare i codici QR</string>
-    <string name="menu_paired_devices_description">Vedi e dissocia i dispositivi associati a questo</string>
+    <string name="menu_paired_devices_description">Vedi e dissocia i dispositivi associati</string>
 </resources>

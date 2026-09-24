@@ -11,18 +11,3 @@ val Setting.Companion.PairedDevicesJson by makeSetting {
         default = "[]",
     )
 }
-
-// Per-role pairings from before pairings were symmetric. Never read: only cleared, so their secrets don't stay on disk.
-val Setting.Companion.LegacyPairedServersJson by makeSetting {
-    Setting.makeString(
-        id = SettingId("paired_servers_json"),
-        default = "[]",
-    )
-}
-
-val Setting.Companion.LegacyPairedClientsJson by makeSetting {
-    Setting.makeString(
-        id = SettingId("paired_clients_json"),
-        default = "[]",
-    )
-}

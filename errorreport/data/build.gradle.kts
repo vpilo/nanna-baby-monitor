@@ -50,7 +50,3 @@ kotlin {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 }
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-}

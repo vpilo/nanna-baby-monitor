@@ -70,6 +70,8 @@
     <string name="app_title_client_pairing">Koppelen met %1$s</string>
     <string name="client_pairing_camera_or_pin">Scan de QR-code op "%1$s" of voer de pincode in die daarop wordt getoond.</string>
     <string name="client_pairing_server_not_on_network">Camera niet gevonden op dit netwerk</string>
+    <string name="client_pairing_failed_storage_error">Opslagfout</string>
+    <string name="client_pairing_failed_protocol_error">Protocolfout</string>
     <string name="client_pairing_failed_invalid_qr">Ongeldige QR-code</string>
     <string name="client_pairing_failed_wrong_pin">Onjuiste pincode, probeer het opnieuw</string>
     <string name="client_pairing_failed_no_active_window">Op dat apparaat is geen koppeling bezig</string>
