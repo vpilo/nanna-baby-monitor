@@ -151,7 +151,7 @@ class CameraSelectionScreenViewModel(
         when (action) {
             is CameraSelectionScreenAction.ConnectToServer -> {
                 vmScope.launch {
-                    if (pairingStorageRepository.findServer(action.server.id) != null) {
+                    if (pairingStorageRepository.find(action.server.id) != null) {
                         networkClientRepository.connect(action.server)
                     } else {
                         CameraSelectionScreenEffect.RequirePairing(action.server).sendEffect()

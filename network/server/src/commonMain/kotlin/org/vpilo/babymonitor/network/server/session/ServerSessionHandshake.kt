@@ -27,7 +27,7 @@ internal suspend fun WebSocketSession.serverSessionHandshake(
             return null
         }
 
-    val paired = pairingStorageRepository.findClient(request.clientId)
+    val paired = pairingStorageRepository.find(request.clientId)
     if (paired == null) {
         Logger.w(TAG) { "Unknown or revoked client ${request.clientId}, refusing session" }
         close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No longer paired"))

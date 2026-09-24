@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.network.model.pairing.PairedClient
+import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingFailureReason
@@ -113,12 +113,12 @@ internal class PairingCoordinator(
         val ms = computeServerConfirmation(window.pin, transcript)
         session.sendPairingResult(PairingResult.Success(ms))
 
-        pairingStorageRepository.pairClient(
-            PairedClient(
+        pairingStorageRepository.pair(
+            PairedDevice(
                 deviceId = hello.clientId.toString(),
                 name = hello.clientName,
+                certFingerprint = hello.certFingerprint,
                 sharedSecretBase64 = Base64.encode(sharedSecret),
-                pairedAtEpochMillis = System.currentTimeMillis(),
             ),
         )
         activeWindow = null

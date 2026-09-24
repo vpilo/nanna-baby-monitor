@@ -84,7 +84,7 @@ class ClientPairingScreenViewModel(
             val outcome = clientPairingRepository.pairWith(server, clientDevice, pin)
             state.copy(pairingState = outcome).update()
             if (outcome is ClientPairingState.Success) {
-                pairingStorageRepository.pairServer(outcome.paired)
+                pairingStorageRepository.pair(outcome.paired)
                 ClientPairingScreenEffect.Paired.sendEffect()
             }
         }

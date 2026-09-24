@@ -19,8 +19,8 @@ internal suspend fun DefaultClientWebSocketSession.controlClientWebSocket(
     pairingStorageRepository: PairingStorageRepository,
     activeSessionsRepository: InternalActiveSessionsRepository,
 ) {
-    val pairedServer = pairingStorageRepository.findServer(serverDeviceId)
-    val cipher = clientSessionHandshake(localDevice.id, serverDeviceId, pairedServer, StreamType.CONTROL) ?: return
+    val pairedDevice = pairingStorageRepository.find(serverDeviceId)
+    val cipher = clientSessionHandshake(localDevice.id, serverDeviceId, pairedDevice, StreamType.CONTROL) ?: return
 
     activeSessionsRepository.register(serverDeviceId, this)
     try {

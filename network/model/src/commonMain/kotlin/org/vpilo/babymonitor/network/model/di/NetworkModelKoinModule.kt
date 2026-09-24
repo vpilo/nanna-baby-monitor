@@ -5,7 +5,7 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 import org.vpilo.babymonitor.network.model.usecase.GetConnectableServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetNewServersFlowUseCase
-import org.vpilo.babymonitor.network.model.usecase.GetPairedDevicesForCurrentRoleFlowUseCase
+import org.vpilo.babymonitor.network.model.usecase.GetPairedDevicesFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetPairedNonVisibleServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetPairedServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetVisibleServersFlowUseCase
@@ -16,7 +16,7 @@ val networkModelKoinModule: Module =
     module {
         factoryOf(::GetConnectableServersFlowUseCase)
         factoryOf(::GetNewServersFlowUseCase)
-        factoryOf(::GetPairedDevicesForCurrentRoleFlowUseCase)
+        factoryOf(::GetPairedDevicesFlowUseCase)
         factoryOf(::GetPairedNonVisibleServersFlowUseCase)
         factoryOf(::GetPairedServersFlowUseCase)
         factoryOf(::GetVisibleServersFlowUseCase)

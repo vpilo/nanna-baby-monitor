@@ -6,7 +6,7 @@ sealed interface ClientPairingState {
     data object InProgress : ClientPairingState
 
     data class Success(
-        val paired: PairedServer,
+        val paired: PairedDevice,
     ) : ClientPairingState
 
     data class Failure(

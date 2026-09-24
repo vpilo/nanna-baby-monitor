@@ -65,7 +65,7 @@ internal class DefaultNetworkClientRepository(
 
         Logger.i(TAG) { "Connecting to $server" }
         val expectedFingerprint =
-            pairingStorageRepository.findServer(server.id)?.certFingerprint
+            pairingStorageRepository.find(server.id)?.certFingerprint
                 ?: error("Not paired with $server - unable to connect")
         val localDevice = localClientDeviceRepository.localDevice.first()
         controlHandler =
@@ -141,14 +141,14 @@ internal class DefaultNetworkClientRepository(
         when (exception) {
             is PairingRevokedException -> {
                 Logger.w(TAG) { "Server revoked our pairing; unpairing $server and giving up" }
-                scope.launch { pairingStorageRepository.unpairServer(server.id) }
+                scope.launch { pairingStorageRepository.unpair(server.id) }
                 disconnect(ConnectionState.ErrorReason.PairingRevoked)
                 return
             }
 
             is CertificateException -> {
                 Logger.w(TAG) { "Server certificate did not match with pairing; unpairing $server and giving up" }
-                scope.launch { pairingStorageRepository.unpairServer(server.id) }
+                scope.launch { pairingStorageRepository.unpair(server.id) }
                 disconnect(ConnectionState.ErrorReason.CertificateMismatch)
                 return
             }

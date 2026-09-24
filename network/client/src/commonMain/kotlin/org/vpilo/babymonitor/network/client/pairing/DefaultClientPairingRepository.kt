@@ -18,7 +18,7 @@ import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingRepository
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
-import org.vpilo.babymonitor.network.model.pairing.PairedServer
+import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.security.crypto.EcdhKeyPair
 import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
@@ -187,15 +187,15 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
             return ClientPairingState.Failure(ClientPairingFailureCause.MITM_SUSPECTED)
         }
         val sharedSecret = deriveSharedSecretS(clientKeyPair.deriveSharedSecret(serverPublicKey))
-        val pairedServer =
-            PairedServer(
+        val pairedDevice =
+            PairedDevice(
                 deviceId = server.id.toString(),
                 name = server.name,
                 certFingerprint = certificate.sha256Fingerprint(),
                 sharedSecretBase64 = Base64.encode(sharedSecret),
             )
         Logger.i(TAG) { "Paired with server $server" }
-        return ClientPairingState.Success(pairedServer)
+        return ClientPairingState.Success(pairedDevice)
     }
 
     private companion object {

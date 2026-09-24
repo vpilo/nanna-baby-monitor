@@ -54,7 +54,7 @@ internal class NetworkAudioReceiverRepository(
                         if (target == null) return@collect
                         val localDevice = localClientDeviceRepository.localDevice.first()
                         val expectedFingerprint =
-                            pairingStorageRepository.findServer(target.id)?.certFingerprint
+                            pairingStorageRepository.find(target.id)?.certFingerprint
                                 ?: error("Not paired with $target - unable to connect")
                         handler =
                             WebSocketConnectionHandler(
