@@ -21,7 +21,7 @@ compose-material = "1.9.0"
 compose-materialIconsExtended = "1.7.3"
 compose-navigation = "2.9.2"
 compose-navigation-event = "1.1.0"
-compose-stability-analyzer = "0.13.0"
+compose-stability-analyzer = "0.14.0"
 
 androidx-activityCompose = "1.13.0"
 androidx-core = "1.19.0"
