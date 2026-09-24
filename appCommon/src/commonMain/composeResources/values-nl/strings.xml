@@ -79,5 +79,5 @@
     <string name="client_pairing_qr_wrong_device">De gescande code hoort bij een ander apparaat</string>
     <string name="client_pairing_pin_label">Pincode</string>
     <string name="client_pairing_camera_failure">Camera niet beschikbaar, QR-codes kunnen niet worden gescand</string>
-    <string name="menu_paired_devices_description">Bekijk en verwijder apparaten die aan deze camera zijn gekoppeld</string>
+    <string name="menu_paired_devices_description">Bekijk en ontkoppel de apparaten die aan dit apparaat zijn gekoppeld</string>
 </resources>

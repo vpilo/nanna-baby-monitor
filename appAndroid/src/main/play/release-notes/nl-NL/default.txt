@@ -1,1 +1,3 @@
 Eerste versie.
+
+Koppelingen werken nu in beide richtingen. Werk na de update alle apparaten bij en koppel ze opnieuw.

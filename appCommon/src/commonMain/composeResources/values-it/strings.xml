@@ -79,5 +79,5 @@
     <string name="client_pairing_qr_wrong_device">Il codice scansionato appartiene a un altro dispositivo</string>
     <string name="client_pairing_pin_label">PIN</string>
     <string name="client_pairing_camera_failure">Fotocamera non disponibile, impossibile scansionare i codici QR</string>
-    <string name="menu_paired_devices_description">Vedi e revoca i dispositivi associati a questa telecamera</string>
+    <string name="menu_paired_devices_description">Vedi e dissocia i dispositivi associati a questo</string>
 </resources>
