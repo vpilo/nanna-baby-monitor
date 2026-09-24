@@ -5,6 +5,7 @@ import org.vpilo.babymonitor.model.repository.DeviceId
 data class PairingHello(
     val clientId: DeviceId,
     val clientName: String,
+    val certFingerprint: String,
     val publicKey: ByteArray,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -15,6 +16,7 @@ data class PairingHello(
 
         if (clientId != other.clientId) return false
         if (clientName != other.clientName) return false
+        if (certFingerprint != other.certFingerprint) return false
         if (!publicKey.contentEquals(other.publicKey)) return false
 
         return true
@@ -23,6 +25,7 @@ data class PairingHello(
     override fun hashCode(): Int {
         var result = clientId.hashCode()
         result = 31 * result + clientName.hashCode()
+        result = 31 * result + certFingerprint.hashCode()
         result = 31 * result + publicKey.contentHashCode()
         return result
     }

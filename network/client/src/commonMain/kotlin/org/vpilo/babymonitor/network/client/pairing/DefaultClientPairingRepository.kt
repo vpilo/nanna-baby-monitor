@@ -7,7 +7,9 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.websocket.CloseReason
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
@@ -25,6 +27,8 @@ import org.vpilo.babymonitor.network.security.crypto.computeClientConfirmation
 import org.vpilo.babymonitor.network.security.crypto.deriveSharedSecretS
 import org.vpilo.babymonitor.network.security.crypto.sha256Fingerprint
 import org.vpilo.babymonitor.network.security.crypto.verifyServerConfirmation
+import org.vpilo.babymonitor.network.security.identity.DeviceIdentity
+import org.vpilo.babymonitor.network.security.pairing.PairingHello
 import org.vpilo.babymonitor.network.security.pairing.PairingResult
 import org.vpilo.babymonitor.network.security.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.security.protocol.receivePairingResultOrNull
@@ -36,8 +40,8 @@ import kotlin.io.encoding.Base64
 
 /**
  * Runs the client side of the pairing window: connects to the server's `/pair` endpoint with a
- * trust-on-first-use TLS trust manager, runs the ECDH+PIN exchange (Task 8), and - on success -
- * returns the derived shared secret and pinned server certificate fingerprint for storage.
+ * trust-on-first-use TLS trust manager, runs the ECDH+PIN exchange, and - on success - returns the
+ * derived shared secret and pinned server certificate fingerprint for storage.
  */
 internal class DefaultClientPairingRepository : ClientPairingRepository {
     override suspend fun pairWith(
@@ -62,9 +66,12 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
             return ClientPairingState.Failure(ClientPairingFailureCause.SERVER_NOT_ON_NETWORK)
         }
 
+        // First use generates an RSA key, which takes seconds on slow phones.
+        val identity = withContext(Dispatchers.IO) { DeviceIdentity.loadOrCreate() }
+
         httpClient.use { http ->
             server.addresses.forEach { address ->
-                val outcome = http.pairWithHost(address, trustManager, server, clientDevice, pin)
+                val outcome = http.pairWithHost(address, trustManager, server, clientDevice, identity.fingerprint, pin)
                 if (outcome != GENERIC_FAILURE) {
                     return outcome
                 }
@@ -78,6 +85,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
         trustManager: PinnedTrustManager,
         server: Device.Server,
         clientDevice: Device.Client,
+        clientCertFingerprint: String,
         pin: Pin,
     ): ClientPairingState {
         Logger.w(TAG) { "Connecting to $server to pair" }
@@ -96,7 +104,7 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
                             outcome = GENERIC_FAILURE
                             return@wss
                         }
-                outcome = runPairing(certificate, server, clientDevice, pin)
+                outcome = runPairing(certificate, server, clientDevice, clientCertFingerprint, pin)
             }
             outcome
         } catch (
@@ -111,11 +119,12 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
         certificate: X509Certificate,
         server: Device.Server,
         clientDevice: Device.Client,
+        clientCertFingerprint: String,
         pin: Pin,
     ): ClientPairingState {
         try {
             val clientKeyPair = EcdhKeyPair.create()
-            sendPairingHello(clientDevice.id, clientDevice.name, clientKeyPair.publicKeyEncoded)
+            sendPairingHello(PairingHello(clientDevice.id, clientDevice.name, clientCertFingerprint, clientKeyPair.publicKeyEncoded))
 
             val serverPublicKey =
                 receiveBase64FrameOrNull() ?: run {
@@ -123,7 +132,13 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
                     return GENERIC_FAILURE
                 }
 
-            val transcript = buildPairingTranscript(clientKeyPair.publicKeyEncoded, serverPublicKey, certificate.sha256Fingerprint())
+            val transcript =
+                buildPairingTranscript(
+                    clientKeyPair.publicKeyEncoded,
+                    serverPublicKey,
+                    certificate.sha256Fingerprint(),
+                    clientCertFingerprint,
+                )
             sendBase64Frame(computeClientConfirmation(pin, transcript))
 
             return when (val result = receivePairingResultOrNull()) {

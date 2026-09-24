@@ -4,17 +4,12 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readText
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.network.security.pairing.PairingHello
 import org.vpilo.babymonitor.network.security.pairing.PairingResult
 import kotlin.io.encoding.Base64
 
-suspend fun WebSocketSession.sendPairingHello(
-    clientId: DeviceId,
-    clientName: String,
-    publicKey: ByteArray,
-) = send(Frame.Text(listOf(clientId, clientName, Base64.encode(publicKey)).joinToString("|")))
+suspend fun WebSocketSession.sendPairingHello(hello: PairingHello) = send(Frame.Text(hello.toWireString()))
 
 suspend fun WebSocketSession.receivePairingHelloOrNull(): PairingHello? {
     val frame = incoming.receive()
@@ -22,22 +17,37 @@ suspend fun WebSocketSession.receivePairingHelloOrNull(): PairingHello? {
         Logger.w(TAG) { "Pairing hello is not a text frame" }
         return null
     }
-    val parts = frame.readText().split("|", limit = 3)
-    if (parts.size != 3) {
-        Logger.w(TAG) { "Pairing hello has ${parts.size} fields, expected 3" }
+    return parsePairingHelloOrNull(frame.readText())
+}
+
+/** `clientId|clientName|clientCertFingerprint|pubKeyB64`. */
+internal fun PairingHello.toWireString(): String =
+    listOf(clientId.toString(), clientName, certFingerprint, Base64.encode(publicKey)).joinToString(HELLO_SEPARATOR)
+
+/** Parses from both ends: the name is the only free-form field and may itself contain the separator. */
+internal fun parsePairingHelloOrNull(text: String): PairingHello? {
+    val parts = text.split(HELLO_SEPARATOR)
+    if (parts.size < HELLO_FIELD_COUNT) {
+        Logger.w(TAG) { "Pairing hello has ${parts.size} fields, expected $HELLO_FIELD_COUNT" }
         return null
     }
     val clientId =
-        parts[0].toDeviceIdOrNull() ?: run {
-            Logger.w(TAG) { "Pairing hello carries an unparseable device id: '${parts[0]}'" }
+        parts.first().toDeviceIdOrNull() ?: run {
+            Logger.w(TAG) { "Pairing hello carries an unparseable device id: '${parts.first()}'" }
             return null
         }
+    val certFingerprint = parts[parts.size - 2]
+    if (!FINGERPRINT_REGEX.matches(certFingerprint)) {
+        Logger.w(TAG) { "Pairing hello carries a malformed certificate fingerprint" }
+        return null
+    }
     val publicKey =
-        runCatching { Base64.decode(parts[2]) }.getOrNull() ?: run {
+        runCatching { Base64.decode(parts.last()) }.getOrNull() ?: run {
             Logger.w(TAG) { "Pairing hello carries an unparseable public key" }
             return null
         }
-    return PairingHello(clientId, parts[1], publicKey)
+    val clientName = parts.subList(1, parts.size - 2).joinToString(HELLO_SEPARATOR)
+    return PairingHello(clientId, clientName, certFingerprint, publicKey)
 }
 
 suspend fun WebSocketSession.sendBase64Frame(bytes: ByteArray) = send(Frame.Text(Base64.encode(bytes)))
@@ -69,3 +79,6 @@ suspend fun WebSocketSession.receivePairingResultOrNull(): PairingResult? {
 }
 
 private const val TAG = "PairingProtocol"
+private const val HELLO_SEPARATOR = "|"
+private const val HELLO_FIELD_COUNT = 4
+private val FINGERPRINT_REGEX = Regex("[0-9a-f]{64}")

@@ -94,7 +94,8 @@ internal class PairingCoordinator(
         val serverKeyPair = EcdhKeyPair.create()
         session.sendBase64Frame(serverKeyPair.publicKeyEncoded)
 
-        val transcript = buildPairingTranscript(hello.publicKey, serverKeyPair.publicKeyEncoded, deviceIdentity.fingerprint)
+        val transcript =
+            buildPairingTranscript(hello.publicKey, serverKeyPair.publicKeyEncoded, deviceIdentity.fingerprint, hello.certFingerprint)
         val mc =
             session.receiveBase64FrameOrNull() ?: run {
                 session.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Malformed confirmation"))
