@@ -44,7 +44,7 @@ import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
-import org.vpilo.babymonitor.network.server.identity.ServerIdentity
+import org.vpilo.babymonitor.network.security.identity.DeviceIdentity
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
 import org.vpilo.babymonitor.network.server.websockets.controlServerWebSocket
@@ -67,7 +67,7 @@ internal class DefaultNetworkServerRepository(
     private val isServerReady = MutableStateFlow(false)
 
     // The /pair route needs this identity's fingerprint to bind it into the pairing transcript.
-    private var serverIdentity: ServerIdentity? = null
+    private var deviceIdentity: DeviceIdentity? = null
     private var self: Device.LocalServer? = null
 
     override val serverStateFlow: Flow<ServerState> = serverStateDataSource.state
@@ -99,8 +99,8 @@ internal class DefaultNetworkServerRepository(
         foregroundLink.start()
         relayRegistration.identifySelf(self)
 
-        val identity = ServerIdentity.loadOrCreate()
-        serverIdentity = identity
+        val identity = DeviceIdentity.loadOrCreate()
+        deviceIdentity = identity
 
         scope.launch {
             embeddedServer(
@@ -266,7 +266,7 @@ internal class DefaultNetworkServerRepository(
                 timeout = Constants.WEBSOCKET_TIMEOUT
 
                 runWebSocketCatching(TAG) {
-                    pairingCoordinator.handlePairingSession(this, checkNotNull(serverIdentity) { "Server identity not loaded" })
+                    pairingCoordinator.handlePairingSession(this, checkNotNull(deviceIdentity) { "Device identity not loaded" })
                 }
             }
         }

@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.network.server.identity
+package org.vpilo.babymonitor.network.security.identity
 
 import io.ktor.network.tls.certificates.buildKeyStore
 import io.ktor.network.tls.certificates.saveToFile
@@ -13,11 +13,10 @@ import java.security.cert.X509Certificate
 import kotlin.io.encoding.Base64
 
 /**
- * The server's persistent, per-install self-signed TLS identity. Loaded (or generated on first launch)
- * once at startup and reused for the lifetime of the process - this is the pinning anchor clients trust
- * after pairing (see [sha256Fingerprint]).
+ * This device's persistent, per-install self-signed TLS identity, whatever its role. The camera serves it; the monitor sends its
+ * fingerprint when pairing, so the peer can pin it once the two devices swap roles (see [sha256Fingerprint]).
  */
-internal class ServerIdentity private constructor(
+class DeviceIdentity private constructor(
     private val keyStore: KeyStore,
     private val password: String,
 ) {
@@ -35,7 +34,9 @@ internal class ServerIdentity private constructor(
         )
 
     companion object {
-        fun loadOrCreate(): ServerIdentity {
+        /** Blocking: reads the key store, or generates an RSA key on first use. */
+        @Synchronized
+        fun loadOrCreate(): DeviceIdentity {
             val directory = File(getSettingsDir(), IDENTITY_DIRECTORY_NAME)
             val keyStoreFile = File(directory, KEYSTORE_FILE_NAME)
             val password = loadOrCreatePassword(directory)
@@ -47,8 +48,8 @@ internal class ServerIdentity private constructor(
                     keyStoreFile.inputStream().use { input ->
                         KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(input, password.toCharArray()) }
                     }
-                Logger.i(TAG) { "Loaded server identity" }
-                return ServerIdentity(keyStore, password)
+                Logger.i(TAG) { "Loaded device identity" }
+                return DeviceIdentity(keyStore, password)
             }
 
             check(directory.exists() || directory.mkdirs()) { "Failed to create ${directory.path}" }
@@ -62,8 +63,8 @@ internal class ServerIdentity private constructor(
                     }
                 }
             keyStore.saveToFile(keyStoreFile, password)
-            Logger.i(TAG) { "Generated server identity" }
-            return ServerIdentity(keyStore, password)
+            Logger.i(TAG) { "Generated device identity" }
+            return DeviceIdentity(keyStore, password)
         }
 
         private fun loadOrCreatePassword(directory: File): String {
@@ -85,6 +86,6 @@ internal class ServerIdentity private constructor(
         private const val CERTIFICATE_VALIDITY_DAYS = 36_500L
         private const val PASSWORD_LENGTH_BYTES = 16
 
-        private val TAG = ServerIdentity::class
+        private val TAG = DeviceIdentity::class
     }
 }

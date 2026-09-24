@@ -25,7 +25,6 @@ kotlin {
             implementation(libs.bundles.ktor.server)
             implementation(libs.bundles.ktor.client)
             implementation(libs.ktor.server.netty)
-            implementation(libs.ktor.network.tls.certificates)
 
             implementation(libs.koin.core)
         }
