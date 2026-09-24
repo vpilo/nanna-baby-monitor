@@ -101,10 +101,11 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // Multiple ktor-server-netty transitive Netty jars ship this.
+            // Multiple ktor-server-netty transitive Netty jars ship these.
             excludes += "/META-INF/INDEX.LIST"
-            // Every Netty jar ships this, just keep one.
+            pickFirsts += "/META-INF/license/*.txt"
             pickFirsts += "/META-INF/io.netty.versions.properties"
+            pickFirsts += "/META-INF/native-image/io.netty/*/*"
         }
         // No need to strip libraries, we only use 3rd party release libraries.
         packaging {

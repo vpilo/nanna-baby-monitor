@@ -38,7 +38,7 @@ cryptography = "0.6.0"
 qrose = "1.3.0"
 zxing = "3.5.4"
 
-ktor = "3.5.2"
+ktor = "3.6.0"
 jmdns = "3.6.3"
 oshi = "7.0.0"
 
