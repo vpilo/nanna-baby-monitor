@@ -9,8 +9,6 @@ plugins {
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.network.internal"
-
-        withHostTest {}
     }
 
     compilerOptions {

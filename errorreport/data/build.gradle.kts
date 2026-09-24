@@ -13,10 +13,6 @@ kotlin {
         androidResources {
             enable = true
         }
-
-        withHostTest {
-            isReturnDefaultValues = true
-        }
     }
 
     sourceSets {

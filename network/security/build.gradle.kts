@@ -10,8 +10,6 @@ plugins {
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.network.security"
-
-        withHostTest {}
     }
 
     sourceSets {
