@@ -26,7 +26,7 @@ import babymonitor.errorreport.presentation.generated.resources.error_report_fai
 import babymonitor.errorreport.presentation.generated.resources.error_report_failed_title
 import babymonitor.errorreport.presentation.generated.resources.error_report_handoff_attach
 import babymonitor.errorreport.presentation.generated.resources.error_report_handoff_attach_no_mail_client
-import babymonitor.errorreport.presentation.generated.resources.error_report_handoff_mail_app
+import babymonitor.errorreport.presentation.generated.resources.error_report_handoff_shared
 import babymonitor.errorreport.presentation.generated.resources.error_report_handoff_title
 import babymonitor.errorreport.presentation.generated.resources.error_report_prompt_message
 import babymonitor.errorreport.presentation.generated.resources.error_report_prompt_title
@@ -127,13 +127,13 @@ private fun ErrorReportDialogContent(
 private fun HandoffMessage(state: ErrorReportState.Handoff) {
     val displayPath = state.displayPath
     if (displayPath == null) {
-        Text(stringResource(Res.string.error_report_handoff_mail_app))
+        Text(stringResource(Res.string.error_report_handoff_shared))
         return
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(Theme.Paddings.Medium)) {
         Text(
-            if (state.isMailClientOpened) {
+            if (state.isHandoffSucceeded) {
                 stringResource(Res.string.error_report_handoff_attach)
             } else {
                 stringResource(Res.string.error_report_handoff_attach_no_mail_client, DEVELOPER_EMAIL)
@@ -174,7 +174,7 @@ private fun ErrorReportHandoffDesktopPreview() =
             state =
                 ErrorReportState.Handoff(
                     displayPath = "/home/user/.config/babymonitor/nanna-baby-monitor-report-20260921-120000.zip",
-                    isMailClientOpened = false,
+                    isHandoffSucceeded = false,
                 ),
         )
     }

@@ -12,14 +12,14 @@ sealed interface ErrorReportState {
     data object Building : ErrorReportState
 
     /**
-     * The report was handed over to the mail client. Whether it was sent is unknown.
+     * The report was handed over to the mail client or the share sheet. Whether it was sent is unknown.
      */
     data class Handoff(
         /**
          * Where the report file is, when the user has to attach it by hand.
          */
         val displayPath: String?,
-        val isMailClientOpened: Boolean,
+        val isHandoffSucceeded: Boolean,
     ) : ErrorReportState
 
     data object Failed : ErrorReportState

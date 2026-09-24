@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
     <string name="error_report_prompt_title">Send an error report?</string>
-    <string name="error_report_prompt_message">The app did not close properly last time. You can email a report to the developer to help fix the problem: it contains records of the app session and basic device information, and no personal data. You can review the email before sending it.</string>
+    <string name="error_report_prompt_message">The app did not close properly last time. You can send a report to the developer to help fix the problem: it contains records of the app session and basic device information, and no personal data. You can review the email before sending it, or share the report zip file with the developer directly instead.</string>
     <string name="error_report_send">Send</string>
     <string name="error_report_dont_send">Don't send</string>
     <string name="error_report_building_title">Preparing the report…</string>
     <string name="error_report_handoff_title">Report ready</string>
-    <string name="error_report_handoff_mail_app">The report was handed over to your email app. Review the email there, then send it.</string>
-    <string name="error_report_handoff_attach">Attach this file to the email which was just opened, then send it. The file will be deleted when you close this message!</string>
-    <string name="error_report_handoff_attach_no_mail_client">No email app could be opened. Email this file to %1$s: the address was copied to the clipboard. The file will be deleted when you close this message!</string>
+    <string name="error_report_handoff_shared">The report was shared. If you picked your email app, review the email there, then send it. You can also share the report zip file with the developer directly, through any other app.</string>
+    <string name="error_report_handoff_attach">Attach this file to the email which was just opened, then send it, or share the zip file with the developer directly instead. The file will be deleted when you close this message!</string>
+    <string name="error_report_handoff_attach_no_mail_client">No email app could be opened. Email this file to %1$s, or share the zip file with the developer directly instead: the address was copied to the clipboard. The file will be deleted when you close this message!</string>
     <string name="error_report_failed_title">Report not sent</string>
     <string name="error_report_failed_message">The report could not be prepared.</string>
     <string name="error_report_close">Close</string>

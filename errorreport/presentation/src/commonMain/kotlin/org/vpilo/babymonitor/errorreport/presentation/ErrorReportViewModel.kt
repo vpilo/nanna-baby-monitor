@@ -40,7 +40,7 @@ class ErrorReportViewModel(
             errorReportingRepository
                 .send()
                 .onSuccess {
-                    ErrorReportState.Handoff(displayPath = it.displayPath, isMailClientOpened = it.isMailClientOpened).update()
+                    ErrorReportState.Handoff(displayPath = it.displayPath, isHandoffSucceeded = it.isSucceeded).update()
                 }.onFailure {
                     Logger.w(TAG, it) { "Unable to send the error report" }
                     ErrorReportState.Failed.update()

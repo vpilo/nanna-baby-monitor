@@ -39,7 +39,7 @@ internal actual fun sendErrorReport(
             .onFailure { Logger.w(TAG, it) { "Unable to copy the developer address" } }
     }
 
-    return ReportHandoff(displayPath = report.absolutePath, isMailClientOpened = isMailClientOpened)
+    return ReportHandoff(displayPath = report.absolutePath, isSucceeded = isMailClientOpened)
 }
 
 private fun makeMailtoUri(

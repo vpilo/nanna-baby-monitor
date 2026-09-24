@@ -1,7 +1,7 @@
 package org.vpilo.babymonitor.errorreport.model
 
 /**
- * An error report handed over to the user's mail client. Whether the email is actually sent is unknown.
+ * An error report handed over to the user's mail client, or to the share sheet. Whether it is actually sent is unknown.
  */
 data class ReportHandoff(
     /**
@@ -9,7 +9,7 @@ data class ReportHandoff(
      */
     val displayPath: String?,
     /**
-     * Whether a new email to the developer was opened. When not, the user has to write it themselves.
+     * Whether a new email to the developer was created or the Android share sheet was opened.
      */
-    val isMailClientOpened: Boolean,
+    val isSucceeded: Boolean,
 )

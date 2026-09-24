@@ -31,5 +31,5 @@ internal actual fun sendErrorReport(
     context.startActivity(
         Intent.createChooser(sendIntent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )
-    return ReportHandoff(displayPath = null, isMailClientOpened = true)
+    return ReportHandoff(displayPath = null, isSucceeded = true)
 }
