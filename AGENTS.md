@@ -125,6 +125,6 @@ individually over multiple iterations:
 - **Companion objects:** Should be at the bottom of a class and made private unless necessary.
 - **Dependencies:** Managed via version catalog at `gradle/libs.versions.toml`. Use `libs.` references in `build.gradle.kts`.
 - **Tests:** only `network:security` (crypto primitives, handshakes, the pairing hello wire format and pairing storage),
-  `network:model` (pairing QR payload and PIN), `errorreport:data` (crash classification) and `build-logic` (version and platform
-  derivation) have them.
-  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :errorreport:data:desktopTest :build-logic:test`.
+  `network:model` (pairing QR payload and PIN), `network:client` (pairing failure handling), `errorreport:data` (crash
+  classification) and `build-logic` (version and platform derivation) have them.
+  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :network:client:desktopTest :errorreport:data:desktopTest :build-logic:test`.

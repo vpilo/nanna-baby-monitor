@@ -23,6 +23,7 @@ import org.vpilo.babymonitor.network.model.repository.IsConnectionAvailableRepos
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.security.di.networkSecurityKoinModule
+import org.vpilo.babymonitor.network.security.identity.DeviceIdentity
 
 val networkClientKoinModule: Module =
     module {
@@ -46,6 +47,6 @@ val networkClientKoinModule: Module =
             .bind<NetworkClientRepository>()
         singleOf(::DefaultRemoteDiscoveryRepository)
             .bind<RemoteDiscoveryRepository>()
-        singleOf(::DefaultClientPairingRepository)
+        single { DefaultClientPairingRepository(loadIdentity = { DeviceIdentity.loadOrCreate() }) }
             .bind<ClientPairingRepository>()
     }

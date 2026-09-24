@@ -7,6 +7,7 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.websocket.CloseReason
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.withContext
@@ -43,12 +44,29 @@ import kotlin.io.encoding.Base64
  * trust-on-first-use TLS trust manager, runs the ECDH+PIN exchange, and - on success - returns the
  * derived shared secret and pinned server certificate fingerprint for storage.
  */
-internal class DefaultClientPairingRepository : ClientPairingRepository {
+internal class DefaultClientPairingRepository(
+    private val loadIdentity: () -> DeviceIdentity,
+) : ClientPairingRepository {
     override suspend fun pairWith(
         server: Device.Server,
         clientDevice: Device.Client,
         pin: Pin,
     ): ClientPairingState {
+        if (server is Device.RemoteServer || server.addresses.isEmpty()) {
+            Logger.w(TAG) { "Server $server has no addresses" }
+            return ClientPairingState.Failure(ClientPairingFailureCause.SERVER_NOT_ON_NETWORK)
+        }
+
+        val identity =
+            runCatching {
+                // First use generates an RSA key, which takes seconds on slow phones.
+                withContext(Dispatchers.IO) { loadIdentity() }
+            }.getOrElse {
+                if (it is CancellationException) throw it
+                Logger.e(TAG, it) { "Unable to load or create this device's identity" }
+                return GENERIC_FAILURE
+            }
+
         val trustManager = PinnedTrustManager(expectedFingerprint = null)
         val httpClient =
             HttpClient(CIO) {
@@ -60,14 +78,6 @@ internal class DefaultClientPairingRepository : ClientPairingRepository {
                     }
                 }
             }
-
-        if (server is Device.RemoteServer || server.addresses.isEmpty()) {
-            Logger.w(TAG) { "Server $server has no addresses" }
-            return ClientPairingState.Failure(ClientPairingFailureCause.SERVER_NOT_ON_NETWORK)
-        }
-
-        // First use generates an RSA key, which takes seconds on slow phones.
-        val identity = withContext(Dispatchers.IO) { DeviceIdentity.loadOrCreate() }
 
         httpClient.use { http ->
             server.addresses.forEach { address ->

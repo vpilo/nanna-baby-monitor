@@ -30,5 +30,19 @@ kotlin {
 
             implementation(libs.koin.core)
         }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
+
+        val desktopTest = getByName("desktopTest")
+        desktopTest.dependencies {
+            implementation(libs.junit.platform)
+        }
     }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
