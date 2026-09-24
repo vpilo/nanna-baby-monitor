@@ -13,7 +13,6 @@ import org.vpilo.babymonitor.common.LoggingForwarder
 import org.vpilo.babymonitor.common.PlatformLogger
 import java.io.File
 import kotlin.concurrent.Volatile
-import kotlin.coroutines.CoroutineContext
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -59,18 +58,30 @@ object ErrorRecorder {
 
     private var hasRecordedFatalError: Boolean = false
 
+    val isRecording: Boolean
+        get() = logFile != null
+
     /**
-     * Start recording this session's log to the given [sessionLogFile].
+     * Start recording this session.
      */
     @Synchronized
-    public fun start(sessionLogFile: File) {
-        if (logFile != null) return
-        logFile = sessionLogFile
-        hasRecordedFatalError = false
+    public fun start() {
+        if (LoggingForwarder.isForwardingEnabled()) return
         LoggingForwarder.enableForwarding(forwardingLogger)
 
+        hasRecordedFatalError = false
         installUncaughtExceptionHandler()
         registerShutdownHook()
+    }
+
+    /**
+     * Forward forwarding this session's log to the given [sessionLogFile].
+     */
+    @Synchronized
+    public fun forwardSession(sessionLogFile: File) {
+        if (!LoggingForwarder.isForwardingEnabled()) return
+        if (logFile != null) return
+        logFile = sessionLogFile
 
         flushJob?.cancel()
         flushJob =
@@ -84,10 +95,11 @@ object ErrorRecorder {
 
     /**
      * Stop recording this session's log on a clean shutdown.
-     * The log is no longer needed so it is deleted, unless it holds a recorded fatal throwable.
+     * The files of every session are no longer needed so they are deleted, unless this session recorded a fatal throwable.
      */
     @Synchronized
     public fun stop() {
+        if (!LoggingForwarder.isForwardingEnabled()) return
         val file = logFile ?: return
         LoggingForwarder.disableForwarding()
         Logger.i(this::class) { "STOP" }
@@ -95,10 +107,10 @@ object ErrorRecorder {
         flushJob = null
         logFile = null
         if (!hasRecordedFatalError) {
-            file.delete()
             do {
                 val discarded = logCache.tryReceive()
             } while (discarded.isSuccess)
+            clearSessionFiles(file)
         }
     }
 
@@ -155,7 +167,17 @@ object ErrorRecorder {
                     append("\n")
                 } while (true)
             }.ifEmpty { return }
-        runCatching { file.appendText(content) }
+        runCatching {
+            // The logs directory may be deleted while recording, e.g. by clearing the app cache on Android.
+            file.parentFile?.mkdirs()
+            file.appendText(content)
+        }
+    }
+
+    private fun clearSessionFiles(sessionLogFile: File) {
+        val files = sessionLogFile.parentFile?.listFiles() ?: return
+        val (logs, others) = files.partition { it.extension == sessionLogFile.extension }
+        (logs + others).forEach { it.delete() }
     }
 
     private const val LOG_CAPACITY = 1_000

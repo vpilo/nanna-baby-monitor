@@ -6,11 +6,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent
 import org.vpilo.babymonitor.app.settings.IsFirstRun
+import org.vpilo.babymonitor.errorreport.model.ErrorReportingRepository
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
+import org.vpilo.babymonitor.network.model.usecase.IsSessionActiveFlowUseCase
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import org.vpilo.babymonitor.settings.model.settings.DeviceId
@@ -20,6 +22,8 @@ import org.vpilo.babymonitor.settings.model.settings.DeviceName
 class OnboardingScreenViewModel(
     private val appRoleRepository: AppRoleRepository,
     private val settingsRepository: SettingsRepository,
+    private val errorReportingRepository: ErrorReportingRepository,
+    private val isSessionActiveFlowUseCase: IsSessionActiveFlowUseCase,
 ) : AppViewModel<Unit, OnboardingScreenState, OnboardingScreenEffect>(initialState = OnboardingScreenState()) {
     override fun SubscriptionScope.onSubscribed() {
         // Ensure that on a new startup the servers are reset, to avoid stale states (eg client's old disconnection state).
@@ -53,6 +57,13 @@ class OnboardingScreenViewModel(
                     OnboardingScreenEffect.SavedRole(role).sendEffect()
                 }
             }.collect()
+        }
+
+        errorReportingRepository.startNewSession()
+        vmScope.launch {
+            isSessionActiveFlowUseCase().collect {
+                errorReportingRepository.markSessionActive(it)
+            }
         }
     }
 }

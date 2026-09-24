@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="error_report_prompt_title">Foutrapport versturen?</string>
+    <string name="error_report_prompt_message">De app is de vorige keer niet goed afgesloten. Je kunt een rapport naar de ontwikkelaar e-mailen om het probleem te helpen oplossen: het bevat het logboek van de app van die sessie en basisgegevens van het apparaat, zonder persoonlijke gegevens. Je kunt de e-mail bekijken voordat je hem verstuurt.</string>
+    <string name="error_report_send">Versturen</string>
+    <string name="error_report_dont_send">Niet versturen</string>
+    <string name="error_report_building_title">Rapport voorbereiden…</string>
+    <string name="error_report_handoff_title">Rapport klaar</string>
+    <string name="error_report_handoff_mail_app">Het rapport is doorgegeven aan je e-mailapp. Bekijk de e-mail daar en verstuur hem.</string>
+    <string name="error_report_handoff_attach">Voeg dit bestand toe aan de e-mail die net is geopend en verstuur hem. Het bestand wordt verwijderd als je dit bericht sluit!</string>
+    <string name="error_report_handoff_attach_no_mail_client">Er kon geen e-mailapp worden geopend. E-mail dit bestand naar %1$s: het adres is naar het klembord gekopieerd. Het bestand wordt verwijderd als je dit bericht sluit!</string>
+    <string name="error_report_failed_title">Rapport niet verstuurd</string>
+    <string name="error_report_failed_message">Het rapport kon niet worden voorbereid.</string>
+    <string name="error_report_close">Sluiten</string>
+</resources>

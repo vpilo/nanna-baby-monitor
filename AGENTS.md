@@ -30,6 +30,14 @@ Key features:
 - **`camera:data`** - `expect/actual` data sources. Desktop uses `webcam-capture`; Android uses CameraX.
 - **`camera:presentation`** - Viewfinder composables (`PanningVideoFeed` and its `expect/actual` platform content), the QR scanner, and
   the `expect/actual` camera/microphone permission helpers.
+- **`errorreport:model`** - `ErrorRecorder` (records the session log under `getCacheDir()/logs/`, deleted on a clean stop), the
+  `ErrorReportingRepository` interface and the report domain types (`SessionCrashReason`, `PendingErrorReport`, `ReportHandoff`,
+  `SessionMarker`).
+- **`errorreport:data`** - `DefaultErrorReportingRepository`: the session marker (`SessionMarkerStore`), classifying the previous
+  session's end (`getClassifiedCrashOrNull`), zipping the report under `getCacheDir()` (`ErrorReportArchiveBuilder`), and the
+  `expect/actual` process exit record reader (`readProcessExitRecords`, Android `ApplicationExitInfo`) and mail handoff
+  (`sendErrorReport`).
+- **`errorreport:presentation`** - `ErrorReportDialog`, `ErrorReportViewModel`, and strings.
 - **`filters`** - Stream filters applied between capture and encoding (`AudioStreamFilter`, `AudioSilenceFilter`).
 - **`network:model`** - Network domain types, repository interfaces, wire constants (`Constants`, `Endpoints`, `RelaySignals`),
   device transport-string codecs (`asTransportString`/`fromTransportString`), the `PairingQrPayload`, the relay settings
@@ -49,7 +57,7 @@ Key features:
 - **`androidService`** - Android-only foreground service infrastructure for background capture.
 - **`presentation`** - Common Composables for the Compose UI elements, theming.
 - **`settings:model`** - Settings data types and repository interfaces, plus the `expect/actual` platform helpers (`getSettingsDir()`,
-  `getCurrentPlatform()`, `isSupportedOnCurrentPlatform`).
+  `getCacheDir()`, `getCurrentPlatform()`, `isSupportedOnCurrentPlatform`).
 - **`settings:data`** - DataStore-backed settings persistence (`DefaultSettingsRepository`), common code only.
 - **`settings:presentation`** - Settings screen Composables.
 - **`appCommon`** - Shared Compose UI, navigation (`Route` sealed interface), ViewModels, Koin initialization.
@@ -58,9 +66,9 @@ Key features:
 ### Key Patterns
 
 - **`expect/actual` declarations** - Used for platform-specific implementations in `codec`, `camera:data`, `camera:presentation`,
-  `network:internal`, `network:presentation`, `settings:model`, `data`, `presentation`, `appCommon` and `common`. When adding
-  platform-specific code, provide declarations in `commonMain` and implementations in `androidMain` + `desktopMain`. Modules declaring
-  `expect` classes add the `-Xexpect-actual-classes` compiler flag.
+  `errorreport:data`, `network:internal`, `network:presentation`, `settings:model`, `data`, `presentation`, `appCommon` and `common`.
+  When adding platform-specific code, provide declarations in `commonMain` and implementations in `androidMain` + `desktopMain`. Modules
+  declaring `expect` classes add the `-Xexpect-actual-classes` compiler flag.
 - **`SharedResourceHolder<T>`** - Base class for resources that auto-start/stop based on subscriber count (see
   `model/.../SharedResourceHolder.kt`). Subclass it and implement `start()`/`stop()`. The `collector` `MutableSharedFlow` drives the
   lifecycle via the `reactor()` extension.
@@ -115,6 +123,6 @@ individually over multiple iterations:
   needing logging.
 - **Companion objects:** Should be at the bottom of a class and made private unless necessary.
 - **Dependencies:** Managed via version catalog at `gradle/libs.versions.toml`. Use `libs.` references in `build.gradle.kts`.
-- **Tests:** only `network:security` (crypto primitives and handshakes), `network:model` (pairing QR payload and PIN) and `build-logic`
-  (version and platform derivation) have them.
-  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :build-logic:test`.
+- **Tests:** only `network:security` (crypto primitives and handshakes), `network:model` (pairing QR payload and PIN), `errorreport:data`
+  (crash classification) and `build-logic` (version and platform derivation) have them.
+  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :errorreport:data:desktopTest :build-logic:test`.

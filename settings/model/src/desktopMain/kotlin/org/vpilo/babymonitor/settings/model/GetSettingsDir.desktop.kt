@@ -2,7 +2,4 @@ package org.vpilo.babymonitor.settings.model
 
 import java.io.File
 
-actual fun getSettingsDir(): File {
-    val home = System.getProperty("user.home")
-    return File(home, ".config/babymonitor")
-}
+actual fun getSettingsDir(): File = File(homeDir, ".config/$APP_DIR_NAME")

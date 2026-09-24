@@ -19,6 +19,11 @@ object LoggingForwarder {
     }
 
     /**
+     * Returns whether log messages are being forwarded to a file.
+     */
+    public fun isForwardingEnabled(): Boolean = forwardingLogger != null
+
+    /**
      * Stops forwarding log messages to a file.
      */
     public fun disableForwarding() {

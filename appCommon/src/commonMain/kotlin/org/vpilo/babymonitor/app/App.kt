@@ -30,6 +30,7 @@ import org.vpilo.babymonitor.app.server.paireddevices.PairedDevicesScreen
 import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.CameraPermissionCheckScreen
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.errorreport.presentation.ErrorReportDialog
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.presentation.AppTheme
 import org.vpilo.babymonitor.presentation.snackbar.SnackbarContainer
@@ -77,6 +78,8 @@ fun App() {
                     )
                 }
             }
+
+            ErrorReportDialog()
         }
     }
 }

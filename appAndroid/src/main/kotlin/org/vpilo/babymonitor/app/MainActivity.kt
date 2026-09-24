@@ -4,15 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.CompositionLocalProvider
-import org.koin.android.ext.android.get
 import org.vpilo.babymonitor.android.service.AndroidServiceRegistry
-import kotlin.coroutines.CoroutineContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // The application might stay in memory after quit.
+        // It's necessary to ensure the app is reinitialized here: the application might stay in memory after quit, keeping the Application
+        // created, but without an Activity.
         onApplicationStart()
 
         AndroidServiceRegistry.setAppCloseListener(::quit)
