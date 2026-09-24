@@ -58,18 +58,24 @@ fun App() {
             ) {
                 navigation<Route.RootNavGraph>(startDestination = Route.Onboarding) {
                     navigationRoutes(
-                        onNavigateUp = { navController.navigateUp() },
+                        onNavigateUp = {
+                            Logger.d(TAG) { "Navigating up from ${navController.currentDestination?.route}" }
+                            navController.navigateUp()
+                        },
                         onNavigateTo = { route, popUpToRoute ->
+                            Logger.d(TAG) { "Navigating to $route from ${navController.currentDestination?.route}, popUpTo=$popUpToRoute" }
                             navController.navigate(route) {
                                 popUpToRoute?.let { popUpTo(popUpToRoute) { inclusive = false } }
                             }
                         },
                         onNavigateUpTo = { route ->
+                            Logger.d(TAG) { "Navigating up to $route from ${navController.currentDestination?.route}" }
                             navController.navigate(route) {
                                 popUpTo(route) { inclusive = true }
                             }
                         },
                         onNavigateToRoot = {
+                            Logger.d(TAG) { "Navigating to root from ${navController.currentDestination?.route}" }
                             navController.navigate(Route.AppPermissionCheck) {
                                 popUpTo<Route.RootNavGraph> { inclusive = false }
                                 launchSingleTop = true

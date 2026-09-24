@@ -25,6 +25,7 @@ import babymonitor.appcommon.generated.resources.pairing_retry
 import babymonitor.appcommon.generated.resources.pairing_succeeded
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingFailureReason
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
@@ -34,6 +35,8 @@ import org.vpilo.babymonitor.presentation.composables.AppDestination
 import org.vpilo.babymonitor.presentation.composables.LoadingBox
 import org.vpilo.babymonitor.presentation.composables.QrCodeImage
 import kotlin.time.Duration.Companion.seconds
+
+private const val TAG = "ServerPairingScreen"
 
 @Composable
 fun ServerPairingScreen(
@@ -46,6 +49,7 @@ fun ServerPairingScreen(
     LaunchedEffect(state.pairingState) {
         if (state.pairingState is ServerPairingState.Succeeded) {
             delay(2.seconds)
+            Logger.d(TAG) { "Pairing done, navigating away from pairing screen" }
             onBackClicked()
         }
     }
