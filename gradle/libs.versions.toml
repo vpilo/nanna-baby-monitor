@@ -2,7 +2,7 @@
 kotlin = "2.4.20"
 kotlinx-coroutines = "1.11.0"
 kotlin-serialization = "1.11.0"
-agp = "9.4.0"
+agp = "9.4.1"
 koin = "4.2.2"
 log4j = "2.26.1"
 slf4j = "2.0.19"
