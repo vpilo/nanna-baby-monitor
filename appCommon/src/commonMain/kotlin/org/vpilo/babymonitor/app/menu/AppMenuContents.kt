@@ -118,6 +118,8 @@ fun ColumnScope.AppMenuContents(
             onNavigateTo(Route.Quit, null)
         },
     )
+
+    DebugMenu()
 }
 
 @Preview
