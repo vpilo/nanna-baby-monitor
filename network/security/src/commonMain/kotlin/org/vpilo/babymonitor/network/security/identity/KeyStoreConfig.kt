@@ -1,4 +1,4 @@
-package org.vpilo.babymonitor.network.server.identity
+package org.vpilo.babymonitor.network.security.identity
 
 import java.security.KeyStore
 
@@ -7,7 +7,7 @@ import java.security.KeyStore
  *
  * Only one password is used for both key store and private key for simplicity.
  */
-internal data class KeyStoreConfig(
+data class KeyStoreConfig(
     val keyStore: KeyStore,
     val keyAlias: String,
     val password: CharArray,

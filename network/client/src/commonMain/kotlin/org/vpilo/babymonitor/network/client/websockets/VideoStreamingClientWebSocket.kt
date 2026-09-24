@@ -18,8 +18,8 @@ internal suspend fun DefaultClientWebSocketSession.videoStreamingClientWebSocket
     pairingStorageRepository: PairingStorageRepository,
     activeSessionsRepository: InternalActiveSessionsRepository,
 ) {
-    val pairedServer = pairingStorageRepository.findServer(serverDeviceId)
-    val cipher = clientSessionHandshake(localDevice.id, serverDeviceId, pairedServer, StreamType.VIDEO) ?: return
+    val pairedDevice = pairingStorageRepository.find(serverDeviceId)
+    val cipher = clientSessionHandshake(localDevice.id, serverDeviceId, pairedDevice, StreamType.VIDEO) ?: return
 
     activeSessionsRepository.register(serverDeviceId, this)
     try {

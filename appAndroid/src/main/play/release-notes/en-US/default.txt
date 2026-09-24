@@ -1,1 +1,2 @@
-First release.
+Added an error reporting request after a crash. Please send reports, it will help me fix bugs faster!
+Pairings now work in both directions. After updating, update every device and pair them again.

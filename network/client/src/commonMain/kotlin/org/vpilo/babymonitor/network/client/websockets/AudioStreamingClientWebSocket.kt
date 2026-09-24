@@ -19,8 +19,8 @@ internal suspend fun DefaultClientWebSocketSession.audioStreamingClientWebSocket
     pairingStorageRepository: PairingStorageRepository,
     activeSessionsRepository: InternalActiveSessionsRepository,
 ) {
-    val pairedServer = pairingStorageRepository.findServer(serverDeviceId)
-    val cipher = clientSessionHandshake(localDevice.id, serverDeviceId, pairedServer, StreamType.AUDIO) ?: return
+    val pairedDevice = pairingStorageRepository.find(serverDeviceId)
+    val cipher = clientSessionHandshake(localDevice.id, serverDeviceId, pairedDevice, StreamType.AUDIO) ?: return
 
     activeSessionsRepository.register(serverDeviceId, this)
     try {

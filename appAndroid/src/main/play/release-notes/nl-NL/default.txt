@@ -1,1 +1,2 @@
-Eerste versie.
+Toevoeging van een foutmeldingsverzoek na een crash. Stuur alstublieft rapporten, dit zal me helpen bugs sneller op te lossen!
+Koppelingen werken nu in beide richtingen. Werk na de update alle apparaten bij en koppel ze opnieuw.

@@ -9,8 +9,6 @@ plugins {
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.network.internal"
-
-        withHostTest {}
     }
 
     compilerOptions {
@@ -49,8 +47,4 @@ kotlin {
             implementation(libs.junit.platform)
         }
     }
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
 }

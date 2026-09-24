@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.network.model.pairing.PairedClient
+import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingFailureReason
@@ -23,12 +23,12 @@ import org.vpilo.babymonitor.network.security.crypto.buildPairingTranscript
 import org.vpilo.babymonitor.network.security.crypto.computeServerConfirmation
 import org.vpilo.babymonitor.network.security.crypto.deriveSharedSecretS
 import org.vpilo.babymonitor.network.security.crypto.verifyClientConfirmation
+import org.vpilo.babymonitor.network.security.identity.DeviceIdentity
 import org.vpilo.babymonitor.network.security.pairing.PairingResult
 import org.vpilo.babymonitor.network.security.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.security.protocol.receivePairingHelloOrNull
 import org.vpilo.babymonitor.network.security.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.security.protocol.sendPairingResult
-import org.vpilo.babymonitor.network.server.identity.ServerIdentity
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.encoding.Base64
 import kotlin.time.Duration.Companion.minutes
@@ -76,7 +76,7 @@ internal class PairingCoordinator(
     /** Runs the server side of the ECDH+PIN exchange over an already-open, TLS-terminated `/pair` session. */
     suspend fun handlePairingSession(
         session: WebSocketSession,
-        serverIdentity: ServerIdentity,
+        deviceIdentity: DeviceIdentity,
     ) {
         val window = activeWindow
         if (window == null) {
@@ -94,7 +94,8 @@ internal class PairingCoordinator(
         val serverKeyPair = EcdhKeyPair.create()
         session.sendBase64Frame(serverKeyPair.publicKeyEncoded)
 
-        val transcript = buildPairingTranscript(hello.publicKey, serverKeyPair.publicKeyEncoded, serverIdentity.fingerprint)
+        val transcript =
+            buildPairingTranscript(hello.publicKey, serverKeyPair.publicKeyEncoded, deviceIdentity.fingerprint, hello.certFingerprint)
         val mc =
             session.receiveBase64FrameOrNull() ?: run {
                 session.close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Malformed confirmation"))
@@ -112,12 +113,12 @@ internal class PairingCoordinator(
         val ms = computeServerConfirmation(window.pin, transcript)
         session.sendPairingResult(PairingResult.Success(ms))
 
-        pairingStorageRepository.pairClient(
-            PairedClient(
+        pairingStorageRepository.pair(
+            PairedDevice(
                 deviceId = hello.clientId.toString(),
                 name = hello.clientName,
+                certFingerprint = hello.certFingerprint,
                 sharedSecretBase64 = Base64.encode(sharedSecret),
-                pairedAtEpochMillis = System.currentTimeMillis(),
             ),
         )
         activeWindow = null

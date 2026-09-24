@@ -29,6 +29,10 @@ plugins.withId(
             compilerOptions {
                 jvmTarget.set(JvmTarget.fromTarget(jvmVersion))
             }
+
+            withHostTest {
+                isReturnDefaultValues = true
+            }
         }
     }
 }

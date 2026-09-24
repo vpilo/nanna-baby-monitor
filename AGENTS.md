@@ -45,7 +45,8 @@ Key features:
 - **`network:internal`** - Internal network plumbing shared by server and client: mDNS discovery, active-session ledger, frame codecs,
   foreground-service link. Compile-time dependency of `network:server`/`network:client`/`network:security` only.
 - **`network:security`** - Pairing, session and relay-access crypto: ECDH/HKDF/AEAD/PBKDF2, the handshakes, the cipher facade,
-  `DefaultPairingStorageRepository`, the sealed-frame protocol, and `relayWss`/`verifyRelayAccess`. Compile-time dependency of
+  the `DeviceIdentity` TLS identity every device serves or presents, `DefaultPairingStorageRepository` (one `PairedDevice` per
+  peer, valid in both roles), the sealed-frame protocol, and `relayWss`/`verifyRelayAccess`. Compile-time dependency of
   `network:server`/`network:client`/`appRelay` only.
 - **`network:server`** - Ktor server with the WebSocket endpoints of `Endpoints` (`/control`, `/audio`, `/video`, `/pair`). Encodes &
   streams.
@@ -123,6 +124,7 @@ individually over multiple iterations:
   needing logging.
 - **Companion objects:** Should be at the bottom of a class and made private unless necessary.
 - **Dependencies:** Managed via version catalog at `gradle/libs.versions.toml`. Use `libs.` references in `build.gradle.kts`.
-- **Tests:** only `network:security` (crypto primitives and handshakes), `network:model` (pairing QR payload and PIN), `errorreport:data`
-  (crash classification) and `build-logic` (version and platform derivation) have them.
-  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :errorreport:data:desktopTest :build-logic:test`.
+- **Tests:** only `network:security` (crypto primitives, handshakes, the pairing hello wire format and pairing storage),
+  `network:model` (pairing QR payload and PIN), `network:client` (pairing failure handling), `errorreport:data` (crash
+  classification) and `build-logic` (version and platform derivation) have them.
+  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :network:client:desktopTest :errorreport:data:desktopTest :build-logic:test`.

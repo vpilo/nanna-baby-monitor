@@ -19,12 +19,13 @@ suspend fun deriveSharedSecretS(rawEcdhSecret: ByteArray): ByteArray =
         outputSizeBytes = PAIRING_SECRET_SIZE_BYTES,
     )
 
-/** `T = A ‖ B ‖ serverCertFingerprint`. */
+/** `T = A ‖ B ‖ serverCertFingerprint ‖ clientCertFingerprint`. Both fingerprints are fixed-length hex, so the fields can't shift. */
 fun buildPairingTranscript(
     clientPublicKey: ByteArray,
     serverPublicKey: ByteArray,
     serverCertFingerprint: String,
-): ByteArray = clientPublicKey + serverPublicKey + serverCertFingerprint.encodeToByteArray()
+    clientCertFingerprint: String,
+): ByteArray = clientPublicKey + serverPublicKey + serverCertFingerprint.encodeToByteArray() + clientCertFingerprint.encodeToByteArray()
 
 /** `KDF(PIN)` - the PIN is low-entropy, so this exists purely to get a fixed-size HMAC key, not to slow down brute force. */
 private suspend fun pinToMacKey(pin: Pin): ByteArray =

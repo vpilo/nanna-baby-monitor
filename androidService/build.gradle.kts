@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
@@ -26,8 +24,5 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.guava)
         }
-
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        remove(commonTest.get())
     }
 }

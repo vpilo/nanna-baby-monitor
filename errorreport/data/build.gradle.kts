@@ -13,10 +13,6 @@ kotlin {
         androidResources {
             enable = true
         }
-
-        withHostTest {
-            isReturnDefaultValues = true
-        }
     }
 
     sourceSets {
@@ -49,8 +45,4 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
 }

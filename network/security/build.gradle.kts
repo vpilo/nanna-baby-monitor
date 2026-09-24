@@ -10,8 +10,6 @@ plugins {
 kotlin {
     android {
         namespace = "org.vpilo.babymonitor.network.security"
-
-        withHostTest {}
     }
 
     sourceSets {
@@ -25,6 +23,7 @@ kotlin {
             implementation(libs.kotlinx.serialization)
 
             implementation(libs.ktor.websockets)
+            implementation(libs.ktor.network.tls.certificates)
             implementation(libs.bundles.ktor.client)
 
             implementation(libs.koin.core)
@@ -36,20 +35,14 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
-            implementation(libs.ktor.network.tls.certificates)
         }
 
         val desktopTest = getByName("desktopTest")
         desktopTest.dependencies {
             implementation(libs.junit.platform)
-            implementation(libs.ktor.network.tls.certificates)
 
             implementation(libs.bundles.ktor.server)
             implementation(libs.ktor.server.netty)
         }
     }
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
 }

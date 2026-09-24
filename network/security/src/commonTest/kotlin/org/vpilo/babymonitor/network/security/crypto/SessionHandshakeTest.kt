@@ -96,4 +96,40 @@ class SessionHandshakeTest {
                 deriveClientSessionCipher(sharedSecret, clientSalt, serverSalt, aad).open(wireFrame)
             }
         }
+
+    @Test
+    fun theSameSharedSecretWorksInBothRoleAssignments() =
+        runTest {
+            val sharedSecret = Random.nextBytes(32)
+            val aad = "device-42|video".encodeToByteArray()
+
+            // First A is the client of B, then the roles swap. Both runs use the same S.
+            repeat(2) {
+                val clientSalt = generateSessionSalt()
+                val serverSalt = generateSessionSalt()
+
+                val clientProof = computeClientHandshakeProof(sharedSecret, clientSalt)
+                assertTrue(verifyClientHandshakeProof(sharedSecret, clientSalt, clientProof))
+                val serverProof = computeServerHandshakeProof(sharedSecret, clientSalt, serverSalt)
+                assertTrue(verifyServerHandshakeProof(sharedSecret, clientSalt, serverSalt, serverProof))
+
+                val serverCipher = deriveServerSessionCipher(sharedSecret, clientSalt, serverSalt, aad)
+                val clientCipher = deriveClientSessionCipher(sharedSecret, clientSalt, serverSalt, aad)
+                assertContentEquals("frame".encodeToByteArray(), clientCipher.open(serverCipher.seal("frame".encodeToByteArray())))
+            }
+        }
+
+    @Test
+    fun aProofFromOneRoleDoesNotVerifyAsTheOtherRole() =
+        runTest {
+            val sharedSecret = Random.nextBytes(32)
+            val clientSalt = generateSessionSalt()
+            val serverSalt = generateSessionSalt()
+
+            val clientProofOverBothSalts = computeClientHandshakeProof(sharedSecret, clientSalt + serverSalt)
+            assertFalse(verifyServerHandshakeProof(sharedSecret, clientSalt, serverSalt, clientProofOverBothSalts))
+
+            val serverProof = computeServerHandshakeProof(sharedSecret, clientSalt, serverSalt)
+            assertFalse(verifyClientHandshakeProof(sharedSecret, clientSalt + serverSalt, serverProof))
+        }
 }
