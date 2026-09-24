@@ -8,11 +8,11 @@ class MenuSettingItemViewModel(
     private val settingsRepository: SettingsRepository,
     private val setting: Setting<*>,
 ) : AppViewModel<MenuSettingItemAction, MenuSettingItemState, Unit>(
-        initialState = MenuSettingItemState(value = setting.default),
+        initialState = MenuSettingItemState(id = setting.id, value = setting.default),
     ) {
     override fun SubscriptionScope.onSubscribed() {
         settingsRepository.flowOf(setting).subscribe { newValue ->
-            MenuSettingItemState(value = newValue).update()
+            MenuSettingItemState(id = setting.id, value = newValue).update()
         }
     }
 
