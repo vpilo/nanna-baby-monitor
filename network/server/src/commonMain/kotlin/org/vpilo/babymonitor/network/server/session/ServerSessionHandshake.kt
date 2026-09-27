@@ -23,7 +23,7 @@ internal suspend fun WebSocketSession.serverSessionHandshake(
     pairingStorageRepository: PairingStorageRepository,
     streamType: StreamType,
 ): ServerSessionHandshakeResult? {
-    if (!receiveProtocolVersion(DEVICE_PROTOCOL_VERSION)) return null
+    if (!receiveProtocolVersion(isRelayConnection = false)) return null
 
     val request =
         receiveSessionHandshakeRequestOrNull() ?: run {

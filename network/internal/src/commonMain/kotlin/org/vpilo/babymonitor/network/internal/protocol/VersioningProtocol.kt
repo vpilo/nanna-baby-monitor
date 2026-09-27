@@ -22,7 +22,8 @@ const val DEVICE_PROTOCOL_VERSION: Int = 1
 const val RELAY_PROTOCOL_VERSION: Int = 1
 
 // Custom Ktor close code returned when closing a connection due to version difference.
-const val PROTOCOL_VERSION_MISMATCH_CLOSE_CODE: Short = 4000
+const val PROTOCOL_VERSION_MISMATCH_CLOSE_CODE_DEVICE: Short = 4000
+const val PROTOCOL_VERSION_MISMATCH_CLOSE_CODE_RELAY: Short = 4001
 
 private const val TAG = "ProtocolVersion"
 
@@ -33,23 +34,31 @@ suspend fun WebSocketSession.sendProtocolVersion(version: Int) = send(Frame.Text
  * Called by the receiving device.
  * Note: the receiving device of a connection only closes the connection on version mismatch. Clients may show errors to the user.
  */
-suspend fun WebSocketSession.receiveProtocolVersion(localVersion: Int): Boolean {
+suspend fun WebSocketSession.receiveProtocolVersion(isRelayConnection: Boolean = false): Boolean {
     val remoteVersion = (incoming.receive() as? Frame.Text)?.readText()?.toIntOrNull()
     if (remoteVersion == null) {
         Logger.w(TAG) { "Malformed protocol version" }
         close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Malformed protocol version"))
         return false
     }
+    val localVersion = if (isRelayConnection) RELAY_PROTOCOL_VERSION else DEVICE_PROTOCOL_VERSION
     if (remoteVersion != localVersion) {
         Logger.w(TAG) { "Protocol version mismatch: local=$localVersion, remote=$remoteVersion" }
-        close(CloseReason(PROTOCOL_VERSION_MISMATCH_CLOSE_CODE, localVersion.toString()))
+        val code = if (isRelayConnection) PROTOCOL_VERSION_MISMATCH_CLOSE_CODE_RELAY else PROTOCOL_VERSION_MISMATCH_CLOSE_CODE_DEVICE
+        close(CloseReason(code, localVersion.toString()))
         return false
     }
     return true
 }
 
-fun CloseReason.asVersionMismatchExceptionOrNull(localVersion: Int): VersionMismatchException? {
-    if (code != PROTOCOL_VERSION_MISMATCH_CLOSE_CODE) return null
+fun CloseReason.asVersionMismatchExceptionOrNull(): VersionMismatchException? {
+    val (localVersion, isRelayConnection) =
+        when (code) {
+            PROTOCOL_VERSION_MISMATCH_CLOSE_CODE_DEVICE -> DEVICE_PROTOCOL_VERSION to false
+            PROTOCOL_VERSION_MISMATCH_CLOSE_CODE_RELAY -> RELAY_PROTOCOL_VERSION to true
+            else -> return null
+        }
     val remoteVersion = message.toIntOrNull() ?: return null
-    return VersionMismatchException(localVersion, remoteVersion)
+    if (remoteVersion == localVersion) return null
+    return VersionMismatchException(localVersion, remoteVersion, isRelayConnection)
 }

@@ -83,7 +83,6 @@ suspend fun relayWss(
             timeout = Constants.WEBSOCKET_TIMEOUT
 
             sendProtocolVersion(RELAY_PROTOCOL_VERSION)
-            throwIfRelayVersionMismatches()
             if (!authenticateWithRelay(accessKey, role, endpoint, trustManager)) return@wss
             block()
         }
@@ -110,6 +109,7 @@ private suspend fun DefaultClientWebSocketSession.authenticateWithRelay(
 
     val relayNonce =
         runCatching { receiveRelayAccessChallengeOrNull() }.getOrNull() ?: run {
+            throwOnRelayVersionMismatch()
             Logger.w(TAG) { "No usable relay challenge for $endpoint" }
             close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Malformed relay challenge"))
             return false
@@ -136,11 +136,11 @@ private suspend fun DefaultClientWebSocketSession.authenticateWithRelay(
 }
 
 // The relay refuses a mismatching version before sending its challenge, and says which version it speaks.
-@OptIn(DelicateCoroutinesApi::class)
-private suspend fun DefaultClientWebSocketSession.throwIfRelayVersionMismatches() {
+private suspend fun DefaultClientWebSocketSession.throwOnRelayVersionMismatch() {
+    @OptIn(DelicateCoroutinesApi::class)
     if (!incoming.isClosedForReceive) return
     withTimeoutOrNull(Constants.WEBSOCKET_TIMEOUT) { closeReason.await() }
-        ?.asVersionMismatchExceptionOrNull(RELAY_PROTOCOL_VERSION)
+        ?.asVersionMismatchExceptionOrNull()
         ?.let { throw it }
 }
 

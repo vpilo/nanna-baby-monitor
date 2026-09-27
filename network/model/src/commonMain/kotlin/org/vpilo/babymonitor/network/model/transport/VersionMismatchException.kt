@@ -3,8 +3,8 @@ package org.vpilo.babymonitor.network.model.transport
 class VersionMismatchException(
     val localVersion: Int,
     val remoteVersion: Int,
-) : Exception("Relay protocol version mismatch: local $localVersion, remote $remoteVersion") {
-
+    val isRelayConnection: Boolean,
+) : Exception("Protocol version mismatch: local $localVersion, remote $remoteVersion (relay=$isRelayConnection)") {
     init {
         check(localVersion != remoteVersion) { "Versions must differ" }
     }
@@ -17,5 +17,5 @@ class VersionMismatchException(
         }
 
     override val message: String
-        get() = "Relay protocol version mismatch: $mismatch (local $localVersion, remote $remoteVersion)"
+        get() = "Protocol version mismatch: $mismatch (local $localVersion, remote $remoteVersion, relay=$isRelayConnection)"
 }

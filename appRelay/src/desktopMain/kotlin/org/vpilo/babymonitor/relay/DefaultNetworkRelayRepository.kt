@@ -24,6 +24,7 @@ import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import io.ktor.websocket.timeout
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -336,11 +337,10 @@ class DefaultNetworkRelayRepository {
     private suspend fun WebSocketSession.closePeer(peer: DefaultWebSocketSession) {
         val reason =
             withTimeoutOrNull(Constants.WEBSOCKET_TIMEOUT) { peer.closeReason.await() }
-                ?.takeIf { it.code != CloseReason.Codes.CLOSED_ABNORMALLY.code }
+                ?.takeIf { it.code != CLOSED_ABNORMALLY_CODE }
                 ?: CloseReason(CloseReason.Codes.NORMAL, "")
         close(reason)
     }
-
 
     @Suppress("ReturnCount")
     private suspend fun DefaultWebSocketServerSession.handleCameraStreamEndpoint(
@@ -395,11 +395,14 @@ class DefaultNetworkRelayRepository {
         timeout = Constants.WEBSOCKET_TIMEOUT
 
         runCatching {
-            withTimeout(Constants.RELAY_HANDSHAKE_TIMEOUT) { receiveRelayProtocolVersion() }
-        }
-            .onFailure {
-                Logger.w(TAG) { "Refused $role connection to $relayEndpoint: relay protocol version mismatch" }
-                return null
+            withTimeoutOrNull(Constants.RELAY_HANDSHAKE_TIMEOUT) { receiveRelayProtocolVersion() }
+        }.onFailure { if (it is CancellationException) throw it }
+            .getOrDefault(false)
+            .let { matches ->
+                if (matches != true) {
+                    Logger.w(TAG) { "Refused $role connection to $relayEndpoint: relay protocol version check failed" }
+                    return null
+                }
             }
 
         if (!verifyRelayAccess(accessKey, role, relayEndpoint, certificateFingerprint)) {
@@ -419,6 +422,9 @@ class DefaultNetworkRelayRepository {
     private companion object {
         private const val RELAY_KEY_ALIAS = "babymonitor-relay"
         private const val RELAY_KEYSTORE_PASSWORD = "babymonitor"
+
+        // Ktor marks CloseReason.Codes.CLOSED_ABNORMALLY as internal API.
+        private const val CLOSED_ABNORMALLY_CODE: Short = 1006
 
         private val TAG = DefaultNetworkRelayRepository::class
     }

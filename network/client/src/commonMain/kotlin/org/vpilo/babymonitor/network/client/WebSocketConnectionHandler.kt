@@ -106,9 +106,9 @@ internal class WebSocketConnectionHandler(
                 is CancellationException,
                 null,
                     -> {
-                    Logger.i(TAG) { "Connection closed to $target for $endpointPath" }
-                    onDisconnected(lastException ?: CancellationException("Closed by client"))
-                }
+                        Logger.i(TAG) { "Connection closed to $target for $endpointPath" }
+                        onDisconnected(lastException ?: CancellationException("Closed by client"))
+                    }
 
                 is CertificateException -> {
                     Logger.w(TAG) { "Certificate mismatch for server $target for $endpointPath: ${lastException.prettify()}" }
@@ -133,9 +133,9 @@ internal class WebSocketConnectionHandler(
                 is WebSocketException,
                 is ProtocolException,
                     -> {
-                    Logger.i(TAG) { "Connection closed by server $target for $endpointPath: ${lastException.prettify()}" }
-                    onDisconnected(lastException)
-                }
+                        Logger.i(TAG) { "Connection closed by server $target for $endpointPath: ${lastException.prettify()}" }
+                        onDisconnected(lastException)
+                    }
 
                 else -> {
                     Logger.w(TAG) { "Failed to connect to $target for $endpointPath: ${lastException.prettify()}" }
@@ -205,7 +205,7 @@ internal class WebSocketConnectionHandler(
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
             val reason = closeReason.await() ?: throw ex
-            throw reason.asVersionMismatchExceptionOrNull(DEVICE_PROTOCOL_VERSION)
+            throw reason.asVersionMismatchExceptionOrNull()
                 ?: when (reason.knownReason) {
                     CloseReason.Codes.VIOLATED_POLICY -> PairingRevokedException(reason.message)
                     CloseReason.Codes.PROTOCOL_ERROR -> ProtocolException(reason.message)

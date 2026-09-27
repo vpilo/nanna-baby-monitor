@@ -26,9 +26,9 @@ import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.RelaySignals
-import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 import org.vpilo.babymonitor.network.model.transport.VersionMismatchException
 import org.vpilo.babymonitor.network.model.transport.asTransportString
 import org.vpilo.babymonitor.network.security.relay.relayWss
@@ -60,7 +60,6 @@ internal class RelayServerRegistration(
 
     private val _relayVersionMismatch = MutableStateFlow<VersionMismatch?>(null)
     val relayVersionMismatch: Flow<VersionMismatch?> = _relayVersionMismatch.asStateFlow()
-
 
     init {
         relayConfigurationRepository.relayConfiguration

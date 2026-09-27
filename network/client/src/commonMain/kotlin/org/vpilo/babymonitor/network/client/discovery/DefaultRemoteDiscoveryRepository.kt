@@ -130,7 +130,10 @@ internal class DefaultRemoteDiscoveryRepository(
                 }
             }.onFailure { ex ->
                 when (ex) {
-                    is CancellationException -> throw ex
+                    is CancellationException -> {
+                        throw ex
+                    }
+
                     is VersionMismatchException -> {
                         Logger.w(TAG) { "Incompatible relay protocol: ${ex.prettify()}" }
                         _relayVersionMismatchFlow.value = ex.mismatch

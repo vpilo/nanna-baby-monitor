@@ -174,15 +174,23 @@ internal class DefaultClientPairingRepository(
             val reason = closeReason.await() ?: throw ex
             return ClientPairingState.Failure(
                 when (reason.knownReason) {
-                    CloseReason.Codes.CANNOT_ACCEPT -> ClientPairingFailureCause.NO_ACTIVE_PAIRING_WINDOW
-                    CloseReason.Codes.VIOLATED_POLICY -> ClientPairingFailureCause.WRONG_PIN
+                    CloseReason.Codes.CANNOT_ACCEPT -> {
+                        ClientPairingFailureCause.NO_ACTIVE_PAIRING_WINDOW
+                    }
+
+                    CloseReason.Codes.VIOLATED_POLICY -> {
+                        ClientPairingFailureCause.WRONG_PIN
+                    }
+
                     else -> {
-                        reason.asVersionMismatchExceptionOrNull(DEVICE_PROTOCOL_VERSION)
+                        reason
+                            .asVersionMismatchExceptionOrNull()
                             ?.let {
-                                if (it.mismatch == VersionMismatch.LOCAL_OUTDATED)
+                                if (it.mismatch == VersionMismatch.LOCAL_OUTDATED) {
                                     ClientPairingFailureCause.MONITOR_OUTDATED
-                                else
+                                } else {
                                     ClientPairingFailureCause.CAMERA_OUTDATED
+                                }
                             }
                             ?: ClientPairingFailureCause.CONNECTION_FAILED
                     }

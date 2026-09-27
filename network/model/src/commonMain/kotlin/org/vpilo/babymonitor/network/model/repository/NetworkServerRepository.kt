@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.model.ServerState
-import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 
 interface NetworkServerRepository {
     val serverStateFlow: Flow<ServerState>

@@ -80,7 +80,7 @@ internal class PairingCoordinator(
         session: WebSocketSession,
         deviceIdentity: DeviceIdentity,
     ) {
-        if (!session.receiveProtocolVersion(DEVICE_PROTOCOL_VERSION)) return
+        if (!session.receiveProtocolVersion(isRelayConnection = false)) return
 
         val window = activeWindow
         if (window == null) {

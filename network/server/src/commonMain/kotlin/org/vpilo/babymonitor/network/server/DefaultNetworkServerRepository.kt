@@ -41,10 +41,10 @@ import org.vpilo.babymonitor.network.internal.repository.InternalActiveSessionsR
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.ServerState
-import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 import org.vpilo.babymonitor.network.security.identity.DeviceIdentity
 import org.vpilo.babymonitor.network.server.pairing.PairingCoordinator
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
@@ -86,7 +86,7 @@ internal class DefaultNetworkServerRepository(
     override val pairingState: Flow<ServerPairingState> = pairingCoordinator.state
 
     override val relayVersionMismatchFlow: Flow<VersionMismatch?> = relayRegistration.relayVersionMismatch
-    
+
     override fun startPairingWindow() {
         pairingCoordinator.startPairingWindow(checkNotNull(self) { "Server not started" })
     }
