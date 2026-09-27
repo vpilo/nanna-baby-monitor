@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.camera.presentation.pairing
 import android.content.Context
 import android.graphics.ImageFormat
 import androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+import androidx.camera.core.CameraState
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -11,6 +12,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.common.HybridBinarizer
@@ -32,8 +34,8 @@ actual class CameraQrScannerViewModel actual constructor(
     override fun SubscriptionScope.onSubscribed() {
         qrReader.scannedDataFlow
             .subscribe {
-                Logger.d(TAG) { "QR code scanned" }
                 it ?: return@subscribe
+                Logger.d(TAG) { "QR code scanned" }
                 CameraQrScannerEffect.QrScanned(it).sendEffect()
             }
     }
@@ -108,16 +110,29 @@ actual class CameraQrScannerViewModel actual constructor(
 
         analysisUseCase.setAnalyzer(coroutineContext.asExecutor(), analyzer)
 
-        processCameraProvider.bindToLifecycle(
-            lifecycleOwner,
-            DEFAULT_BACK_CAMERA,
-            cameraPreviewUseCase,
-            analysisUseCase,
-        )
+        val camera =
+            processCameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                DEFAULT_BACK_CAMERA,
+                cameraPreviewUseCase,
+                analysisUseCase,
+            )
+
+        val cameraStateObserver =
+            Observer<CameraState> { cameraState ->
+                val error = cameraState.error ?: return@Observer
+                if (error.type != CameraState.ErrorType.CRITICAL) {
+                    return@Observer
+                }
+                Logger.w(TAG, error.cause) { "Camera failed! error=${error.code}" }
+                CameraQrScannerEffect.CameraError.sendEffect()
+            }
+        camera.cameraInfo.cameraState.observe(lifecycleOwner, cameraStateObserver)
 
         try {
             awaitCancellation()
         } finally {
+            camera.cameraInfo.cameraState.removeObserver(cameraStateObserver)
             processCameraProvider.unbindAll()
         }
     }

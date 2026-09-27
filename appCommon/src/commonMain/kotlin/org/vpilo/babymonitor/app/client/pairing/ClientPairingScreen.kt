@@ -43,6 +43,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.module.dsl.viewModelOf
+import org.vpilo.babymonitor.camera.presentation.RequestCameraPermission
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScanner
 import org.vpilo.babymonitor.camera.presentation.pairing.CameraQrScannerViewModel
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
@@ -62,7 +63,18 @@ fun ClientPairingScreen(
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
     val snackbarController = LocalSnackbarController.current
-    var isCameraAvailable by remember { mutableStateOf(true) }
+    var isCameraPermissionRequested by remember { mutableStateOf(false) }
+    var isCameraAvailable by remember { mutableStateOf(false) }
+
+    if (!isCameraPermissionRequested) {
+        RequestCameraPermission(
+            onGranted = {
+                isCameraPermissionRequested = true
+                isCameraAvailable = true
+            },
+            onDenied = { isCameraPermissionRequested = true },
+        )
+    }
 
     LaunchedEffect(viewModel.effectsFlow) {
         viewModel.effectsFlow.collect { effect ->
@@ -85,7 +97,10 @@ fun ClientPairingScreen(
         onMainActionClicked = onBackClicked,
     ) {
         ClientPairingView(
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(Theme.Paddings.Medium),
             serverName = state.server?.name.orEmpty(),
             pairingState = state.pairingState,
             isCameraAvailable = isCameraAvailable,
@@ -107,7 +122,7 @@ private fun ClientPairingView(
     modifier: Modifier = Modifier,
     serverName: String,
     pairingState: ClientPairingState,
-    isCameraAvailable: Boolean = true,
+    isCameraAvailable: Boolean = false,
     onQrRead: (qrContent: String) -> Unit = {},
     onPinEntered: (pin: Pin) -> Unit = {},
     onCameraError: () -> Unit = {},

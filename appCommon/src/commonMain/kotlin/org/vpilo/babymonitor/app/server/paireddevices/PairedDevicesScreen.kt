@@ -44,7 +44,10 @@ fun PairedDevicesScreen(
         onMainActionClicked = onBackClicked,
     ) {
         PairedDevicesView(
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(Theme.Paddings.Medium),
             devices = state.devices,
             onRevoke = { viewModel.send(PairedDevicesScreenAction.Revoke(it)) },
         )
@@ -59,7 +62,7 @@ private fun PairedDevicesView(
 ) {
     if (devices.isEmpty()) {
         Box(
-            modifier = modifier.padding(Theme.Paddings.Medium),
+            modifier = modifier,
             contentAlignment = Alignment.TopCenter,
         ) {
             Text(
