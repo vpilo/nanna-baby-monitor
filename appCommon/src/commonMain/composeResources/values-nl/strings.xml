@@ -37,8 +37,8 @@
     <string name="client_connection_chooser_error_details">Foutdetails: %1$s</string>
     <string name="client_connection_chooser_pairing_revoked">De camera heeft de koppeling van dit apparaat verwijderd. Koppel opnieuw om verbinding te maken.</string>
     <string name="client_connection_chooser_certificate_mismatch">De handtekening van de camera is gewijzigd. Koppel opnieuw om verbinding te maken.</string>
-    <string name="client_connection_chooser_camera_outdated">De camera-app is verouderd. Werk hem bij om verbinding te maken.</string>
-    <string name="client_connection_chooser_monitor_outdated">Deze app is ouder dan die van de camera. Werk hem bij om verbinding te maken.</string>
+    <string name="client_connection_chooser_camera_outdated">De camera-app is verouderd en niet meer compatibel met deze app. Werk hem bij om verbinding te maken.</string>
+    <string name="client_connection_chooser_monitor_outdated">Deze app is ouder dan de camera-app en niet meer compatibel. Werk deze app bij om verbinding te maken.</string>
     <string name="client_connection_chooser_servers_section_connectable">Beschikbare camera's</string>
     <string name="client_connection_chooser_servers_section_new">Onbekende camera's</string>
     <string name="client_connection_chooser_servers_section_paired">Gekoppelde camera's</string>
@@ -81,11 +81,11 @@
     <string name="client_pairing_failed_mitm_suspected">Kan de identiteit van de camera niet verifiëren - koppelen afgebroken</string>
     <string name="client_pairing_failed_connection_failed">Verbinding mislukt, probeer het opnieuw</string>
     <string name="client_pairing_qr_wrong_device">De gescande code hoort bij een ander apparaat</string>
-    <string name="client_pairing_failed_camera_outdated">De camera-app is verouderd. Werk hem bij om te koppelen.</string>
-    <string name="client_pairing_failed_monitor_outdated">Deze app is ouder dan die van de camera. Werk hem bij om te koppelen.</string>
+    <string name="client_pairing_failed_camera_outdated">De camera-app is verouderd en niet meer compatibel met deze app. Werk hem bij om te koppelen.</string>
+    <string name="client_pairing_failed_monitor_outdated">Deze app is ouder dan de camera-app en niet meer compatibel. Werk deze app bij om te koppelen.</string>
     <string name="client_pairing_pin_label">Pincode</string>
     <string name="client_pairing_camera_failure">Camera niet beschikbaar, QR-codes kunnen niet worden gescand</string>
     <string name="menu_paired_devices_description">Bekijk en ontkoppel de apparaten die aan dit apparaat zijn gekoppeld</string>
-    <string name="relay_version_mismatch_relay_outdated">De relayserver is verouderd. Werk hem bij om de relay te gebruiken.</string>
-    <string name="relay_version_mismatch_app_outdated">Deze app is ouder dan de relayserver. Werk hem bij om de relay te gebruiken.</string>
+    <string name="relay_version_mismatch_relay_outdated">De relayserver is ouder dan deze app en niet meer compatibel. Werk hem bij om de relay te gebruiken.</string>
+    <string name="relay_version_mismatch_app_outdated">Deze app is ouder dan de relayserver en niet meer compatibel. Werk deze app bij om de relay te gebruiken.</string>
 </resources>
