@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.app.cameraselection
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -98,6 +99,10 @@ class CameraSelectionScreenViewModel(
                     ConnectionState.ErrorReason.ClientQuit,
                     ConnectionState.ErrorReason.PairingRevoked,
                     ConnectionState.ErrorReason.ServerNotFound,
+                    ConnectionState.ErrorReason.CameraDeviceOutdated,
+                    ConnectionState.ErrorReason.MonitorDeviceOutdated,
+                    ConnectionState.ErrorReason.RelayOutdated,
+                    ConnectionState.ErrorReason.AppRelayOutdated,
                         -> {
                             Logger.d(TAG) { "Stopping auto-reconnection" }
                             settingsRepository.save(Setting.ClientLastServerId, "")
@@ -124,6 +129,9 @@ class CameraSelectionScreenViewModel(
         }
         remoteDiscoveryRepository.isRegisteredFlow.subscribe { isRegistered ->
             state.copy(isAvailableOnRelay = isRegistered).update()
+        }
+        remoteDiscoveryRepository.relayVersionMismatchFlow.filterNotNull().subscribe {
+            CameraSelectionScreenEffect.AnnounceRelayVersionMismatch(it).sendEffect()
         }
 
         if (deviceId != null) {

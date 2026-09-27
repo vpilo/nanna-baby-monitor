@@ -30,12 +30,14 @@ import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_connect
 import babymonitor.appcommon.generated.resources.camera_selection_server_type_local
 import babymonitor.appcommon.generated.resources.camera_selection_server_type_relay
+import babymonitor.appcommon.generated.resources.client_connection_chooser_camera_outdated
 import babymonitor.appcommon.generated.resources.client_connection_chooser_certificate_mismatch
 import babymonitor.appcommon.generated.resources.client_connection_chooser_choose
 import babymonitor.appcommon.generated.resources.client_connection_chooser_client_quit
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connected
 import babymonitor.appcommon.generated.resources.client_connection_chooser_connecting
 import babymonitor.appcommon.generated.resources.client_connection_chooser_error_details
+import babymonitor.appcommon.generated.resources.client_connection_chooser_monitor_outdated
 import babymonitor.appcommon.generated.resources.client_connection_chooser_no_servers_found
 import babymonitor.appcommon.generated.resources.client_connection_chooser_pairing_revoked
 import babymonitor.appcommon.generated.resources.client_connection_chooser_reconnecting
@@ -44,9 +46,12 @@ import babymonitor.appcommon.generated.resources.client_connection_chooser_serve
 import babymonitor.appcommon.generated.resources.client_connection_chooser_servers_section_connectable
 import babymonitor.appcommon.generated.resources.client_connection_chooser_servers_section_new
 import babymonitor.appcommon.generated.resources.client_connection_chooser_servers_section_paired
+import babymonitor.appcommon.generated.resources.relay_version_mismatch_app_outdated
+import babymonitor.appcommon.generated.resources.relay_version_mismatch_relay_outdated
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.app.network.ktx.toMessageResource
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
@@ -93,6 +98,10 @@ fun CameraSelectionScreen(
 
                 is CameraSelectionScreenEffect.RequirePairing -> {
                     onRequirePairing(effect.server.id.toString())
+                }
+
+                is CameraSelectionScreenEffect.AnnounceRelayVersionMismatch -> {
+                    snackbarController.show(message = getString(effect.mismatch.toMessageResource()))
                 }
             }
         }
@@ -342,6 +351,22 @@ private suspend fun getConnectionStateMessage(
 
                 ConnectionState.ErrorReason.CertificateMismatch -> {
                     label = Res.string.client_connection_chooser_certificate_mismatch
+                }
+
+                ConnectionState.ErrorReason.CameraDeviceOutdated -> {
+                    label = Res.string.client_connection_chooser_camera_outdated
+                }
+
+                ConnectionState.ErrorReason.MonitorDeviceOutdated -> {
+                    label = Res.string.client_connection_chooser_monitor_outdated
+                }
+
+                ConnectionState.ErrorReason.RelayOutdated -> {
+                    label = Res.string.relay_version_mismatch_relay_outdated
+                }
+
+                ConnectionState.ErrorReason.AppRelayOutdated -> {
+                    label = Res.string.relay_version_mismatch_app_outdated
                 }
             }
         }

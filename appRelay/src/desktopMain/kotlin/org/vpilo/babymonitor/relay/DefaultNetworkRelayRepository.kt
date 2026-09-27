@@ -16,6 +16,7 @@ import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
+import io.ktor.websocket.DefaultWebSocketSession
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
@@ -23,11 +24,13 @@ import io.ktor.websocket.pingInterval
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import io.ktor.websocket.timeout
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
@@ -40,6 +43,7 @@ import org.vpilo.babymonitor.network.model.RelaySignals
 import org.vpilo.babymonitor.network.model.transport.asTransportString
 import org.vpilo.babymonitor.network.model.transport.fromTransportString
 import org.vpilo.babymonitor.network.security.crypto.sha256Fingerprint
+import org.vpilo.babymonitor.network.security.relay.receiveRelayProtocolVersion
 import org.vpilo.babymonitor.network.security.relay.verifyRelayAccess
 import java.security.cert.X509Certificate
 import java.util.concurrent.ConcurrentHashMap
@@ -71,7 +75,7 @@ class DefaultNetworkRelayRepository {
     private val remoteServers = MutableStateFlow<Map<DeviceId, RegisteredServer>>(emptyMap())
 
     private val pendingRelays =
-        ConcurrentHashMap<PendingSessionKey, ConcurrentLinkedDeque<CompletableDeferred<WebSocketServerSession?>>>()
+        ConcurrentHashMap<PendingSessionKey, ConcurrentLinkedDeque<CompletableDeferred<DefaultWebSocketSession?>>>()
 
     fun start(
         device: Device.Relay,
@@ -277,7 +281,7 @@ class DefaultNetworkRelayRepository {
     ) {
         Logger.d(TAG) { "Waiting rendezvous for $serverId on $endpoint" }
         val pendingSessionKey = PendingSessionKey(serverId, endpoint)
-        val cameraArrived = CompletableDeferred<WebSocketServerSession?>()
+        val cameraArrived = CompletableDeferred<DefaultWebSocketSession?>()
         pendingRelays.computeIfAbsent(pendingSessionKey) { ConcurrentLinkedDeque() }.addLast(cameraArrived)
 
         try {
@@ -299,8 +303,8 @@ class DefaultNetworkRelayRepository {
     }
 
     suspend fun runProxySession(
-        client: WebSocketSession,
-        server: WebSocketSession,
+        client: DefaultWebSocketSession,
+        server: DefaultWebSocketSession,
     ) {
         try {
             coroutineScope {
@@ -310,7 +314,7 @@ class DefaultNetworkRelayRepository {
                             server.send(frame)
                         }
                     } finally {
-                        server.close()
+                        server.closePeer(client)
                     }
                 }
                 launch {
@@ -319,7 +323,7 @@ class DefaultNetworkRelayRepository {
                             client.send(frame)
                         }
                     } finally {
-                        client.close()
+                        client.closePeer(server)
                     }
                 }
             }
@@ -327,6 +331,15 @@ class DefaultNetworkRelayRepository {
             server.close()
             client.close()
         }
+    }
+
+    // Ktor does not put a `Close` frame on `incoming`, so each proxy direction ends with the other side's close reason.
+    private suspend fun WebSocketSession.closePeer(peer: DefaultWebSocketSession) {
+        val reason =
+            withTimeoutOrNull(Constants.WEBSOCKET_TIMEOUT) { peer.closeReason.await() }
+                ?.takeIf { it.code != CLOSED_ABNORMALLY_CODE }
+                ?: CloseReason(CloseReason.Codes.NORMAL, "")
+        close(reason)
     }
 
     @Suppress("ReturnCount")
@@ -381,6 +394,17 @@ class DefaultNetworkRelayRepository {
         pingInterval = Constants.WEBSOCKET_PING_PERIOD
         timeout = Constants.WEBSOCKET_TIMEOUT
 
+        runCatching {
+            withTimeoutOrNull(Constants.RELAY_HANDSHAKE_TIMEOUT) { receiveRelayProtocolVersion() }
+        }.onFailure { if (it is CancellationException) throw it }
+            .getOrDefault(false)
+            .let { matches ->
+                if (matches != true) {
+                    Logger.w(TAG) { "Refused $role connection to $relayEndpoint: relay protocol version check failed" }
+                    return null
+                }
+            }
+
         if (!verifyRelayAccess(accessKey, role, relayEndpoint, certificateFingerprint)) {
             Logger.w(TAG) { "Refused unauthenticated $role connection to $relayEndpoint" }
             // Deliberately unspecific: a caller guessing passphrases learns nothing from the close reason.
@@ -398,6 +422,9 @@ class DefaultNetworkRelayRepository {
     private companion object {
         private const val RELAY_KEY_ALIAS = "babymonitor-relay"
         private const val RELAY_KEYSTORE_PASSWORD = "babymonitor"
+
+        // Ktor marks CloseReason.Codes.CLOSED_ABNORMALLY as internal API.
+        private const val CLOSED_ABNORMALLY_CODE: Short = 1006
 
         private val TAG = DefaultNetworkRelayRepository::class
     }

@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
+import org.vpilo.babymonitor.network.internal.protocol.receiveProtocolVersion
 import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.model.pairing.Pin
@@ -78,6 +80,8 @@ internal class PairingCoordinator(
         session: WebSocketSession,
         deviceIdentity: DeviceIdentity,
     ) {
+        if (!session.receiveProtocolVersion(isRelayConnection = false)) return
+
         val window = activeWindow
         if (window == null) {
             Logger.w(TAG) { "Rejecting pairing session: no active pairing window" }

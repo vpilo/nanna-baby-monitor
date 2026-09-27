@@ -26,9 +26,11 @@ import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_pairing
 import babymonitor.appcommon.generated.resources.client_pairing_camera_failure
 import babymonitor.appcommon.generated.resources.client_pairing_camera_or_pin
+import babymonitor.appcommon.generated.resources.client_pairing_failed_camera_outdated
 import babymonitor.appcommon.generated.resources.client_pairing_failed_connection_failed
 import babymonitor.appcommon.generated.resources.client_pairing_failed_invalid_qr
 import babymonitor.appcommon.generated.resources.client_pairing_failed_mitm_suspected
+import babymonitor.appcommon.generated.resources.client_pairing_failed_monitor_outdated
 import babymonitor.appcommon.generated.resources.client_pairing_failed_no_active_window
 import babymonitor.appcommon.generated.resources.client_pairing_failed_protocol_error
 import babymonitor.appcommon.generated.resources.client_pairing_failed_server_not_on_network
@@ -147,6 +149,8 @@ private fun ClientPairingView(
                         ClientPairingFailureCause.MITM_SUSPECTED -> Res.string.client_pairing_failed_mitm_suspected
                         ClientPairingFailureCause.CONNECTION_FAILED -> Res.string.client_pairing_failed_connection_failed
                         ClientPairingFailureCause.WRONG_DEVICE -> Res.string.client_pairing_qr_wrong_device
+                        ClientPairingFailureCause.CAMERA_OUTDATED -> Res.string.client_pairing_failed_camera_outdated
+                        ClientPairingFailureCause.MONITOR_OUTDATED -> Res.string.client_pairing_failed_monitor_outdated
                     }
                 }
 

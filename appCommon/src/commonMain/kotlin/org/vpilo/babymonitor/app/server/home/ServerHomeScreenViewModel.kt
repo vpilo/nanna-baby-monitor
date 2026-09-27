@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.app.server.home
 
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -26,7 +27,7 @@ class ServerHomeScreenViewModel(
     private val settings: SettingsRepository,
     private val relayConfigurationRepository: RelayConfigurationRepository,
     videoCaptureRepository: VideoCaptureRepository,
-) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, Unit>(
+) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, ServerHomeScreenEffect>(
         initialState = ServerHomeScreenState(),
     ) {
     val videoStream: OpaqueVideoStream = videoCaptureRepository.videoStream
@@ -48,6 +49,10 @@ class ServerHomeScreenViewModel(
 
         relayConfigurationRepository.relayConfiguration.subscribe { configuration ->
             state.copy(isRelayConfigured = configuration.isConfigured).update()
+        }
+
+        server.relayVersionMismatchFlow.filterNotNull().subscribe {
+            ServerHomeScreenEffect.AnnounceRelayVersionMismatch(it).sendEffect()
         }
     }
 

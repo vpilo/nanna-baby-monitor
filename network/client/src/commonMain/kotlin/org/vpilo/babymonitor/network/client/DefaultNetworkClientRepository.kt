@@ -24,6 +24,8 @@ import org.vpilo.babymonitor.network.model.ServerState
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
+import org.vpilo.babymonitor.network.model.transport.VersionMismatchException
 import java.net.ProtocolException
 import java.security.cert.CertificateException
 import kotlin.coroutines.CoroutineContext
@@ -156,6 +158,38 @@ internal class DefaultNetworkClientRepository(
             is ProtocolException -> {
                 Logger.w(TAG) { "Server reported a protocol issue. Incompatible version?" }
                 disconnect(ConnectionState.ErrorReason.ServerQuit)
+                return
+            }
+
+            is VersionMismatchException if exception.isRelayConnection -> {
+                Logger.w(TAG) { "Incompatible relay protocol for $server: ${exception.prettify()}" }
+                val reason =
+                    when (exception.mismatch) {
+                        VersionMismatch.LOCAL_OUTDATED -> {
+                            ConnectionState.ErrorReason.AppRelayOutdated
+                        }
+
+                        VersionMismatch.REMOTE_OUTDATED -> {
+                            ConnectionState.ErrorReason.RelayOutdated
+                        }
+                    }
+                disconnect(reason)
+                return
+            }
+
+            is VersionMismatchException -> {
+                Logger.w(TAG) { "Incompatible device protocol with $server: ${exception.prettify()}" }
+                val reason =
+                    when (exception.mismatch) {
+                        VersionMismatch.LOCAL_OUTDATED -> {
+                            ConnectionState.ErrorReason.MonitorDeviceOutdated
+                        }
+
+                        VersionMismatch.REMOTE_OUTDATED -> {
+                            ConnectionState.ErrorReason.CameraDeviceOutdated
+                        }
+                    }
+                disconnect(reason)
                 return
             }
         }

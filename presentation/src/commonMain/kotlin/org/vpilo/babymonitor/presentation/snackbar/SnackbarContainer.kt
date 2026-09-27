@@ -22,8 +22,6 @@ fun SnackbarContainer(
     val snackbarHostState = remember { SnackbarHostState() }
 
     Box(modifier = modifier.fillMaxSize()) {
-        SnackbarHost(hostState = snackbarHostState, Modifier.align(Alignment.BottomCenter))
-
         LaunchedEffect(scope) {
             controller.awaitSnacks(snackbarHostState)
         }
@@ -31,5 +29,7 @@ fun SnackbarContainer(
         CompositionLocalProvider(LocalSnackbarController provides controller) {
             content()
         }
+
+        SnackbarHost(hostState = snackbarHostState, Modifier.align(Alignment.BottomCenter))
     }
 }

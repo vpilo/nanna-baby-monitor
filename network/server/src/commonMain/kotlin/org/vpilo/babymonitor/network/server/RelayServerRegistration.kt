@@ -28,6 +28,8 @@ import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.RelaySignals
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
+import org.vpilo.babymonitor.network.model.transport.VersionMismatchException
 import org.vpilo.babymonitor.network.model.transport.asTransportString
 import org.vpilo.babymonitor.network.security.relay.relayWss
 import org.vpilo.babymonitor.network.server.websockets.audioStreamingServerWebSocket
@@ -56,6 +58,9 @@ internal class RelayServerRegistration(
 
     private var isEnabled: Boolean = true
 
+    private val _relayVersionMismatch = MutableStateFlow<VersionMismatch?>(null)
+    val relayVersionMismatch: Flow<VersionMismatch?> = _relayVersionMismatch.asStateFlow()
+
     init {
         relayConfigurationRepository.relayConfiguration
             .onEach { configuration ->
@@ -78,6 +83,7 @@ internal class RelayServerRegistration(
 
     fun stop() {
         _isRegistered.value = false
+        _relayVersionMismatch.value = null
         registrationJob?.cancel()
         activeStreamJobs.forEach { it.cancel() }
         activeStreamJobs.clear()
@@ -108,11 +114,17 @@ internal class RelayServerRegistration(
                 }
             }.onFailure { ex ->
                 if (ex is CancellationException) throw ex
+                if (ex is VersionMismatchException) _relayVersionMismatch.value = ex.mismatch
+
                 Logger.i(TAG) { "Relay disconnected: ${ex.prettify()}. Retrying." }
             }
             activeStreamJobs.forEach { it.cancel() }
             activeStreamJobs.clear()
             _isRegistered.value = false
+            _relayVersionMismatch.value?.let {
+                Logger.w(TAG) { "Relay protocol version mismatch ($it), not retrying" }
+                return
+            }
             delay(Constants.RECONNECTION_TIMEOUT)
         }
     }

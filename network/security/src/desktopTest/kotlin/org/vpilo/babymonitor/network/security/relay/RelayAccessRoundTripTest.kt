@@ -9,12 +9,19 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import io.ktor.websocket.readText
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.vpilo.babymonitor.model.AppRole
+import org.vpilo.babymonitor.network.internal.protocol.PROTOCOL_VERSION_MISMATCH_CLOSE_CODE_RELAY
+import org.vpilo.babymonitor.network.internal.protocol.RELAY_PROTOCOL_VERSION
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.RelayConfiguration
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
+import org.vpilo.babymonitor.network.model.transport.VersionMismatchException
 import org.vpilo.babymonitor.network.security.crypto.deriveRelayAccessKey
 import org.vpilo.babymonitor.network.security.crypto.sha256Fingerprint
 import java.net.ServerSocket
@@ -23,6 +30,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
 private const val ENDPOINT = "/relay/discovery"
@@ -32,9 +40,9 @@ private const val KEY_PASSWORD = "test-password"
 private const val GREETING = "you are in"
 
 /**
- * Drives [relayWss] against a real TLS Ktor server running [verifyRelayAccess], so the wire format, the frame
- * ordering, and - most importantly - the two sides independently arriving at the same certificate fingerprint
- * are all exercised on the stack that ships.
+ * Drives [relayWss] against a real TLS Ktor server running the version exchange and [verifyRelayAccess], so the
+ * wire format, the frame ordering, and - most importantly - the two sides independently arriving at the same
+ * certificate fingerprint are all exercised on the stack that ships.
  */
 class RelayAccessRoundTripTest {
     private var server: EmbeddedServer<*, *>? = null
@@ -123,10 +131,54 @@ class RelayAccessRoundTripTest {
             assertFalse(sessionRan)
         }
 
+    // The version tests run on real time: the connector waits for the relay's close reason with a timeout, which
+    // virtual time would expire at once.
+    @Test
+    fun aNewerRelayRejectsTheVersionBeforeTheAccessHandshake() =
+        runBlocking {
+            // A wrong passphrase too: the version is checked first, so the mismatch must still be what surfaces.
+            val port = startRelay(PASSPHRASE, relayVersion = RELAY_PROTOCOL_VERSION + 1)
+            var sessionRan = false
+
+            val exception =
+                assertFailsWith<VersionMismatchException> {
+                    relayWss(
+                        configuration = RelayConfiguration(host = "127.0.0.1", passphrase = "not the passphrase"),
+                        role = AppRole.CLIENT,
+                        endpoint = ENDPOINT,
+                        port = port,
+                    ) {
+                        sessionRan = true
+                    }
+                }
+
+            assertEquals(VersionMismatch.LOCAL_OUTDATED, exception.mismatch)
+            assertFalse(sessionRan)
+        }
+
+    @Test
+    fun anOlderRelayIsReportedOutdated() =
+        runBlocking {
+            val port = startRelay(PASSPHRASE, relayVersion = RELAY_PROTOCOL_VERSION - 1)
+
+            val exception =
+                assertFailsWith<VersionMismatchException> {
+                    relayWss(
+                        configuration = RelayConfiguration(host = "127.0.0.1", passphrase = PASSPHRASE),
+                        role = AppRole.CLIENT,
+                        endpoint = ENDPOINT,
+                        port = port,
+                    ) {}
+                }
+
+            assertEquals(VersionMismatch.REMOTE_OUTDATED, exception.mismatch)
+        }
+
     private suspend fun startRelay(
         passphrase: String,
         expectedRole: AppRole = AppRole.CLIENT,
         fingerprintOverride: String? = null,
+        relayVersion: Int = RELAY_PROTOCOL_VERSION,
     ): Int {
         val port = ServerSocket(0).use { it.localPort }
         val keyStore =
@@ -159,6 +211,13 @@ class RelayAccessRoundTripTest {
                     install(WebSockets)
                     routing {
                         webSocket(ENDPOINT) {
+                            if (relayVersion != RELAY_PROTOCOL_VERSION) {
+                                // Stands in for a relay built against another version, refusing ours.
+                                incoming.receive()
+                                close(CloseReason(PROTOCOL_VERSION_MISMATCH_CLOSE_CODE_RELAY, relayVersion.toString()))
+                                return@webSocket
+                            }
+                            if (!receiveRelayProtocolVersion()) return@webSocket
                             if (!verifyRelayAccess(accessKey, expectedRole, ENDPOINT, fingerprint)) return@webSocket
                             send(Frame.Text(GREETING))
                         }

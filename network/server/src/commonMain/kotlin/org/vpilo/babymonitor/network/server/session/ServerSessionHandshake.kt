@@ -5,6 +5,8 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
+import org.vpilo.babymonitor.network.internal.protocol.receiveProtocolVersion
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.security.crypto.computeServerHandshakeProof
 import org.vpilo.babymonitor.network.security.crypto.deriveServerSessionCipher
@@ -21,6 +23,8 @@ internal suspend fun WebSocketSession.serverSessionHandshake(
     pairingStorageRepository: PairingStorageRepository,
     streamType: StreamType,
 ): ServerSessionHandshakeResult? {
+    if (!receiveProtocolVersion(isRelayConnection = false)) return null
+
     val request =
         receiveSessionHandshakeRequestOrNull() ?: run {
             close(CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Malformed session handshake"))

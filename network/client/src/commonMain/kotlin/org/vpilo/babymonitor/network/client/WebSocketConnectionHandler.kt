@@ -20,9 +20,12 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
+import org.vpilo.babymonitor.network.internal.protocol.asVersionMismatchExceptionOrNull
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.RelayConfiguration
+import org.vpilo.babymonitor.network.model.transport.VersionMismatchException
 import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
 import org.vpilo.babymonitor.network.security.relay.relayWss
 import java.net.ConnectException
@@ -119,6 +122,12 @@ internal class WebSocketConnectionHandler(
                     onDisconnected(lastException)
                 }
 
+                is VersionMismatchException -> {
+                    Logger.w(TAG) { "Version mismatch for $target for $endpointPath: ${lastException.prettify()}" }
+                    connectionJob = null
+                    onDisconnected(lastException)
+                }
+
                 is ClosedSendChannelException,
                 is ClosedReceiveChannelException,
                 is WebSocketException,
@@ -186,8 +195,8 @@ internal class WebSocketConnectionHandler(
     }
 
     /**
-     * Runs [sessionBlock] and, if the session ends because the server closed it with a policy violation, translates the
-     * close reason into a [PairingRevokedException] so the connection is dropped for good instead of retried.
+     * Runs [sessionBlock] and, if the session ends because the server closed it with a policy violation, the connection is dropped
+     * instead of retried.
      */
     private suspend fun DefaultClientWebSocketSession.runSession() {
         try {
@@ -196,11 +205,12 @@ internal class WebSocketConnectionHandler(
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
             val reason = closeReason.await() ?: throw ex
-            throw when (reason.knownReason) {
-                CloseReason.Codes.VIOLATED_POLICY -> PairingRevokedException(reason.message)
-                CloseReason.Codes.PROTOCOL_ERROR -> ProtocolException(reason.message)
-                else -> ex
-            }
+            throw reason.asVersionMismatchExceptionOrNull()
+                ?: when (reason.knownReason) {
+                    CloseReason.Codes.VIOLATED_POLICY -> PairingRevokedException(reason.message)
+                    CloseReason.Codes.PROTOCOL_ERROR -> ProtocolException(reason.message)
+                    else -> ex
+                }
         }
     }
 
