@@ -17,7 +17,11 @@ class SnackbarController internal constructor() {
 
     internal suspend fun awaitSnacks(snackbarHostState: SnackbarHostState) {
         snackbarMessages.asSharedFlow().collect { message ->
-            snackbarHostState.showSnackbar(message = message, duration = SnackbarDuration.Short)
+            snackbarHostState.showSnackbar(
+                message = message,
+                withDismissAction = true,
+                duration = SnackbarDuration.Short,
+            )
         }
     }
 

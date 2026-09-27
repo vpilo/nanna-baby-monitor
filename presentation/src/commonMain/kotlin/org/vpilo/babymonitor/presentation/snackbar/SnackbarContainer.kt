@@ -1,7 +1,9 @@
 package org.vpilo.babymonitor.presentation.snackbar
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -30,6 +32,11 @@ fun SnackbarContainer(
             content()
         }
 
-        SnackbarHost(hostState = snackbarHostState, Modifier.align(Alignment.BottomCenter))
+        SnackbarHost(hostState = snackbarHostState, Modifier.align(Alignment.BottomCenter)) { data ->
+            Snackbar(
+                snackbarData = data,
+                modifier = Modifier.clickable { data.dismiss() },
+            )
+        }
     }
 }
