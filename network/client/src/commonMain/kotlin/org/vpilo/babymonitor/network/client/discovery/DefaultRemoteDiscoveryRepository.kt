@@ -28,6 +28,8 @@ import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
+import org.vpilo.babymonitor.network.model.transport.VersionMismatchException
 import org.vpilo.babymonitor.network.model.transport.fromTransportString
 import org.vpilo.babymonitor.network.security.relay.relayWss
 import kotlin.coroutines.CoroutineContext
@@ -50,9 +52,13 @@ internal class DefaultRemoteDiscoveryRepository(
     private var discoveryJob: Job? = null
     private var session: DefaultWebSocketSession? = null
 
+    private val _relayVersionMismatchFlow = MutableStateFlow<VersionMismatch?>(null)
+    override val relayVersionMismatchFlow: Flow<VersionMismatch?> = _relayVersionMismatchFlow.asStateFlow()
+
     private fun setRelay(configuration: RelayConfiguration) {
         relayConfiguration = configuration
         _discoveredDevicesFlow.value = emptySet()
+        _relayVersionMismatchFlow.value = null
 
         discoveryJob?.cancel()
         discoveryJob = null
@@ -103,6 +109,7 @@ internal class DefaultRemoteDiscoveryRepository(
 
                     session = this
                     mutableIsRegisteredFlow.value = true
+                    _relayVersionMismatchFlow.value = null
                     runWebSocketCatching(TAG) {
                         for (frame in incoming) {
                             if (frame !is Frame.Text) continue
@@ -122,7 +129,13 @@ internal class DefaultRemoteDiscoveryRepository(
                     }
                 }
             }.onFailure { ex ->
-                if (ex is CancellationException) throw ex
+                when (ex) {
+                    is CancellationException -> throw ex
+                    is VersionMismatchException -> {
+                        Logger.w(TAG) { "Incompatible relay protocol: ${ex.prettify()}" }
+                        _relayVersionMismatchFlow.value = ex.mismatch
+                    }
+                }
                 Logger.i(TAG) { "Relay discovery connection failed: ${ex.prettify()}. Retrying." }
             }
             mutableIsRegisteredFlow.value = false

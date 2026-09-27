@@ -29,5 +29,9 @@ sealed interface ConnectionState {
         NotConnectedYet,
         PairingRevoked,
         CertificateMismatch,
+        CameraDeviceOutdated,
+        MonitorDeviceOutdated,
+        RelayOutdated,
+        AppRelayOutdated,
     }
 }

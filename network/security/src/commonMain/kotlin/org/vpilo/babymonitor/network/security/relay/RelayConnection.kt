@@ -11,9 +11,14 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
 import io.ktor.websocket.pingInterval
 import io.ktor.websocket.timeout
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.network.internal.protocol.RELAY_PROTOCOL_VERSION
+import org.vpilo.babymonitor.network.internal.protocol.asVersionMismatchExceptionOrNull
+import org.vpilo.babymonitor.network.internal.protocol.sendProtocolVersion
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.RelayConfiguration
 import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
@@ -29,8 +34,9 @@ import io.ktor.client.plugins.websocket.pingInterval as clientPingInterval
 /**
  * Opens an authenticated relay connection and runs [block] on it.
  *
- * Every relay connection goes through here, so the access handshake can't be forgotten at a call site: [block]
- * only runs once this app has proven it holds the relay passphrase *and* the relay has proven the same back.
+ * Every relay connection goes through here.
+ * [block] is only run once the connection has been proven to have a compatible version and to hold the relay passphrase, and once the
+ * relay has proven the same back.
  *
  * [endpoint] is one of the `Endpoints.Relay` constants and is bound into both proofs; [serverId], when given, is
  * appended to the request path but deliberately left out of the proofs - the relay routes on it, and binding it
@@ -76,6 +82,8 @@ suspend fun relayWss(
             pingInterval = Constants.WEBSOCKET_PING_PERIOD
             timeout = Constants.WEBSOCKET_TIMEOUT
 
+            sendProtocolVersion(RELAY_PROTOCOL_VERSION)
+            throwIfRelayVersionMismatches()
             if (!authenticateWithRelay(accessKey, role, endpoint, trustManager)) return@wss
             block()
         }
@@ -125,6 +133,15 @@ private suspend fun DefaultClientWebSocketSession.authenticateWithRelay(
         return false
     }
     return true
+}
+
+// The relay refuses a mismatching version before sending its challenge, and says which version it speaks.
+@OptIn(DelicateCoroutinesApi::class)
+private suspend fun DefaultClientWebSocketSession.throwIfRelayVersionMismatches() {
+    if (!incoming.isClosedForReceive) return
+    withTimeoutOrNull(Constants.WEBSOCKET_TIMEOUT) { closeReason.await() }
+        ?.asVersionMismatchExceptionOrNull(RELAY_PROTOCOL_VERSION)
+        ?.let { throw it }
 }
 
 private const val TAG = "RelayConnection"

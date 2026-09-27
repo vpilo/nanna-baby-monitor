@@ -14,6 +14,9 @@ import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
+import org.vpilo.babymonitor.network.internal.protocol.asVersionMismatchExceptionOrNull
+import org.vpilo.babymonitor.network.internal.protocol.sendProtocolVersion
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
@@ -21,6 +24,7 @@ import org.vpilo.babymonitor.network.model.pairing.ClientPairingRepository
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.network.model.pairing.Pin
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 import org.vpilo.babymonitor.network.security.crypto.EcdhKeyPair
 import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
 import org.vpilo.babymonitor.network.security.crypto.buildPairingTranscript
@@ -132,6 +136,8 @@ internal class DefaultClientPairingRepository(
         pin: Pin,
     ): ClientPairingState {
         try {
+            sendProtocolVersion(DEVICE_PROTOCOL_VERSION)
+
             val clientKeyPair = EcdhKeyPair.create()
             sendPairingHello(PairingHello(clientDevice.id, clientDevice.name, clientCertFingerprint, clientKeyPair.publicKeyEncoded))
 
@@ -170,7 +176,16 @@ internal class DefaultClientPairingRepository(
                 when (reason.knownReason) {
                     CloseReason.Codes.CANNOT_ACCEPT -> ClientPairingFailureCause.NO_ACTIVE_PAIRING_WINDOW
                     CloseReason.Codes.VIOLATED_POLICY -> ClientPairingFailureCause.WRONG_PIN
-                    else -> ClientPairingFailureCause.CONNECTION_FAILED
+                    else -> {
+                        reason.asVersionMismatchExceptionOrNull(DEVICE_PROTOCOL_VERSION)
+                            ?.let {
+                                if (it.mismatch == VersionMismatch.LOCAL_OUTDATED)
+                                    ClientPairingFailureCause.MONITOR_OUTDATED
+                                else
+                                    ClientPairingFailureCause.CAMERA_OUTDATED
+                            }
+                            ?: ClientPairingFailureCause.CONNECTION_FAILED
+                    }
                 },
             )
         }

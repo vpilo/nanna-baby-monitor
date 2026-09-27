@@ -10,4 +10,6 @@ enum class ClientPairingFailureCause {
     MITM_SUSPECTED,
     CONNECTION_FAILED,
     WRONG_DEVICE,
+    CAMERA_OUTDATED,
+    MONITOR_OUTDATED,
 }

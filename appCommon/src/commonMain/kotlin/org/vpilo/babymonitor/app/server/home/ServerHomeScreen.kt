@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,8 +20,10 @@ import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_server_home
 import babymonitor.appcommon.generated.resources.app_title_server_pairing
 import babymonitor.appcommon.generated.resources.pair
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.vpilo.babymonitor.app.network.ktx.toMessageResource
 import org.vpilo.babymonitor.camera.presentation.composables.PanningVideoFeed
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.OpaqueVideoStream
@@ -34,6 +37,7 @@ import org.vpilo.babymonitor.presentation.composables.Tooltip
 import org.vpilo.babymonitor.presentation.composables.rememberIsVideoFeedActive
 import org.vpilo.babymonitor.presentation.preview.makePreviewVideoStream
 import org.vpilo.babymonitor.presentation.server.RecordingIcon
+import org.vpilo.babymonitor.presentation.snackbar.LocalSnackbarController
 
 @Composable
 fun ServerHomeScreen(
@@ -43,6 +47,17 @@ fun ServerHomeScreen(
     onPairClicked: () -> Unit,
 ) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
+    val snackbarController = LocalSnackbarController.current
+
+    LaunchedEffect(viewModel.effectsFlow) {
+        viewModel.effectsFlow.collect { effect ->
+            when (effect) {
+                is ServerHomeScreenEffect.AnnounceRelayVersionMismatch -> {
+                    snackbarController.show(message = getString(effect.mismatch.toMessageResource()))
+                }
+            }
+        }
+    }
 
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),

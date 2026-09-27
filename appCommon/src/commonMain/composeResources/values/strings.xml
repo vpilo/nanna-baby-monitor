@@ -41,6 +41,8 @@
     <string name="client_connection_chooser_error_details">Error details: %1$s</string>
     <string name="client_connection_chooser_pairing_revoked">The camera removed this device's pairing. Pair again to reconnect.</string>
     <string name="client_connection_chooser_certificate_mismatch">The camera's signature changed. Pair again to reconnect.</string>
+    <string name="client_connection_chooser_camera_outdated">The camera app version is outdated, and this version is not compatible with it anymore. Update it to connect.</string>
+    <string name="client_connection_chooser_monitor_outdated">The version of this app is older than the version of the camera app, and they are not compatible. Update it to connect.</string>
     <string name="client_connection_chooser_servers_section_connectable">Available cameras</string>
     <string name="client_connection_chooser_servers_section_new">Unknown cameras</string>
     <string name="client_connection_chooser_servers_section_paired">Paired cameras</string>
@@ -83,7 +85,11 @@
     <string name="client_pairing_failed_mitm_suspected">Could not verify the server's identity - pairing aborted</string>
     <string name="client_pairing_failed_connection_failed">Connection failed, try again</string>
     <string name="client_pairing_qr_wrong_device">Scanned code is for a different device</string>
+    <string name="client_pairing_failed_camera_outdated">The camera app version is outdated, and they are not compatible. Update it to pair.</string>
+    <string name="client_pairing_failed_monitor_outdated">The version of this app is older than the version of the camera app, and they are not compatible. Update it to pair.</string>
     <string name="client_pairing_pin_label">PIN</string>
     <string name="client_pairing_camera_failure">Camera unavailable, unable to scan QRs</string>
     <string name="menu_paired_devices_description">View and unpair the devices paired with this one</string>
+    <string name="relay_version_mismatch_relay_outdated">The relay server is outdated, and they are not compatible. Update it to use the relay.</string>
+    <string name="relay_version_mismatch_app_outdated">The version of this app is older than the version of the relay server, and they are not compatible. Update it to use the relay.</string>
 </resources>

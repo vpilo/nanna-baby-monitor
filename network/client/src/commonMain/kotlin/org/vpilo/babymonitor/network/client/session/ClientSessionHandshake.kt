@@ -5,6 +5,8 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
+import org.vpilo.babymonitor.network.internal.protocol.sendProtocolVersion
 import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.network.security.crypto.SessionFrameCipher
 import org.vpilo.babymonitor.network.security.crypto.computeClientHandshakeProof
@@ -28,6 +30,8 @@ internal suspend fun WebSocketSession.clientSessionHandshake(
         close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No longer paired"))
         return null
     }
+
+    sendProtocolVersion(DEVICE_PROTOCOL_VERSION)
 
     val sharedSecret = Base64.decode(pairedDevice.sharedSecretBase64)
     val clientSalt = generateSessionSalt()

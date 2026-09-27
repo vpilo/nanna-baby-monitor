@@ -37,6 +37,8 @@
     <string name="client_connection_chooser_error_details">Dettagli dell'errore: %1$s</string>
     <string name="client_connection_chooser_pairing_revoked">La telecamera ha rimosso l'associazione di questo dispositivo. Associalo di nuovo per riconnetterti.</string>
     <string name="client_connection_chooser_certificate_mismatch">La firma della telecamera è cambiata. Associa di nuovo il dispositivo per riconnetterti.</string>
+    <string name="client_connection_chooser_camera_outdated">La versione della app della telecamera non è aggiornata, e questa versione non è piú compatibile. Aggiornala per connetterti.</string>
+    <string name="client_connection_chooser_monitor_outdated">La versione di questa app è meno recente di quella della telecamera, e quella versione non è piú compatibile. Aggiornala per connetterti.</string>
     <string name="client_connection_chooser_servers_section_connectable">Telecamere disponibili</string>
     <string name="client_connection_chooser_servers_section_new">Telecamere sconosciute</string>
     <string name="client_connection_chooser_servers_section_paired">Telecamere associate</string>
@@ -79,7 +81,11 @@
     <string name="client_pairing_failed_mitm_suspected">Impossibile verificare l'identità della telecamera - associazione interrotta</string>
     <string name="client_pairing_failed_connection_failed">Connessione non riuscita, riprova</string>
     <string name="client_pairing_qr_wrong_device">Il codice scansionato appartiene a un altro dispositivo</string>
+    <string name="client_pairing_failed_camera_outdated">La versione della app della telecamera non è aggiornata, e non sono compatibili. Aggiornala per associarla.</string>
+    <string name="client_pairing_failed_monitor_outdated">La versione di questa app è meno recente di quella della telecamera, e non sono compatibili. Aggiornala per associarla.</string>
     <string name="client_pairing_pin_label">PIN</string>
     <string name="client_pairing_camera_failure">Fotocamera non disponibile, impossibile scansionare i codici QR</string>
     <string name="menu_paired_devices_description">Vedi e dissocia i dispositivi associati</string>
+    <string name="relay_version_mismatch_relay_outdated">Il server relay non è aggiornato, e non sono compatibili. Aggiornalo per usare il relay.</string>
+    <string name="relay_version_mismatch_app_outdated">La versione di questa app è meno recente di quella del server relay, e non sono compatibili. Aggiornala per usare il relay.</string>
 </resources>

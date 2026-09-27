@@ -4,12 +4,15 @@ import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.model.CaptureMode
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.model.ServerState
+import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 import org.vpilo.babymonitor.network.model.pairing.ServerPairingState
 
 interface NetworkServerRepository {
     val serverStateFlow: Flow<ServerState>
 
     val pairingState: Flow<ServerPairingState>
+
+    val relayVersionMismatchFlow: Flow<VersionMismatch?>
 
     suspend fun start(self: Device.LocalServer)
 
