@@ -1,6 +1,7 @@
 # Releasing
 
 A release is a git tag. CI builds and publishes it, and F-Droid picks it up from there.
+Update the appAndroid/src/main/play/release-notes/<locale>/default.txt files before tagging. The English one will be used for the release note.
 
 ## Versions
 

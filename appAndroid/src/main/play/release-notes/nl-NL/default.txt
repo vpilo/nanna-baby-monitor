@@ -1,2 +1,4 @@
 Toevoeging van een foutmeldingsverzoek na een crash. Stuur alstublieft rapporten, dit zal me helpen bugs sneller op te lossen!
 Koppelingen werken nu in beide richtingen. Werk na de update alle apparaten bij en koppel ze opnieuw.
+Versiedetectie toegevoegd om verbindingspogingen tussen incompatibele versies te herkennen: werk in dat geval beide apparaten bij naar de nieuwste versie.
+Pop-upberichten kunnen nu worden gesloten door erop te tikken of te klikken.
