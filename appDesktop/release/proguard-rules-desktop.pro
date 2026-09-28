@@ -44,6 +44,8 @@
 -dontwarn com.github.luben.zstd.**
 -dontwarn com.google.protobuf.**
 -dontwarn com.jcraft.jzlib.**
+# Netty's HTTP/3 codec uses JSR-305 annotations, which are compile-time only.
+-dontwarn javax.annotation.**
 -dontwarn com.ning.compress.**
 -dontwarn io.netty.internal.tcnative.**
 -dontwarn io.netty.pkitesting.**
