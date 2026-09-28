@@ -1,5 +1,6 @@
 package org.vpilo.babymonitor.data
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
@@ -20,7 +21,9 @@ internal class DefaultDeviceStateRepository(
         dataSource
             .batteryLevel
             .onCompletion { ex ->
-                ex?.let { Logger.e(TAG) { "Battery level retrieval error: ${ex.prettify()}" } }
+                ex
+                    ?.takeIf { it !is CancellationException }
+                    ?.let { Logger.e(TAG) { "Battery level retrieval error: ${ex.prettify()}" } }
             }.distinctUntilChanged()
             .onEach { state ->
                 Logger.d(TAG) { "Battery level changed: $state" }
@@ -30,7 +33,9 @@ internal class DefaultDeviceStateRepository(
         dataSource
             .signalLevel
             .onCompletion { ex ->
-                ex?.let { Logger.e(TAG) { "Signal quality retrieval error: ${ex.prettify()}" } }
+                ex
+                    ?.takeIf { it !is CancellationException }
+                    ?.let { Logger.e(TAG) { "Signal quality retrieval error: ${ex.prettify()}" } }
             }.distinctUntilChanged()
             .onEach { state ->
                 Logger.d(TAG) { "Signal quality changed: $state" }
@@ -43,7 +48,9 @@ internal class DefaultDeviceStateRepository(
             .debounce(INTERNET_STATE_DEBOUNCE_TIMEOUT)
             .drop(1)
             .onCompletion { ex ->
-                ex?.let { Logger.e(TAG) { "Internet availability retrieval error: ${ex.prettify()}" } }
+                ex
+                    ?.takeIf { it !is CancellationException }
+                    ?.let { Logger.e(TAG) { "Internet availability retrieval error: ${ex.prettify()}" } }
             }.onEach { state ->
                 Logger.d(TAG) { "Internet availability changed: $state" }
             }
