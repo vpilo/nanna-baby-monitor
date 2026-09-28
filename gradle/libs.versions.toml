@@ -24,7 +24,7 @@ compose-navigation-event = "1.1.0"
 compose-stability-analyzer = "0.15.0"
 
 androidx-activityCompose = "1.13.0"
-androidx-core = "1.19.0"
+androidx-core = "1.19.1"
 androidx-datastore = "1.2.1"
 jetbrains-lifecycle = "2.11.0"
 
