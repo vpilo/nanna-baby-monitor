@@ -80,5 +80,16 @@ if [ "$CHECKS_RESULT" -ne 0 ]; then
     exit 1
 fi
 
+echo "Checking release notes..."
+relnotes_files=$(find appAndroid/src/main/play/release-notes -type f -name "*.txt")
+for file in $relnotes_files
+do
+    character_count=$(wc -m $file | grep txt | awk '{$1=$1};1' | cut -f 1 -d ' ')
+    if [ "$character_count" -gt 500 ]; then
+        echo "❌ Release notes file $file exceeds 500 characters."
+        exit 1
+    fi
+done
+
 echo "✅ All pre-commit checks passed."
 exit 0
