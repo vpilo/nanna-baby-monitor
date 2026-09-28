@@ -5,7 +5,7 @@ kotlin-serialization = "1.11.0"
 agp = "9.4.1"
 koin = "4.2.2"
 log4j = "2.26.1"
-slf4j = "2.0.19"
+slf4j = "2.0.20"
 
 #noinspection UnusedVersionCatalogEntry
 android-compileSdk = "37"
