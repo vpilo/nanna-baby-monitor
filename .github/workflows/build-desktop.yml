@@ -12,7 +12,7 @@ on:
         type: string
         required: true
       release:
-        description: Build the release jar instead of the debug one.
+        description: Build the release jar and AppImage instead of the debug jar only.
         type: boolean
         default: false
 
@@ -34,12 +34,64 @@ jobs:
 
       - name: Build release jar
         if: ${{ inputs.release }}
-        run: ./gradlew -Pjavacpp.platform=${{ inputs.platform }} :appDesktop:packageReleaseUberJarForCurrentOS -Pbabymonitor.release=true
+        run: |
+          ./gradlew -Pjavacpp.platform=${{ inputs.platform }} -Pbabymonitor.release=true \
+            :appDesktop:packageReleaseUberJarForCurrentOS
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
         with:
           name: desktop-${{ inputs.release && 'release' || 'debug' }}-${{ inputs.platform }}
-          path: appDesktop/build/compose/jars/*.jar
+          path: |
+            appDesktop/build/compose/jars/*.jar
           if-no-files-found: error
           retention-days: ${{ inputs.release && 90 || 14 }}
+
+      - name: Build release app image
+        if: ${{ inputs.release }}
+        run: |
+          ./gradlew -Pjavacpp.platform=${{ inputs.platform }} -Pbabymonitor.release=true \
+            :appDesktop:packageReleaseAppImage
+
+      - name: Package release AppImage
+        if: ${{ inputs.release }}
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          URUNTIME_VERSION: v0.8.1
+          URUNTIME_SHA256_X86_64: 2153e68d63f570c7ebe3d1f38df0fa16814f34d839c5cce2ee42667e327708e8
+          URUNTIME_SHA256_AARCH64: 5644d0584ebcb950924c2c549e597ac6a08bc42e07e6fac2d111fff96d39a152
+        run: |
+          # setup uruntime
+          case "$PLATFORM" in
+            linux-x86_64) arch=x86_64; sha256="$URUNTIME_SHA256_X86_64" ;;
+            linux-arm64) arch=aarch64; sha256="$URUNTIME_SHA256_AARCH64" ;;
+            *) echo "No AppImage for $PLATFORM"; exit 1 ;;
+          esac
+          uruntime="$RUNNER_TEMP/uruntime"
+          curl -fsSL --retry 3 -o "$uruntime" \
+            "https://github.com/VHSgunzo/uruntime/releases/download/$URUNTIME_VERSION/uruntime-appimage-squashfs-$arch"
+          echo "$sha256  $uruntime" | sha256sum -c -
+          chmod +x "$uruntime"
+
+          # setup the appdir
+          appdir="$RUNNER_TEMP/AppDir"
+          cp -a appDesktop/build/compose/binaries/main-release/app/org.vpilo.babymonitor "$appdir"
+          ln -s bin/org.vpilo.babymonitor "$appdir/AppRun"
+          cp appDesktop/appimage/org.vpilo.babymonitor.desktop "$appdir/"
+          cp appDesktop/icons/icon.png "$appdir/org.vpilo.babymonitor.png"
+          ln -s org.vpilo.babymonitor.png "$appdir/.DirIcon"
+
+          # build the AppImage
+          "$uruntime" --appimage-mksquashfs "$appdir" "$RUNNER_TEMP/AppDir.sqfs" -comp zstd -root-owned -noappend -quiet
+          mkdir -p appDesktop/build/appimage
+          out="appDesktop/build/appimage/org.vpilo.babymonitor-$PLATFORM-$GITHUB_REF_NAME.AppImage"
+          cat "$uruntime" "$RUNNER_TEMP/AppDir.sqfs" > "$out"
+          chmod +x "$out"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ inputs.release }}
+        with:
+          name: appimage-release-${{ inputs.platform }}
+          path: |
+            appDesktop/build/appimage/*.AppImage
+          if-no-files-found: error
+          retention-days: 90

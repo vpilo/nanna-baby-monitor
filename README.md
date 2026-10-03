@@ -47,7 +47,16 @@ Pairing two Android devices: the recording device shows the code, the watching d
 
 ![Pairing two phones](docs/screenshots/android-pairing.jpg)
 
-# Installation
+# Download
+
+Head to the latest release on [GitHub](https://github.com/vpilo/nanna-baby-monitor/releases):
+* For Android, get the APK
+* For Linux, get the AppImage (or the jar) for your architecture.
+* On Windows, if you have Java installed you can download the `org.vpilo.babymonitor-linux-x64-<version>-release.jar` and just click on it.
+
+# Development
+
+## Installation
 
 You can simply make debug builds from source.
 

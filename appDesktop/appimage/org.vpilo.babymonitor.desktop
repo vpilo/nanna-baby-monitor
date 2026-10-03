@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Nanna Baby Monitor
+Comment=Stream audio and video to and from Android and Desktop devices
+Exec=org.vpilo.babymonitor
+Icon=org.vpilo.babymonitor
+Categories=AudioVideo;Video;
+Terminal=false

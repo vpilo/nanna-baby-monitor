@@ -37,6 +37,7 @@ compose.desktop {
         val appVersion = gitVersion.info.get()
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.AppImage, TargetFormat.Exe)
+            modules("java.instrument", "java.management", "java.naming", "jdk.jfr", "jdk.unsupported")
 
             packageName = "org.vpilo.babymonitor"
             packageVersion = appVersion.versionCore
