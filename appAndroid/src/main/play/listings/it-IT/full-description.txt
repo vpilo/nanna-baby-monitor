@@ -28,3 +28,7 @@ sorgente del progetto.
 Un'app relay opzionale permette ai dispositivi associati di collegarsi anche da fuori la rete di casa. Il relay vede solo dati cifrati, e
 lo installi tu stesso su un computer sotto il tuo controllo. Senza relay, l'app trasmette solo all'interno di una singola rete locale.
 Anche il relay è pubblicato insieme al codice sorgente del progetto.
+
+Questa app include una funzione di segnalazione dei problemi. Se la app rileva un crash, ti chiederà di inviare direttamente via email (o
+condividere in altro modo) un rapporto di crash precompilato allo sviluppatore. È completamente opzionale, e nessun dato viene inviato
+senza il tuo consenso. I rapporti non contengono alcuna informazione su di te.

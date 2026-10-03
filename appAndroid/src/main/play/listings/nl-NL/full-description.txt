@@ -26,3 +26,7 @@ elke combinatie samenwerkt met de Android-app. Deze wordt samen met de broncode 
 Met een optionele relay-app kunnen gekoppelde apparaten elkaar ook buiten het thuisnetwerk bereiken. De relay ziet alleen versleutelde
 gegevens en draait op een computer die je zelf beheert. Zonder relay streamt de app alleen binnen één lokaal netwerk. Ook de relay wordt
 samen met de broncode van dit project gepubliceerd.
+
+Deze app bevat een functie voor het melden van crashes. Als de app een crash detecteert, word je gevraagd om rechtstreeks een crashrapport
+te e-mailen (of op een andere manier te delen) met de ontwikkelaar. Dit is volledig optioneel en er worden geen gegevens verzonden zonder
+jouw toestemming. De rapporten bevatten geen informatie over jou.

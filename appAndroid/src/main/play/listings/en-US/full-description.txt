@@ -24,5 +24,9 @@ Nanna is also available as a desktop application for Linux, Windows and macOS, w
 it will work with the Android app in any combination. It is published together with this project's source code on GitHub.
 
 An optional relay app lets paired devices reach each other from outside the home network. The relay only ever sees encrypted data, and you
-host it yourself on a machine you control. Without it, the app streams only within a single local network. It is also published together with
-this project's source code.
+host it yourself on a machine you control. Without it, the app streams only within a single local network. It is also published together
+with this project's source code.
+
+This app includes a crash reporting feature, where if the app detects a crash, it will ask you to directly email (or otherwise share) a
+prepared crash report to the developer. This is completely optional, and no data is sent without your consent. Reports contain no
+information about you.
