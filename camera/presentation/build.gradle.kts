@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.compose.stability.analyzer)
     id("babymonitor.android-target")
     id("babymonitor.compose")
     id("babymonitor.desktop-target")

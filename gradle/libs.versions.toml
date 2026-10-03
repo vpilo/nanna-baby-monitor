@@ -61,6 +61,7 @@ compose-resources = { module = "org.jetbrains.compose.components:components-reso
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
 compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose" }
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose" }
 
 jetbrains-lifecycle-common = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-common", version.ref = "jetbrains-lifecycle" }
 jetbrains-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "jetbrains-lifecycle" }
