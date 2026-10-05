@@ -52,7 +52,7 @@ internal class RelayServerRegistration(
     val isRegistered: Flow<Boolean> = _isRegistered.asStateFlow()
 
     private var relayConfiguration: RelayConfiguration = RelayConfiguration.NONE
-    private lateinit var server: Device.LocalServer
+    private var server: Device.LocalServer? = null
     private var registrationJob: Job? = null
     private val activeStreamJobs = java.util.concurrent.CopyOnWriteArrayList<Job>()
 
@@ -71,7 +71,7 @@ internal class RelayServerRegistration(
     }
 
     fun identifySelf(server: Device.LocalServer) {
-        if (this::server.isInitialized && this.server == server) return
+        if (this.server == server) return
         this.server = server
         restart()
     }
@@ -82,6 +82,11 @@ internal class RelayServerRegistration(
     }
 
     fun stop() {
+        server = null
+        cancelRegistration()
+    }
+
+    private fun cancelRegistration() {
         _isRegistered.value = false
         _relayVersionMismatch.value = null
         registrationJob?.cancel()
@@ -91,12 +96,13 @@ internal class RelayServerRegistration(
     }
 
     private fun restart() {
-        stop()
-        if (!isEnabled || !relayConfiguration.isConfigured || !this::server.isInitialized) return
-        registrationJob = scope.launch { runRegistrationLoop() }
+        cancelRegistration()
+        if (!isEnabled || !relayConfiguration.isConfigured) return
+        val server = server ?: return
+        registrationJob = scope.launch { runRegistrationLoop(server) }
     }
 
-    private suspend fun runRegistrationLoop() {
+    private suspend fun runRegistrationLoop(server: Device.LocalServer) {
         while (true) {
             Logger.d(TAG) { "Connecting to relay at $relayConfiguration as $server" }
             runCatching {
@@ -109,7 +115,7 @@ internal class RelayServerRegistration(
                         send(Frame.Text(server.asTransportString(relayConfiguration.host)))
                         Logger.i(TAG) { "Registered with relay as $server" }
                         _isRegistered.value = true
-                        readRelaySignals()
+                        readRelaySignals(server)
                     }
                 }
             }.onFailure { ex ->
@@ -129,18 +135,21 @@ internal class RelayServerRegistration(
         }
     }
 
-    private suspend fun DefaultClientWebSocketSession.readRelaySignals() {
+    private suspend fun DefaultClientWebSocketSession.readRelaySignals(server: Device.LocalServer) {
         for (frame in incoming) {
             if (frame !is Frame.Text) continue
             when (frame.readText()) {
-                RelaySignals.CONTROL -> launchStream(Endpoints.CONTROL)
-                RelaySignals.AUDIO -> launchStream(Endpoints.STREAM_AUDIO)
-                RelaySignals.VIDEO -> launchStream(Endpoints.STREAM_VIDEO)
+                RelaySignals.CONTROL -> launchStream(server, Endpoints.CONTROL)
+                RelaySignals.AUDIO -> launchStream(server, Endpoints.STREAM_AUDIO)
+                RelaySignals.VIDEO -> launchStream(server, Endpoints.STREAM_VIDEO)
             }
         }
     }
 
-    private fun launchStream(endpoint: String) {
+    private fun launchStream(
+        server: Device.LocalServer,
+        endpoint: String,
+    ) {
         val streamPath =
             when (endpoint) {
                 Endpoints.CONTROL -> Endpoints.Relay.SERVER_CONTROL
