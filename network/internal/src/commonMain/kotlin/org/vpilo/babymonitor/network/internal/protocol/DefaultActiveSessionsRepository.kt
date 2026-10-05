@@ -64,6 +64,6 @@ internal class DefaultActiveSessionsRepository : InternalActiveSessionsRepositor
     }
 
     private companion object {
-        private val TAG = DefaultActiveSessionsRepository::class
+        private const val TAG = "DefaultActiveSessionsRepository"
     }
 }

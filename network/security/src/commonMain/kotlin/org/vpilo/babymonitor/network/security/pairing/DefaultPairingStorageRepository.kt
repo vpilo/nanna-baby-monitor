@@ -51,7 +51,7 @@ internal class DefaultPairingStorageRepository(
             .getOrDefault(emptyList())
 
     private companion object {
-        private val TAG = DefaultPairingStorageRepository::class
+        private const val TAG = "DefaultPairingStorageRepository"
         private val json =
             Json {
                 ignoreUnknownKeys = true

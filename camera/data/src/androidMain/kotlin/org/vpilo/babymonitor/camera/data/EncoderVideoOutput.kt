@@ -77,6 +77,6 @@ internal class EncoderVideoOutput(
     }
 
     private companion object {
-        private val TAG = EncoderVideoOutput::class
+        private const val TAG = "EncoderVideoOutput"
     }
 }

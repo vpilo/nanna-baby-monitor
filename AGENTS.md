@@ -119,9 +119,9 @@ individually over multiple iterations:
 ## Conventions
 
 - **Package root:** `org.vpilo.babymonitor`
-- **Logging:** Use `Logger.d(TAG) { "message" }` from `common` module. TAG is typically the class's `KClass` reference. Declare TAG in the
-  companion object of each class: `companion object { private val TAG = MyClass::class }`, or as a top level string for anything else
-  needing logging.
+- **Logging:** Use `Logger.d(TAG) { "message" }` from `common` module. Use literal string tags so release logs remain readable after
+  obfuscation. Declare TAG in the companion object of each class: `private companion object { private const val TAG = "MyClass" }`, or as a top level string constant
+  for anything else needing logging. Subclasses of `AppViewModel` and `SharedResourceHolder` pass their literal tag to the base constructor.
 - **Companion objects:** Should be at the bottom of a class and made private unless necessary.
 - **Dependencies:** Managed via version catalog at `gradle/libs.versions.toml`. Use `libs.` references in `build.gradle.kts`.
 - **Tests:** only `network:security` (crypto primitives, handshakes, the pairing hello wire format and pairing storage),

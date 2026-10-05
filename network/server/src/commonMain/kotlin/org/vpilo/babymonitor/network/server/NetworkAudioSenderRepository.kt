@@ -14,6 +14,7 @@ internal class NetworkAudioSenderRepository(
     audioRepository: AudioCaptureRepository,
     coroutineContext: CoroutineContext,
 ) : SharedResourceHolder<EncodedAudioStreamChunk>(
+        TAG = "NetworkAudioSenderRepository",
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
     ),
     StreamingAudioSenderRepository {

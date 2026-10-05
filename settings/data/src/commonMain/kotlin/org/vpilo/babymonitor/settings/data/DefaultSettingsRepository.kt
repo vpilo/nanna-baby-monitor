@@ -175,7 +175,7 @@ class DefaultSettingsRepository(
     }
 
     private companion object {
-        private val TAG = DefaultSettingsRepository::class
+        private const val TAG = "DefaultSettingsRepository"
 
         private val SAVE_DELAY = 2.seconds
     }

@@ -186,6 +186,6 @@ actual class AudioEncoder actual constructor(
     }
 
     private companion object {
-        private val TAG = AudioEncoder::class
+        private const val TAG = "AudioEncoder"
     }
 }

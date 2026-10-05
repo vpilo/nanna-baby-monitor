@@ -10,6 +10,7 @@ import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 class ErrorReportViewModel(
     private val errorReportingRepository: ErrorReportingRepository,
 ) : AppViewModel<ErrorReportScreenAction, ErrorReportState, Unit>(
+        TAG = "ErrorReportViewModel",
         initialState = ErrorReportState.None,
     ) {
     override fun SubscriptionScope.onSubscribed() {

@@ -28,7 +28,10 @@ import kotlin.coroutines.CoroutineContext
 @Stable
 actual class CameraQrScannerViewModel actual constructor(
     private val coroutineContext: CoroutineContext,
-) : AppViewModel<Unit, Unit, CameraQrScannerEffect>(initialState = Unit) {
+) : AppViewModel<Unit, Unit, CameraQrScannerEffect>(
+        TAG = "CameraQrScannerViewModel",
+        initialState = Unit,
+    ) {
     private val qrReader = QrReader()
 
     override fun SubscriptionScope.onSubscribed() {

@@ -20,6 +20,7 @@ import org.vpilo.babymonitor.model.repository.SharedResourceHolder
 
 internal actual class AudioCaptureDataSource :
     SharedResourceHolder<AudioFrame>(
+        TAG = "AudioCaptureDataSource",
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
     ),
     AndroidService {

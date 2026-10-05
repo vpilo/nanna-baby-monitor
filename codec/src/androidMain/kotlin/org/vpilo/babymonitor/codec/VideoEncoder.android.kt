@@ -167,7 +167,7 @@ actual class VideoEncoder actual constructor(
     }
 
     private companion object {
-        private val TAG = VideoEncoder::class
+        private const val TAG = "VideoEncoder"
 
         const val CODEC_TIMEOUT_US = 10_000L
 

@@ -124,5 +124,5 @@ object AndroidServiceRegistry : KoinComponent {
         }
     }
 
-    private val TAG = AndroidServiceRegistry::class
+    private const val TAG = "AndroidServiceRegistry"
 }

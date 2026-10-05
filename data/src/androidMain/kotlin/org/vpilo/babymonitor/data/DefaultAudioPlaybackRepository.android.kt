@@ -63,6 +63,6 @@ internal actual class DefaultAudioPlaybackRepository actual constructor() : Audi
     }
 
     private companion object {
-        private val TAG = DefaultAudioPlaybackRepository::class
+        private const val TAG = "DefaultAudioPlaybackRepository"
     }
 }

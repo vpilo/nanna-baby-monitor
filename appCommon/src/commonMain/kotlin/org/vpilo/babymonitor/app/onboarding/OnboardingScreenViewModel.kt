@@ -24,7 +24,10 @@ class OnboardingScreenViewModel(
     private val settingsRepository: SettingsRepository,
     private val errorReportingRepository: ErrorReportingRepository,
     private val isSessionActiveFlowUseCase: IsSessionActiveFlowUseCase,
-) : AppViewModel<Unit, OnboardingScreenState, OnboardingScreenEffect>(initialState = OnboardingScreenState()) {
+) : AppViewModel<Unit, OnboardingScreenState, OnboardingScreenEffect>(
+        TAG = "OnboardingScreenViewModel",
+        initialState = OnboardingScreenState(),
+    ) {
     override fun SubscriptionScope.onSubscribed() {
         // Ensure that on a new startup the servers are reset, to avoid stale states (eg client's old disconnection state).
         vmScope.launch {

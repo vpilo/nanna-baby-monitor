@@ -148,6 +148,6 @@ internal class DefaultRemoteDiscoveryRepository(
     }
 
     private companion object {
-        private val TAG = DefaultRemoteDiscoveryRepository::class
+        private const val TAG = "DefaultRemoteDiscoveryRepository"
     }
 }

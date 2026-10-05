@@ -24,6 +24,7 @@ class ClientPairingScreenViewModel(
     private val clientPairingRepository: ClientPairingRepository,
     private val localClientDeviceRepository: LocalClientDeviceRepository,
 ) : AppViewModel<ClientPairingScreenAction, ClientPairingScreenState, ClientPairingScreenEffect>(
+        TAG = "ClientPairingScreenViewModel",
         initialState = ClientPairingScreenState(),
     ) {
     override fun SubscriptionScope.onSubscribed() {

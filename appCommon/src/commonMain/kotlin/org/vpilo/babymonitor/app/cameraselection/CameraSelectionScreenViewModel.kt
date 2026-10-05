@@ -39,6 +39,7 @@ class CameraSelectionScreenViewModel(
     private val pairingStorageRepository: PairingStorageRepository,
     localClientDeviceRepository: LocalClientDeviceRepository,
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
+        TAG = "CameraSelectionScreenViewModel",
         initialState = CameraSelectionScreenState(),
     ) {
     private var discoveryJob: Job? = null

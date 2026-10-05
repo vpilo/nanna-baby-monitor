@@ -233,6 +233,6 @@ internal class DefaultClientPairingRepository(
     private companion object {
         private val GENERIC_FAILURE = ClientPairingState.Failure(ClientPairingFailureCause.CONNECTION_FAILED)
 
-        private val TAG = DefaultClientPairingRepository::class
+        private const val TAG = "DefaultClientPairingRepository"
     }
 }

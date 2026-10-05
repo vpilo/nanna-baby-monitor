@@ -9,7 +9,7 @@ import sun.misc.Signal
 import sun.misc.SignalHandler as JavaSignalHandler
 
 object SignalHandler {
-    private val TAG = SignalHandler::class
+    private const val TAG = "SignalHandler"
 
     private val signals = Channel<String>(1)
 

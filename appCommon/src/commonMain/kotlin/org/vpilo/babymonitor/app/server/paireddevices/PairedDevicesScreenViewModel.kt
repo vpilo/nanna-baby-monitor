@@ -14,6 +14,7 @@ class PairedDevicesScreenViewModel(
     private val unpairDeviceUseCase: UnpairDeviceUseCase,
     private val activeSessionsRepository: ActiveSessionsRepository,
 ) : AppViewModel<PairedDevicesScreenAction, PairedDevicesScreenState, Unit>(
+        TAG = "PairedDevicesScreenViewModel",
         initialState = PairedDevicesScreenState(),
     ) {
     override fun SubscriptionScope.onSubscribed() {

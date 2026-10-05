@@ -216,7 +216,7 @@ actual class AudioDecoder actual constructor(
     )
 
     private companion object {
-        private val TAG = AudioDecoder::class
+        private const val TAG = "AudioDecoder"
 
         /** Size of the OpusHead identification header for mono/stereo (mapping family 0). */
         private const val OPUS_HEAD_SIZE = 19

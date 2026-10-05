@@ -7,12 +7,6 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.reflect.KClass
-
-suspend inline fun DefaultWebSocketSession.runWebSocketCatching(
-    caller: KClass<out Any>,
-    block: WebSocketSession.() -> Unit,
-) = runWebSocketCatching(caller.simpleName ?: "<unknown>", block)
 
 suspend inline fun DefaultWebSocketSession.runWebSocketCatching(
     tag: String,

@@ -12,6 +12,7 @@ class ServerPairingScreenViewModel(
     private val networkServerRepository: NetworkServerRepository,
     private val settings: SettingsRepository,
 ) : AppViewModel<ServerPairingScreenAction, ServerPairingScreenState, Unit>(
+        TAG = "ServerPairingScreenViewModel",
         initialState = ServerPairingScreenState(),
     ) {
     override fun SubscriptionScope.onSubscribed() {

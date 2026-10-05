@@ -26,6 +26,6 @@ class SnackbarController internal constructor() {
     }
 
     private companion object {
-        private val TAG = SnackbarController::class
+        private const val TAG = "SnackbarController"
     }
 }

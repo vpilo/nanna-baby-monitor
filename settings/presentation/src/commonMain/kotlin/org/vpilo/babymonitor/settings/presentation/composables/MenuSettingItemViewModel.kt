@@ -8,6 +8,7 @@ class MenuSettingItemViewModel(
     private val settingsRepository: SettingsRepository,
     private val setting: Setting<*>,
 ) : AppViewModel<MenuSettingItemAction, MenuSettingItemState, Unit>(
+        TAG = "MenuSettingItemViewModel",
         initialState = MenuSettingItemState(id = setting.id, value = setting.default),
     ) {
     override fun SubscriptionScope.onSubscribed() {

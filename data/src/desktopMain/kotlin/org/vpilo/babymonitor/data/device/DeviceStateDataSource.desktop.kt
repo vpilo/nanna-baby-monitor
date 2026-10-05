@@ -83,7 +83,7 @@ internal actual class DeviceStateDataSource actual constructor() {
     }
 
     private companion object {
-        private val TAG = DeviceStateDataSource::class
+        private const val TAG = "DeviceStateDataSource"
 
         private val PROC_NET_WIRELESS = File("/proc/net/wireless")
         private const val MAX_LINK_QUALITY = 70

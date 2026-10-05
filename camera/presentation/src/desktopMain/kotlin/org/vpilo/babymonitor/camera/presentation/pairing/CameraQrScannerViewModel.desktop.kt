@@ -28,7 +28,10 @@ import kotlin.time.measureTime
 actual class CameraQrScannerViewModel internal constructor(
     coroutineContext: CoroutineContext,
     webcamGetter: () -> Webcam,
-) : AppViewModel<Unit, Unit, CameraQrScannerEffect>(initialState = Unit) {
+) : AppViewModel<Unit, Unit, CameraQrScannerEffect>(
+        TAG = "CameraQrScannerViewModel",
+        initialState = Unit,
+    ) {
     actual constructor(
         coroutineContext: CoroutineContext,
     ) : this(

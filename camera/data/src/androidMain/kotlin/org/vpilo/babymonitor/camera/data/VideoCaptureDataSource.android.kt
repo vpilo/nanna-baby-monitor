@@ -356,7 +356,7 @@ internal actual class VideoCaptureDataSource(
         }
 
     private companion object {
-        private val TAG = VideoCaptureDataSource::class
+        private const val TAG = "VideoCaptureDataSource"
 
         // Default rotation assumed for a typical phone back-camera mount.
         // This is assumed before the camera binds, to align the initial frame size to the most common case, and not need to recreate

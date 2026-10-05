@@ -179,7 +179,7 @@ internal actual class DefaultLocalDiscoveryRepository(
     }
 
     companion object {
-        val TAG = DefaultLocalDiscoveryRepository::class
+        const val TAG = "DefaultLocalDiscoveryRepository"
 
         private fun createServiceInfo(device: Device): NsdServiceInfo =
             NsdServiceInfo().apply {

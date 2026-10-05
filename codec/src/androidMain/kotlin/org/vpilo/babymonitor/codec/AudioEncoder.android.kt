@@ -137,7 +137,7 @@ actual class AudioEncoder actual constructor(
     }
 
     private companion object {
-        private val TAG = AudioEncoder::class
+        private const val TAG = "AudioEncoder"
 
         const val CODEC_TIMEOUT_US = 10_000L
     }

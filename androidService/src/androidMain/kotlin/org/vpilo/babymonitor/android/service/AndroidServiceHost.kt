@@ -125,7 +125,7 @@ internal class AndroidServiceHost : LifecycleService() {
     }
 
     companion object {
-        private val TAG = AndroidServiceHost::class
+        private const val TAG = "AndroidServiceHost"
 
         private const val NOTIFICATION_ID = 1
         private const val CHANNEL_ID = "BackgroundServiceChannel"

@@ -217,6 +217,6 @@ internal class DefaultNetworkClientRepository(
     }
 
     private companion object {
-        private val TAG = DefaultNetworkClientRepository::class
+        private const val TAG = "DefaultNetworkClientRepository"
     }
 }

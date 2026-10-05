@@ -75,7 +75,7 @@ class AudioSilenceFilter(
     }
 
     private companion object {
-        private val TAG = AudioSilenceFilter::class
+        private const val TAG = "AudioSilenceFilter"
 
         private const val BYTES_PER_SAMPLE = MediaFormats.Audio.SAMPLE_SIZE_BITS / 8
 

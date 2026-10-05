@@ -141,6 +141,6 @@ internal class DefaultErrorReportingRepository(
     private fun getLogsDir(): File = File(getCacheDir(), "logs")
 
     private companion object {
-        private val TAG = DefaultErrorReportingRepository::class
+        private const val TAG = "DefaultErrorReportingRepository"
     }
 }

@@ -145,7 +145,7 @@ internal class PairingCoordinator(
     )
 
     private companion object {
-        private val TAG = PairingCoordinator::class
+        private const val TAG = "PairingCoordinator"
         private val PAIRING_WINDOW_DURATION = 2.minutes
         private const val MAX_PIN_ATTEMPTS = 5
     }

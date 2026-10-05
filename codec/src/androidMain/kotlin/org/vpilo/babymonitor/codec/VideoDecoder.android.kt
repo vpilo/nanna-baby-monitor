@@ -231,7 +231,7 @@ actual class VideoDecoder actual constructor(
     }
 
     private companion object {
-        private val TAG = VideoDecoder::class
+        private const val TAG = "VideoDecoder"
 
         /** Timeout when waiting for a free input buffer to submit encoded data. */
         const val INPUT_TIMEOUT_US = 10_000L

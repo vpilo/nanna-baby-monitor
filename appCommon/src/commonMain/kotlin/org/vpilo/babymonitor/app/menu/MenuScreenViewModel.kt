@@ -13,6 +13,7 @@ class MenuScreenViewModel(
     private val isConnectionAvailableRepository: IsConnectionAvailableRepository,
     private val networkClientRepository: NetworkClientRepository,
 ) : AppViewModel<MenuScreenAction, MenuScreenState, MenuScreenEffect>(
+        TAG = "MenuScreenViewModel",
         initialState = MenuScreenState(),
     ) {
     override fun SubscriptionScope.onSubscribed() {

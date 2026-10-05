@@ -28,6 +28,7 @@ class ServerHomeScreenViewModel(
     private val relayConfigurationRepository: RelayConfigurationRepository,
     videoCaptureRepository: VideoCaptureRepository,
 ) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, ServerHomeScreenEffect>(
+        TAG = "ServerHomeScreenViewModel",
         initialState = ServerHomeScreenState(),
     ) {
     val videoStream: OpaqueVideoStream = videoCaptureRepository.videoStream

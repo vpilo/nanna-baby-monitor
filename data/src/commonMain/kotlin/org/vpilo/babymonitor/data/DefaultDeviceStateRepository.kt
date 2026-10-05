@@ -56,7 +56,7 @@ internal class DefaultDeviceStateRepository(
             }
 
     private companion object {
-        private val TAG = DefaultDeviceStateRepository::class
+        private const val TAG = "DefaultDeviceStateRepository"
 
         private val INTERNET_STATE_DEBOUNCE_TIMEOUT = 10.seconds
     }

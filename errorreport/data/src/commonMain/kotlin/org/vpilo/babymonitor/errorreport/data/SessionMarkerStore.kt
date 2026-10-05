@@ -55,7 +55,7 @@ internal class SessionMarkerStore {
     }
 
     companion object {
-        private val TAG = SessionMarkerStore::class
+        private const val TAG = "SessionMarkerStore"
         private const val KEY_ACTIVE = "active"
         private const val KEY_PID = "pid"
 

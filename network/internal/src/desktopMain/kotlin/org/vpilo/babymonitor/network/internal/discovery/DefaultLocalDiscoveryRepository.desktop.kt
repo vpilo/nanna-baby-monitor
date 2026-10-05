@@ -130,7 +130,7 @@ internal actual class DefaultLocalDiscoveryRepository actual constructor(
     }
 
     companion object {
-        val TAG = DefaultLocalDiscoveryRepository::class
+        const val TAG = "DefaultLocalDiscoveryRepository"
 
         // JmDNS requires the ".local." suffix
         private const val DISCOVERY_DESKTOP_SERVICE_TYPE = "_${Constants.DISCOVERY_SERVICE_TYPE}._tcp.local."

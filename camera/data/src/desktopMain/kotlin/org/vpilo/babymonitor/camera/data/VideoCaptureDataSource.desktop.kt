@@ -212,7 +212,7 @@ internal actual class VideoCaptureDataSource(
     }
 
     private companion object {
-        private val TAG = VideoCaptureDataSource::class
+        private const val TAG = "VideoCaptureDataSource"
 
         // Sample once every N captured frames.
         private const val BRIGHTNESS_SAMPLING_INTERVAL = 15

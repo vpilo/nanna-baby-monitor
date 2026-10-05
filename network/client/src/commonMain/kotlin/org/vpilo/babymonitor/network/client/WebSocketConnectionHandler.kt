@@ -222,7 +222,7 @@ internal class WebSocketConnectionHandler(
     }
 
     private companion object {
-        private val TAG = WebSocketConnectionHandler::class
+        private const val TAG = "WebSocketConnectionHandler"
 
         private fun relayEndpointFor(endpointPath: String): String =
             when (endpointPath) {

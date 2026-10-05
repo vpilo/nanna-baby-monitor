@@ -245,6 +245,6 @@ actual class VideoDecoder actual constructor(
     }
 
     private companion object {
-        private val TAG = VideoDecoder::class
+        private const val TAG = "VideoDecoder"
     }
 }

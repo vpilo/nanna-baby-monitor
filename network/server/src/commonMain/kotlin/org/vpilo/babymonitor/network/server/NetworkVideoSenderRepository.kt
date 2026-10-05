@@ -14,6 +14,7 @@ internal class NetworkVideoSenderRepository(
     videoRepository: VideoCaptureRepository,
     coroutineContext: CoroutineContext,
 ) : SharedResourceHolder<EncodedVideoStreamChunk>(
+        TAG = "NetworkVideoSenderRepository",
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
     ),
     StreamingVideoSenderRepository {

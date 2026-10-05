@@ -102,7 +102,7 @@ object ErrorRecorder {
         if (!LoggingForwarder.isForwardingEnabled()) return
         val file = logFile ?: return
         LoggingForwarder.disableForwarding()
-        Logger.i(this::class) { "STOP" }
+        Logger.i(TAG) { "STOP" }
         flushJob?.cancel()
         flushJob = null
         logFile = null
@@ -151,7 +151,7 @@ object ErrorRecorder {
         message: () -> String,
     ) {
         if (hasRecordedFatalError) return
-        Logger.e(this::class, throwable, message)
+        Logger.e(TAG, throwable, message)
         flush()
         hasRecordedFatalError = true
     }
@@ -180,6 +180,7 @@ object ErrorRecorder {
         (logs + others).forEach { it.delete() }
     }
 
+    private const val TAG = "ErrorRecorder"
     private const val LOG_CAPACITY = 1_000
     private val LOG_FLUSH_INTERVAL = 2.seconds
 }

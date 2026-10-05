@@ -29,6 +29,7 @@ internal class NetworkAudioReceiverRepository(
     private val localClientDeviceRepository: LocalClientDeviceRepository,
     coroutineContext: CoroutineContext,
 ) : SharedResourceHolder<AudioFrame>(
+        TAG = "NetworkAudioReceiverRepository",
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
     ),
     StreamingAudioReceiverRepository {

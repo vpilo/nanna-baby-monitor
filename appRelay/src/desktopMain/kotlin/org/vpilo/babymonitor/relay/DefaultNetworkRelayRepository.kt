@@ -426,6 +426,6 @@ class DefaultNetworkRelayRepository {
         // Ktor marks CloseReason.Codes.CLOSED_ABNORMALLY as internal API.
         private const val CLOSED_ABNORMALLY_CODE: Short = 1006
 
-        private val TAG = DefaultNetworkRelayRepository::class
+        private const val TAG = "DefaultNetworkRelayRepository"
     }
 }

@@ -23,12 +23,11 @@ import org.vpilo.babymonitor.common.ktx.prettify
 import kotlinx.coroutines.flow.collectLatest as coroutinesCollectLatest
 
 abstract class AppViewModel<A, S, E>(
+    @Suppress("VariableNaming", "ktlint:standard:property-naming", "PropertyName", "ConstructorParameterNaming")
+    protected val TAG: String,
     private val initialState: S,
     scope: CoroutineScope? = null,
 ) : ViewModel() {
-    @Suppress("VariableNaming", "ktlint:standard:property-naming", "PropertyName")
-    protected val TAG = this::class
-
     protected val vmScope: CoroutineScope = scope ?: viewModelScope
 
     private var internalActionsChannel: Channel<A> = Channel(capacity = Channel.BUFFERED)

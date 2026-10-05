@@ -199,6 +199,6 @@ internal class RelayServerRegistration(
     }
 
     private companion object {
-        private val TAG = RelayServerRegistration::class
+        private const val TAG = "RelayServerRegistration"
     }
 }

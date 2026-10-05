@@ -85,6 +85,6 @@ class DeviceIdentity private constructor(
         private const val CERTIFICATE_VALIDITY_DAYS = 36_500L
         private const val PASSWORD_LENGTH_BYTES = 16
 
-        private val TAG = DeviceIdentity::class
+        private const val TAG = "DeviceIdentity"
     }
 }

@@ -16,6 +16,7 @@ import javax.sound.sampled.TargetDataLine
 
 internal actual class AudioCaptureDataSource :
     SharedResourceHolder<AudioFrame>(
+        TAG = "AudioCaptureDataSource",
         bufferCapacity = MediaFormats.BufferSizes.MAX_SAMPLE_BUFFER_SIZE,
     ) {
     actual val samples: AudioFrameFlow = collector.asSharedFlow()

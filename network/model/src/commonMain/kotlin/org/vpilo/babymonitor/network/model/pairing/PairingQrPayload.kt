@@ -13,7 +13,7 @@ data class PairingQrPayload(
             .joinToString(QR_PAYLOAD_SEPARATOR)
 
     companion object {
-        private val TAG = PairingQrPayload::class
+        private const val TAG = "PairingQrPayload"
 
         private const val QR_PAYLOAD_PREFIX = "bm"
         private const val QR_PAYLOAD_FIELD_COUNT = 4

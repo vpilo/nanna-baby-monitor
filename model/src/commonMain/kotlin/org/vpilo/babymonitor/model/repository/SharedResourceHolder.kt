@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.ktx.reactor
-import kotlin.reflect.KClass
 
 /**
  * Base class for a repository that manages a shared resource, such as a camera.
@@ -22,6 +21,8 @@ import kotlin.reflect.KClass
  * e.g. slow subscribers.
  */
 abstract class SharedResourceHolder<T>(
+    @Suppress("VariableNaming", "PropertyName", "ktlint:standard:property-naming", "ConstructorParameterNaming")
+    protected val TAG: String,
     coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
     bufferCapacity: Int = 0,
     onBufferOverflow: BufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -53,7 +54,4 @@ abstract class SharedResourceHolder<T>(
         Logger.d(TAG) { "Stopping" }
         stop()
     }
-
-    @Suppress("VariableNaming", "PropertyName", "ktlint:standard:property-naming")
-    open val TAG: KClass<*> = this::class
 }

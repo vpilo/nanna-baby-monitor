@@ -27,6 +27,7 @@ class ClientHomeScreenViewModel(
     private val settingsRepository: SettingsRepository,
     private val playReceivedAudio: PlayReceivedAudioUseCase,
 ) : AppViewModel<ClientHomeScreenAction, ClientHomeScreenState, ClientHomeScreenEffect>(
+        TAG = "ClientHomeScreenViewModel",
         initialState = ClientHomeScreenState(),
     ) {
     private val isAudioEnabled: Flow<Boolean> =

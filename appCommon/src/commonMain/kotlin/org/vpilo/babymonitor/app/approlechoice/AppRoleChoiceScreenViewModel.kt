@@ -11,6 +11,7 @@ import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 class AppRoleChoiceScreenViewModel(
     private val appRoleRepository: AppRoleRepository,
 ) : AppViewModel<AppRoleChoiceScreenAction, OnboardingScreenState, AppRoleChoiceScreenEffect>(
+        TAG = "AppRoleChoiceScreenViewModel",
         initialState = OnboardingScreenState(),
     ) {
     override fun SubscriptionScope.onSubscribed() {

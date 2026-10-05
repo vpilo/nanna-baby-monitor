@@ -276,7 +276,7 @@ internal class DefaultNetworkServerRepository(
     }
 
     private companion object {
-        private val TAG = DefaultNetworkServerRepository::class
+        private const val TAG = "DefaultNetworkServerRepository"
 
         private const val MAX_OUTGOING_FRAMES = 32
     }

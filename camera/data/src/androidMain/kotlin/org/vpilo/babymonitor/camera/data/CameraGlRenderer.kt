@@ -469,7 +469,7 @@ internal class CameraGlRenderer(
     }
 
     private companion object {
-        private val TAG = CameraGlRenderer::class
+        private const val TAG = "CameraGlRenderer"
 
         private const val GL_THREAD_NAME = "camera-gl"
 
