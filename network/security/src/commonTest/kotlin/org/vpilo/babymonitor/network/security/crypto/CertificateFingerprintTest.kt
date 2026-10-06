@@ -1,10 +1,13 @@
 package org.vpilo.babymonitor.network.security.crypto
 
 import io.ktor.network.tls.certificates.buildKeyStore
+import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertSame
 
 class CertificateFingerprintTest {
     @Test
@@ -22,6 +25,38 @@ class CertificateFingerprintTest {
         val certB = selfSignedTestCertificate()
 
         assertNotEquals(certA.sha256Fingerprint(), certB.sha256Fingerprint())
+    }
+
+    @Test
+    fun qrFingerprintAcceptsMatchingCertificate() {
+        val certificate = selfSignedTestCertificate()
+        val trustManager = PinnedTrustManager(certificate.sha256Fingerprint())
+
+        trustManager.checkServerTrusted(arrayOf(certificate), "RSA")
+
+        assertSame(certificate, trustManager.capturedCertificate)
+    }
+
+    @Test
+    fun qrFingerprintRejectsDifferentCertificate() {
+        val expectedCertificate = selfSignedTestCertificate()
+        val presentedCertificate = selfSignedTestCertificate()
+        val trustManager = PinnedTrustManager(expectedCertificate.sha256Fingerprint())
+
+        assertFailsWith<CertificateException> {
+            trustManager.checkServerTrusted(arrayOf(presentedCertificate), "RSA")
+        }
+        assertSame(presentedCertificate, trustManager.capturedCertificate)
+    }
+
+    @Test
+    fun manualPinPairingCapturesCertificateWithoutExistingPin() {
+        val certificate = selfSignedTestCertificate()
+        val trustManager = PinnedTrustManager(expectedFingerprint = null)
+
+        trustManager.checkServerTrusted(arrayOf(certificate), "RSA")
+
+        assertSame(certificate, trustManager.capturedCertificate)
     }
 
     private fun selfSignedTestCertificate(): X509Certificate {

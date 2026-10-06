@@ -42,7 +42,9 @@ class ClientPairingScreenViewModel(
     override fun onAction(action: ClientPairingScreenAction) {
         when (action) {
             is ClientPairingScreenAction.SubmitPin -> {
-                attemptPairing(action.pin)
+                // Pairing with just the PIN is a fallback: it is vulnerable to MITM attacks.
+                // The server fingerprint is not known, so the connection will be trusted on first use.
+                attemptPairing(action.pin, serverFingerprint = "")
             }
 
             is ClientPairingScreenAction.SubmitQr -> {
@@ -73,16 +75,16 @@ class ClientPairingScreenViewModel(
             return
         }
 
-        attemptPairing(qrPayload.pin)
+        attemptPairing(qrPayload.pin, qrPayload.serverFingerprint)
     }
 
-    private fun attemptPairing(pin: Pin) {
+    private fun attemptPairing(pin: Pin, serverFingerprint: String) {
         val server = state.server ?: return
 
         vmScope.launch {
             state.copy(pairingState = ClientPairingState.InProgress).update()
             val clientDevice = localClientDeviceRepository.localDevice.first()
-            val outcome = clientPairingRepository.pairWith(server, clientDevice, pin)
+            val outcome = clientPairingRepository.pairWith(server, clientDevice, pin, serverFingerprint)
             state.copy(pairingState = outcome).update()
             if (outcome is ClientPairingState.Success) {
                 pairingStorageRepository.pair(outcome.paired)

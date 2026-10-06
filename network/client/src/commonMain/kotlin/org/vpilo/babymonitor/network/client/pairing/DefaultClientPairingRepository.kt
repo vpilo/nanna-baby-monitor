@@ -44,9 +44,9 @@ import java.security.cert.X509Certificate
 import kotlin.io.encoding.Base64
 
 /**
- * Runs the client side of the pairing window: connects to the server's `/pair` endpoint with a
- * trust-on-first-use TLS trust manager, runs the ECDH+PIN exchange, and - on success - returns the
- * derived shared secret and pinned server certificate fingerprint for storage.
+ * Runs the client side of the pairing window: connects to the server's `/pair` endpoint with a TLS trust manager pinned to the scanned
+ * QR fingerprint (or trust-on-first-use for manual PIN entry), runs the ECDH+PIN exchange, and - on success - returns the derived shared
+ * secret and pinned server certificate fingerprint for storage.
  */
 internal class DefaultClientPairingRepository(
     private val loadIdentity: () -> DeviceIdentity,
@@ -55,6 +55,7 @@ internal class DefaultClientPairingRepository(
         server: Device.Server,
         clientDevice: Device.Client,
         pin: Pin,
+        serverFingerprint: String?,
     ): ClientPairingState {
         if (server is Device.RemoteServer || server.addresses.isEmpty()) {
             Logger.w(TAG) { "Server $server has no addresses" }
@@ -70,7 +71,7 @@ internal class DefaultClientPairingRepository(
                 return ClientPairingState.Failure(ClientPairingFailureCause.STORAGE_ERROR)
             }
 
-        val trustManager = PinnedTrustManager(expectedFingerprint = null)
+        val trustManager = PinnedTrustManager(expectedFingerprint = serverFingerprint)
         val httpClient =
             HttpClient(CIO) {
                 install(WebSockets)
@@ -84,7 +85,7 @@ internal class DefaultClientPairingRepository(
 
         httpClient.use { http ->
             server.addresses.forEach { address ->
-                val outcome = http.pairWithHost(address, trustManager, server, clientDevice, identity.fingerprint, pin)
+                val outcome = http.pairWithHost(address, trustManager, server, clientDevice, identity.fingerprint, pin, serverFingerprint)
                 if (outcome != GENERIC_FAILURE) {
                     return outcome
                 }
@@ -100,6 +101,7 @@ internal class DefaultClientPairingRepository(
         clientDevice: Device.Client,
         clientCertFingerprint: String,
         pin: Pin,
+        serverFingerprint: String?,
     ): ClientPairingState {
         Logger.w(TAG) { "Connecting to $server to pair" }
         return try {
@@ -120,11 +122,20 @@ internal class DefaultClientPairingRepository(
                 outcome = runPairing(certificate, server, clientDevice, clientCertFingerprint, pin)
             }
             outcome
+        } catch (ex: CancellationException) {
+            throw ex
         } catch (
             @Suppress("TooGenericExceptionCaught") ex: Exception,
         ) {
             Logger.w(TAG) { "Pairing with $server failed: ${ex.prettify()}" }
-            GENERIC_FAILURE
+
+            serverFingerprint ?: return GENERIC_FAILURE
+            val expectedFingerprint = trustManager.capturedCertificate?.sha256Fingerprint()
+            if (serverFingerprint != expectedFingerprint) {
+                ClientPairingState.Failure(ClientPairingFailureCause.MITM_SUSPECTED)
+            } else {
+                GENERIC_FAILURE
+            }
         }
     }
 

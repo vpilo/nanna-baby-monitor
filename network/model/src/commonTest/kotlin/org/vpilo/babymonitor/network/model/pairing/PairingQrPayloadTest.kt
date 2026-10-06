@@ -10,6 +10,7 @@ class PairingQrPayloadTest {
     fun roundTripsThroughEncodeAndDecode() {
         val payload =
             PairingQrPayload(
+                serverFingerprint = FINGERPRINT,
                 deviceId = DeviceId.random(),
                 pin = Pin.generate(),
             )
@@ -21,21 +22,42 @@ class PairingQrPayloadTest {
 
     @Test
     fun rejectsWrongPrefix() {
-        assertNull(PairingQrPayload.fromPayloadStringOrNull("xx|1|${DeviceId.random()}|AB23CD"))
+        assertNull(PairingQrPayload.fromPayloadStringOrNull("xx|2|$FINGERPRINT|${DeviceId.random()}|AB23CD"))
     }
 
     @Test
     fun rejectsMalformedDeviceId() {
-        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|1|not-a-uuid|AB23CD"))
+        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|2|$FINGERPRINT|not-a-uuid|AB23CD"))
     }
 
     @Test
     fun rejectsDifferentProtocolVersion() {
-        assertNull(PairingQrPayload.fromPayloadStringOrNull("xx|5|${DeviceId.random()}|AB23CD"))
+        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|5|$FINGERPRINT|${DeviceId.random()}|AB23CD"))
     }
 
     @Test
     fun rejectsWrongFieldCount() {
-        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|1|${DeviceId.random()}|AB23CD|rofl&lol"))
+        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|2|$FINGERPRINT|${DeviceId.random()}|AB23CD|rofl&lol"))
+    }
+
+    @Test
+    fun rejectsLegacyPayloadWithoutFingerprint() {
+        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|1|${DeviceId.random()}|AB23CD"))
+    }
+
+    @Test
+    fun rejectsMalformedFingerprints() {
+        listOf("", FINGERPRINT.dropLast(1), FINGERPRINT + "0", "g".repeat(64), FINGERPRINT.uppercase()).forEach { fingerprint ->
+            assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|2|$fingerprint|${DeviceId.random()}|AB23CD"))
+        }
+    }
+
+    @Test
+    fun rejectsMalformedPin() {
+        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|2|$FINGERPRINT|${DeviceId.random()}|invalid"))
+    }
+
+    private companion object {
+        private val FINGERPRINT = "0123456789abcdef".repeat(4)
     }
 }
