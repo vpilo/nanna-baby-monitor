@@ -1,17 +1,48 @@
-# Nanna Baby Monitor
-
 <p align="center">
-  <img src="appAndroid/src/main/play/listings/en-US/graphics/icon/icon.png" alt="Nanna Baby Monitor icon" width="128">
+  <kbd><img src="appAndroid/src/main/play/listings/en-US/graphics/icon/icon.png" alt="Nanna Baby Monitor icon" width="256"></kbd>
 </p>
 
-This is a baby monitor app, with secure video and audio streaming, for Android and PC (using Java).
+# Nanna Baby Monitor
+
+This is a baby monitor app, with secure video and audio streaming, for Android and PC (Windows, MacOS and Linux, using Java).
 No accounts, no cloud servers, no telemetry, forever free and open source.
+
+<p align="center">
+<!--
+coming up...
+<a href="https://f-droid.org/packages/whatever/">
+    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid"  width="161" />
+  </a>
+  <a href="https://play.google.com/store/apps/details?id=org.vpilo.babymonitor">
+    <img src="docs/badges/badge_google_play.png" alt="Get it on Google Play" width="161" />
+  </a>
+-->
+&nbsp;
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22org.vpilo.babymonitor%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fvpilo%2Fnanna-baby-monitor%22%2C%22author%22%3A%22Valerio%20Pilo%22%2C%22name%22%3A%22Nanna%20Baby%20Monitor%22%7D">
+    <img src="docs/badges/badge_obtainium.png" alt="Get it on Obtainium" width="161" />
+  </a>
+</p>
+
+<div align="center">
+
+[![Latest release](https://img.shields.io/github/v/release/vpilo/nanna-baby-monitor)](https://github.com/vpilo/nanna-baby-monitor/releases)
+![Made for Android](https://img.shields.io/badge/Platform-Android_8%2B-brightgreen)
+![Made for Windows](https://img.shields.io/badge/Platform-Windows-orange)
+![Made for MacOS](https://img.shields.io/badge/Platform-MacOS-purple)
+![Made for Linux](https://img.shields.io/badge/Platform-Linux-blue)
+![Written in Kotlin](https://img.shields.io/github/languages/top/vpilo/nanna-baby-monitor)
+[![License: aGPLv3](https://img.shields.io/github/license/vpilo/nanna-baby-monitor)](LICENSE)
+
+</div>
+
+# About
 
 Nanna means "baby sleep" in Italian. But this is not just for babies!
 Watch your pets, your plants, your home, or anything else you want to securely and privately keep an eye on.
 
 This app requires pairing between devices. Run the app in recording mode on one device (any Android 8+ device or a PC with a webcam). Using
 a pairing code or a QR, pair it with another devices set to watching mode. Connect anytime to watch and/or listen.
+
 Obviously, the recording device needs a camera and microphone, and the watching device needs a screen and optional speakers!
 
 The app provides an optional relay application to allow paired devices to see each other from anywhere. Both recording and watching devices
@@ -35,17 +66,25 @@ service if you have one.
 
 # Screenshots
 
-| Recording on Android                                        | Watching on a PC                                          |
-|-------------------------------------------------------------|-----------------------------------------------------------|
-| ![Recording device](docs/screenshots/android-recording.jpg) | ![Watching device](docs/screenshots/desktop-watching.jpg) |
-
-| Choosing a camera to watch                                  | Pairing a new camera                             |
-|-------------------------------------------------------------|--------------------------------------------------|
-| ![Camera selection](docs/screenshots/desktop-selection.jpg) | ![Pairing](docs/screenshots/desktop-pairing.jpg) |
-
-Pairing two Android devices: the recording device shows the code, the watching device scans or types it.
-
-![Pairing two phones](docs/screenshots/android-pairing.jpg)
+<h3 align="center">Android</h3>
+<p align="center">
+  <img src="docs/screenshots/android-welcome.jpg" alt="Welcome screen on Android" title="Welcome screen on Android" height="240" /> &nbsp;
+  <img src="docs/screenshots/android-browsing.jpg" alt="Browsing cameras on Android" title="Browsing cameras on Android" height="240" /> &nbsp;
+  <img src="docs/screenshots/android-pairing.jpg" alt="Pairing on Android" title="Pairing on Android" height="240" /> &nbsp;
+  <img src="docs/screenshots/android-streaming.jpg" alt="Streaming on Android" title="Streaming on Android" height="240" /> &nbsp;
+  <img src="docs/screenshots/android-dark-mode.jpg" alt="Dark mode on Android" title="Dark mode on Android" height="240" />
+  <br/>
+  <sub>Android: welcome &nbsp;·&nbsp; browsing &nbsp;·&nbsp; pairing &nbsp;·&nbsp; streaming &nbsp;·&nbsp; dark mode</sub>
+</p>
+<h3 align="center">PC</h3>
+<p align="center">
+  <img src="docs/screenshots/desktop-browsing.jpg" alt="Browsing cameras on PC" title="Browsing cameras on PC" height="240" /> &nbsp;
+  <img src="docs/screenshots/desktop-pairing.jpg" alt="Pairing on PC" title="Pairing on PC" height="240" /> &nbsp;
+  <img src="docs/screenshots/desktop-watching.jpg" alt="Watching on PC" title="Watching on PC" height="240" /> &nbsp;
+  <img src="docs/screenshots/desktop-dark-mode.jpg" alt="Dark mode on PC" title="Dark mode on PC" height="240" />
+  <br/>
+  <sub>PC: browsing &nbsp;·&nbsp; pairing &nbsp;·&nbsp; watching &nbsp;·&nbsp; dark mode</sub>
+</p>
 
 # Download
 
@@ -53,68 +92,6 @@ Head to the latest release on [GitHub](https://github.com/vpilo/nanna-baby-monit
 * For Android, get the APK
 * For Linux, get the AppImage (or the jar) for your architecture.
 * On Windows, if you have Java installed you can download the `org.vpilo.babymonitor-linux-x64-<version>-release.jar` and just click on it.
-
-# Development
-
-## Installation
-
-You can simply make debug builds from source.
-
-```sh
-git clone https://github.com/vpilo/nanna-baby-monitor.git
-cd babymonitor
-```
-
-## Requirements
-
-- To build: JDK 21 or later. Gradle downloads by itself the JetBrains Runtime 21 it builds with.
-- To build the Android app: the Android SDK. Either install Android Studio, or set `ANDROID_HOME` to an SDK installed with the command line
-  tools.
-- To run the app: Android 8.0 (API 26) or later, or any PC with Java 21 or later.
-
-## Android
-
-```sh
-./gradlew :appAndroid:assembleDebug
-```
-
-The APK is made as `appAndroid/build/outputs/apk/debug/org.vpilo.babymonitor-*-debug.apk`.
-Copy it to the phone then open it, or install it with adb:
-
-```sh
-adb install -r appAndroid/build/outputs/apk/debug/org.vpilo.babymonitor-*.apk
-```
-
-`./gradlew :appAndroid:installDebug` builds and installs in one step on a device already connected to adb.
-
-## Desktop
-
-Build a self-contained jar and run it:
-
-```sh
-./gradlew :appDesktop:packageUberJarForCurrentOS
-java -jar appDesktop/build/compose/jars/org.vpilo.babymonitor-*.jar
-```
-
-The jar embeds the FFmpeg native libraries, so it is large (around 130 MB) and only runs on the OS and architecture it was built on.
-Build it on the machine that will run it. Only the native libraries of one platform are bundled, those of the host the build runs on.
-
-To try a build without packaging it, run it directly with `./gradlew :appDesktop:run`.
-
-Native installers (`./gradlew :appDesktop:packageAppImage`, `:appDesktop:packageDeb`) need a full JDK 21 including `jpackage` and the
-`jmods` directory, already provided by the JetBrains Runtime that Gradle downloads. `packageDeb` additionally needs `dpkg` and `fakeroot`
-installed on the build machine.
-
-## Release builds
-
-You can also make your own release builds, but to build the Android one, you'll have to create your own keystore (Android Studio: Build
-menu > Generate Signed App Bundle or APK): use `./gradlew appAndroid:assembleRelease`.
-Use `:appDesktop:runRelease` and `:appDesktop:packageReleaseUberJarForCurrentOS`) to build the optimized version, around 70 MB.
-
-## Relay server
-
-The relay is only needed to connect devices that are not on the same network. See the [relay README](appRelay/systemd/README.md) for
-instructions on how to build and install it.
 
 # Usage
 
@@ -157,6 +134,79 @@ Android permissions used by the app:
   multicast traffic needed to find cameras on the local network.
 
 No location permission is requested, and no permission is used for anything other than the above.
+
+# Development
+
+## Installation
+
+You can simply make debug builds from source.
+
+```sh
+git clone https://github.com/vpilo/nanna-baby-monitor.git
+cd babymonitor
+```
+
+## Requirements
+
+- To run the app: Android 8.0 (API 26) or later, or any PC with Java 21 or later. AppImage builds do not need Java to be installed.
+- To build: JDK 21 or later. Gradle downloads by itself the JetBrains Runtime 21 it builds with.
+- To build the Android app: the Android SDK. Either install Android Studio, or set `ANDROID_HOME` to an SDK installed with the command line
+  tools.
+
+## Android
+
+```sh
+./gradlew :appAndroid:assembleDebug
+```
+
+The APK is made as `appAndroid/build/outputs/apk/debug/org.vpilo.babymonitor-*-debug.apk`.
+Copy it to the phone then open it, or install it with adb:
+
+```sh
+adb install -r appAndroid/build/outputs/apk/debug/org.vpilo.babymonitor-*.apk
+```
+
+`./gradlew :appAndroid:installDebug` builds and installs in one step on a device already connected to adb.
+
+### Keeping pairings across a reinstall for debugging
+
+Only when using debug builds, the device identity, pairings, and other app settings can be dumped then restored across app reinstalls:
+
+```sh
+adb exec-out run-as org.vpilo.babymonitor tar cf - files > nanna.tar
+# ..
+adb shell am force-stop org.vpilo.babymonitor
+adb exec-in run-as org.vpilo.babymonitor tar xf - < nanna.tar
+```
+
+## Desktop
+
+Build a self-contained jar and run it:
+
+```sh
+./gradlew :appDesktop:packageUberJarForCurrentOS
+java -jar appDesktop/build/compose/jars/org.vpilo.babymonitor-*.jar
+```
+
+The jar embeds the FFmpeg native libraries, so it is large (around 130 MB) and only runs on the OS and architecture it was built on.
+Build it on the machine that will run it. Only the native libraries of one platform are bundled, those of the host the build runs on.
+
+To try a build without packaging it, run it directly with `./gradlew :appDesktop:run`.
+
+Native installers (`./gradlew :appDesktop:packageAppImage`, `:appDesktop:packageDeb`) need a full JDK 21 including `jpackage` and the
+`jmods` directory, already provided by the JetBrains Runtime that Gradle downloads. `packageDeb` additionally needs `dpkg` and `fakeroot`
+installed on the build machine.
+
+## Release builds
+
+You can also make your own release builds, but to build the Android one, you'll have to create your own keystore (Android Studio: Build
+menu > Generate Signed App Bundle or APK): use `./gradlew appAndroid:assembleRelease -Pbabymonitor.release=true`.
+For Desktop, use `:appDesktop:packageReleaseUberJarForCurrentOS -Pbabymonitor.release=true`) to build the optimized version, around 70 MB.
+
+## Relay server
+
+The relay is only needed to connect devices that are not on the same network. See the [relay README](appRelay/systemd/README.md) for
+instructions on how to build and install it.
 
 # Contributing
 
