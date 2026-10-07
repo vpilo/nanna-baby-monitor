@@ -4,9 +4,8 @@ import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload.Companion.fromPayloadString
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
-class PairingQrPayloadPayloadTest {
+class PairingQrPayloadTest {
     @Test
     fun roundTripsThroughEncodeAndDecode() {
         val payload =
@@ -24,14 +23,14 @@ class PairingQrPayloadPayloadTest {
 
     @Test
     fun rejectsWrongFieldCount() {
-        assertEquals(
-            PairingQrPayload.Invalid.WRONG_QR,
-            "WIFI:T:nopass;S:SomeOtherQr;;".fromPayloadString(expectedDeviceId = someDeviceId),
-        )
-        assertEquals(
-            PairingQrPayload.Invalid.WRONG_QR,
-            "xx|$VERSION|$someDeviceId|AB23CD".fromPayloadString(expectedDeviceId = someDeviceId),
-        )
+        listOf(
+            "WIFI:T:nopass;S:SomeOtherQr;;",
+            "$PREFIX|$VERSION",
+            "$PREFIX|$VERSION|$FINGERPRINT",
+            "$PREFIX|$VERSION|$FINGERPRINT|$someDeviceId",
+        ).forEach { payload ->
+            assertEquals(PairingQrPayload.Invalid.WRONG_QR, payload.fromPayloadString(someDeviceId))
+        }
     }
 
     @Test
@@ -49,7 +48,6 @@ class PairingQrPayloadPayloadTest {
             "$PREFIX|$VERSION|$FINGERPRINT|hello-i-am-uuid|AB23CD".fromPayloadString(expectedDeviceId = someDeviceId),
         )
     }
-
 
     @Test
     fun rejectsInvalidDeviceId() {
@@ -77,19 +75,46 @@ class PairingQrPayloadPayloadTest {
 
     @Test
     fun rejectsLegacyPayloadWithoutFingerprint() {
-        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|1|${DeviceId.random()}|AB23CD"))
+        assertEquals(
+            PairingQrPayload.Invalid.VERSION_MISMATCH_REMOTE_OUTDATED,
+            "bm|1|$someDeviceId|AB23CD".fromPayloadString(someDeviceId),
+        )
     }
 
     @Test
     fun rejectsMalformedFingerprints() {
         listOf("", FINGERPRINT.dropLast(1), FINGERPRINT + "0", "g".repeat(64), FINGERPRINT.uppercase()).forEach { fingerprint ->
-            assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|2|$fingerprint|${DeviceId.random()}|AB23CD"))
+            assertEquals(
+                PairingQrPayload.Invalid.INVALID_SERVER_FINGERPRINT,
+                "bm|2|$fingerprint|$someDeviceId|AB23CD".fromPayloadString(someDeviceId),
+            )
         }
     }
 
     @Test
     fun rejectsMalformedPin() {
-        assertNull(PairingQrPayload.fromPayloadStringOrNull("bm|2|$FINGERPRINT|${DeviceId.random()}|invalid"))
+        assertEquals(
+            PairingQrPayload.Invalid.WRONG_PIN,
+            "bm|2|$FINGERPRINT|$someDeviceId|invalid".fromPayloadString(someDeviceId),
+        )
+    }
+
+    @Test
+    fun rejectsMalformedVersions() {
+        listOf("", "hello", "0", "-1", "9999999999999999999999").forEach { version ->
+            assertEquals(
+                PairingQrPayload.Invalid.WRONG_QR,
+                "$PREFIX|$version|$FINGERPRINT|$someDeviceId|AB23CD".fromPayloadString(someDeviceId),
+            )
+        }
+    }
+
+    @Test
+    fun rejectsExtraFields() {
+        assertEquals(
+            PairingQrPayload.Invalid.WRONG_PIN,
+            "$PREFIX|$VERSION|$FINGERPRINT|$someDeviceId|AB23CD|extra".fromPayloadString(someDeviceId),
+        )
     }
 
     private companion object {

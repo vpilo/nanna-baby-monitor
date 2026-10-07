@@ -2,7 +2,11 @@ package org.vpilo.babymonitor.presentation.composables
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,5 +37,24 @@ fun QrCodeImage(
 @Composable
 private fun QrCodeImagePreview() =
     AppPreviewTheme {
-        QrCodeImage(data = "bm|1|00000000-0000-0000-0000-000000000000|AB23CD|192.168.1.1")
+        Column {
+            val fingerprint = "0123456789abcdef".repeat(4)
+            val id = "00000000-0000-0000-0000-000000000000"
+
+            Text("Invalid QR")
+            QrCodeImage(data = "WIFI:T:nopass;S:SomeOtherQr;;")
+            Spacer(modifier = Modifier.height(Theme.Paddings.Large))
+
+            Text("Older version")
+            QrCodeImage(data = "bm|1|$fingerprint|$id|DEADBE")
+            Spacer(modifier = Modifier.height(Theme.Paddings.Large))
+
+            Text("Newer version")
+            QrCodeImage(data = "bm|99|$fingerprint|$id|DEADBE")
+            Spacer(modifier = Modifier.height(Theme.Paddings.Large))
+
+            Text("Other device")
+            QrCodeImage(data = "bm|2|$fingerprint|$id|DEADBE")
+            Spacer(modifier = Modifier.height(Theme.Paddings.Large))
+        }
     }

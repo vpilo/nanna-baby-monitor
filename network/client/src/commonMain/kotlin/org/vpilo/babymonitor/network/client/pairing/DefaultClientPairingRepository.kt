@@ -71,20 +71,20 @@ internal class DefaultClientPairingRepository(
                 return ClientPairingState.Failure(ClientPairingFailureCause.STORAGE_ERROR)
             }
 
-        val trustManager = PinnedTrustManager(expectedFingerprint = serverFingerprint)
-        val httpClient =
-            HttpClient(CIO) {
-                install(WebSockets)
-                engine {
-                    https {
-                        this.trustManager = trustManager
-                        serverName = Constants.TLS_SERVER_NAME
+        server.addresses.forEach { address ->
+            val trustManager = PinnedTrustManager(expectedFingerprint = serverFingerprint)
+            val httpClient =
+                HttpClient(CIO) {
+                    install(WebSockets)
+                    engine {
+                        https {
+                            this.trustManager = trustManager
+                            serverName = Constants.TLS_SERVER_NAME
+                        }
                     }
                 }
-            }
 
-        httpClient.use { http ->
-            server.addresses.forEach { address ->
+            httpClient.use { http ->
                 val outcome = http.pairWithHost(address, trustManager, server, clientDevice, identity.fingerprint, pin, serverFingerprint)
                 if (outcome != GENERIC_FAILURE) {
                     return outcome
@@ -130,8 +130,8 @@ internal class DefaultClientPairingRepository(
             Logger.w(TAG) { "Pairing with $server failed: ${ex.prettify()}" }
 
             serverFingerprint ?: return GENERIC_FAILURE
-            val expectedFingerprint = trustManager.capturedCertificate?.sha256Fingerprint()
-            if (serverFingerprint != expectedFingerprint) {
+            val actualFingerprint = trustManager.capturedCertificate?.sha256Fingerprint() ?: return GENERIC_FAILURE
+            if (serverFingerprint != actualFingerprint) {
                 ClientPairingState.Failure(ClientPairingFailureCause.MITM_SUSPECTED)
             } else {
                 GENERIC_FAILURE

@@ -26,6 +26,7 @@ import babymonitor.appcommon.generated.resources.Res
 import babymonitor.appcommon.generated.resources.app_title_client_pairing
 import babymonitor.appcommon.generated.resources.client_pairing_camera_failure
 import babymonitor.appcommon.generated.resources.client_pairing_camera_or_pin
+import babymonitor.appcommon.generated.resources.client_pairing_camera_or_pin_more_info
 import babymonitor.appcommon.generated.resources.client_pairing_failed_camera_outdated
 import babymonitor.appcommon.generated.resources.client_pairing_failed_connection_failed
 import babymonitor.appcommon.generated.resources.client_pairing_failed_invalid_qr
@@ -135,8 +136,15 @@ private fun ClientPairingView(
         Text(
             modifier =
                 Modifier
-                    .padding(vertical = Theme.Paddings.Medium),
+                    .padding(top = Theme.Paddings.Medium),
             text = stringResource(Res.string.client_pairing_camera_or_pin, serverName),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            modifier =
+                Modifier
+                    .padding(top = Theme.Paddings.Tiny, bottom = Theme.Paddings.Medium),
+            text = stringResource(Res.string.client_pairing_camera_or_pin_more_info),
             style = MaterialTheme.typography.bodyMedium,
         )
         PinEntry(
@@ -145,6 +153,7 @@ private fun ClientPairingView(
                     .padding(Theme.Paddings.Medium),
             onPinEntered = onPinEntered,
             pinResetKey = pairingState,
+            enabled = pairingState !is ClientPairingState.InProgress && pairingState !is ClientPairingState.Success,
         )
 
         val statusStringResource =

@@ -25,9 +25,9 @@ class ClientPairingScreenViewModel(
     private val clientPairingRepository: ClientPairingRepository,
     private val localClientDeviceRepository: LocalClientDeviceRepository,
 ) : AppViewModel<ClientPairingScreenAction, ClientPairingScreenState, ClientPairingScreenEffect>(
-    TAG = "ClientPairingScreenViewModel",
-    initialState = ClientPairingScreenState(),
-) {
+        TAG = "ClientPairingScreenViewModel",
+        initialState = ClientPairingScreenState(),
+    ) {
     override fun SubscriptionScope.onSubscribed() {
         localDiscoveryRepository.discoveredDevicesFlow.subscribe { devices ->
             val deviceId = deviceId.toDeviceIdOrNull()
@@ -41,11 +41,13 @@ class ClientPairingScreenViewModel(
     }
 
     override fun onAction(action: ClientPairingScreenAction) {
+        if (state.pairingState is ClientPairingState.InProgress || state.pairingState is ClientPairingState.Success) return
+
         when (action) {
             is ClientPairingScreenAction.SubmitPin -> {
                 // Pairing with just the PIN is a fallback: it is vulnerable to MITM attacks.
                 // The server fingerprint is not known, so the connection will be trusted on first use.
-                attemptPairing(action.pin, serverFingerprint = "")
+                attemptPairing(action.pin, serverFingerprint = null)
             }
 
             is ClientPairingScreenAction.SubmitQr -> {
@@ -75,7 +77,7 @@ class ClientPairingScreenViewModel(
                 PairingQrPayload.Invalid.WRONG_QR -> ClientPairingFailureCause.INVALID_QR
                 PairingQrPayload.Invalid.VERSION_MISMATCH_REMOTE_OUTDATED -> ClientPairingFailureCause.CAMERA_OUTDATED
                 PairingQrPayload.Invalid.VERSION_MISMATCH_LOCAL_OUTDATED -> ClientPairingFailureCause.MONITOR_OUTDATED
-                PairingQrPayload.Invalid.INVALID_SERVER_FINGERPRINT -> ClientPairingFailureCause.MITM_SUSPECTED
+                PairingQrPayload.Invalid.INVALID_SERVER_FINGERPRINT -> ClientPairingFailureCause.INVALID_QR
                 PairingQrPayload.Invalid.INVALID_DEVICE_ID -> ClientPairingFailureCause.WRONG_DEVICE
                 PairingQrPayload.Invalid.WRONG_PIN -> ClientPairingFailureCause.WRONG_PIN
             }
@@ -83,11 +85,14 @@ class ClientPairingScreenViewModel(
         state.copy(pairingState = ClientPairingState.Failure(failureReason)).update()
     }
 
-    private fun attemptPairing(pin: Pin, serverFingerprint: String) {
+    private fun attemptPairing(
+        pin: Pin,
+        serverFingerprint: String?,
+    ) {
         val server = state.server ?: return
 
+        state.copy(pairingState = ClientPairingState.InProgress).update()
         vmScope.launch {
-            state.copy(pairingState = ClientPairingState.InProgress).update()
             val clientDevice = localClientDeviceRepository.localDevice.first()
             val outcome = clientPairingRepository.pairWith(server, clientDevice, pin, serverFingerprint)
             state.copy(pairingState = outcome).update()

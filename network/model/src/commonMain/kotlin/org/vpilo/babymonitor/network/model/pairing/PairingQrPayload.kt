@@ -4,7 +4,6 @@ import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 
 sealed interface PairingQrPayload {
-
     enum class Invalid : PairingQrPayload {
         WRONG_QR,
         VERSION_MISMATCH_REMOTE_OUTDATED,
@@ -38,7 +37,9 @@ sealed interface PairingQrPayload {
                 return Invalid.WRONG_QR
             }
 
-            val version = parts[1].toIntOrNull() ?: 0
+            if (parts.size != QR_PAYLOAD_FIELD_COUNT) return Invalid.WRONG_QR
+
+            val version = parts[1].toIntOrNull()?.takeIf { it > 0 } ?: return Invalid.WRONG_QR
             when {
                 version < PAIRING_PROTOCOL_VERSION -> return Invalid.VERSION_MISMATCH_REMOTE_OUTDATED
                 version > PAIRING_PROTOCOL_VERSION -> return Invalid.VERSION_MISMATCH_LOCAL_OUTDATED
@@ -46,14 +47,14 @@ sealed interface PairingQrPayload {
 
             val fingerprint =
                 parts[2]
-                    // TODO make helpers for hex?
                     .takeIf { it.length == 64 && it.all { c -> c in '0'..'9' || c in 'a'..'f' } }
                     ?: return Invalid.INVALID_SERVER_FINGERPRINT
 
-            val deviceId = parts[3]
-                .toDeviceIdOrNull()
-                ?.takeIf { it == expectedDeviceId }
-                ?: return Invalid.INVALID_DEVICE_ID
+            val deviceId =
+                parts[3]
+                    .toDeviceIdOrNull()
+                    ?.takeIf { it == expectedDeviceId }
+                    ?: return Invalid.INVALID_DEVICE_ID
 
             val pin =
                 Pin.fromStringOrNull(parts[4])
@@ -65,6 +66,5 @@ sealed interface PairingQrPayload {
                 pin = pin,
             )
         }
-
     }
 }

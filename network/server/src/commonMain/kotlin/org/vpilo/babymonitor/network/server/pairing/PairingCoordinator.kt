@@ -56,11 +56,12 @@ internal class PairingCoordinator(
     ) {
         val pin = Pin.generate()
         val qrText =
-            PairingQrPayload.Valid(
-                serverFingerprint = deviceIdentity.fingerprint,
-                deviceId = self.id,
-                pin = pin,
-            ).asPayloadString()
+            PairingQrPayload
+                .Valid(
+                    serverFingerprint = deviceIdentity.fingerprint,
+                    deviceId = self.id,
+                    pin = pin,
+                ).asPayloadString()
         activeWindow = ActiveWindow(pin = pin, remainingAttempts = MAX_PIN_ATTEMPTS)
         _state.value = ServerPairingState.Active(pin, qrText)
 
