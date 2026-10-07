@@ -12,6 +12,7 @@ import org.vpilo.babymonitor.network.model.pairing.ClientPairingFailureCause
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingRepository
 import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload
+import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload.Companion.fromPayloadString
 import org.vpilo.babymonitor.network.model.pairing.Pin
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
@@ -24,9 +25,9 @@ class ClientPairingScreenViewModel(
     private val clientPairingRepository: ClientPairingRepository,
     private val localClientDeviceRepository: LocalClientDeviceRepository,
 ) : AppViewModel<ClientPairingScreenAction, ClientPairingScreenState, ClientPairingScreenEffect>(
-        TAG = "ClientPairingScreenViewModel",
-        initialState = ClientPairingScreenState(),
-    ) {
+    TAG = "ClientPairingScreenViewModel",
+    initialState = ClientPairingScreenState(),
+) {
     override fun SubscriptionScope.onSubscribed() {
         localDiscoveryRepository.discoveredDevicesFlow.subscribe { devices ->
             val deviceId = deviceId.toDeviceIdOrNull()
@@ -63,19 +64,23 @@ class ClientPairingScreenViewModel(
         server: DeviceId,
         qrContent: String,
     ) {
-        val qrPayload =
-            PairingQrPayload.fromPayloadStringOrNull(qrContent)
-                ?: run {
-                    state.copy(pairingState = ClientPairingState.Failure(ClientPairingFailureCause.INVALID_QR)).update()
-                    return
-                }
-
-        if (qrPayload.deviceId != server) {
-            state.copy(pairingState = ClientPairingState.Failure(ClientPairingFailureCause.WRONG_DEVICE)).update()
+        val qrPayload = qrContent.fromPayloadString(expectedDeviceId = server)
+        if (qrPayload is PairingQrPayload.Valid) {
+            attemptPairing(qrPayload.pin, qrPayload.serverFingerprint)
             return
         }
 
-        attemptPairing(qrPayload.pin, qrPayload.serverFingerprint)
+        val failureReason =
+            when (qrPayload as PairingQrPayload.Invalid) {
+                PairingQrPayload.Invalid.WRONG_QR -> ClientPairingFailureCause.INVALID_QR
+                PairingQrPayload.Invalid.VERSION_MISMATCH_REMOTE_OUTDATED -> ClientPairingFailureCause.CAMERA_OUTDATED
+                PairingQrPayload.Invalid.VERSION_MISMATCH_LOCAL_OUTDATED -> ClientPairingFailureCause.MONITOR_OUTDATED
+                PairingQrPayload.Invalid.INVALID_SERVER_FINGERPRINT -> ClientPairingFailureCause.MITM_SUSPECTED
+                PairingQrPayload.Invalid.INVALID_DEVICE_ID -> ClientPairingFailureCause.WRONG_DEVICE
+                PairingQrPayload.Invalid.WRONG_PIN -> ClientPairingFailureCause.WRONG_PIN
+            }
+
+        state.copy(pairingState = ClientPairingState.Failure(failureReason)).update()
     }
 
     private fun attemptPairing(pin: Pin, serverFingerprint: String) {

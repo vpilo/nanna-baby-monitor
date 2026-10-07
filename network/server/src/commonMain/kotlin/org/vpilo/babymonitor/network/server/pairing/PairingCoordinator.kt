@@ -56,7 +56,7 @@ internal class PairingCoordinator(
     ) {
         val pin = Pin.generate()
         val qrText =
-            PairingQrPayload(
+            PairingQrPayload.Valid(
                 serverFingerprint = deviceIdentity.fingerprint,
                 deviceId = self.id,
                 pin = pin,
