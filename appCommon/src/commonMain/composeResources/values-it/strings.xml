@@ -70,7 +70,8 @@
     <string name="menu_paired_devices_title">Gestisci i dispositivi associati</string>
 
     <string name="app_title_client_pairing">Associa a %1$s</string>
-    <string name="client_pairing_camera_or_pin">Scansiona il codice QR su "%1$s" oppure inserisci il PIN che sta mostrando.</string>
+    <string name="client_pairing_camera_or_pin">Scansiona il codice QR su "%1$s" per verificarne l'identità e associarla in sicurezza.</string>
+    <string name="client_pairing_camera_or_pin_more_info">Se non puoi scansionarlo, inserisci il PIN mostrato, ma solo su una rete fidata: l'associazione con il PIN non può verificare l'identità della telecamera.</string>
     <string name="client_pairing_server_not_on_network">Telecamera non trovata su questa rete</string>
     <string name="client_pairing_failed_storage_error">Errore di archiviazione</string>
     <string name="client_pairing_failed_protocol_error">Errore di protocollo</string>

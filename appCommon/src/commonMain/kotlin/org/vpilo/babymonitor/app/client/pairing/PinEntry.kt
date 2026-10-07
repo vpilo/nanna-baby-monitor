@@ -25,6 +25,7 @@ import org.vpilo.babymonitor.settings.model.getCurrentPlatform
 fun PinEntry(
     pinResetKey: Any,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onPinEntered: (pin: Pin) -> Unit,
 ) {
     var pin by remember(pinResetKey) { mutableStateOf("") }
@@ -36,6 +37,7 @@ fun PinEntry(
                 .requiredHeight(IntrinsicSize.Min)
                 .focusable()
                 .focusRequester(focusRequester),
+        enabled = enabled,
         value = pin,
         onValueChange = {
             pin = Pin.normalize(it)
@@ -49,7 +51,7 @@ fun PinEntry(
     )
 
     // On Android, keep the keyboard closed
-    if (getCurrentPlatform() == Platform.Desktop) {
+    if (enabled && getCurrentPlatform() == Platform.Desktop) {
         SideEffect { focusRequester.requestFocus() }
     }
 }

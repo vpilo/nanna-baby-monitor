@@ -33,7 +33,7 @@ private suspend fun pinToMacKey(pin: Pin): ByteArray =
         pin.toString().encodeToByteArray(),
         salt = null,
         info = "babymonitor-pin".encodeToByteArray(),
-        outputSizeBytes = 32,
+        outputSizeBytes = PAIRING_SECRET_SIZE_BYTES,
     )
 
 /** `Mc = HMAC(KDF(PIN), "c" ‖ T)`. */

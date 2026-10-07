@@ -7,13 +7,12 @@ import javax.net.ssl.X509TrustManager
 /**
  * Client-side TLS trust for a single Nanna Baby Monitor connection.
  *
- * With [expectedFingerprint] `null`: trust-on-first-use - accepts any presented certificate but records it in
- * [capturedCertificate] so the caller can bind the actual negotiated certificate into a transcript. Used for the
- * `/pair` connection, where the server isn't trusted yet, and for relay connections, where the relay is
- * authenticated by the channel-bound access handshake rather than by PKI.
+ * With [expectedFingerprint] `null`: trust-on-first-use - accepts any presented certificate but records it in [capturedCertificate] so the
+ * caller can bind the actual negotiated certificate into a transcript. Used for the `/pair` connection with manual PIN entry, and for relay
+ * connections, where the relay is authenticated by the channel-bound access handshake rather than by PKI.
  *
- * With [expectedFingerprint] set: strict pinning - rejects any certificate whose SHA-256 fingerprint doesn't
- * match. Used for every LAN connection after pairing.
+ * With [expectedFingerprint] set: strict pinning - rejects any certificate whose SHA-256 fingerprint doesn't match. Used for QR pairing
+ * and every LAN connection after pairing.
  *
  * One instance serves exactly one connection: [capturedCertificate] would otherwise race between them.
  */

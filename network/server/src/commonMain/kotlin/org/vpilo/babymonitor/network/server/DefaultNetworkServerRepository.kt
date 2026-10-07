@@ -88,7 +88,10 @@ internal class DefaultNetworkServerRepository(
     override val relayVersionMismatchFlow: Flow<VersionMismatch?> = relayRegistration.relayVersionMismatch
 
     override fun startPairingWindow() {
-        pairingCoordinator.startPairingWindow(checkNotNull(self) { "Server not started" })
+        pairingCoordinator.startPairingWindow(
+            checkNotNull(self) { "Server not started" },
+            checkNotNull(deviceIdentity) { "Device identity not loaded" },
+        )
     }
 
     override fun cancelPairingWindow() {

@@ -74,7 +74,8 @@
     <string name="menu_paired_devices_title">Manage paired devices</string>
 
     <string name="app_title_client_pairing">Pair with %1$s</string>
-    <string name="client_pairing_camera_or_pin">Scan the QR code on "%1$s" or enter the PIN it is showing.</string>
+    <string name="client_pairing_camera_or_pin">Scan the QR code on "%1$s" to verify its identity and pair securely.</string>
+    <string name="client_pairing_camera_or_pin_more_info">If scanning is unavailable, enter the PIN it shows, but only on a trusted network: pairing with PIN cannot verify the camera's identity.</string>
     <string name="client_pairing_server_not_on_network">Camera not found on this network</string>
     <string name="client_pairing_failed_storage_error">Storage error</string>
     <string name="client_pairing_failed_protocol_error">Protocol error</string>

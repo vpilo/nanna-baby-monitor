@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
 import org.vpilo.babymonitor.network.internal.protocol.receiveProtocolVersion
 import org.vpilo.babymonitor.network.model.pairing.PairedDevice
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload
@@ -51,13 +50,18 @@ internal class PairingCoordinator(
     @Volatile
     private var activeWindow: ActiveWindow? = null
 
-    fun startPairingWindow(self: Device.LocalServer) {
+    fun startPairingWindow(
+        self: Device.LocalServer,
+        deviceIdentity: DeviceIdentity,
+    ) {
         val pin = Pin.generate()
         val qrText =
-            PairingQrPayload(
-                deviceId = self.id,
-                pin = pin,
-            ).asPayloadString()
+            PairingQrPayload
+                .Valid(
+                    serverFingerprint = deviceIdentity.fingerprint,
+                    deviceId = self.id,
+                    pin = pin,
+                ).asPayloadString()
         activeWindow = ActiveWindow(pin = pin, remainingAttempts = MAX_PIN_ATTEMPTS)
         _state.value = ServerPairingState.Active(pin, qrText)
 

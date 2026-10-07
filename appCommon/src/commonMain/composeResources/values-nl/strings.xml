@@ -70,7 +70,8 @@
     <string name="menu_paired_devices_title">Gekoppelde apparaten beheren</string>
 
     <string name="app_title_client_pairing">Koppelen met %1$s</string>
-    <string name="client_pairing_camera_or_pin">Scan de QR-code op "%1$s" of voer de pincode in die daarop wordt getoond.</string>
+    <string name="client_pairing_camera_or_pin">Scan de QR-code op "%1$s" om de identiteit te verifiëren en veilig te koppelen.</string>
+    <string name="client_pairing_camera_or_pin_more_info">Als scannen niet mogelijk is, voer dan de getoonde pincode in, maar alleen op een vertrouwd netwerk: koppelen met een pincode kan de identiteit van de camera niet verifiëren.</string>
     <string name="client_pairing_server_not_on_network">Camera niet gevonden op dit netwerk</string>
     <string name="client_pairing_failed_storage_error">Opslagfout</string>
     <string name="client_pairing_failed_protocol_error">Protocolfout</string>

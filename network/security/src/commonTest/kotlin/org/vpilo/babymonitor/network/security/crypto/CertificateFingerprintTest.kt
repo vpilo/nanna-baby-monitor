@@ -1,10 +1,13 @@
 package org.vpilo.babymonitor.network.security.crypto
 
 import io.ktor.network.tls.certificates.buildKeyStore
+import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertSame
 
 class CertificateFingerprintTest {
     @Test
@@ -24,10 +27,48 @@ class CertificateFingerprintTest {
         assertNotEquals(certA.sha256Fingerprint(), certB.sha256Fingerprint())
     }
 
+    @Test
+    fun qrFingerprintAcceptsMatchingCertificate() {
+        val certificate = selfSignedTestCertificate()
+        val trustManager = PinnedTrustManager(certificate.sha256Fingerprint())
+
+        trustManager.checkServerTrusted(arrayOf(certificate), "RSA")
+
+        assertSame(certificate, trustManager.capturedCertificate)
+    }
+
+    @Test
+    fun qrFingerprintRejectsDifferentCertificate() {
+        val expectedCertificate = selfSignedTestCertificate()
+        val presentedCertificate = selfSignedTestCertificate()
+        val trustManager = PinnedTrustManager(expectedCertificate.sha256Fingerprint())
+
+        assertFailsWith<CertificateException> {
+            trustManager.checkServerTrusted(arrayOf(presentedCertificate), "RSA")
+        }
+        assertSame(presentedCertificate, trustManager.capturedCertificate)
+    }
+
+    @Test
+    fun manualPinPairingCapturesCertificateWithoutExistingPin() {
+        val certificate = selfSignedTestCertificate()
+        val trustManager = PinnedTrustManager(expectedFingerprint = null)
+
+        trustManager.checkServerTrusted(arrayOf(certificate), "RSA")
+
+        assertSame(certificate, trustManager.capturedCertificate)
+    }
+
+    @Test
+    fun rejectsMissingCertificatesEvenForManualPinPairing() {
+        listOf(null, "0".repeat(64)).forEach { fingerprint ->
+            val trustManager = PinnedTrustManager(fingerprint)
+            assertFailsWith<CertificateException> { trustManager.checkServerTrusted(null, "RSA") }
+            assertFailsWith<CertificateException> { trustManager.checkServerTrusted(emptyArray(), "RSA") }
+        }
+    }
+
     private fun selfSignedTestCertificate(): X509Certificate {
-        // Built with plain JDK sun.security.x509 test scaffolding is avoided on purpose (see Task 7's
-        // discussion of JDK internals); instead this reuses the same buildKeyStore helper Task 7 wires
-        // into production code, keeping the test aligned with what actually ships.
         val keyStore =
             buildKeyStore {
                 certificate("test") {
