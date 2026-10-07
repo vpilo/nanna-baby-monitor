@@ -76,8 +76,8 @@ class PairingQrPayloadTest {
     @Test
     fun rejectsLegacyPayloadWithoutFingerprint() {
         assertEquals(
-            PairingQrPayload.Invalid.VERSION_MISMATCH_REMOTE_OUTDATED,
-            "bm|1|$someDeviceId|AB23CD".fromPayloadString(someDeviceId),
+            PairingQrPayload.Invalid.WRONG_QR,
+            "bm|$VERSION|$someDeviceId|AB23CD".fromPayloadString(someDeviceId),
         )
     }
 
@@ -86,7 +86,7 @@ class PairingQrPayloadTest {
         listOf("", FINGERPRINT.dropLast(1), FINGERPRINT + "0", "g".repeat(64), FINGERPRINT.uppercase()).forEach { fingerprint ->
             assertEquals(
                 PairingQrPayload.Invalid.INVALID_SERVER_FINGERPRINT,
-                "bm|2|$fingerprint|$someDeviceId|AB23CD".fromPayloadString(someDeviceId),
+                "bm|$VERSION|$fingerprint|$someDeviceId|AB23CD".fromPayloadString(someDeviceId),
             )
         }
     }
@@ -95,7 +95,7 @@ class PairingQrPayloadTest {
     fun rejectsMalformedPin() {
         assertEquals(
             PairingQrPayload.Invalid.WRONG_PIN,
-            "bm|2|$FINGERPRINT|$someDeviceId|invalid".fromPayloadString(someDeviceId),
+            "bm|$VERSION|$FINGERPRINT|$someDeviceId|invalid".fromPayloadString(someDeviceId),
         )
     }
 
