@@ -6,6 +6,7 @@ import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,22 +14,30 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.NetworkAddress
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.internal.discovery.ktx.toAttributes
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import org.vpilo.babymonitor.settings.model.repository.NetworkAddressCacheRepository
 import kotlin.coroutines.CoroutineContext
 
 internal actual class DefaultLocalDiscoveryRepository(
     context: Context,
     coroutineContext: CoroutineContext,
+    private val networkAddressCacheRepository: NetworkAddressCacheRepository,
 ) : LocalDiscoveryRepository {
-    actual constructor(coroutineContext: CoroutineContext) : this(
+    actual constructor(
+        coroutineContext: CoroutineContext,
+        networkAddressCacheRepository: NetworkAddressCacheRepository,
+    ) : this(
         context = KoinPlatform.getKoin().get(),
         coroutineContext = coroutineContext,
+        networkAddressCacheRepository = networkAddressCacheRepository,
     )
 
     private var device: Device? = null
@@ -45,6 +54,8 @@ internal actual class DefaultLocalDiscoveryRepository(
 
     private val mutableDiscoveredDevicesFlow: MutableStateFlow<Map<DeviceId, Device>> = MutableStateFlow(emptyMap())
 
+    private val coroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
+
     private val watchdog =
         DeviceWatchdog(
             devicesFlow = mutableDiscoveredDevicesFlow,
@@ -56,13 +67,15 @@ internal actual class DefaultLocalDiscoveryRepository(
                 Logger.i(TAG) { "Device returned: $returned" }
                 mutableDiscoveredDevicesFlow.update { it + (returned.id to returned) }
             },
-            coroutineScope = CoroutineScope(coroutineContext),
+            coroutineScope = coroutineScope,
         )
 
     private var discoveryListener: AndroidDiscoveryListener =
         AndroidDiscoveryListener(
+            coroutineScope = coroutineScope,
             nsdManager = nsdManager,
             mutableDiscoveredDevicesFlow = mutableDiscoveredDevicesFlow,
+            onDeviceAddressesUpdated = ::updateDeviceAddresses,
         )
     private var registrationListener: AndroidRegistrationListener = AndroidRegistrationListener()
 
@@ -75,6 +88,11 @@ internal actual class DefaultLocalDiscoveryRepository(
 
     private val mutableIsRegisteredFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual override val isRegisteredFlow: Flow<Boolean> = mutableIsRegisteredFlow.asStateFlow()
+
+    private fun updateDeviceAddresses(deviceId: DeviceId, addresses: Set<NetworkAddress>) =
+        coroutineScope.launch {
+            networkAddressCacheRepository.put(deviceId, addresses)
+        }
 
     actual override fun register(device: Device) {
         if (this.device == device) {
@@ -138,15 +156,17 @@ internal actual class DefaultLocalDiscoveryRepository(
             }
         }
         this.device = null
-        discoveryListener.reset()
         mutableIsRegisteredFlow.value = false
         mutableDiscoveredDevicesFlow.value = emptyMap()
         releaseMulticastLock()
         // It's apparently unreliable to keep using the same listener between sessions, so make a new one every time.
+        discoveryListener.release()
         discoveryListener =
             AndroidDiscoveryListener(
+                coroutineScope = coroutineScope,
                 nsdManager = nsdManager,
                 mutableDiscoveredDevicesFlow = mutableDiscoveredDevicesFlow,
+                onDeviceAddressesUpdated = ::updateDeviceAddresses,
             )
         registrationListener = AndroidRegistrationListener()
         watchdog.stopWatching()

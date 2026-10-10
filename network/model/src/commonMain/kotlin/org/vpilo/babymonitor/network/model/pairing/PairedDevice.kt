@@ -16,9 +16,17 @@ data class PairedDevice(
     val certFingerprint: String,
     val sharedSecretBase64: String,
 ) {
-    fun asServer(): Device.LocalServer = Device.LocalServer(DeviceId.parse(deviceId), name)
+    fun asServer(): Device.LocalServer =
+        Device.LocalServer(
+            id = DeviceId.parse(deviceId),
+            name = name,
+        )
 
-    fun asClient(): Device.Client = Device.Client(DeviceId.parse(deviceId), name)
+    fun asClient(): Device.Client =
+        Device.Client(
+            id = DeviceId.parse(deviceId),
+            name = name,
+        )
 
-    override fun toString(): String = "PairedDevice($deviceId)"
+    override fun toString(): String = "PairedDevice($deviceId, $name)"
 }

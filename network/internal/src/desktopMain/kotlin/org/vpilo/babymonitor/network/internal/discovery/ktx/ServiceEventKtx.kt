@@ -2,13 +2,13 @@ package org.vpilo.babymonitor.network.internal.discovery.ktx
 
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.NetworkAddress
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.internal.discovery.DefaultLocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.Constants
-import java.net.InetAddress
 import javax.jmdns.ServiceEvent
 
-internal fun ServiceEvent.toDeviceOrNull(): Device? {
+internal fun ServiceEvent.toDeviceOrNull(address: NetworkAddress): Device? {
     if (!type.contains(Constants.DISCOVERY_SERVICE_TYPE)) return null
 
     val version = info.getPropertyString(DEVICE_ATTRIBUTE_VERSION) ?: return null
@@ -38,7 +38,7 @@ internal fun ServiceEvent.toDeviceOrNull(): Device? {
             Device.LocalServer(
                 id = id,
                 name = name,
-                addresses = hosts,
+                address = address,
             )
         }
 
@@ -46,7 +46,7 @@ internal fun ServiceEvent.toDeviceOrNull(): Device? {
             Device.Client(
                 id = id,
                 name = name,
-                addresses = hosts,
+                address = address,
             )
         }
 
@@ -57,5 +57,5 @@ internal fun ServiceEvent.toDeviceOrNull(): Device? {
     }
 }
 
-private val ServiceEvent.hosts: Set<InetAddress>
-    get() = (info.inet6Addresses?.toSet() ?: emptySet()) + (info.inet4Addresses?.toSet() ?: emptySet())
+internal val ServiceEvent.hosts: Set<NetworkAddress>
+    get() = info.inetAddresses.map { NetworkAddress(it.hostAddress ?: it.hostName) }.toSet()

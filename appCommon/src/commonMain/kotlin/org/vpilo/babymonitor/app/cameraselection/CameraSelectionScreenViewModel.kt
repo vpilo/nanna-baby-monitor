@@ -22,6 +22,8 @@ import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.model.usecase.GetConnectableServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetNewServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetPairedNonVisibleServersFlowUseCase
+import org.vpilo.babymonitor.network.model.usecase.GetVisibleServersFlowUseCase
+import org.vpilo.babymonitor.network.model.usecase.UpdateServerNamesUseCase
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 
@@ -32,6 +34,8 @@ class CameraSelectionScreenViewModel(
     private val settingsRepository: SettingsRepository,
     private val getPairedNonVisibleServersFlowUseCase: GetPairedNonVisibleServersFlowUseCase,
     private val getConnectableServersFlowUseCase: GetConnectableServersFlowUseCase,
+    private val getVisibleServersFlowUseCase: GetVisibleServersFlowUseCase,
+    private val updateVisibleServersUseCase: UpdateServerNamesUseCase,
     private val getNewServersFlowUseCase: GetNewServersFlowUseCase,
     private val localDiscoveryRepository: LocalDiscoveryRepository,
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
@@ -69,6 +73,10 @@ class CameraSelectionScreenViewModel(
         getNewServersFlowUseCase().subscribe {
             state.copy(newServers = it.toList()).update()
         }
+        // Keep names updated.
+        getVisibleServersFlowUseCase().subscribe {
+            updateVisibleServersUseCase.invoke(it)
+        }
 
         // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
         deviceStateRepository.isInternetAvailable.subscribe {
@@ -81,11 +89,11 @@ class CameraSelectionScreenViewModel(
                 is ConnectionState.Disconnected,
                 is ConnectionState.Connecting,
                     -> {
-                        if (lastAnnouncedEvent != netState) {
-                            lastAnnouncedEvent = netState
-                            CameraSelectionScreenEffect.AnnounceConnectionEvent(netState).sendEffect()
-                        }
+                    if (lastAnnouncedEvent != netState) {
+                        lastAnnouncedEvent = netState
+                        CameraSelectionScreenEffect.AnnounceConnectionEvent(netState).sendEffect()
                     }
+                }
 
                 is ConnectionState.Connected -> {
                     settingsRepository.save(Setting.ClientLastServerId, netState.server.id.toString())
@@ -105,9 +113,9 @@ class CameraSelectionScreenViewModel(
                     ConnectionState.ErrorReason.RelayOutdated,
                     ConnectionState.ErrorReason.AppRelayOutdated,
                         -> {
-                            Logger.d(TAG) { "Stopping auto-reconnection" }
-                            settingsRepository.save(Setting.ClientLastServerId, "")
-                        }
+                        Logger.d(TAG) { "Stopping auto-reconnection" }
+                        settingsRepository.save(Setting.ClientLastServerId, "")
+                    }
 
                     else -> {
                         // Keep trying to reconnect.

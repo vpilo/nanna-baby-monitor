@@ -4,7 +4,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -12,15 +11,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.settings.data.ktx.getSafeFlow
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
-import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -139,15 +137,6 @@ class DefaultSettingsRepository(
             settings.remove(key)
         }
     }
-
-    private fun DataStore<Preferences>.getSafeFlow(): Flow<Preferences> =
-        data.catch {
-            if (it is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw it
-            }
-        }
 
     private fun <T : Any> Setting<T>.toDataStoreKey(): Preferences.Key<T> {
         @Suppress("UNCHECKED_CAST")

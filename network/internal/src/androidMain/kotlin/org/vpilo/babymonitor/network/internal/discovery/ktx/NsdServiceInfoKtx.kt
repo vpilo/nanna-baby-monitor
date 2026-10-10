@@ -5,12 +5,12 @@ import android.os.Build
 import android.os.ext.SdkExtensions
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.NetworkAddress
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.network.internal.discovery.DefaultLocalDiscoveryRepository
 import org.vpilo.babymonitor.network.model.Constants
-import java.net.InetAddress
 
-internal fun NsdServiceInfo.toDeviceOrNull(): Device? {
+internal suspend fun NsdServiceInfo.toDeviceOrNull(address: NetworkAddress): Device? {
     if (!serviceType.contains(Constants.DISCOVERY_SERVICE_TYPE)) return null
     val attrs = attributes ?: return null
 
@@ -41,7 +41,7 @@ internal fun NsdServiceInfo.toDeviceOrNull(): Device? {
             Device.LocalServer(
                 id = id,
                 name = name,
-                addresses = hosts,
+                address = address,
             )
         }
 
@@ -49,7 +49,7 @@ internal fun NsdServiceInfo.toDeviceOrNull(): Device? {
             Device.Client(
                 id = id,
                 name = name,
-                addresses = hosts,
+                address = address,
             )
         }
 
@@ -62,13 +62,15 @@ internal fun NsdServiceInfo.toDeviceOrNull(): Device? {
 
 private fun Map<String, ByteArray>.getString(attributeName: String): String? = this[attributeName]?.toString(Charsets.UTF_8)
 
-private val NsdServiceInfo.hosts: Set<InetAddress>
+internal val NsdServiceInfo.hosts: Set<NetworkAddress>
     get() =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             SdkExtensions.getExtensionVersion(Build.VERSION_CODES.TIRAMISU) >= 7
         ) {
-            hostAddresses.toSet()
+            hostAddresses
         } else {
             @Suppress("DEPRECATION")
-            setOf(host)
+            listOf(host)
         }
+            .map { NetworkAddress(it.hostAddress ?: it.hostName) }
+            .toSet()

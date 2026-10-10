@@ -119,7 +119,7 @@ internal class DefaultRemoteDiscoveryRepository(
                                     .lines()
                                     .filter { it.isNotEmpty() }
                                     .mapNotNull { line -> Device.RemoteServer.fromTransportString(line) }
-                                    .filter { it.relayHost == relayConfiguration.host }
+                                    .filter { it.address.address == relayConfiguration.host }
                                     .toSet()
                             if (_discoveredDevicesFlow.value != servers) {
                                 Logger.i(TAG) { "Relay found servers: $servers" }

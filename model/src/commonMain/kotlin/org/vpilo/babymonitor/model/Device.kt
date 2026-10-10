@@ -2,27 +2,23 @@ package org.vpilo.babymonitor.model
 
 import androidx.compose.runtime.Stable
 import org.vpilo.babymonitor.model.repository.DeviceId
-import java.net.InetAddress
 
 /**
  * Represents a device that can be discovered and connected to.
  *
  * @property id Unique ID of the device.
  * @property name User-defined name of the device.
- * @property addresses IP addresses of the device.
+ * @property address Network address of the device.
  */
 @Stable
 sealed class Device(
     val id: DeviceId,
     val name: String,
-    val addresses: Set<InetAddress>,
+    val address: NetworkAddress,
 ) : Comparable<Device> {
     init {
         require(name.isNotBlank()) { "Device name cannot be blank" }
     }
-
-    constructor(id: DeviceId, name: String) : this(id, name, emptySet())
-    constructor(id: DeviceId, name: String, address: InetAddress) : this(id, name, setOf(address))
 
     val idString: String
         get() = id.toString()
@@ -35,7 +31,7 @@ sealed class Device(
     override fun hashCode(): Int {
         var result = id.hashCode()
         result = 31 * result + name.hashCode()
-        result = 31 * result + addresses.hashCode()
+        result = 31 * result + address.hashCode()
         return result
     }
 
@@ -47,20 +43,20 @@ sealed class Device(
 
         if (id != other.id) return false
         if (name != other.name) return false
-        if (addresses != other.addresses) return false
+        if (address != other.address) return false
 
         return true
     }
 
-    override fun toString(): String = "${this::class.simpleName}($id, ${addresses.size} addresses)"
+    override fun toString(): String =
+        "${this::class.simpleName}($id $address)"
 
     @Stable
-    @Suppress("UnnecessaryAbstractClass")
     abstract class Server(
         id: DeviceId,
         name: String,
-        addresses: Set<InetAddress>,
-    ) : Device(id, name, addresses) {
+        address: NetworkAddress,
+    ) : Device(id, name, address) {
         companion object
     }
 
@@ -68,17 +64,17 @@ sealed class Device(
     class LocalServer(
         id: DeviceId,
         name: String,
-        addresses: Set<InetAddress>,
-    ) : Server(id, name, addresses) {
-        constructor(id: DeviceId, name: String) : this(id, name, emptySet())
+        address: NetworkAddress,
+    ) : Server(id, name, address) {
+        constructor(id: DeviceId, name: String) : this(id, name, NO_ADDRESS)
     }
 
     @Stable
     class RemoteServer(
         id: DeviceId,
         name: String,
-        val relayHost: String,
-    ) : Server(id, name, relayHost.toAddressSet()) {
+        address: NetworkAddress,
+    ) : Server(id, name, address) {
         companion object
     }
 
@@ -86,21 +82,19 @@ sealed class Device(
     class Client(
         id: DeviceId,
         name: String,
-        addresses: Set<InetAddress>,
-    ) : Device(id, name, addresses) {
-        constructor(id: DeviceId, name: String) : this(id, name, emptySet())
+        address: NetworkAddress,
+    ) : Device(id, name, address) {
+        constructor(id: DeviceId, name: String) : this(id, name, NO_ADDRESS)
     }
 
     @Stable
     class Relay(
         id: DeviceId,
         name: String,
-        val relayHost: String,
-    ) : Device(id, name, relayHost.toAddressSet())
+        address: NetworkAddress,
+    ) : Device(id, name, address)
 
     private companion object {
-        private val EMPTY_ADDRESS by lazy { ByteArray(4) }
-
-        private fun String.toAddressSet(): Set<InetAddress> = setOf(InetAddress.getByAddress(this, EMPTY_ADDRESS))
+        private val NO_ADDRESS = NetworkAddress("")
     }
 }

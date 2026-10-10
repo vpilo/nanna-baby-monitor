@@ -59,7 +59,7 @@ class DefaultPairingStorageRepositoryTest {
             val device = pairedDevice()
             repository.pair(device)
 
-            repository.updateName(Uuid.parse(device.deviceId), "Kitchen")
+            repository.update(Uuid.parse(device.deviceId), "Kitchen", null)
 
             assertEquals("Kitchen", repository.find(Uuid.parse(device.deviceId))?.name)
         }

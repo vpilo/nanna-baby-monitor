@@ -7,13 +7,16 @@ import org.vpilo.babymonitor.model.Device
 class GetPairedNonVisibleServersFlowUseCase(
     private val getPairedServersFlowUseCase: GetPairedServersFlowUseCase,
     private val getVisibleServersFlowUseCase: GetVisibleServersFlowUseCase,
+    private val getPairedReachableServersFlowUseCase: GetPairedReachableServersFlowUseCase,
 ) {
     operator fun invoke(): Flow<Set<Device.Server>> =
         combine(
             getPairedServersFlowUseCase(),
             getVisibleServersFlowUseCase(),
-        ) { paired, visible ->
+            getPairedReachableServersFlowUseCase(),
+        ) { paired, visible, reachable ->
             val visibleIds = visible.map { it.id }
-            paired.filter { it.id !in visibleIds }.toSet()
+            val reachableIds = reachable.map { it.id }
+            paired.filter { it.id !in visibleIds && it.id !in reachableIds }.toSet()
         }
 }
