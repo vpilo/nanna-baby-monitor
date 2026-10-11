@@ -93,7 +93,12 @@ internal class AndroidDiscoveryListener(
 
         onDeviceAddressesUpdated(added.id, addresses)
 
-        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
+        mutableDiscoveredDevicesFlow.value[added.id]
+            ?.let { return }
+            ?: run {
+                Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
+            }
+
         mutableDiscoveredDevicesFlow.update { it + (added.id to added) }
     }
 

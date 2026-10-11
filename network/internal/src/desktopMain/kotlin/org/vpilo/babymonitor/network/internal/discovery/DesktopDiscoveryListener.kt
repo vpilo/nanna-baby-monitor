@@ -37,7 +37,9 @@ internal class DesktopDiscoveryListener(
             val addresses = event.hosts.filterReachable(Constants.SERVICE_PORT).ranked()
             val address = addresses.firstOrNull()
             if (address == null) {
-                Logger.w(DefaultLocalDiscoveryRepository.TAG) { "Device ignored due to no connectable hosts: $event" }
+                Logger.w(DefaultLocalDiscoveryRepository.TAG) {
+                    "Device ignored due to no connectable hosts (out of ${addresses.size}: $addresses): ${event.toString().replace("\n", " ")}"
+                }
                 return@launch
             }
             val added = event.toDeviceOrNull(address) ?: return@launch
@@ -45,11 +47,11 @@ internal class DesktopDiscoveryListener(
 
             onDeviceAddressesUpdated(added.id, addresses)
 
-            // Log only new or renamed devices to reduce verbosity.
-            val known = discoveredDevices.value[added.id]
-            if (known?.name != added.name) {
-                Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
-            }
+            discoveredDevices.value[added.id]
+                ?.let { return@launch }
+                ?: run {
+                    Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
+                }
 
             discoveredDevices.update { it + (added.id to added) }
             Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Discovered devices now: ${discoveredDevices.value}" }

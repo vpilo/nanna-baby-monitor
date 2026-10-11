@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.network.security.pairing
 
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.none
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.vpilo.babymonitor.common.Logger
@@ -15,10 +16,15 @@ import org.vpilo.babymonitor.settings.model.settings.PairedDevicesJson
 internal class DefaultPairingStorageRepository(
     private val settingsRepository: SettingsRepository,
 ) : PairingStorageRepository {
+    private var pairedDeviceList: List<PairedDevice> = listOf()
+
     override val pairedDevices =
         settingsRepository
             .flowOf(Setting.PairedDevicesJson)
-            .map { it.decodeOrEmpty() }
+            .map { rawJson ->
+                rawJson.decodeOrEmpty()
+                    .also {  pairedDeviceList = it }
+            }
 
     override suspend fun pair(device: PairedDevice) {
         save(getDevices().filterNot { it.deviceId == device.deviceId } + device)
@@ -37,6 +43,9 @@ internal class DefaultPairingStorageRepository(
         newName: String,
     ) {
         val id = deviceId.toString()
+        val savedDevice = pairedDeviceList.find { it.deviceId == id }
+        if (savedDevice == null || savedDevice.name == newName) return
+
         save(getDevices().map { if (it.deviceId == id) it.copy(name = newName) else it })
         Logger.i(TAG) { "Updated stored name for paired device $id" }
     }
