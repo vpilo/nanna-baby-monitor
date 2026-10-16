@@ -12,6 +12,7 @@ Functies:
 * Beveiligde video- en audiostreaming.
 * Automatisch vinden van opnemende apps op hetzelfde netwerk.
 * Veilig koppelen van apparaten met een koppelcode of QR-code.
+* Het camerabeeld wordt altijd rechtop weergegeven, ongeacht hoe de camera is geplaatst.
 * Lichtversterking om beter te zien bij weinig licht.
 * Stiltedetectie, zodat er geen audio wordt verstuurd als het stil is.
 * Instelbare opnamekwaliteit.

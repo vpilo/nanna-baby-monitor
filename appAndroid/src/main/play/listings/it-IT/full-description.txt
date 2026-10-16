@@ -13,6 +13,7 @@ Funzionalità:
 * Trasmissione video e audio sicura.
 * Individuazione automatica delle app in registrazione sulla stessa rete.
 * Associazione sicura tra dispositivi, tramite codice QR o PIN.
+* Streaming video sempre nel verso corretto, indipendentemente da come è posizionata la telecamera.
 * Miglioramento della luminosità, per vedere meglio in condizioni di luce scarsa.
 * Rilevamento del silenzio, per non sentire rumore di fondo quando è tutto tranquillo.
 * Qualità di registrazione personalizzabile.

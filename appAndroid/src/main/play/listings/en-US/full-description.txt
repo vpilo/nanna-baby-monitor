@@ -12,6 +12,7 @@ Features:
 * Secure video and audio streaming.
 * Network discovery of recording apps on the same network.
 * Secure pairing between devices, using a pairing code or QR code.
+* Always upright video stream, regardless of how the camera is placed.
 * Low light boost to see better in low light conditions.
 * Silence detection to avoid sending audio when it's all quiet.
 * Customizable recording quality.

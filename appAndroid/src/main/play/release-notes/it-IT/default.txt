@@ -1,4 +1,3 @@
-Aggiunta una richiesta di invio di un rapporto degli errori dopo un crash. Per favore, inviate i rapporti, mi aiuteranno a correggere i bug più velocemente!
-Le associazioni ora funzionano in entrambe le direzioni. Dopo l'aggiornamento, aggiorna tutti i dispositivi e associali di nuovo.
-Aggiunto il rilevamento della versione per riconoscere i tentativi di connessione tra versioni incompatibili.
-I messaggi pop-up ora si possono chiudere toccandoli o cliccandoci sopra.
+Aggiunto salvataggio degli indirizzi delle telecamere per connettersi più velocemente e in modo più affidabile.
+Aggiunta l'identità della telecamera ai codici QR per una maggiore sicurezza.
+Fissata registrazione al server relay.
