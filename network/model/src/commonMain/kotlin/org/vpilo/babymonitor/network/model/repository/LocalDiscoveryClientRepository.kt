@@ -2,20 +2,15 @@ package org.vpilo.babymonitor.network.model.repository
 
 import kotlinx.coroutines.flow.Flow
 import org.vpilo.babymonitor.model.Device
-import kotlin.time.Duration.Companion.milliseconds
 
-interface LocalDiscoveryRepository {
+interface LocalDiscoveryClientRepository {
     val discoveredDevicesFlow: Flow<Set<Device>>
 
     val isRegisteredFlow: Flow<Boolean>
 
-    fun register(device: Device)
+    fun startDiscovery(device: Device)
 
-    fun unregister()
+    fun stopDiscovery()
 
     fun refresh()
-
-    companion object {
-        val DISCOVERY_DEBOUNCE_TIME = 500.milliseconds
-    }
 }

@@ -14,13 +14,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.model.Device
-import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
+import org.vpilo.babymonitor.model.NetworkAddress
 import org.vpilo.babymonitor.network.internal.protocol.asVersionMismatchExceptionOrNull
 import org.vpilo.babymonitor.network.model.Constants
 import org.vpilo.babymonitor.network.model.Endpoints
@@ -29,7 +28,6 @@ import org.vpilo.babymonitor.network.model.transport.VersionMismatchException
 import org.vpilo.babymonitor.network.security.crypto.PinnedTrustManager
 import org.vpilo.babymonitor.network.security.relay.relayWss
 import java.net.ConnectException
-import java.net.InetAddress
 import java.net.ProtocolException
 import java.security.cert.CertificateException
 import kotlin.coroutines.cancellation.CancellationException
@@ -45,7 +43,6 @@ internal class WebSocketConnectionHandler(
     private val relayConfiguration: RelayConfiguration? = null,
 ) {
     private var connectionJob: Job? = null
-    private var retryJob: Job? = null
 
     fun connect() {
         if (connectionJob?.isActive == true) {
@@ -54,40 +51,30 @@ internal class WebSocketConnectionHandler(
         connectionJob =
             coroutineScope.launch {
                 if (device is Device.RemoteServer) {
-                    connectToRelay()
+                    attemptSafeConnection(
+                        target = relayConfiguration.toString(),
+                        connect = ::handleRelaySession,
+                    ) {
+                        onDisconnected(ConnectException("Relay connection failure"))
+                    }
                 } else {
-                    connect(device.addresses)
+                    attemptSafeConnection(
+                        target = device.address.toString(),
+                        connect = { startWebSocket(device.address) },
+                    ) {
+                        Logger.w(TAG) { "Failed to connect to $device for $endpointPath" }
+                        onDisconnected(ConnectException("Connection failure"))
+                    }
                 }
-            }
-    }
-
-    private suspend fun connect(remainingHosts: Set<InetAddress>) {
-        val host = remainingHosts.first()
-        val nextHosts = remainingHosts - host
-        doConnect(host, nextHosts)
-    }
-
-    private suspend fun doConnect(
-        host: InetAddress,
-        nextHosts: Set<InetAddress>,
-    ): Unit =
-        attemptSafeConnection(target = host.hashCode(), connect = { startWebSocket(host) }) {
-            if (nextHosts.isNotEmpty()) {
-                delay(Constants.WEBSOCKET_CONNECTION_ATTEMPT_DELAY)
-                val nextHost = nextHosts.first()
-                doConnect(nextHost, nextHosts - nextHost)
-            } else {
-                Logger.w(TAG) { "Failed to connect to any of the hosts for $endpointPath" }
                 connectionJob = null
-                onDisconnected(ConnectException("Connection failure"))
             }
-        }
+    }
 
     /**
      * Runs [connect]; on failure calls [onDisconnected] callback, or [onUnreachable] if the server cannot be reached.
      */
     private suspend fun attemptSafeConnection(
-        target: Any?,
+        target: String,
         connect: suspend () -> Unit,
         onUnreachable: suspend () -> Unit,
     ) {
@@ -112,19 +99,16 @@ internal class WebSocketConnectionHandler(
 
                 is CertificateException -> {
                     Logger.w(TAG) { "Certificate mismatch for server $target for $endpointPath: ${lastException.prettify()}" }
-                    connectionJob = null
                     onDisconnected(lastException)
                 }
 
                 is PairingRevokedException -> {
                     Logger.w(TAG) { "Pairing revoked by server $target for $endpointPath: ${lastException.prettify()}" }
-                    connectionJob = null
                     onDisconnected(lastException)
                 }
 
                 is VersionMismatchException -> {
                     Logger.w(TAG) { "Version mismatch for $target for $endpointPath: ${lastException.prettify()}" }
-                    connectionJob = null
                     onDisconnected(lastException)
                 }
 
@@ -143,10 +127,9 @@ internal class WebSocketConnectionHandler(
                 }
             }
         }
-        connectionJob = null
     }
 
-    private suspend fun startWebSocket(host: InetAddress) {
+    private suspend fun startWebSocket(host: NetworkAddress) {
         val pinnedClient =
             HttpClient(CIO) {
                 install(WebSockets) { clientPingInterval = Constants.WEBSOCKET_PING_PERIOD }
@@ -160,7 +143,7 @@ internal class WebSocketConnectionHandler(
         pinnedClient.use {
             it.wss(
                 method = HttpMethod.Get,
-                host = host.hostAddress,
+                host = host.address,
                 port = Constants.SERVICE_PORT,
                 path = endpointPath,
             ) {
@@ -171,12 +154,6 @@ internal class WebSocketConnectionHandler(
             }
         }
     }
-
-    private suspend fun connectToRelay(): Unit =
-        attemptSafeConnection(target = relayConfiguration, connect = ::handleRelaySession) {
-            connectionJob = null
-            onDisconnected(ConnectException("Relay connection failure"))
-        }
 
     private suspend fun handleRelaySession() {
         checkNotNull(relayConfiguration) { "Relay configuration must be provided for remote servers" }
@@ -217,8 +194,6 @@ internal class WebSocketConnectionHandler(
     fun disconnect() {
         connectionJob?.cancel()
         connectionJob = null
-        retryJob?.cancel()
-        retryJob = null
     }
 
     private companion object {

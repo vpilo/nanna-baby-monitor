@@ -5,22 +5,25 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
-import kotlinx.coroutines.flow.collectLatest as coroutinesCollectLatest
 
 abstract class AppViewModel<A, S, E>(
     @Suppress("VariableNaming", "ktlint:standard:property-naming", "PropertyName", "ConstructorParameterNaming")
@@ -31,38 +34,44 @@ abstract class AppViewModel<A, S, E>(
     protected val vmScope: CoroutineScope = scope ?: viewModelScope
 
     private var internalActionsChannel: Channel<A> = Channel(capacity = Channel.BUFFERED)
-    private var actionsJob: Job? = null
+    private var subscriptionJob: Job? = null
 
     private val internalStateFlow: MutableStateFlow<S> = MutableStateFlow(initialState)
     val stateFlow: StateFlow<S> by lazy {
         internalStateFlow
             .onSubscription {
-                Logger.d(TAG) { "Subscribed" }
-                actionsJob?.cancel()
-                internalActionsChannel = Channel(capacity = Channel.BUFFERED)
-                actionsJob =
-                    vmScope.launch {
-                        internalActionsChannel.receiveAsFlow().collect { action ->
-                            Logger.d(TAG) { "Received action: $action" }
-                            onAction(action)
+                subscriptionJob?.cancel()
+                val job =
+                    SupervisorJob(vmScope.coroutineContext[Job])
+                        .apply {
+                            subscriptionJob = this
+                            invokeOnCompletion {
+                                Logger.d(TAG) { "Unsubscribed" }
+                            }
                         }
+
+                Logger.d(TAG) { "Subscribed" }
+
+                val subscriptionScope = vmScope + job
+                internalActionsChannel = Channel(capacity = Channel.BUFFERED)
+                subscriptionScope.launch {
+                    internalActionsChannel.receiveAsFlow().collect { action ->
+                        Logger.d(TAG) { "Received action: $action" }
+                        onAction(action)
                     }
+                }
 
                 object : SubscriptionScope {
                     override fun <T> Flow<T>.subscribe(collector: suspend (value: T) -> Unit) {
-                        vmScope.launch { this@subscribe.coroutinesCollectLatest(collector) }
-                    }
-
-                    override fun <T> Flow<T>.collectLatest(collector: suspend (value: T) -> Unit) {
-                        vmScope.launch { this@collectLatest.coroutinesCollectLatest(collector) }
+                        subscriptionScope
+                            .launch { this@subscribe.collectLatest(collector) }
                     }
                 }.onSubscribed()
             }.onCompletion {
-                Logger.d(TAG) { "Unsubscribed" }
                 internalActionsChannel.cancel()
-                actionsJob?.cancel()
-                actionsJob = null
                 withContext(NonCancellable) {
+                    subscriptionJob?.cancelAndJoin()
+                    subscriptionJob = null
                     onUnsubscribed()
                 }
             }.stateIn(
@@ -83,12 +92,6 @@ abstract class AppViewModel<A, S, E>(
          * Automatically cancels the subscription when the [AppViewModel] is unsubscribed.
          */
         fun <T> Flow<T>.subscribe(collector: suspend (value: T) -> Unit)
-
-        /**
-         * Collect the latest values from this [Flow] to the optional [collector], cancelling the previous collection
-         * if a new value is emitted.
-         */
-        fun <T> Flow<T>.collectLatest(collector: suspend (value: T) -> Unit = {})
     }
 
     protected open fun SubscriptionScope.onSubscribed() {

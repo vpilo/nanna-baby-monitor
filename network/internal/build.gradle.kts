@@ -22,6 +22,7 @@ kotlin {
             implementation(project(":network:model"))
             implementation(project(":settings:model"))
 
+            implementation(libs.androidx.datastore)
             implementation(libs.ktor.websockets)
             implementation(libs.bundles.ktor.client)
 

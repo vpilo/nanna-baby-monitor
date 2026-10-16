@@ -6,7 +6,6 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import org.vpilo.babymonitor.common.Logger
-import org.vpilo.babymonitor.network.model.transport.VersionMismatch
 import org.vpilo.babymonitor.network.model.transport.VersionMismatchException
 
 /**

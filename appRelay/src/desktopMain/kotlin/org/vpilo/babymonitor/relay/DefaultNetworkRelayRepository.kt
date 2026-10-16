@@ -30,7 +30,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AppRole
@@ -198,7 +197,7 @@ class DefaultNetworkRelayRepository {
             close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Invalid registration"))
             return
         }
-        if (server.relayHost != device.relayHost) {
+        if (server.address != device.address) {
             Logger.e(TAG) { "Invalid server registration for different relay: $server" }
             close(reason = CloseReason(CloseReason.Codes.PROTOCOL_ERROR, "Invalid registration for this relay"))
             return

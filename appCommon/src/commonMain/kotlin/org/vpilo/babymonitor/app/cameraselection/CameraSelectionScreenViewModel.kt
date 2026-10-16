@@ -10,18 +10,21 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.app.settings.ClientLastServerId
 import org.vpilo.babymonitor.common.Logger
+import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.ConnectionState
 import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.repository.LocalClientDeviceRepository
 import org.vpilo.babymonitor.model.repository.toDeviceIdOrNull
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
-import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryClientRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.model.repository.RemoteDiscoveryRepository
 import org.vpilo.babymonitor.network.model.usecase.GetConnectableServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetNewServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetPairedNonVisibleServersFlowUseCase
+import org.vpilo.babymonitor.network.model.usecase.GetVisibleServersFlowUseCase
+import org.vpilo.babymonitor.network.model.usecase.UpdateServerNamesUseCase
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 
@@ -32,26 +35,31 @@ class CameraSelectionScreenViewModel(
     private val settingsRepository: SettingsRepository,
     private val getPairedNonVisibleServersFlowUseCase: GetPairedNonVisibleServersFlowUseCase,
     private val getConnectableServersFlowUseCase: GetConnectableServersFlowUseCase,
+    private val getVisibleServersFlowUseCase: GetVisibleServersFlowUseCase,
+    private val updateVisibleServersUseCase: UpdateServerNamesUseCase,
     private val getNewServersFlowUseCase: GetNewServersFlowUseCase,
-    private val localDiscoveryRepository: LocalDiscoveryRepository,
+    private val localDiscoveryClientRepository: LocalDiscoveryClientRepository,
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
     private val deviceStateRepository: DeviceStateRepository,
     private val pairingStorageRepository: PairingStorageRepository,
-    localClientDeviceRepository: LocalClientDeviceRepository,
+    private val localClientDeviceRepository: LocalClientDeviceRepository,
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
         TAG = "CameraSelectionScreenViewModel",
         initialState = CameraSelectionScreenState(),
     ) {
     private var discoveryJob: Job? = null
-    private var autoConnectJob: Job? = null
 
     private var lastAnnouncedEvent: ConnectionState? = null
+
+    private var device: Device.Client? = null
 
     init {
         discoveryJob =
             localClientDeviceRepository.localDevice
-                .onEach { device -> localDiscoveryRepository.register(device) }
-                .launchIn(vmScope)
+                .onEach { device ->
+                    this.device = device
+                    localDiscoveryClientRepository.startDiscovery(device)
+                }.launchIn(vmScope)
     }
 
     override fun onCleared() {
@@ -60,6 +68,8 @@ class CameraSelectionScreenViewModel(
     }
 
     override fun SubscriptionScope.onSubscribed() {
+        device?.let { localDiscoveryClientRepository.startDiscovery(it) }
+
         getConnectableServersFlowUseCase().subscribe {
             state.copy(connectableServers = it.toList()).update()
         }
@@ -69,63 +79,29 @@ class CameraSelectionScreenViewModel(
         getNewServersFlowUseCase().subscribe {
             state.copy(newServers = it.toList()).update()
         }
+        // Keep names updated.
+        getVisibleServersFlowUseCase().subscribe {
+            updateVisibleServersUseCase.invoke(it)
+        }
 
         // When internet connectivity changes, re-enable discovery to ensure the server list is up to date.
         deviceStateRepository.isInternetAvailable.subscribe {
-            localDiscoveryRepository.refresh()
+            localDiscoveryClientRepository.refresh()
         }
 
-        networkClientRepository.connectionStateFlow.subscribe { netState ->
-            state.copy(connectionState = netState).update()
-            when (netState) {
-                is ConnectionState.Disconnected,
-                is ConnectionState.Connecting,
-                    -> {
-                        if (lastAnnouncedEvent != netState) {
-                            lastAnnouncedEvent = netState
-                            CameraSelectionScreenEffect.AnnounceConnectionEvent(netState).sendEffect()
-                        }
-                    }
-
-                is ConnectionState.Connected -> {
-                    settingsRepository.save(Setting.ClientLastServerId, netState.server.id.toString())
-                    CameraSelectionScreenEffect.Connected.sendEffect()
-                }
-
-                else -> {}
-            }
-
-            if (netState is ConnectionState.Disconnected) {
-                when (netState.reason) {
-                    ConnectionState.ErrorReason.ClientQuit,
-                    ConnectionState.ErrorReason.PairingRevoked,
-                    ConnectionState.ErrorReason.ServerNotFound,
-                    ConnectionState.ErrorReason.CameraDeviceOutdated,
-                    ConnectionState.ErrorReason.MonitorDeviceOutdated,
-                    ConnectionState.ErrorReason.RelayOutdated,
-                    ConnectionState.ErrorReason.AppRelayOutdated,
-                        -> {
-                            Logger.d(TAG) { "Stopping auto-reconnection" }
-                            settingsRepository.save(Setting.ClientLastServerId, "")
-                        }
-
-                    else -> {
-                        // Keep trying to reconnect.
-                    }
-                }
-            }
+        networkClientRepository.connectionStateFlow.subscribe { newState ->
+            onConnectionStateChanged(newState)
         }
 
-        autoConnectJob =
-            vmScope.launch {
-                waitForLastConnectedServer()
-            }
+        vmScope.launch {
+            waitForLastConnectedServer()
+        }
 
         vmScope.launch {
             remoteDiscoveryRepository.start()
         }
 
-        localDiscoveryRepository.isRegisteredFlow.subscribe { isRegistered ->
+        localDiscoveryClientRepository.isRegisteredFlow.subscribe { isRegistered ->
             state.copy(isAvailableOnLocalNetwork = isRegistered).update()
         }
         remoteDiscoveryRepository.isRegisteredFlow.subscribe { isRegistered ->
@@ -149,11 +125,8 @@ class CameraSelectionScreenViewModel(
     }
 
     override suspend fun onUnsubscribed() {
-        vmScope.launch {
-            remoteDiscoveryRepository.stop()
-        }
-        autoConnectJob?.cancel()
-        autoConnectJob = null
+        localDiscoveryClientRepository.stopDiscovery()
+        remoteDiscoveryRepository.stop()
     }
 
     override fun onAction(action: CameraSelectionScreenAction) {
@@ -165,6 +138,47 @@ class CameraSelectionScreenViewModel(
                     } else {
                         CameraSelectionScreenEffect.RequirePairing(action.server).sendEffect()
                     }
+                }
+            }
+        }
+    }
+
+    private suspend fun onConnectionStateChanged(newState: ConnectionState) {
+        state.copy(connectionState = newState).update()
+        when (newState) {
+            is ConnectionState.Disconnected,
+            is ConnectionState.Connecting,
+                -> {
+                    if (lastAnnouncedEvent != newState) {
+                        lastAnnouncedEvent = newState
+                        CameraSelectionScreenEffect.AnnounceConnectionEvent(newState).sendEffect()
+                    }
+                }
+
+            is ConnectionState.Connected -> {
+                settingsRepository.save(Setting.ClientLastServerId, newState.server.id.toString())
+                CameraSelectionScreenEffect.Connected.sendEffect()
+            }
+
+            else -> {}
+        }
+
+        if (newState is ConnectionState.Disconnected) {
+            when (newState.reason) {
+                ConnectionState.ErrorReason.ClientQuit,
+                ConnectionState.ErrorReason.PairingRevoked,
+                ConnectionState.ErrorReason.ServerNotFound,
+                ConnectionState.ErrorReason.CameraDeviceOutdated,
+                ConnectionState.ErrorReason.MonitorDeviceOutdated,
+                ConnectionState.ErrorReason.RelayOutdated,
+                ConnectionState.ErrorReason.AppRelayOutdated,
+                    -> {
+                        Logger.d(TAG) { "Stopping auto-reconnection" }
+                        settingsRepository.save(Setting.ClientLastServerId, "")
+                    }
+
+                else -> {
+                    // Keep trying to reconnect.
                 }
             }
         }

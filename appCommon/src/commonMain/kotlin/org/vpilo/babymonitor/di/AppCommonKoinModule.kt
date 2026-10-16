@@ -44,7 +44,9 @@ val appSharedKoinModules =
                     getPairedNonVisibleServersFlowUseCase = get(),
                     getConnectableServersFlowUseCase = get(),
                     getNewServersFlowUseCase = get(),
-                    localDiscoveryRepository = get(),
+                    getVisibleServersFlowUseCase = get(),
+                    updateVisibleServersUseCase = get(),
+                    localDiscoveryClientRepository = get(),
                     remoteDiscoveryRepository = get(),
                     deviceStateRepository = get(),
                     pairingStorageRepository = get(),
@@ -55,7 +57,7 @@ val appSharedKoinModules =
             viewModel { params ->
                 ClientPairingScreenViewModel(
                     deviceId = params.get(),
-                    localDiscoveryRepository = get(),
+                    localDiscoveryClientRepository = get(),
                     pairingStorageRepository = get(),
                     clientPairingRepository = get(),
                     localClientDeviceRepository = get(),

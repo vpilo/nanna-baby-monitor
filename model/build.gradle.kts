@@ -26,6 +26,15 @@ kotlin {
         androidMain.dependencies {
             api(libs.androidx.camera.core)
         }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
+
+        desktopTest.dependencies {
+            implementation(libs.junit.platform)
+        }
     }
 
     compilerOptions {

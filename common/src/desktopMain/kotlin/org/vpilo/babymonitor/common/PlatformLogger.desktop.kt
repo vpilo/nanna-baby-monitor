@@ -9,7 +9,7 @@ private val logger: Logger by lazy {
 
 actual val platformLogger: PlatformLogger =
     PlatformLogger { tag, level, message, throwable ->
-        val logMessage = "[$tag] $message"
+        val logMessage = "${timestamp()} [$tag] $message"
         when (level) {
             LogLevel.DEBUG -> logger.debug(logMessage, throwable)
             LogLevel.INFO -> logger.info(logMessage, throwable)

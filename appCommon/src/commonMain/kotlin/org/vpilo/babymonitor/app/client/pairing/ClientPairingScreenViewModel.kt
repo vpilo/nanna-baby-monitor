@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.app.client.pairing
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.LocalClientDeviceRepository
@@ -14,13 +15,13 @@ import org.vpilo.babymonitor.network.model.pairing.ClientPairingState
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload
 import org.vpilo.babymonitor.network.model.pairing.PairingQrPayload.Companion.fromPayloadString
 import org.vpilo.babymonitor.network.model.pairing.Pin
-import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryClientRepository
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 
 @Stable
 class ClientPairingScreenViewModel(
     private val deviceId: String,
-    private val localDiscoveryRepository: LocalDiscoveryRepository,
+    private val localDiscoveryClientRepository: LocalDiscoveryClientRepository,
     private val pairingStorageRepository: PairingStorageRepository,
     private val clientPairingRepository: ClientPairingRepository,
     private val localClientDeviceRepository: LocalClientDeviceRepository,
@@ -29,10 +30,11 @@ class ClientPairingScreenViewModel(
         initialState = ClientPairingScreenState(),
     ) {
     override fun SubscriptionScope.onSubscribed() {
-        localDiscoveryRepository.discoveredDevicesFlow.subscribe { devices ->
+        localDiscoveryClientRepository.discoveredDevicesFlow.subscribe { devices ->
             val deviceId = deviceId.toDeviceIdOrNull()
             val server = devices.filterIsInstance<Device.Server>().firstOrNull { it.id == deviceId }
             if (deviceId == null || server == null || server !is Device.LocalServer) {
+                Logger.w(TAG) { "Server with ID $deviceId not found in discovered devices: $devices ($server)" }
                 ClientPairingScreenEffect.ServerUnavailable.sendEffect()
                 return@subscribe
             }

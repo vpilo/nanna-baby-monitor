@@ -2,9 +2,10 @@ package org.vpilo.babymonitor.network.model.transport
 
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.NetworkAddress
 import org.vpilo.babymonitor.model.repository.DeviceId
 
-fun Device.RemoteServer.asTransportString(): String = "$id#$relayHost#$name"
+fun Device.RemoteServer.asTransportString(): String = "$id#$address#$name"
 
 fun Device.LocalServer.asTransportString(relayHost: String): String = "$id#$relayHost#$name"
 
@@ -15,8 +16,8 @@ fun Device.RemoteServer.Companion.fromTransportString(transportString: String): 
         Logger.w("DeviceTransport") { "Malformed transport string" }
         return null
     }
-    val (rawId, relayHost, name) = splits
-    if (rawId.isBlank() || relayHost.isBlank() || name.isBlank()) {
+    val (rawId, address, name) = splits
+    if (rawId.isBlank() || address.isBlank() || name.isBlank()) {
         Logger.w("DeviceTransport") { "Invalid transport string" }
         return null
     }
@@ -25,6 +26,6 @@ fun Device.RemoteServer.Companion.fromTransportString(transportString: String): 
     return Device.RemoteServer(
         id = id,
         name = name,
-        relayHost = relayHost,
+        address = NetworkAddress(address),
     )
 }

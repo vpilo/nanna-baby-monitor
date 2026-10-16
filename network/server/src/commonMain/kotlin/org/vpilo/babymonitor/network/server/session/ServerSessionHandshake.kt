@@ -5,7 +5,6 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.repository.DeviceId
-import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
 import org.vpilo.babymonitor.network.internal.protocol.receiveProtocolVersion
 import org.vpilo.babymonitor.network.model.repository.PairingStorageRepository
 import org.vpilo.babymonitor.network.security.crypto.computeServerHandshakeProof

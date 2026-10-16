@@ -18,7 +18,9 @@ internal class DefaultPairingStorageRepository(
     override val pairedDevices =
         settingsRepository
             .flowOf(Setting.PairedDevicesJson)
-            .map { it.decodeOrEmpty() }
+            .map { rawJson ->
+                rawJson.decodeOrEmpty()
+            }
 
     override suspend fun pair(device: PairedDevice) {
         save(getDevices().filterNot { it.deviceId == device.deviceId } + device)
@@ -37,7 +39,11 @@ internal class DefaultPairingStorageRepository(
         newName: String,
     ) {
         val id = deviceId.toString()
-        save(getDevices().map { if (it.deviceId == id) it.copy(name = newName) else it })
+        val devices = getDevices()
+        val savedDevice = devices.find { it.deviceId == id }
+        if (savedDevice == null || savedDevice.name == newName) return
+
+        save(devices.map { if (it.deviceId == id) it.copy(name = newName) else it })
         Logger.i(TAG) { "Updated stored name for paired device $id" }
     }
 

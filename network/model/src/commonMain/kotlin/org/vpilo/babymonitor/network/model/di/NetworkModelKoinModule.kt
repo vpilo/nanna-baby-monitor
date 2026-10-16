@@ -11,6 +11,7 @@ import org.vpilo.babymonitor.network.model.usecase.GetPairedServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.GetVisibleServersFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.IsSessionActiveFlowUseCase
 import org.vpilo.babymonitor.network.model.usecase.UnpairDeviceUseCase
+import org.vpilo.babymonitor.network.model.usecase.UpdateServerNamesUseCase
 
 val networkModelKoinModule: Module =
     module {
@@ -20,6 +21,7 @@ val networkModelKoinModule: Module =
         factoryOf(::GetPairedNonVisibleServersFlowUseCase)
         factoryOf(::GetPairedServersFlowUseCase)
         factoryOf(::GetVisibleServersFlowUseCase)
+        factoryOf(::UpdateServerNamesUseCase)
         factoryOf(::UnpairDeviceUseCase)
         factoryOf(::IsSessionActiveFlowUseCase)
     }

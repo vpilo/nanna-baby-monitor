@@ -12,6 +12,7 @@ import org.vpilo.babymonitor.common.BuildInfo
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.data.di.dataKoinModule
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.NetworkAddress
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.repository.toDeviceId
 import org.vpilo.babymonitor.network.model.RelayConfiguration
@@ -62,7 +63,7 @@ private fun babyMonitorMain() {
             Device.Relay(
                 id = deferredDeviceId.await(),
                 name = configuration.host,
-                relayHost = configuration.host,
+                address = NetworkAddress(configuration.host),
             )
         relay.start(device, deriveRelayAccessKey(configuration.passphrase))
     }

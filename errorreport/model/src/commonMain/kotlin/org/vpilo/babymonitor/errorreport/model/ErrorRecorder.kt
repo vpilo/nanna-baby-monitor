@@ -11,11 +11,10 @@ import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.LoggingForwarder
 import org.vpilo.babymonitor.common.PlatformLogger
+import org.vpilo.babymonitor.common.timestamp
 import java.io.File
 import kotlin.concurrent.Volatile
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 
 /**
  * Records the current session's log to a file, so that an unclean exit can be reported at the next start.
@@ -25,28 +24,13 @@ object ErrorRecorder {
     @Volatile
     private var logFile: File? = null
 
-    private val startInstant: Instant = Clock.System.now()
-
     private val logCache: Channel<String> = Channel(LOG_CAPACITY, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val forwardingLogger: PlatformLogger =
         PlatformLogger { tag, level, message, throwable ->
             logFile ?: return@PlatformLogger
 
-            val elapsedTime =
-                (Clock.System.now() - startInstant).toComponents { hours, minutes, seconds, nanoseconds ->
-                    buildString {
-                        append(hours.toString().padStart(2, '0'))
-                        append(":")
-                        append(minutes.toString().padStart(2, '0'))
-                        append(":")
-                        append(seconds.toString().padStart(2, '0'))
-                        append(".")
-                        append((nanoseconds / 1_000_000).toString().padStart(3, '0')) // Milliseconds are enough
-                    }
-                }
-
-            val logMessage = "[$elapsedTime][$level][$tag] $message" + throwable?.let { "\n${it.stackTraceToString()}" }.orEmpty()
+            val logMessage = "[${timestamp()}][$level][$tag] $message" + throwable?.let { "\n${it.stackTraceToString()}" }.orEmpty()
             logCache.trySend(logMessage)
         }
 

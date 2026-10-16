@@ -12,7 +12,7 @@ import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.DeviceId
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
-import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryRepository
+import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryServerRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
 import org.vpilo.babymonitor.network.model.repository.RelayConfigurationRepository
 import org.vpilo.babymonitor.settings.model.Setting
@@ -22,7 +22,7 @@ import org.vpilo.babymonitor.settings.model.settings.DeviceName
 
 @Stable
 class ServerHomeScreenViewModel(
-    private val discoveryManager: LocalDiscoveryRepository,
+    private val discoveryServer: LocalDiscoveryServerRepository,
     private val server: NetworkServerRepository,
     private val settings: SettingsRepository,
     private val relayConfigurationRepository: RelayConfigurationRepository,
@@ -64,7 +64,7 @@ class ServerHomeScreenViewModel(
         ) { rawId, deviceName ->
             val id = checkNotNull(DeviceId.parseOrNull(rawId)) { "Invalid device ID: $rawId" }
             val device = Device.LocalServer(id = id, name = deviceName)
-            discoveryManager.register(device)
+            discoveryServer.register(device)
 
             if (!state.isAvailableOnLocalNetwork) {
                 server.start(device)
@@ -76,7 +76,7 @@ class ServerHomeScreenViewModel(
 
     override fun onCleared() {
         runBlocking {
-            discoveryManager.unregister()
+            discoveryServer.unregister()
             server.stop()
         }
     }

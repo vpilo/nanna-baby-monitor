@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.common.ktx.prettify
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.NetworkAddress
 import org.vpilo.babymonitor.network.internal.protocol.DEVICE_PROTOCOL_VERSION
 import org.vpilo.babymonitor.network.internal.protocol.asVersionMismatchExceptionOrNull
 import org.vpilo.babymonitor.network.internal.protocol.sendProtocolVersion
@@ -39,7 +40,6 @@ import org.vpilo.babymonitor.network.security.protocol.receiveBase64FrameOrNull
 import org.vpilo.babymonitor.network.security.protocol.receivePairingResultOrNull
 import org.vpilo.babymonitor.network.security.protocol.sendBase64Frame
 import org.vpilo.babymonitor.network.security.protocol.sendPairingHello
-import java.net.InetAddress
 import java.security.cert.X509Certificate
 import kotlin.io.encoding.Base64
 
@@ -57,7 +57,7 @@ internal class DefaultClientPairingRepository(
         pin: Pin,
         serverFingerprint: String?,
     ): ClientPairingState {
-        if (server is Device.RemoteServer || server.addresses.isEmpty()) {
+        if (server is Device.RemoteServer || server.address.address.isEmpty()) {
             Logger.w(TAG) { "Server $server has no addresses" }
             return ClientPairingState.Failure(ClientPairingFailureCause.SERVER_NOT_ON_NETWORK)
         }
@@ -71,31 +71,30 @@ internal class DefaultClientPairingRepository(
                 return ClientPairingState.Failure(ClientPairingFailureCause.STORAGE_ERROR)
             }
 
-        server.addresses.forEach { address ->
-            val trustManager = PinnedTrustManager(expectedFingerprint = serverFingerprint)
-            val httpClient =
-                HttpClient(CIO) {
-                    install(WebSockets)
-                    engine {
-                        https {
-                            this.trustManager = trustManager
-                            serverName = Constants.TLS_SERVER_NAME
-                        }
+        val trustManager = PinnedTrustManager(expectedFingerprint = serverFingerprint)
+        val httpClient =
+            HttpClient(CIO) {
+                install(WebSockets)
+                engine {
+                    https {
+                        this.trustManager = trustManager
+                        serverName = Constants.TLS_SERVER_NAME
                     }
                 }
+            }
 
-            httpClient.use { http ->
-                val outcome = http.pairWithHost(address, trustManager, server, clientDevice, identity.fingerprint, pin, serverFingerprint)
-                if (outcome != GENERIC_FAILURE) {
-                    return outcome
-                }
+        httpClient.use { http ->
+            val outcome =
+                http.pairWithHost(server.address, trustManager, server, clientDevice, identity.fingerprint, pin, serverFingerprint)
+            if (outcome != GENERIC_FAILURE) {
+                return outcome
             }
         }
         return GENERIC_FAILURE
     }
 
     private suspend fun HttpClient.pairWithHost(
-        host: InetAddress,
+        host: NetworkAddress,
         trustManager: PinnedTrustManager,
         server: Device.Server,
         clientDevice: Device.Client,
@@ -108,7 +107,7 @@ internal class DefaultClientPairingRepository(
             var outcome: ClientPairingState = GENERIC_FAILURE
             wss(
                 method = HttpMethod.Get,
-                host = host.hostAddress,
+                host = host.address,
                 port = Constants.SERVICE_PORT,
                 path = Endpoints.PAIR,
             ) {

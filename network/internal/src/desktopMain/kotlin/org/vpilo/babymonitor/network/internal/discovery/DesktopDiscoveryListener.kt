@@ -1,23 +1,32 @@
 package org.vpilo.babymonitor.network.internal.discovery
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
+import org.vpilo.babymonitor.model.ktx.filterReachable
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.network.internal.discovery.ktx.hosts
+import org.vpilo.babymonitor.network.internal.discovery.ktx.ranked
 import org.vpilo.babymonitor.network.internal.discovery.ktx.toDeviceOrNull
 import org.vpilo.babymonitor.network.model.Constants
 import javax.jmdns.ServiceEvent
 import javax.jmdns.ServiceListener
+import kotlin.coroutines.CoroutineContext
 
 internal class DesktopDiscoveryListener(
+    coroutineContext: CoroutineContext,
+    private val localId: DeviceId,
     private val discoveredDevices: MutableStateFlow<Map<DeviceId, Device>>,
 ) : ServiceListener {
-    private var device: Device? = null
+    private val coroutineScope = CoroutineScope(coroutineContext + SupervisorJob())
 
-    fun reset(device: Device? = null) {
-        this.device = device
-        discoveredDevices.value = emptyMap()
+    fun release() {
+        coroutineScope.cancel()
     }
 
     override fun serviceAdded(event: ServiceEvent) {
@@ -25,21 +34,21 @@ internal class DesktopDiscoveryListener(
     }
 
     override fun serviceResolved(event: ServiceEvent) {
-        val added = event.toDeviceOrNull() ?: return
-        if (added.id == device?.id) return
+        coroutineScope.launch {
+            val addresses = event.hosts.filterReachable(Constants.SERVICE_PORT).ranked()
+            if (addresses.isEmpty()) return@launch
 
-        if (added.addresses.isEmpty()) {
-            Logger.w(DefaultLocalDiscoveryRepository.TAG) { "Device resolved with no hosts: $added" }
-            return
+            val added = event.toDeviceOrNull(addresses) ?: return@launch
+            if (added.id == localId) return@launch
+
+            discoveredDevices.value[added.id]
+                ?.let { return@launch }
+                ?: run {
+                    Logger.i(LocalDiscoveryDataSource.TAG) { "Device found: $added" }
+                }
+
+            discoveredDevices.update { it + (added.id to added) }
         }
-
-        // Log only new or renamed devices to reduce verbosity.
-        val known = discoveredDevices.value[added.id]
-        if (known?.name != added.name) {
-            Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device found: $added" }
-        }
-
-        discoveredDevices.update { it + (added.id to added) }
     }
 
     override fun serviceRemoved(event: ServiceEvent) {
@@ -47,7 +56,7 @@ internal class DesktopDiscoveryListener(
         val id = DeviceId.parseOrNull(event.name) ?: return
         val removed = discoveredDevices.value[id] ?: return
 
-        Logger.i(DefaultLocalDiscoveryRepository.TAG) { "Device lost: $removed" }
+        Logger.i(LocalDiscoveryDataSource.TAG) { "Device lost: $removed" }
         discoveredDevices.update { it - removed.id }
     }
 }

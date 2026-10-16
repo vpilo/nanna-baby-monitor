@@ -6,24 +6,24 @@ import org.vpilo.babymonitor.common.Logger
 
 class AndroidRegistrationListener : NsdManager.RegistrationListener {
     override fun onServiceRegistered(serviceInfo: NsdServiceInfo) {
-        Logger.d(DefaultLocalDiscoveryRepository.TAG) { "Service registered" }
+        Logger.d(LocalDiscoveryServerDataSource.TAG) { "Service registered" }
     }
 
     override fun onRegistrationFailed(
         serviceInfo: NsdServiceInfo,
         errorCode: Int,
     ) {
-        Logger.e(DefaultLocalDiscoveryRepository.TAG) { "Service registration failed: errorCode=$errorCode" }
+        Logger.e(LocalDiscoveryServerDataSource.TAG) { "Service registration failed: errorCode=$errorCode" }
     }
 
     override fun onServiceUnregistered(serviceInfo: NsdServiceInfo) {
-        Logger.d(DefaultLocalDiscoveryRepository.TAG) { "Service unregistered" }
+        Logger.d(LocalDiscoveryServerDataSource.TAG) { "Service unregistered" }
     }
 
     override fun onUnregistrationFailed(
         serviceInfo: NsdServiceInfo,
         errorCode: Int,
     ) {
-        Logger.e(DefaultLocalDiscoveryRepository.TAG) { "Service unregistration failed: errorCode=$errorCode" }
+        Logger.e(LocalDiscoveryServerDataSource.TAG) { "Service unregistration failed: errorCode=$errorCode" }
     }
 }
