@@ -116,6 +116,10 @@ android {
     }
 }
 
+dependencies {
+    implementation(libs.slf4j.nop)
+}
+
 tasks.register("generateVersionFile") {
     description = "Writes the version of this build to a file to identify a release."
 

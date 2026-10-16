@@ -113,6 +113,7 @@ oshi = { module = "com.github.oshi:oshi-core-java11", version.ref = "oshi" }
 
 log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 
 junit-platform = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit" }
