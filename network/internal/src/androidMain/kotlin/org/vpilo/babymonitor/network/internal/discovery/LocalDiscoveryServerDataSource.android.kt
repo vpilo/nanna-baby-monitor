@@ -28,15 +28,17 @@ internal actual class LocalDiscoveryServerDataSource(
 
     private val multicastLock: MulticastLock = MulticastLock(applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
 
-    private val registrationListener: AndroidRegistrationListener = AndroidRegistrationListener()
+    private var registrationListener: AndroidRegistrationListener? = null
 
     actual fun registerService(device: Device.Server) {
         multicastLock.acquire(device.idString)
+        registrationListener = AndroidRegistrationListener()
         nsdManager.registerService(createServiceInfo(device), NsdManager.PROTOCOL_DNS_SD, registrationListener)
     }
 
     actual fun unregisterService() {
         nsdManager.unregisterService(registrationListener)
+        registrationListener = null
         multicastLock.release()
     }
 
