@@ -29,6 +29,7 @@ import org.vpilo.babymonitor.app.server.home.ServerHomeScreen
 import org.vpilo.babymonitor.app.server.paireddevices.PairedDevicesScreen
 import org.vpilo.babymonitor.app.server.pairing.ServerPairingScreen
 import org.vpilo.babymonitor.camera.presentation.permissioncheck.CameraPermissionCheckScreen
+import org.vpilo.babymonitor.common.BuildInfo
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.errorreport.presentation.ErrorReportDialog
 import org.vpilo.babymonitor.model.AppRole
@@ -41,6 +42,7 @@ private const val TAG = "App"
 fun App() {
     val navController = rememberNavController()
     LaunchedEffect(navController) {
+        Logger.i(TAG) { "Baby monitor ${BuildInfo.VERSION} (${BuildInfo.VERSION_CODE}) ${if (BuildInfo.IS_DEBUG) "debug" else "release"}" }
         navController.currentBackStack.collect { backStack ->
             if (backStack.isEmpty()) return@collect
             Logger.d(TAG) {
