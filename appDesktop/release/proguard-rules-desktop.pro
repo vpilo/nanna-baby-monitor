@@ -1,12 +1,16 @@
+# Compose writes dependencies back to separate jars, where metadata paths may
+# repeat. Preserve the resources and silence only these expected duplicates.
+# ProGuard's note filters use class-name syntax (dots for path separators).
+-dontnote META-INF.**,module-info
 
 -keepclasseswithmembernames,includedescriptorclasses class * {
     native <methods>;
 }
 
 -keep class com.sun.jna.** { *; }
--keep class * extends com.sun.jna.Structure { *; }
--keep class * implements com.sun.jna.Library { *; }
--keep class * implements com.sun.jna.Callback { *; }
+-keep,includedescriptorclasses class * extends com.sun.jna.Structure { *; }
+-keep,includedescriptorclasses class * implements com.sun.jna.Library { *; }
+-keep,includedescriptorclasses class * implements com.sun.jna.Callback { *; }
 
 -keep class org.bridj.** { *; }
 -keep class com.github.sarxos.webcam.ds.buildin.natives.** { *; }
@@ -14,7 +18,7 @@
 
 -keep class org.bytedeco.** { *; }
 -keep class * implements org.slf4j.spi.SLF4JServiceProvider { *; }
--keep class dev.whyoleg.cryptography.providers.** { *; }
+-keep,includedescriptorclasses class dev.whyoleg.cryptography.providers.** { *; }
 
 -keepclassmembers enum * {
     public static **[] values();
@@ -36,7 +40,7 @@
 -dontwarn com.google.errorprone.annotations.InlineMe
 
 # Optimizing Ktor stops the client's `wss` block from ever being invoked.
--keep,allowobfuscation,allowshrinking class io.ktor.** { *; }
+-keep,includedescriptorclasses,allowobfuscation,allowshrinking class io.ktor.** { *; }
 
 # Ktor's Netty engine references every codec, TLS provider and logging backend it can ever use...
 -dontwarn ch.qos.logback.**
@@ -58,9 +62,9 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.jboss.marshalling.**
 -dontwarn reactor.blockhound.**
--keep class io.netty.buffer.** { *; }
--keep class io.netty.util.** { *; }
--keep class io.netty.handler.codec.* { *; }
+-keep,includedescriptorclasses class io.netty.buffer.** { *; }
+-keep,includedescriptorclasses class io.netty.util.** { *; }
+-keep,includedescriptorclasses class io.netty.handler.codec.* { *; }
 -keep class io.netty.channel.socket.nio.NioServerSocketChannel { <init>(); }
 -keep class io.netty.channel.ChannelHandler$Sharable
 -keep,allowobfuscation @io.netty.channel.ChannelHandler$Sharable class *
