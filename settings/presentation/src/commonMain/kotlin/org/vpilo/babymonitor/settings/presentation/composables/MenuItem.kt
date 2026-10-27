@@ -78,20 +78,20 @@ fun MenuItem(
                 }
             }
         }
-        bottomContent
-            ?.let {
-                Column(
-                    modifier =
-                        Modifier
-                            .padding(
-                                top = Theme.Paddings.Tiny,
-                                start = Theme.Sizes.IconSmall + Theme.Paddings.Small,
-                                bottom = Theme.Paddings.Medium,
-                            ),
-                ) {
+        Column(
+            modifier =
+                Modifier
+                    .padding(
+                        top = Theme.Paddings.Tiny,
+                        start = Theme.Sizes.IconSmall + Theme.Paddings.Small,
+                        bottom = Theme.Paddings.Medium,
+                    ),
+        ) {
+            bottomContent
+                ?.let {
                     it()
                 }
-            }
+        }
     }
 }
 
