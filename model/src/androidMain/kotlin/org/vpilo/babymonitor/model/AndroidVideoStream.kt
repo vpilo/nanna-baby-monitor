@@ -2,31 +2,30 @@ package org.vpilo.babymonitor.model
 
 import android.view.Surface
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 
 sealed class AndroidVideoStream : VideoStream<Surface>() {
-    private val mutableSurface = MutableStateFlow<Surface?>(null)
-    override val surface: Flow<Surface?> = mutableSurface.asStateFlow()
-    override val isActive: Flow<Boolean> = mutableSurface.map { it != null }
+    private val viewfinder = SurfaceSlot()
+    override val surface: Flow<Surface?> = viewfinder.requested
+    override val isActive: Flow<Boolean> = viewfinder.isOccupied
 
     /**
-     * Registers [surface] as the current output, replacing any previously attached surface.
-     *
-     * Overlapping surface lifecycles are expected: a new [android.view.TextureView] can produce its
-     * surface before the outgoing one is destroyed (e.g. during a navigation transition), because
-     * this stream is a long-lived singleton shared across surface producers.
+     * Sets [surface] as the output, replacing the previous one.
+     * A new [android.view.TextureView] can create its surface before the old one is destroyed, e.g. during a navigation transition.
      */
-    fun attachSurface(surface: Surface) {
-        mutableSurface.value = surface
-    }
+    fun attachSurface(surface: Surface) = viewfinder.offer(surface)
 
     /**
-     * Detaches [surface] only if it is still the current one, so a stale destroy from a torn-down
-     * producer cannot clobber a newer surface that already replaced it.
+     * Removes [surface] if it is still the output, so a late call from an old producer does not remove its replacement.
+     * Does not wait for the consumer: the system releases the surface anyway, and a late consumer only gets errors.
      */
-    fun detachSurface(surface: Surface) {
-        mutableSurface.compareAndSet(surface, null)
-    }
+    fun detachSurface(surface: Surface) = viewfinder.withdraw(surface)
+
+    /**
+     * Calls [attach] with each output surface, and [detach] when it is removed or replaced.
+     * [attach] may suspend while it uses the surface, and is canceled when the surface is removed.
+     */
+    suspend fun consumeSurface(
+        attach: suspend (Surface) -> Unit,
+        detach: suspend () -> Unit,
+    ) = viewfinder.consume(attach, detach)
 }

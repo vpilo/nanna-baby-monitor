@@ -113,9 +113,9 @@ internal class CameraGlRenderer(
     suspend fun detachEncoder() =
         withContext(glDispatcher) {
             Logger.d(TAG) { "Detaching encoder" }
+            checkFallbackContext()
             encoder?.let { EGL14.eglDestroySurface(eglDisplay, it.eglSurface) }
             encoder = null
-            checkFallbackContext()
         }
 
     fun setLowLightBoostEnabled(enabled: Boolean) = brightnessController.setEnabled(enabled)

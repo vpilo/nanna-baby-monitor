@@ -7,11 +7,15 @@ import android.os.Bundle
 import androidx.compose.ui.unit.IntSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AndroidServerVideoStream
 import org.vpilo.babymonitor.model.EncodedVideoStreamChunk
@@ -29,6 +33,7 @@ actual class VideoEncoder actual constructor(
     coroutineContext: CoroutineContext,
 ) {
     private val coroutineScope = CoroutineScope(coroutineContext)
+    private val encodingSessionLock = Mutex()
     private var encodingJob: Job? = null
 
     private val videoStream: AndroidServerVideoStream =
@@ -42,13 +47,16 @@ actual class VideoEncoder actual constructor(
         }
         encodingJob =
             coroutineScope.launch {
-                videoStream
-                    .frameSize
-                    .filter { it != IntSize.Zero }
-                    .collectLatest { frameSize ->
-                        Logger.d(TAG) { "Frame size updated: $frameSize" }
-                        runEncodeLoop(frameSize)
-                    }
+                // Stopping cancels asynchronously, so when restarting, the new encoder must wait for the previous one's cleanup.
+                encodingSessionLock.withLock {
+                    videoStream
+                        .frameSize
+                        .filter { it != IntSize.Zero }
+                        .collectLatest { frameSize ->
+                            Logger.d(TAG) { "Frame size updated: $frameSize" }
+                            runEncodeLoop(frameSize)
+                        }
+                }
             }
     }
 
@@ -68,12 +76,12 @@ actual class VideoEncoder actual constructor(
         val inputSurface = codec.createInputSurface()
         codec.start()
         try {
-            videoStream.postEncoderSurface(inputSurface)
+            videoStream.attachEncoderSurface(inputSurface)
             drainEncoderLoop(codec, width, height)
         } finally {
-            videoStream.postEncoderSurface(null)
-            inputSurface.release()
             releaseCodec(codec)
+            withContext(NonCancellable) { videoStream.detachEncoderSurface(inputSurface) }
+            inputSurface.release()
             Logger.d(TAG) { "Video encoder stopped" }
         }
     }

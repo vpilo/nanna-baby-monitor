@@ -7,8 +7,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AndroidClientVideoStream
@@ -42,19 +40,23 @@ actual class VideoDecoder actual constructor(
 
         decodeJob =
             coroutineScope.launch {
-                mutableVideoStream.surface.collectLatest { surface ->
-                    if (surface == null || !isActive) return@collectLatest
-                    while (true) {
-                        try {
-                            runDecodingSession(surface)
-                        } catch (ex: CancellationException) {
-                            throw ex
-                        } catch (ex: IllegalStateException) {
-                            Logger.e(TAG, ex) { "Video decoder failed, restarting" }
+                mutableVideoStream.consumeSurface(
+                    attach = { surface ->
+                        while (true) {
+                            try {
+                                runDecodingSession(surface)
+                            } catch (ex: CancellationException) {
+                                throw ex
+                            } catch (ex: IllegalStateException) {
+                                Logger.e(TAG, ex) { "Video decoder failed, restarting" }
+                            }
+                            delay(RESTART_DELAY)
                         }
-                        delay(RESTART_DELAY)
-                    }
-                }
+                    },
+                    detach = {
+                        // Nothing to do, the codec is released when the session ends.
+                    },
+                )
             }
     }
 

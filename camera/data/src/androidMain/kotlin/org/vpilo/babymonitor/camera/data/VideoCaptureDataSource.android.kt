@@ -115,31 +115,37 @@ internal actual class VideoCaptureDataSource(
         }
         // Drive renderer attach/detach for the encoder.
         backgroundScope.launch {
-            mutableVideoStream.encoderSurface.collect { surface ->
-                with(renderer) {
-                    if (surface != null) {
-                        attachEncoder(surface)
-                        Logger.d(TAG) { "Encoder attached" }
-                    } else {
-                        detachEncoder()
-                        Logger.d(TAG) { "Encoder detached" }
-                    }
-                }
-            }
+            var currentRenderer: CameraGlRenderer? = null
+            mutableVideoStream.consumeEncoderSurface(
+                attach = { surface ->
+                    val current = renderer
+                    currentRenderer = current
+                    current.attachEncoder(surface)
+                    Logger.d(TAG) { "Encoder attached" }
+                },
+                detach = {
+                    currentRenderer?.detachEncoder()
+                    currentRenderer = null
+                    Logger.d(TAG) { "Encoder detached" }
+                },
+            )
         }
         // Drive renderer attach/detach for the viewfinder.
         backgroundScope.launch {
-            mutableVideoStream.surface.collect { surface ->
-                with(renderer) {
-                    if (surface != null) {
-                        Logger.d(TAG) { "Viewfinder attached" }
-                        attachViewfinder(surface)
-                    } else {
-                        Logger.d(TAG) { "Viewfinder detached" }
-                        detachViewfinder()
-                    }
-                }
-            }
+            var currentRenderer: CameraGlRenderer? = null
+            mutableVideoStream.consumeSurface(
+                attach = { surface ->
+                    val current = renderer
+                    currentRenderer = current
+                    current.attachViewfinder(surface)
+                    Logger.d(TAG) { "Viewfinder attached" }
+                },
+                detach = {
+                    currentRenderer?.detachViewfinder()
+                    currentRenderer = null
+                    Logger.d(TAG) { "Viewfinder detached" }
+                },
+            )
         }
     }
 
