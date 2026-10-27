@@ -68,3 +68,11 @@ kotlin {
         }
     }
 }
+
+dependencies {
+    constraints {
+        // Ensure reflection library is consistent across platforms.
+        add("androidMainApi", libs.kotlin.reflect)
+        add("desktopMainApi", libs.kotlin.reflect)
+    }
+}
