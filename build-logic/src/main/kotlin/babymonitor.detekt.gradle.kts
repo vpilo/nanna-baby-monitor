@@ -6,6 +6,10 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+dependencies {
+    detektPlugins(libs.compose.rules.detekt)
+}
+
 private val detektTaskName = "detekt"
 
 fun String.uppercaseFirst() = replaceFirstChar { it.uppercase() }
