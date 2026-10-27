@@ -113,6 +113,10 @@ internal class ErrorReportArchiveBuilder(
                 SessionCrashReason.AbnormalSession -> {
                     mapOf("reason" to "AbnormalSession")
                 }
+
+                SessionCrashReason.ManualErrorReport -> {
+                    mapOf("reason" to "ManualErrorReport")
+                }
             }.toLines()
 
         private fun Map<String, String>.toLines(): String =

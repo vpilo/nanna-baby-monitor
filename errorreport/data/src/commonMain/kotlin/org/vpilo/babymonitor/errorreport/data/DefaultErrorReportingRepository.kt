@@ -17,6 +17,7 @@ import org.vpilo.babymonitor.errorreport.model.ErrorRecorder
 import org.vpilo.babymonitor.errorreport.model.ErrorReportingRepository
 import org.vpilo.babymonitor.errorreport.model.PendingErrorReport
 import org.vpilo.babymonitor.errorreport.model.ReportHandoff
+import org.vpilo.babymonitor.errorreport.model.SessionCrashReason
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.settings.model.getCacheDir
 import java.io.File
@@ -62,6 +63,17 @@ internal class DefaultErrorReportingRepository(
         examinePreviousSessionJob =
             scope.launch(Dispatchers.IO) {
                 examinePreviousSessions(previousSessions)
+            }
+    }
+
+    @Synchronized
+    override fun makeManualReport() {
+        examinePreviousSessionJob?.cancel()
+        examinePreviousSessionJob =
+            scope.launch(Dispatchers.IO) {
+                previousSession = markerStore.getCurrent()
+                previousCrash = ClassifiedCrash(SessionCrashReason.ManualErrorReport, null)
+                pendingReportState.value = PendingErrorReport(SessionCrashReason.ManualErrorReport)
             }
     }
 

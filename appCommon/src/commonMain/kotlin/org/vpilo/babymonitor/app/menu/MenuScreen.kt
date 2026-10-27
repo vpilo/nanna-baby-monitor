@@ -61,6 +61,7 @@ fun MenuScreen(
                     showDisconnect = state.isConnected,
                     onNavigateToRoot = onNavigateToRoot,
                     onNavigateTo = onNavigateTo,
+                    onSendErrorReport = { viewModel.send(MenuScreenAction.SendErrorReport) },
                     onDisconnect = { viewModel.send(MenuScreenAction.Disconnect) },
                 )
             },

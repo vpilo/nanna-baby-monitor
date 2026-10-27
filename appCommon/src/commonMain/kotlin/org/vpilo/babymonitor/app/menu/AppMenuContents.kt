@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.BrightnessMedium
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Key
@@ -24,6 +25,8 @@ import babymonitor.appcommon.generated.resources.menu_paired_devices_description
 import babymonitor.appcommon.generated.resources.menu_paired_devices_title
 import babymonitor.appcommon.generated.resources.menu_quit_android
 import babymonitor.appcommon.generated.resources.menu_quit_desktop
+import babymonitor.appcommon.generated.resources.menu_report_issue_description
+import babymonitor.appcommon.generated.resources.menu_report_issue_title
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.core.module.dsl.viewModelOf
@@ -35,6 +38,7 @@ import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.network.model.settings.RelayHost
 import org.vpilo.babymonitor.network.model.settings.RelayPassphrase
 import org.vpilo.babymonitor.presentation.AppPreviewTheme
+import org.vpilo.babymonitor.presentation.composables.MenuDivider
 import org.vpilo.babymonitor.settings.model.PlatformAvailability
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.isSupportedOnCurrentPlatform
@@ -50,6 +54,7 @@ fun ColumnScope.AppMenuContents(
     showDisconnect: Boolean,
     onNavigateTo: (Route, popUpTo: Route?) -> Unit,
     onNavigateToRoot: () -> Unit,
+    onSendErrorReport: () -> Unit,
     onDisconnect: () -> Unit,
 ) {
     if (currentRole == AppRole.CLIENT && showDisconnect) {
@@ -67,6 +72,8 @@ fun ColumnScope.AppMenuContents(
         description = stringResource(Res.string.menu_paired_devices_description),
         onClick = { onNavigateTo(Route.PairedDevices, null) },
     )
+
+    MenuDivider()
 
     if (currentRole == AppRole.SERVER) {
         MenuSettingEnumItem(
@@ -88,6 +95,8 @@ fun ColumnScope.AppMenuContents(
         imageVector = Icons.Default.Person,
     )
 
+    MenuDivider()
+
     MenuSettingItem(
         setting = Setting.RelayHost,
         imageVector = Icons.Default.Cloud,
@@ -98,12 +107,23 @@ fun ColumnScope.AppMenuContents(
         imageVector = Icons.Default.Key,
     )
 
+    MenuDivider()
+
+    MenuItem(
+        imageVector = Icons.Default.BugReport,
+        title = stringResource(Res.string.menu_report_issue_title),
+        description = stringResource(Res.string.menu_report_issue_description),
+        onClick = onSendErrorReport,
+    )
+
     MenuItem(
         imageVector = Icons.Default.SwapHoriz,
         title = stringResource(Res.string.menu_change_role_title),
         description = stringResource(Res.string.menu_change_role_description),
         onClick = onNavigateToRoot,
     )
+
+    MenuDivider()
 
     val quitLabel =
         when {
@@ -136,6 +156,7 @@ private fun AppMenuContentsServerPreview() =
                 showDisconnect = true,
                 onNavigateTo = { _, _ -> },
                 onNavigateToRoot = {},
+                onSendErrorReport = {},
                 onDisconnect = {},
             )
         }
@@ -155,6 +176,7 @@ private fun AppMenuContentsClientPreview() =
                 showDisconnect = true,
                 onNavigateTo = { _, _ -> },
                 onNavigateToRoot = {},
+                onSendErrorReport = {},
                 onDisconnect = {},
             )
         }

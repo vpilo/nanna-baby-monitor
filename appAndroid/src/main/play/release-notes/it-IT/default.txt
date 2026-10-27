@@ -3,3 +3,4 @@ Aggiunta l'identità della telecamera ai codici QR per una maggiore sicurezza.
 Fissata registrazione al server relay.
 Fissato crash sulle telecamere Android quando si interrompe lo streaming.
 Fissato crash nella schermata di selezione della telecamera.
+Aggiunto "Segnala un problema" per segnalare un problema o un bug nell'app.

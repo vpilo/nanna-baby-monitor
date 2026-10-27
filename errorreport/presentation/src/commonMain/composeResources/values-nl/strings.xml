@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
     <string name="error_report_prompt_title">Foutrapport versturen?</string>
-    <string name="error_report_prompt_message">De app is de vorige keer niet goed afgesloten. Je kunt een rapport naar de ontwikkelaar sturen om het probleem te helpen oplossen: het bevat het logboek van de app van die sessie en basisgegevens van het apparaat, zonder persoonlijke gegevens. Je kunt de e-mail bekijken voordat je hem verstuurt, of het zip-bestand van het rapport direct met de ontwikkelaar delen.</string>
+    <string name="error_report_prompt_automatic_message">De app is de vorige keer niet goed afgesloten. Je kunt een rapport naar de ontwikkelaar sturen om het probleem te helpen oplossen: het bevat het logboek van de app van die sessie en basisgegevens van het apparaat, zonder persoonlijke gegevens. Je kunt de e-mail bekijken voordat je hem verstuurt, of het zip-bestand van het rapport direct met de ontwikkelaar delen.</string>
+    <string name="error_report_prompt_manual_message">Je hebt ervoor gekozen om een rapport naar de ontwikkelaar te sturen om problemen te helpen oplossen: het bevat het logboek van de app van die sessie en basisgegevens van het apparaat, zonder persoonlijke gegevens. Beschrijf het probleem in de e-mail voordat je hem verstuurt, of deel het zip-bestand van het rapport direct met de ontwikkelaar met een beschrijving.</string>
     <string name="error_report_send">Versturen</string>
     <string name="error_report_dont_send">Niet versturen</string>
     <string name="error_report_building_title">Rapport voorbereiden…</string>

@@ -14,6 +14,7 @@ import kotlin.time.Instant
 internal enum class ExitReason(
     val outcome: Outcome,
 ) {
+    MANUAL(Outcome.REPORT),
     CRASH(Outcome.REPORT),
     CRASH_NATIVE(Outcome.REPORT),
     ANR(Outcome.REPORT),

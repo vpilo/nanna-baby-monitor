@@ -28,4 +28,9 @@ sealed interface SessionCrashReason {
      * No information why is available.
      */
     data object AbnormalSession : SessionCrashReason
+
+    /**
+     * The user requested an error report to be sent.
+     */
+    data object ManualErrorReport : SessionCrashReason
 }

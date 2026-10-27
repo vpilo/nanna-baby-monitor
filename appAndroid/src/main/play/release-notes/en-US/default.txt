@@ -3,3 +3,4 @@ Add camera identity to QRs for better security.
 Fixed registration to relay server.
 Fix crash on Android cameras when stopping streaming.
 Fix crash on the camera selection screen.
+Add "Report an issue" menu item to report a problem or bug in the app.

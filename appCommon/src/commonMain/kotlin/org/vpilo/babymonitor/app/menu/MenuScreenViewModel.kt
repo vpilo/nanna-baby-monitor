@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.app.menu
 
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.launch
+import org.vpilo.babymonitor.errorreport.model.ErrorReportingRepository
 import org.vpilo.babymonitor.model.repository.AppRoleRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.model.repository.IsConnectionAvailableRepository
@@ -12,6 +13,7 @@ class MenuScreenViewModel(
     private val appRoleRepository: AppRoleRepository,
     private val isConnectionAvailableRepository: IsConnectionAvailableRepository,
     private val networkClientRepository: NetworkClientRepository,
+    private val errorReportingRepository: ErrorReportingRepository,
 ) : AppViewModel<MenuScreenAction, MenuScreenState, MenuScreenEffect>(
         TAG = "MenuScreenViewModel",
         initialState = MenuScreenState(),
@@ -31,6 +33,12 @@ class MenuScreenViewModel(
                 vmScope.launch {
                     networkClientRepository.disconnect()
                     MenuScreenEffect.Disconnected.sendEffect()
+                }
+            }
+
+            MenuScreenAction.SendErrorReport -> {
+                vmScope.launch {
+                    errorReportingRepository.makeManualReport()
                 }
             }
         }

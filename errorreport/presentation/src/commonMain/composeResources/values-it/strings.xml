@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
     <string name="error_report_prompt_title">Inviare una segnalazione di errore?</string>
-    <string name="error_report_prompt_message">L'ultima volta l'app non si è chiusa correttamente. Puoi inviare una segnalazione allo sviluppatore per aiutare a risolvere il problema: contiene il registro dell'app di quella sessione e informazioni di base sul dispositivo, senza dati personali. Potrai controllare l'email prima di inviarla, oppure condividere direttamente il file zip della segnalazione con lo sviluppatore.</string>
+    <string name="error_report_prompt_automatic_message">L'ultima volta l'app non si è chiusa correttamente. Puoi inviare una segnalazione allo sviluppatore per aiutare a risolvere il problema: contiene il registro dell'app di quella sessione e informazioni di base sul dispositivo, senza dati personali. Potrai controllare l'email prima di inviarla, oppure condividere direttamente il file zip della segnalazione con lo sviluppatore.</string>
+    <string name="error_report_prompt_manual_message">Hai scelto di inviare una segnalazione allo sviluppatore per aiutare a risolvere i problemi: contiene il registro dell'app di quella sessione e informazioni di base sul dispositivo, senza dati personali. Descrivi il problema nell'email prima di inviarla, oppure condividi direttamente il file zip della segnalazione con lo sviluppatore con una descrizione.</string>
     <string name="error_report_send">Invia</string>
     <string name="error_report_dont_send">Non inviare</string>
     <string name="error_report_building_title">Preparazione della segnalazione…</string>

@@ -20,6 +20,8 @@
     <string name="menu_disconnect_description">Disconnettiti dal dispositivo che sta registrando.</string>
     <string name="menu_change_role_title">Cambia il ruolo dell'app</string>
     <string name="menu_change_role_description">Passa tra registrazione e visualizzazione su questo dispositivo.</string>
+    <string name="menu_report_issue_title">Segnala un problema</string>
+    <string name="menu_report_issue_description">Segnala un problema o un bug dell'app.</string>
     <string name="menu_quit_desktop">Esci</string>
     <string name="menu_quit_android">Chiudi l'app</string>
 

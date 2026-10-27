@@ -20,6 +20,8 @@
     <string name="menu_disconnect_description">Verbreek de verbinding met het opnemende apparaat.</string>
     <string name="menu_change_role_title">Rol van de app wijzigen</string>
     <string name="menu_change_role_description">Wissel op dit apparaat tussen opnemen en bekijken.</string>
+    <string name="menu_report_issue_title">Een probleem melden</string>
+    <string name="menu_report_issue_description">Meld een probleem of bug in de app.</string>
     <string name="menu_quit_desktop">Afsluiten</string>
     <string name="menu_quit_android">App sluiten</string>
 

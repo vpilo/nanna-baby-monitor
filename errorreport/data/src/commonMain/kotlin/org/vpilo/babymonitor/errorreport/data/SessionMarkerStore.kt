@@ -27,6 +27,9 @@ internal class SessionMarkerStore {
     }
 
     @Synchronized
+    fun getCurrent(): SessionFiles? = session
+
+    @Synchronized
     fun update(active: Boolean) {
         val session = session ?: return
         // Deleted on a clean shutdown; recreating it would leave an orphan behind.

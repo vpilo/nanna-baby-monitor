@@ -3,3 +3,4 @@ Toegevoegd camera identiteit aan QR-codes voor betere beveiliging.
 Fout bij registratie bij relay-server opgelost.
 Fout bij crashen van Android-camera's bij het stoppen van streaming opgelost.
 Fout bij crashen op het camera keuze scherm opgelost.
+Toegevoegd "Meld een probleem" optie om een probleem of bug in de app te melden.

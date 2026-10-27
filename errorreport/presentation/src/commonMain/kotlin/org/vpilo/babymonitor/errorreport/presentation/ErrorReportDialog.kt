@@ -28,7 +28,8 @@ import babymonitor.errorreport.presentation.generated.resources.error_report_han
 import babymonitor.errorreport.presentation.generated.resources.error_report_handoff_attach_no_mail_client
 import babymonitor.errorreport.presentation.generated.resources.error_report_handoff_shared
 import babymonitor.errorreport.presentation.generated.resources.error_report_handoff_title
-import babymonitor.errorreport.presentation.generated.resources.error_report_prompt_message
+import babymonitor.errorreport.presentation.generated.resources.error_report_prompt_automatic_message
+import babymonitor.errorreport.presentation.generated.resources.error_report_prompt_manual_message
 import babymonitor.errorreport.presentation.generated.resources.error_report_prompt_title
 import babymonitor.errorreport.presentation.generated.resources.error_report_send
 import org.jetbrains.compose.resources.stringResource
@@ -69,11 +70,17 @@ private fun ErrorReportDialogContent(
         }
 
         is ErrorReportState.Prompt -> {
+            val messageRes =
+                if (state.reason == SessionCrashReason.ManualErrorReport) {
+                    Res.string.error_report_prompt_manual_message
+                } else {
+                    Res.string.error_report_prompt_automatic_message
+                }
             AlertDialog(
                 onDismissRequest = onDismiss,
                 properties = properties,
                 title = { Text(stringResource(Res.string.error_report_prompt_title)) },
-                text = { Text(stringResource(Res.string.error_report_prompt_message)) },
+                text = { Text(stringResource(messageRes)) },
                 confirmButton = {
                     TextButton(onClick = onSendReport) {
                         Text(stringResource(Res.string.error_report_send))

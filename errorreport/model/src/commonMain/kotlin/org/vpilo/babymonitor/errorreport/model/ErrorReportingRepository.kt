@@ -19,6 +19,12 @@ interface ErrorReportingRepository {
     fun startNewSession()
 
     /**
+     * Manually report the current session.
+     * Can be used to manually report an issue.
+     */
+    fun makeManualReport()
+
+    /**
      * Notify the repository when the session is active.
      * The server is active while streaming and when available to connect; the client is available when connected or reconnecting.
      */

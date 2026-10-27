@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <resources>
     <string name="error_report_prompt_title">Send an error report?</string>
-    <string name="error_report_prompt_message">The app did not close properly last time. You can send a report to the developer to help fix the problem: it contains records of the app session and basic device information, and no personal data. You can review the email before sending it, or share the report zip file with the developer directly instead.</string>
+    <string name="error_report_prompt_automatic_message">The app did not close properly last time. You can send a report to the developer to help fix the problem: it contains records of the app session and basic device information, and no personal data. You can review the email before sending it, or share the report zip file with the developer directly instead.</string>
+    <string name="error_report_prompt_manual_message">You chose to send a report to the developer to help fix problems: it contains records of the app session and basic device information, and no personal data. Please describe the problem in the email before sending it, or share the report zip file with the developer directly with a description instead.</string>
     <string name="error_report_send">Send</string>
     <string name="error_report_dont_send">Don't send</string>
     <string name="error_report_building_title">Preparing the report…</string>
