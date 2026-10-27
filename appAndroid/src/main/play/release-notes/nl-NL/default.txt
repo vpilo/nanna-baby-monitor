@@ -1,3 +1,5 @@
 Toegevoegd het onthouden van camera-adressen om sneller en betrouwbaarder verbinding te maken.
 Toegevoegd camera identiteit aan QR-codes voor betere beveiliging.
 Fout bij registratie bij relay-server opgelost.
+Fout bij crashen van Android-camera's bij het stoppen van streaming opgelost.
+Fout bij crashen op het camera keuze scherm opgelost.

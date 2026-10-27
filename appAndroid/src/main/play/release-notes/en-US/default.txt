@@ -1,3 +1,5 @@
 Added remembering camera addresses to connect to them faster and more reliably.
 Add camera identity to QRs for better security.
 Fixed registration to relay server.
+Fix crash on Android cameras when stopping streaming.
+Fix crash on the camera selection screen.

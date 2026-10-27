@@ -193,7 +193,7 @@ private fun CameraSelectionScreenContent(
                 stickyHeader {
                     Header(label = Res.string.client_connection_chooser_servers_section_connectable)
                 }
-                items(items = connectableServers, key = { it.id }) { server ->
+                items(items = connectableServers, key = { "connectable_${it.id}" }) { server ->
                     Server(
                         name = server.name,
                         isRemote = server is Device.RemoteServer,
@@ -207,7 +207,7 @@ private fun CameraSelectionScreenContent(
                 stickyHeader {
                     Header(label = Res.string.client_connection_chooser_servers_section_paired)
                 }
-                items(items = pairedServers, key = { it.id }) { server ->
+                items(items = pairedServers, key = { "paired_${it.id}" }) { server ->
                     Server(
                         name = server.name,
                         isRemote = server is Device.RemoteServer,
@@ -221,7 +221,7 @@ private fun CameraSelectionScreenContent(
                 stickyHeader {
                     Header(label = Res.string.client_connection_chooser_servers_section_new)
                 }
-                items(items = newServers, key = { it.id }) { server ->
+                items(items = newServers, key = { "new_${it.id}" }) { server ->
                     Server(
                         name = server.name,
                         isRemote = server is Device.RemoteServer,

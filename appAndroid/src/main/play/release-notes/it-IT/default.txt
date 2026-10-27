@@ -1,3 +1,5 @@
 Aggiunto salvataggio degli indirizzi delle telecamere per connettersi più velocemente e in modo più affidabile.
 Aggiunta l'identità della telecamera ai codici QR per una maggiore sicurezza.
 Fissata registrazione al server relay.
+Fissato crash sulle telecamere Android quando si interrompe lo streaming.
+Fissato crash nella schermata di selezione della telecamera.
