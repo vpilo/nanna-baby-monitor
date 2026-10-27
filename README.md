@@ -68,7 +68,7 @@ service if you have one.
   <img src="docs/screenshots/android-streaming.jpg" alt="Streaming on Android" title="Streaming on Android" height="240" /> &nbsp;
   <img src="docs/screenshots/android-dark-mode.jpg" alt="Dark mode on Android" title="Dark mode on Android" height="240" />
   <br/>
-  <sub>Android: welcome &nbsp;·&nbsp; browsing &nbsp;·&nbsp; pairing &nbsp;·&nbsp; streaming &nbsp;·&nbsp; dark mode</sub>
+  <sub><i>Android: welcome &nbsp;·&nbsp; browsing &nbsp;·&nbsp; pairing &nbsp;·&nbsp; streaming &nbsp;·&nbsp; dark mode</i></sub>
 </p>
 <h3 align="center">PC</h3>
 <p align="center">
@@ -77,12 +77,12 @@ service if you have one.
   <img src="docs/screenshots/desktop-watching.jpg" alt="Watching on PC" title="Watching on PC" height="240" /> &nbsp;
   <img src="docs/screenshots/desktop-dark-mode.jpg" alt="Dark mode on PC" title="Dark mode on PC" height="240" />
   <br/>
-  <sub>PC: browsing &nbsp;·&nbsp; pairing &nbsp;·&nbsp; watching &nbsp;·&nbsp; dark mode</sub>
+  <sub><i>PC: browsing &nbsp;·&nbsp; pairing &nbsp;·&nbsp; watching &nbsp;·&nbsp; dark mode</i></sub>
 </p>
 
 # Download
 
-Head to the latest release on [GitHub](https://github.com/vpilo/nanna-baby-monitor/releases):
+You can install this app via open source app store [F-Droid](https://f-droid.org/en/packages/org.vpilo.babymonitor/), or via [Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22org.vpilo.babymonitor%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fvpilo%2Fnanna-baby-monitor%22%2C%22author%22%3A%22Valerio%20Pilo%22%2C%22name%22%3A%22Nanna%20Baby%20Monitor%22%7D); otherwise, you can always download the latest release on [GitHub](https://github.com/vpilo/nanna-baby-monitor/releases):
 * For Android, get the APK
 * For Linux, get the AppImage (or the jar) for your architecture.
 * On Windows, if you have Java installed you can download the `org.vpilo.babymonitor-linux-x64-<version>-release.jar` and just click on it.
@@ -210,7 +210,10 @@ Issues and pull requests are welcome at [github.com/vpilo/nanna-baby-monitor](ht
 
 # License
 
-Nanna Baby Monitor is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+[![GNU GPLv3 Image](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.html)
+
+Nanna Baby Monitor is Free Software: it is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+You can use it, share it, study it and improve it as you wish. Any modifications you make must remain open source, under the same license.
 
 The owl icon is CC0 artwork from [SVG Repo](https://www.svgrepo.com/svg/289213/owl).
 
