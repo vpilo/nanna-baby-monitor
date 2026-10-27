@@ -8,28 +8,22 @@ This is a baby monitor app, with secure video and audio streaming, for Android a
 No accounts, no cloud servers, no telemetry, forever free and open source.
 
 <p align="center">
-<!--
-coming up...
-<a href="https://f-droid.org/packages/whatever/">
-    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid"  width="161" />
-  </a>
-  <a href="https://play.google.com/store/apps/details?id=org.vpilo.babymonitor">
-    <img src="docs/badges/badge_google_play.png" alt="Get it on Google Play" width="161" />
-  </a>
--->
-&nbsp;
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22org.vpilo.babymonitor%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fvpilo%2Fnanna-baby-monitor%22%2C%22author%22%3A%22Valerio%20Pilo%22%2C%22name%22%3A%22Nanna%20Baby%20Monitor%22%7D">
-    <img src="docs/badges/badge_obtainium.png" alt="Get it on Obtainium" width="161" />
-  </a>
+  <a href="https://f-droid.org/en/packages/org.vpilo.babymonitor/"> <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid"  width="161" /></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22org.vpilo.babymonitor%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fvpilo%2Fnanna-baby-monitor%22%2C%22author%22%3A%22Valerio%20Pilo%22%2C%22name%22%3A%22Nanna%20Baby%20Monitor%22%7D"><img src="docs/badges/badge_obtainium.png" alt="Get it on Obtainium" width="161" /></a>
 </p>
 
 <div align="center">
 
-[![Latest release](https://img.shields.io/github/v/release/vpilo/nanna-baby-monitor)](https://github.com/vpilo/nanna-baby-monitor/releases)
 ![Made for Android](https://img.shields.io/badge/Platform-Android_8%2B-brightgreen)
 ![Made for Windows](https://img.shields.io/badge/Platform-Windows-orange)
 ![Made for MacOS](https://img.shields.io/badge/Platform-MacOS-purple)
 ![Made for Linux](https://img.shields.io/badge/Platform-Linux-blue)
+
+</div>
+
+<div align="center">
+
+[![Latest release](https://img.shields.io/github/v/release/vpilo/nanna-baby-monitor)](https://github.com/vpilo/nanna-baby-monitor/releases)
 ![Written in Kotlin](https://img.shields.io/github/languages/top/vpilo/nanna-baby-monitor)
 [![License: aGPLv3](https://img.shields.io/github/license/vpilo/nanna-baby-monitor)](LICENSE)
 
