@@ -1,11 +1,12 @@
-This is a baby monitor app, with secure video and audio streaming, for Android and PC (using Java).
+This is a baby monitor app, with secure video and audio streaming, for Android and PC (Windows, macOS and Linux).
 No accounts, no cloud servers, no telemetry, forever free and open source.
 
 Nanna means "baby sleep" in Italian. But this is not just for babies!
 Watch your pets, your plants, your home, or anything else you want to securely and privately keep an eye on.
 
-This app requires pairing between devices. Run the app in recording mode on any Android 8+ device. Using pairing code or a QR, pair it with
-another devices set to watching mode. Connect anytime to watch and/or listen.
+Run the app in recording mode on an Android 8+ device or a PC with a webcam and microphone. Set another phone or computer to watching mode.
+Devices must be paired once on the same local network: open pairing on the recording device, then scan its QR code or enter its
+six-character code on the watching device. Connect anytime to watch and/or listen. Pairings can be removed from either device at any time.
 
 Features:
 
@@ -17,9 +18,15 @@ Features:
 * Silence detection to avoid sending audio when it's all quiet.
 * Customizable recording quality.
 * Draggable video feed to see the whole video feed on any screen.
+* Keep streaming in the background or with the screen off.
+* Mute audio and video independently from either device.
 * Works on Android 8.0 and later.
 * Supports multiple recording devices and multiple watching devices.
-* Private, and without any cloud services or telemetry: it stays on your home's network.
+* Private local streaming, without accounts, cloud services or telemetry.
+* Optional self-hosted relay for secure streaming between different networks.
+
+The recording device shows a viewfinder, but only sends audio and video while a paired watching device is connected. Turn its screen off
+to save battery. If audio or video is disabled on the recording device, watching devices cannot turn it back on remotely.
 
 Nanna is also available as a desktop application for Linux, Windows and macOS, which can act as either a recording or a watching device;
 it will work with the Android app in any combination. It is published together with this project's source code on GitHub.
