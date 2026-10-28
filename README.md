@@ -1,5 +1,5 @@
 <p align="center">
-  <kbd><img src="appAndroid/src/main/play/listings/en-US/graphics/icon/icon.png" alt="Nanna Baby Monitor icon" width="256"></kbd>
+  <kbd><img src="fastlane/metadata/android/en-US/images/icon.png" alt="Nanna Baby Monitor icon" width="256"></kbd>
 </p>
 
 # Nanna Baby Monitor

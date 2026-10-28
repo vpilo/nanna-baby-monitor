@@ -81,7 +81,7 @@ if [ "$CHECKS_RESULT" -ne 0 ]; then
 fi
 
 echo "Checking release notes..."
-relnotes_files=$(find appAndroid/src/main/play/release-notes -type f -name "*.txt")
+relnotes_files=$(find fastlane/metadata/android -type f -path "*/changelogs/*.txt")
 for file in $relnotes_files
 do
     character_count=$(wc -m $file | grep txt | awk '{$1=$1};1' | cut -f 1 -d ' ')

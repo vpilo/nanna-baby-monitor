@@ -1,0 +1,39 @@
+ENV["FASTLANE_SKIP_DOCS"] = "true"
+
+default_platform(:android)
+
+platform :android do
+  desc "Publish the release and its listing to Google Play"
+  lane :release do
+    track = ENV.fetch("GOOGLE_PLAY_TRACK", "").strip
+    UI.user_error!("Set GOOGLE_PLAY_TRACK to the target Play track.") if track.empty?
+    UI.user_error!("Set SUPPLY_JSON_KEY_DATA to the Play service-account JSON.") if ENV.fetch("SUPPLY_JSON_KEY_DATA", "").empty?
+
+    directory = File.expand_path(ENV.fetch("PLAY_RELEASE_DIR"))
+    tag = ENV.fetch("RELEASE_TAG")
+    version = File.readlines(File.join(directory, "artifacts", "version.txt"), chomp: true)
+                  .to_h { |line| line.split("=", 2) }
+    UI.user_error!("Release files do not match the selected tag.") unless version["versionName"] == tag
+    major, minor, patch = tag.split(".").map(&:to_i)
+    expected_code = major * 1_000_000 + minor * 1_000 + patch
+    UI.user_error!("Release version code does not match the tag.") unless version["versionCode"] == expected_code.to_s
+
+    bundles = Dir[File.join(directory, "artifacts", "*.aab")]
+    mappings = Dir[File.join(directory, "artifacts", "mapping-*.txt")]
+    UI.user_error!("Expected exactly one AAB and one R8 mapping.") unless bundles.size == 1 && mappings.size == 1
+    UI.user_error!("Release mapping does not match the tag.") unless File.basename(mappings.first) == "mapping-#{tag}.txt"
+    UI.user_error!("Release files are empty.") unless [bundles.first, mappings.first].all? { |path| File.size?(path) }
+    metadata = File.expand_path("metadata/android")
+    UI.user_error!("Release listing metadata is missing.") unless File.file?(File.join(metadata, "en-US", "full_description.txt"))
+
+    upload_to_play_store(
+      aab: bundles.first,
+      mapping: mappings.first,
+      metadata_path: metadata,
+      track: track,
+      release_status: "completed",
+      skip_upload_apk: true,
+      sync_image_upload: true
+    )
+  end
+end

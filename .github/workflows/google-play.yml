@@ -1,0 +1,112 @@
+name: Publish release to Google Play
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag to upload (MAJOR.MINOR.PATCH).
+        type: string
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: google-play
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  publish:
+    name: Upload release to Google Play
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.path == '.github/workflows/release.yml' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: fastlane
+    env:
+      GOOGLE_PLAY_TRACK: ${{ vars.GOOGLE_PLAY_TRACK }}
+      FASTLANE_SKIP_UPDATE_CHECK: 'true'
+      FASTLANE_HIDE_CHANGELOG: 'true'
+      FASTLANE_OPT_OUT_USAGE: 'true'
+      FASTLANE_SKIP_DOCS: 'true'
+    steps:
+      - name: Check out release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+          sparse-checkout: fastlane
+
+      - name: Select published release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [[ ! "$GOOGLE_PLAY_TRACK" =~ [^[:space:]] ]]; then
+            echo "::error::Set the GitHub Actions variable GOOGLE_PLAY_TRACK."
+            exit 1
+          fi
+
+          if [[ -z "$RELEASE_TAG" ]]; then
+            mapfile -t tags < <(git tag --points-at "$SOURCE_SHA" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$')
+            if [[ ${#tags[@]} -ne 1 ]]; then
+              echo "::error::Expected one release tag on the successful Release commit."
+              exit 1
+            fi
+            RELEASE_TAG="${tags[0]}"
+          fi
+
+          if [[ ! "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tag must be MAJOR.MINOR.PATCH."
+            exit 1
+          fi
+
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,isPrerelease,publishedAt \
+            --jq 'if .isDraft or .isPrerelease or .publishedAt == null then error("Expected a published stable release") else .publishedAt end'
+
+          printf 'tag=%s\n' "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Download signed Android build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          if [[ -z "$RUN_ID" ]]; then
+            RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow release.yml \
+              --commit "$(git rev-parse HEAD)" --event push --status success --limit 1 \
+              --json databaseId --jq '.[0].databaseId // empty')
+          fi
+          if [[ -z "$RUN_ID" ]]; then
+            echo "::error::No successful Release build found for this tag."
+            exit 1
+          fi
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name android-release --dir build/artifacts
+
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: fastlane
+
+      - name: Upload bundle and store listing
+        env:
+          PLAY_RELEASE_DIR: ${{ github.workspace }}/fastlane/build
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          SUPPLY_JSON_KEY_DATA: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: bundle exec fastlane android release
