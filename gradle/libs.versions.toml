@@ -19,7 +19,7 @@ jvm-toolchain = "21"
 compose = "1.12.2"
 compose-material = "1.9.0"
 compose-materialIconsExtended = "1.7.3"
-compose-navigation = "2.9.2"
+compose-navigation = "2.10.0"
 compose-navigation-event = "1.1.0"
 compose-stability-analyzer = "0.15.0"
 
