@@ -2,4 +2,9 @@
 <resources>
     <string name="settings_device_name_title">Apparaatnaam</string>
     <string name="settings_device_name_description">Naam van dit apparaat, zichtbaar voor andere Nanna Baby Monitor-apps.</string>
+    <string name="settings_audio_output_title">Audio output</string>
+    <string name="settings_audio_output_description">Where the watching device plays sound. Applies as soon as you change it, including while already listening.</string>
+    <string name="settings_audio_output_earpiece">Earpiece (like a phone call)</string>
+    <string name="settings_audio_output_speaker">Loudspeaker</string>
+    <string name="settings_audio_output_headset">Headphones or Bluetooth</string>
 </resources>

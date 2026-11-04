@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.NoiseAware
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import babymonitor.appcommon.generated.resources.Res
@@ -42,6 +43,7 @@ import org.vpilo.babymonitor.presentation.composables.MenuDivider
 import org.vpilo.babymonitor.settings.model.PlatformAvailability
 import org.vpilo.babymonitor.settings.model.Setting
 import org.vpilo.babymonitor.settings.model.isSupportedOnCurrentPlatform
+import org.vpilo.babymonitor.settings.model.settings.AudioOutputRoute
 import org.vpilo.babymonitor.settings.model.settings.DeviceName
 import org.vpilo.babymonitor.settings.presentation.composables.MenuItem
 import org.vpilo.babymonitor.settings.presentation.composables.MenuSettingEnumItem
@@ -94,6 +96,13 @@ fun ColumnScope.AppMenuContents(
         setting = Setting.DeviceName,
         imageVector = Icons.Default.Person,
     )
+
+    if (currentRole == AppRole.CLIENT && PlatformAvailability.AndroidOnly.isSupportedOnCurrentPlatform) {
+        MenuSettingEnumItem(
+            setting = Setting.AudioOutputRoute,
+            imageVector = Icons.Default.VolumeUp,
+        )
+    }
 
     MenuDivider()
 
