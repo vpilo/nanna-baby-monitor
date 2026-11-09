@@ -7,12 +7,15 @@ import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.AudioFrameFlow
 import org.vpilo.babymonitor.model.MediaFormats
 import org.vpilo.babymonitor.model.repository.AudioPlaybackRepository
+import org.vpilo.babymonitor.settings.model.repository.SettingsRepository
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.SourceDataLine
 
-internal actual class DefaultAudioPlaybackRepository actual constructor() : AudioPlaybackRepository {
+internal actual class DefaultAudioPlaybackRepository actual constructor(
+    @Suppress("UNUSED_PARAMETER") settingsRepository: SettingsRepository,
+) : AudioPlaybackRepository {
     override suspend fun play(input: AudioFrameFlow) {
         val audioFormat =
             AudioFormat(
