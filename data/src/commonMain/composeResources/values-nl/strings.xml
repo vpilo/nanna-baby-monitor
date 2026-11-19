@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="settings_audio_output_title">Audio-uitgang</string>
+    <string name="settings_audio_output_description">Waar de monitor het geluid afspeelt. Geldt direct. Geen koptelefoon of Bluetooth beschikbaar? Dan kiest Android een andere uitgang.</string>
+    <string name="settings_audio_output_earpiece">Oortelefoontje (zoals bij een telefoongesprek)</string>
+    <string name="settings_audio_output_speaker">Luidspreker</string>
+    <string name="settings_audio_output_headset">Koptelefoon of Bluetooth</string>
+</resources>

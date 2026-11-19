@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.NoiseAware
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.outlined.Output
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import babymonitor.appcommon.generated.resources.Res
@@ -34,6 +35,7 @@ import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.camera.model.settings.CameraResolution
 import org.vpilo.babymonitor.camera.model.settings.LowLightBoost
 import org.vpilo.babymonitor.camera.model.settings.SilenceDetectionThreshold
+import org.vpilo.babymonitor.data.settings.AudioOutputRoute
 import org.vpilo.babymonitor.model.AppRole
 import org.vpilo.babymonitor.network.model.settings.RelayHost
 import org.vpilo.babymonitor.network.model.settings.RelayPassphrase
@@ -87,6 +89,13 @@ fun ColumnScope.AppMenuContents(
         MenuSettingItem(
             setting = Setting.SilenceDetectionThreshold,
             imageVector = Icons.Default.NoiseAware,
+        )
+    }
+
+    if (currentRole == AppRole.CLIENT && PlatformAvailability.AndroidOnly.isSupportedOnCurrentPlatform) {
+        MenuSettingEnumItem(
+            setting = Setting.AudioOutputRoute,
+            imageVector = Icons.Outlined.Output,
         )
     }
 
