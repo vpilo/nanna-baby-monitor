@@ -164,13 +164,19 @@ adb install -r appAndroid/build/outputs/apk/debug/org.vpilo.babymonitor-*.apk
 
 ### Keeping pairings across a reinstall for debugging
 
-Only when using debug builds, the device identity, pairings, and other app settings can be dumped then restored across app reinstalls:
+This procedure saves the device identity, pairings, and other app settings. Both the installed app and the replacement must be
+debuggable Android builds. If backup reports `package not debuggable`, Android denied access to the app data.
+
+Before uninstalling, run the backup script from the repository root. Proceed only after it succeeds and creates or updates `nanna.tar`.
 
 ```sh
-adb exec-out run-as org.vpilo.babymonitor tar cf - files > nanna.tar
-# ..
-adb shell am force-stop org.vpilo.babymonitor
-adb exec-in run-as org.vpilo.babymonitor tar xf - < nanna.tar
+./scripts/backup-app-data.sh
+```
+
+After installing the new debug APK, run the restore script from the same directory before opening the app.
+
+```sh
+./scripts/restore-app-data.sh
 ```
 
 ## Desktop

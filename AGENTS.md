@@ -75,6 +75,11 @@ Key features:
   lifecycle via the `reactor()` extension.
 - **Flow typealiases** - Domain flows are typealiased in `model/` (e.g. `AudioFrameFlow = Flow<AudioFrame>`,
   `MutableStreamingVideoFlow = MutableSharedFlow<EncodedVideoStreamChunk>`). Use these instead of raw `Flow` types.
+- **UseCases** - A UseCase is a disposable, stateless class that composes business logic for one operation. It has exactly one
+  public method, `operator fun invoke(...)`, which may be `suspend`. Give distinct operations their own UseCase classes.
+  Keep only immutable dependency references in the instance. Use arguments and repository APIs to compute results or compose
+  flows. The caller owns collection of any returned flow. Keep caches, retry history, coroutine scopes, and lifecycle management
+  in the repository or ViewModel that owns that state.
 - **DI with Koin** - Each module exposes a `val ...KoinModule: Module` (e.g. `cameraDataKoinModule`, `networkServerKoinModule`). All are
   composed in `appCommon/.../KoinInitialization.kt`. Platform-specific modules use `expect val appPlatformModule: Module` in `AppModule.kt`.
 - **MVVM** - ViewModels use Jetbrains `lifecycle-viewmodel`. State is exposed via `StateFlow` with `SharingStarted.WhileSubscribed()`.
@@ -125,6 +130,7 @@ individually over multiple iterations:
 - **Companion objects:** Should be at the bottom of a class and made private unless necessary.
 - **Dependencies:** Managed via version catalog at `gradle/libs.versions.toml`. Use `libs.` references in `build.gradle.kts`.
 - **Tests:** only `network:security` (crypto primitives, handshakes, the pairing hello wire format and pairing storage),
-  `network:model` (pairing QR payload and PIN), `model` (Android surface handoff, `AppViewModel`), `network:client` (pairing failure handling), `errorreport:data` (crash
-  classification) and `build-logic` (version and platform derivation) have them.
-  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :network:client:desktopTest :model:testAndroidHostTest :errorreport:data:desktopTest :build-logic:test`.
+  `network:model` (pairing QR payload and PIN), `model` (Android surface handoff, `AppViewModel`), `network:client` (pairing failure
+  handling), `appCommon` (camera picker reconnection), `errorreport:data` (crash classification) and `build-logic` (version and platform
+  derivation) have them.
+  Run with `./gradlew :network:security:desktopTest :network:model:desktopTest :network:client:desktopTest :appCommon:desktopTest :model:testAndroidHostTest :errorreport:data:desktopTest :build-logic:test`.
