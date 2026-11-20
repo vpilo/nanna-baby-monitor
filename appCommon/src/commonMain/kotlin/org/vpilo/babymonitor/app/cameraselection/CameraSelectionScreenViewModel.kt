@@ -2,7 +2,7 @@ package org.vpilo.babymonitor.app.cameraselection
 
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
@@ -42,7 +42,7 @@ class CameraSelectionScreenViewModel(
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
     private val deviceStateRepository: DeviceStateRepository,
     private val pairingStorageRepository: PairingStorageRepository,
-    private val localClientDeviceRepository: LocalClientDeviceRepository,
+    localClientDeviceRepository: LocalClientDeviceRepository,
 ) : AppViewModel<CameraSelectionScreenAction, CameraSelectionScreenState, CameraSelectionScreenEffect>(
         TAG = "CameraSelectionScreenViewModel",
         initialState = CameraSelectionScreenState(),
@@ -93,9 +93,7 @@ class CameraSelectionScreenViewModel(
             onConnectionStateChanged(newState)
         }
 
-        vmScope.launch {
-            waitForLastConnectedServer()
-        }
+        observeAutoReconnect()
 
         vmScope.launch {
             remoteDiscoveryRepository.start()
@@ -167,7 +165,6 @@ class CameraSelectionScreenViewModel(
             when (newState.reason) {
                 ConnectionState.ErrorReason.ClientQuit,
                 ConnectionState.ErrorReason.PairingRevoked,
-                ConnectionState.ErrorReason.ServerNotFound,
                 ConnectionState.ErrorReason.CameraDeviceOutdated,
                 ConnectionState.ErrorReason.MonitorDeviceOutdated,
                 ConnectionState.ErrorReason.RelayOutdated,
@@ -184,23 +181,31 @@ class CameraSelectionScreenViewModel(
         }
     }
 
-    private suspend fun waitForLastConnectedServer() {
-        settingsRepository
-            .flowOf(Setting.ClientLastServerId)
-            .collectLatest { rawLastServerId ->
-                val lastServerId = rawLastServerId.toDeviceIdOrNull() ?: return@collectLatest
-
-                val serverList = getConnectableServersFlowUseCase().first { it.isNotEmpty() }
-                val state = state.connectionState
-
-                // Only reconnect on first startup, when we haven't connected yet.
-                if (state !is ConnectionState.Disconnected || state.reason != ConnectionState.ErrorReason.NotConnectedYet) {
-                    return@collectLatest
+    private fun SubscriptionScope.observeAutoReconnect() {
+        var lastAttemptedServer: Device.Server? = null
+        combine(
+            settingsRepository.flowOf(Setting.ClientLastServerId),
+            getConnectableServersFlowUseCase(),
+            getConnectableServersFlowUseCase(includeCached = false),
+            networkClientRepository.connectionStateFlow,
+        ) { rawLastServerId, visible, discovered, connectionState ->
+            val lastServerId = rawLastServerId.toDeviceIdOrNull()
+            val reason = (connectionState as? ConnectionState.Disconnected)?.reason
+            val servers = if (reason == ConnectionState.ErrorReason.NotConnectedYet) visible else discovered
+            servers.firstOrNull { it.id == lastServerId } to reason
+        }.subscribe { (server, reason) ->
+            val canAutoConnect =
+                reason == ConnectionState.ErrorReason.NotConnectedYet || reason == ConnectionState.ErrorReason.ServerNotFound
+            when {
+                server == null -> {
+                    lastAttemptedServer = null
                 }
-                val lastServer =
-                    serverList.firstOrNull { it.id == lastServerId }
-                        ?: return@collectLatest
-                CameraSelectionScreenEffect.ConnectToServer(lastServer).sendEffect()
+
+                canAutoConnect && server != lastAttemptedServer -> {
+                    lastAttemptedServer = server
+                    CameraSelectionScreenEffect.ConnectToServer(server).sendEffect()
+                }
             }
+        }
     }
 }

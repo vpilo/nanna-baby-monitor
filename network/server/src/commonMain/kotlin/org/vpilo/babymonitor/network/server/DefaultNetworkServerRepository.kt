@@ -175,6 +175,7 @@ internal class DefaultNetworkServerRepository(
 
     override suspend fun stop() {
         withContext(coroutineContext) {
+            if (server == null && !isServerReady.value) return@withContext
             Logger.i(TAG) { "Requested server stop" }
             relayRegistration.stop()
             server?.stop(

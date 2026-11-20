@@ -156,9 +156,7 @@ private fun ClientHomeScreenContent(
             }
         }
 
-        if (captureMode != CaptureMode.AUDIO_ONLY && !isFeedActive) {
-            LoadingBox()
-        } else if (connectionState is ConnectionState.Connecting || connectionState is ConnectionState.Reconnecting) {
+        if (connectionState is ConnectionState.Connecting || connectionState is ConnectionState.Reconnecting) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.surface.copy(alpha = SURFACE_ALPHA),
@@ -177,6 +175,8 @@ private fun ClientHomeScreenContent(
                     }
                 }
             }
+        } else if (captureMode != CaptureMode.AUDIO_ONLY && !isFeedActive) {
+            LoadingBox()
         }
     }
 }
@@ -240,6 +240,22 @@ private fun ClientHomeScreenDisconnectedPreview() =
             batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
             signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
             connectionState = ConnectionState.Disconnected(reason = ConnectionState.ErrorReason.ClientQuit),
+            onDisconnected = { },
+            isRemoteServer = false,
+        )
+    }
+
+@Preview
+@Composable
+private fun ClientHomeScreenReconnectingPreview() =
+    AppPreviewTheme {
+        ClientHomeScreenContent(
+            modifier = Modifier.fillMaxSize(),
+            videoStream = makePreviewVideoStream(),
+            captureMode = CaptureMode.AUDIO_AND_VIDEO,
+            batteryLevel = DEVICE_STATE_DATA_UNAVAILABLE,
+            signalQuality = DEVICE_STATE_DATA_UNAVAILABLE,
+            connectionState = ConnectionState.Reconnecting(makePreviewServer("Nanna Baby Monitor-1234")),
             onDisconnected = { },
             isRemoteServer = false,
         )

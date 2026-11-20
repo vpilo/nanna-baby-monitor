@@ -58,6 +58,12 @@ kotlin {
             implementation(libs.koin.composeViewmodel)
             implementation(libs.koin.core)
         }
+
+        desktopTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.junit.platform)
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }
 

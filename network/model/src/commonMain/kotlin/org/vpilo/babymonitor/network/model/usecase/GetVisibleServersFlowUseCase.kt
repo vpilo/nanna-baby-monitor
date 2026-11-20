@@ -2,6 +2,7 @@ package org.vpilo.babymonitor.network.model.usecase
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.network.model.repository.DiscoveredDeviceCacheRepository
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryClientRepository
@@ -12,11 +13,11 @@ class GetVisibleServersFlowUseCase(
     private val discoveredDeviceCacheRepository: DiscoveredDeviceCacheRepository,
     private val remoteDiscoveryRepository: RemoteDiscoveryRepository,
 ) {
-    operator fun invoke(): Flow<Set<Device.Server>> =
+    operator fun invoke(includeCached: Boolean = true): Flow<Set<Device.Server>> =
         combine(
             remoteDiscoveryRepository.discoveredDevicesFlow,
             localDiscoveryClientRepository.discoveredDevicesFlow,
-            discoveredDeviceCacheRepository.cachedDevicesFlow,
+            if (includeCached) discoveredDeviceCacheRepository.cachedDevicesFlow else flowOf(emptySet()),
         ) { remote, local, cached ->
             val cachedUndiscovered =
                 cached

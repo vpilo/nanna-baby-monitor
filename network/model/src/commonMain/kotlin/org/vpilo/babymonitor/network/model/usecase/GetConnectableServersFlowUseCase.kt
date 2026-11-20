@@ -8,10 +8,10 @@ class GetConnectableServersFlowUseCase(
     private val getPairedServersFlowUseCase: GetPairedServersFlowUseCase,
     private val getVisibleServersFlowUseCase: GetVisibleServersFlowUseCase,
 ) {
-    operator fun invoke(): Flow<Set<Device.Server>> =
+    operator fun invoke(includeCached: Boolean = true): Flow<Set<Device.Server>> =
         combine(
             getPairedServersFlowUseCase(),
-            getVisibleServersFlowUseCase(),
+            getVisibleServersFlowUseCase(includeCached = includeCached),
         ) { paired, visible ->
             val pairedIds = paired.map { it.id }
             visible.filter { it.id in pairedIds }.toSet()

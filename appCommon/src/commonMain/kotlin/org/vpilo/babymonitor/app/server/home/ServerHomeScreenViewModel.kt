@@ -4,13 +4,17 @@ import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEmpty
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.vpilo.babymonitor.app.settings.LastCaptureMode
 import org.vpilo.babymonitor.camera.model.VideoCaptureRepository
+import org.vpilo.babymonitor.common.Logger
 import org.vpilo.babymonitor.model.Device
 import org.vpilo.babymonitor.model.OpaqueVideoStream
 import org.vpilo.babymonitor.model.repository.DeviceId
+import org.vpilo.babymonitor.model.repository.DeviceStateRepository
 import org.vpilo.babymonitor.model.viewmodel.AppViewModel
 import org.vpilo.babymonitor.network.model.repository.LocalDiscoveryServerRepository
 import org.vpilo.babymonitor.network.model.repository.NetworkServerRepository
@@ -26,6 +30,7 @@ class ServerHomeScreenViewModel(
     private val server: NetworkServerRepository,
     private val settings: SettingsRepository,
     private val relayConfigurationRepository: RelayConfigurationRepository,
+    deviceStateRepository: DeviceStateRepository,
     videoCaptureRepository: VideoCaptureRepository,
 ) : AppViewModel<ServerHomeScreenAction, ServerHomeScreenState, ServerHomeScreenEffect>(
         TAG = "ServerHomeScreenViewModel",
@@ -61,12 +66,15 @@ class ServerHomeScreenViewModel(
         combine(
             settings.flowOf(Setting.DeviceId),
             settings.flowOf(Setting.DeviceName),
-        ) { rawId, deviceName ->
+            deviceStateRepository.isInternetAvailable.onStart { emit(true) },
+        ) { rawId, deviceName, isInternetAvailable ->
             val id = checkNotNull(DeviceId.parseOrNull(rawId)) { "Invalid device ID: $rawId" }
             val device = Device.LocalServer(id = id, name = deviceName)
-            discoveryServer.register(device)
 
-            if (!state.isAvailableOnLocalNetwork) {
+            discoveryServer.unregister()
+            server.stop()
+            if (isInternetAvailable) {
+                discoveryServer.register(device)
                 server.start(device)
             }
 
