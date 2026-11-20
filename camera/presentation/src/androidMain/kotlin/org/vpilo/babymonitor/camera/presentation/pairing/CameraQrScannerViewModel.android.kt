@@ -3,6 +3,7 @@ package org.vpilo.babymonitor.camera.presentation.pairing
 import android.content.Context
 import android.graphics.ImageFormat
 import androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+import androidx.camera.core.CameraSelector.DEFAULT_FRONT_CAMERA
 import androidx.camera.core.CameraState
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
@@ -110,13 +111,29 @@ actual class CameraQrScannerViewModel actual constructor(
         lifecycleOwner: LifecycleOwner,
     ) {
         val processCameraProvider = ProcessCameraProvider.awaitInstance(appContext)
+        val cameraSelector =
+            when {
+                processCameraProvider.hasCamera(DEFAULT_BACK_CAMERA) -> {
+                    DEFAULT_BACK_CAMERA
+                }
+
+                processCameraProvider.hasCamera(DEFAULT_FRONT_CAMERA) -> {
+                    DEFAULT_FRONT_CAMERA
+                }
+
+                else -> {
+                    Logger.w(TAG) { "No rear or front camera available" }
+                    CameraQrScannerEffect.CameraError.sendEffect()
+                    return
+                }
+            }
 
         analysisUseCase.setAnalyzer(coroutineContext.asExecutor(), analyzer)
 
         val camera =
             processCameraProvider.bindToLifecycle(
                 lifecycleOwner,
-                DEFAULT_BACK_CAMERA,
+                cameraSelector,
                 cameraPreviewUseCase,
                 analysisUseCase,
             )

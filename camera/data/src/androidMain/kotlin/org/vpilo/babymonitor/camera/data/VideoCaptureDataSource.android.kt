@@ -9,6 +9,9 @@ import android.view.Surface
 import androidx.annotation.MainThread
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+import androidx.camera.core.CameraSelector.DEFAULT_FRONT_CAMERA
+import androidx.camera.core.CameraSelector.LENS_FACING_FRONT
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.SessionConfig
 import androidx.camera.core.SurfaceOrientedMeteringPointFactory
@@ -149,36 +152,45 @@ internal actual class VideoCaptureDataSource(
         }
     }
 
+    private fun ProcessCameraProvider.detectCameraSelector(): CameraSelector? =
+        when {
+            hasCamera(DEFAULT_BACK_CAMERA) -> {
+                DEFAULT_BACK_CAMERA
+            }
+
+            hasCamera(DEFAULT_FRONT_CAMERA) -> {
+                DEFAULT_FRONT_CAMERA
+            }
+
+            else -> {
+                Logger.e(TAG) { "No rear or front camera available" }
+                null
+            }
+        }
+
     @MainThread
     private fun bind(
         cameraProvider: ProcessCameraProvider,
         context: Context,
         lifecycleOwner: LifecycleOwner,
     ) {
-        val selector = resolutionSelector
-
-        val cameraSelector =
-            CameraSelector
-                .Builder()
-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                .build()
-
+        val cameraSelector = cameraProvider.detectCameraSelector() ?: return
         val cameraInfo = cameraProvider.getCameraInfo(cameraSelector)
 
         // Lock targetRotation so CameraX adds no rotation of its own: device rotation is carried as stream metadata instead, to allow
         // clients to rotate independently of the stream.
-        // The relative rotation must be zero to keep the image the "right" way up, which CameraX achieves when targetRotation degrees
-        // equal the sensor mount degrees.
-        // Note that the sensor-mount transposition still lives in the buffer, and is handled by sizing the surfaces to the content's
-        // true aspect.
+        // CameraX subtracts target rotation for rear cameras and adds it for front cameras. Choose the target that
+        // makes the relative rotation zero. Use the actual sensor mount angle when sizing surfaces.
         sensorRotationDegrees = cameraInfo.sensorRotationDegrees
-        val sensorTargetRotation = sensorRotationToSurfaceRotation(cameraInfo.sensorRotationDegrees)
+        val targetRotationDegrees =
+            if (cameraInfo.lensFacing == LENS_FACING_FRONT) (360 - sensorRotationDegrees) % 360 else sensorRotationDegrees
+        val sensorTargetRotation = sensorRotationToSurfaceRotation(targetRotationDegrees)
 
         val videoCapture =
             @SuppressLint("RestrictedApi")
             VideoCapture
                 .Builder(EncoderVideoOutput(resolution, renderer, mainExecutor))
-                .setResolutionSelector(selector)
+                .setResolutionSelector(resolutionSelector)
                 .setTargetRotation(sensorTargetRotation)
                 .build()
 
