@@ -72,9 +72,11 @@ class ServerHomeScreenViewModel(
             val device = Device.LocalServer(id = id, name = deviceName)
 
             discoveryServer.unregister()
-            server.stop()
             if (isInternetAvailable) {
                 discoveryServer.register(device)
+            }
+
+            if (!state.isAvailableOnLocalNetwork) {
                 server.start(device)
             }
 
