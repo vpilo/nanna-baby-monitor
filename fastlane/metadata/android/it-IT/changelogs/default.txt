@@ -1,6 +1,6 @@
-Aggiunto salvataggio degli indirizzi delle telecamere per connettersi più velocemente e in modo più affidabile.
-Aggiunta l'identità della telecamera ai codici QR per una maggiore sicurezza.
-Fissata registrazione al server relay.
-Fissato crash sulle telecamere Android quando si interrompe lo streaming.
-Fissato crash nella schermata di selezione della telecamera.
-Aggiunto "Segnala un problema" per segnalare un problema o un bug nell'app.
+Aggiunta finestra di dialogo "App già in esecuzione" su desktop.
+La telecamera torna online dopo un cambio di rete.
+Commutazione automatica alla fotocamera frontale se quella posteriore non è disponibile.
+Migliorata l'affidabilità di connessione e riconnessione nell'app monitor.
+Aggiunta opzione di uscita audio su Android (grazie fatpus!)
+Corretto il problema della notifica che restava attiva dopo una disconnessione.

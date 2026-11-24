@@ -1,6 +1,6 @@
-Added remembering camera addresses to connect to them faster and more reliably.
-Add camera identity to QRs for better security.
-Fixed registration to relay server.
-Fix crash on Android cameras when stopping streaming.
-Fix crash on the camera selection screen.
-Add "Report an issue" menu item to report a problem or bug in the app.
+Add an "app already running" dialog on desktop.
+Ensure the camera comes back online after a network change.
+Automatically fall back to front camera if back camera is unavailable.
+Improve reliability of connecting and reconnecting on monitor app.
+Add audio output route option on Android (thanks fatpus!)
+Fix notification persisting on disconnection
