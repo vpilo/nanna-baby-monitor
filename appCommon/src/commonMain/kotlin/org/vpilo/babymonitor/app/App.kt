@@ -1,11 +1,16 @@
 package org.vpilo.babymonitor.app
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavBackStackEntry
@@ -21,7 +26,6 @@ import org.vpilo.babymonitor.app.approlechoice.AppRoleChoiceScreen
 import org.vpilo.babymonitor.app.cameraselection.CameraSelectionScreen
 import org.vpilo.babymonitor.app.client.home.ClientHomeScreen
 import org.vpilo.babymonitor.app.client.pairing.ClientPairingScreen
-import org.vpilo.babymonitor.app.menu.MenuScreen
 import org.vpilo.babymonitor.app.navigation.Route
 import org.vpilo.babymonitor.app.onboarding.OnboardingScreen
 import org.vpilo.babymonitor.app.permissioncheck.AppPermissionCheckScreen
@@ -41,6 +45,8 @@ private const val TAG = "App"
 @Composable
 fun App() {
     val navController = rememberNavController()
+    var isMenuVisible by remember { mutableStateOf(false) }
+
     LaunchedEffect(navController) {
         Logger.i(TAG) { "Baby monitor ${BuildInfo.VERSION} (${BuildInfo.VERSION_CODE}) ${if (BuildInfo.IS_DEBUG) "debug" else "release"}" }
         navController.currentBackStack.collect { backStack ->
@@ -53,7 +59,34 @@ fun App() {
     }
 
     AppTheme {
-        MainContainer {
+        fun navigateTo(
+            route: Route,
+            popUpToRoute: Route?,
+        ) {
+            Logger.d(TAG) { "Navigating to $route from ${navController.currentDestination?.route}, popUpTo=$popUpToRoute" }
+            navController.navigate(route) {
+                popUpToRoute?.let { popUpTo(popUpToRoute) { inclusive = false } }
+            }
+        }
+
+        fun navigateToRoot() {
+            Logger.d(TAG) { "Navigating to root from ${navController.currentDestination?.route}" }
+            navController.navigate(Route.AppPermissionCheck) {
+                popUpTo<Route.RootNavGraph> { inclusive = false }
+                launchSingleTop = true
+            }
+        }
+
+        MainContainer(
+            menuOverlay = {
+                MenuOverlay(
+                    visible = isMenuVisible,
+                    onHide = { isMenuVisible = false },
+                    onNavigateTo = ::navigateTo,
+                    onNavigateToRoot = ::navigateToRoot,
+                )
+            },
+        ) {
             NavHost(
                 navController = navController,
                 startDestination = Route.RootNavGraph,
@@ -64,25 +97,15 @@ fun App() {
                             Logger.d(TAG) { "Navigating up from ${navController.currentDestination?.route}" }
                             navController.navigateUp()
                         },
-                        onNavigateTo = { route, popUpToRoute ->
-                            Logger.d(TAG) { "Navigating to $route from ${navController.currentDestination?.route}, popUpTo=$popUpToRoute" }
-                            navController.navigate(route) {
-                                popUpToRoute?.let { popUpTo(popUpToRoute) { inclusive = false } }
-                            }
-                        },
+                        onNavigateTo = ::navigateTo,
                         onNavigateUpTo = { route ->
                             Logger.d(TAG) { "Navigating up to $route from ${navController.currentDestination?.route}" }
                             navController.navigate(route) {
                                 popUpTo(route) { inclusive = true }
                             }
                         },
-                        onNavigateToRoot = {
-                            Logger.d(TAG) { "Navigating to root from ${navController.currentDestination?.route}" }
-                            navController.navigate(Route.AppPermissionCheck) {
-                                popUpTo<Route.RootNavGraph> { inclusive = false }
-                                launchSingleTop = true
-                            }
-                        },
+                        onNavigateToRoot = ::navigateToRoot,
+                        onOpenMenu = { isMenuVisible = true },
                     )
                 }
             }
@@ -95,6 +118,7 @@ fun App() {
 @Composable
 private fun MainContainer(
     modifier: Modifier = Modifier,
+    menuOverlay: @Composable () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     Column(
@@ -106,7 +130,10 @@ private fun MainContainer(
         verticalArrangement = Arrangement.Top,
     ) {
         SnackbarContainer {
-            content()
+            Box(modifier = Modifier.fillMaxSize()) {
+                content()
+                menuOverlay()
+            }
         }
     }
 }
@@ -117,6 +144,7 @@ private fun NavGraphBuilder.navigationRoutes(
     onNavigateUp: () -> Unit = {},
     onNavigateUpTo: (route: Route) -> Unit = { _ -> },
     onNavigateToRoot: () -> Unit = {},
+    onOpenMenu: () -> Unit = {},
 ) {
     composable<Route.Onboarding> {
         OnboardingScreen(
@@ -154,15 +182,6 @@ private fun NavGraphBuilder.navigationRoutes(
         )
     }
 
-    composable<Route.Menu> {
-        MenuScreen(
-            viewModel = koinViewModel(),
-            onBackClicked = onNavigateUp,
-            onNavigateTo = onNavigateTo,
-            onNavigateToRoot = onNavigateToRoot,
-        )
-    }
-
     composable<Route.Quit> {
         val quitApplication = LocalQuitApplication.current
         LaunchedEffect(Unit) {
@@ -190,9 +209,7 @@ private fun NavGraphBuilder.navigationRoutes(
     composable<Route.ServerHome> {
         ServerHomeScreen(
             viewModel = koinViewModel(),
-            onMenuClicked = {
-                onNavigateTo(Route.Menu, null)
-            },
+            onMenuClicked = onOpenMenu,
             onPairClicked = {
                 onNavigateTo(Route.ServerPairing, null)
             },
@@ -223,9 +240,7 @@ private fun NavGraphBuilder.navigationRoutes(
             onRequirePairing = { deviceId ->
                 onNavigateTo(Route.ClientPairing(deviceId), null)
             },
-            onMenuClicked = {
-                onNavigateTo(Route.Menu, null)
-            },
+            onMenuClicked = onOpenMenu,
         )
     }
 
@@ -244,9 +259,7 @@ private fun NavGraphBuilder.navigationRoutes(
             onDisconnected = {
                 onNavigateUpTo(Route.CameraSelection())
             },
-            onMenuClicked = {
-                onNavigateTo(Route.Menu, null)
-            },
+            onMenuClicked = onOpenMenu,
         )
     }
 }

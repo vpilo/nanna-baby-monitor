@@ -75,7 +75,7 @@ private fun MenuScreenContent(
     menuItems: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().padding(bottom = Theme.Paddings.Small),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ScrollableBox(modifier = Modifier.weight(1f)) {
