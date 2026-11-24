@@ -18,8 +18,10 @@ kotlin {
             implementation(project(":common"))
             implementation(project(":model"))
             implementation(project(":settings:model"))
+            implementation(project(":presentation"))
             implementation(libs.koin.core)
             implementation(compose.desktop.currentOs)
+            implementation(libs.compose.material)
             // ProGuard needs this: optimizing Netty's optional log4j2 backend requires its whole class hierarchy even if it's not used.
             implementation(libs.log4j.api)
         }
